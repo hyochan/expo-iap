@@ -1,10 +1,13 @@
-import { NativeModulesProxy, EventEmitter, Subscription } from 'expo-modules-core';
+import {
+  NativeModulesProxy,
+  EventEmitter,
+  Subscription,
+} from "expo-modules-core";
 
 // Import the native module. On web, it will be resolved to ExpoIap.web.ts
 // and on native platforms to ExpoIap.ts
-import ExpoIapModule from './ExpoIapModule';
-import ExpoIapView from './ExpoIapView';
-import { ChangeEventPayload, ExpoIapViewProps } from './ExpoIap.types';
+import { ChangeEventPayload } from "./ExpoIap.types";
+import ExpoIapModule from "./ExpoIapModule";
 
 // Get the native constant value.
 export const PI = ExpoIapModule.PI;
@@ -19,8 +22,19 @@ export async function setValueAsync(value: string) {
 
 const emitter = new EventEmitter(ExpoIapModule ?? NativeModulesProxy.ExpoIap);
 
-export function addChangeListener(listener: (event: ChangeEventPayload) => void): Subscription {
-  return emitter.addListener<ChangeEventPayload>('onChange', listener);
+export function addChangeListener(
+  listener: (event: ChangeEventPayload) => void,
+): Subscription {
+  return emitter.addListener<ChangeEventPayload>("onChange", listener);
 }
 
-export { ExpoIapView, ExpoIapViewProps, ChangeEventPayload };
+export { ChangeEventPayload };
+
+// IAP Implementation
+export function initConnection() {
+  return ExpoIapModule.initConnection();
+}
+
+export async function endConnection(): Promise<boolean> {
+  return ExpoIapModule.endConnection();
+}

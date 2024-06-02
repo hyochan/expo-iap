@@ -1,4 +1,4 @@
-package expo.modules.iap.example
+package com.dooboolab.test
 
 import android.os.Build
 import android.os.Bundle

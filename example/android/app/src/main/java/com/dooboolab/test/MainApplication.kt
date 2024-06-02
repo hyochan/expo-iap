@@ -1,4 +1,4 @@
-package expo.modules.iap.example
+package com.dooboolab.test
 
 import android.app.Application
 import android.content.res.Configuration
