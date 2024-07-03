@@ -27,11 +27,50 @@ func serializeTransaction(_ transaction: Transaction) -> [String: Any?] {
     ]
 }
 
+func serializeSubscriptionStatus(_ status: Product.SubscriptionInfo.Status) -> [String: Any?] {
+    return [
+        "state": status.state.rawValue,
+        "renewalInfo": serializeRenewalInfo(status.renewalInfo)
+    ]
+}
+
+func serializeRenewalInfo(_ renewalInfo: VerificationResult<Product.SubscriptionInfo.RenewalInfo>) -> [String: Any?]? {
+    switch renewalInfo {
+    case .unverified(_, _):
+        return nil
+    case .verified(let info):
+        return [
+            "autoRenewStatus": info.willAutoRenew,
+            "autoRenewPreference": info.autoRenewPreference,
+            "expirationReason": info.expirationReason,
+            "deviceVerification": info.deviceVerification,
+            "currentProductID": info.currentProductID,
+            "debugDescription": info.debugDescription,
+            "gracePeriodExpirationDate": info.gracePeriodExpirationDate
+        ]
+    }
+}
+
+func serialize(_ transaction: Transaction, _ result: VerificationResult<Transaction>) -> [String: Any?] {
+    return serializeTransaction(transaction)
+}
+
+@Sendable func serialize(_ rs: Transaction.RefundRequestStatus?) -> String? {
+    guard let rs = rs else { return nil }
+    switch rs {
+    case .success: return "success"
+    case .userCancelled: return "userCancelled"
+    default:
+        return nil
+    }
+}
+
 @available(iOS 15.0, *)
 public class ExpoIapModule: Module, EXEventEmitter {
-    private var transactions: [String: Any] = [:]
+    private var transactions: [String: Transaction] = [:]
     private var productStore: ProductStore?
     private var hasListeners = false
+    private var updateListenerTask: Task<Void, Error>?
 
     public func definition() -> ModuleDefinition {
         Name("ExpoIap")
@@ -44,23 +83,21 @@ public class ExpoIapModule: Module, EXEventEmitter {
 
         OnStartObserving {
             hasListeners = true
+            self.addTransactionObserver()
         }
 
         OnStopObserving {
             hasListeners = false
-        }
-
-        Function("hello") {
-            return "Hello world! 👋"
+            self.removeTransactionObserver()
         }
 
         Function("initConnection") {
-            productStore = ProductStore()
+            self.productStore = ProductStore()
             return AppStore.canMakePayments
         }
 
         AsyncFunction("getItems") { (skus: [String]) -> [[String: Any?]?] in
-            guard let productStore = productStore else {
+            guard let productStore = self.productStore else {
                 throw NSError(domain: "ExpoIapModule", code: 1, userInfo: [NSLocalizedDescriptionKey: "Connection not initialized"])
             }
 
@@ -85,18 +122,82 @@ public class ExpoIapModule: Module, EXEventEmitter {
         }
 
         AsyncFunction("endConnection") { () -> Bool in
-            guard let productStore = productStore else {
+            guard let productStore = self.productStore else {
                 return false
             }
 
             await productStore.removeAll()
-            transactions.removeAll()
+            self.transactions.removeAll()
             self.productStore = nil
+            self.removeTransactionObserver()
             return true
         }
 
+        AsyncFunction("getAvailableItems") { (alsoPublishToEventListener: Bool, onlyIncludeActiveItems: Bool) -> [[String: Any?]?] in
+            var purchasedItems: [Transaction] = []
+
+            func addTransaction(transaction: Transaction) {
+                purchasedItems.append(transaction)
+                if alsoPublishToEventListener {
+                    self.sendEvent("purchase-updated", serializeTransaction(transaction))
+                }
+            }
+
+            func addError(error: Error, errorDict: [String: String]) {
+                if alsoPublishToEventListener {
+                    self.sendEvent("purchase-error", errorDict)
+                }
+            }
+
+            for await result in onlyIncludeActiveItems ? Transaction.currentEntitlements : Transaction.all {
+                do {
+                    let transaction = try self.checkVerified(result)
+                    if !onlyIncludeActiveItems {
+                        addTransaction(transaction: transaction)
+                        continue
+                    }
+                    switch transaction.productType {
+                    case .nonConsumable, .autoRenewable, .consumable:
+                        if await self.productStore?.getProduct(productID: transaction.productID) != nil {
+                            addTransaction(transaction: transaction)
+                        }
+                    case .nonRenewable:
+                        if await self.productStore?.getProduct(productID: transaction.productID) != nil {
+                            let currentDate = Date()
+                            let expirationDate = Calendar(identifier: .gregorian).date(byAdding: DateComponents(year: 1), to: transaction.purchaseDate)!
+                            if currentDate < expirationDate {
+                                addTransaction(transaction: transaction)
+                            }
+                        }
+                    default:
+                        break
+                    }
+                } catch StoreError.failedVerification {
+                    let err = [
+                        "responseCode": IapErrors.E_TRANSACTION_VALIDATION_FAILED.rawValue,
+                        "debugMessage": StoreError.failedVerification.localizedDescription,
+                        "code": IapErrors.E_TRANSACTION_VALIDATION_FAILED.rawValue,
+                        "message": StoreError.failedVerification.localizedDescription,
+                        "productId": "unknown"
+                    ]
+                    addError(error: StoreError.failedVerification, errorDict: err)
+                } catch {
+                    let err = [
+                        "responseCode": IapErrors.E_UNKNOWN.rawValue,
+                        "debugMessage": error.localizedDescription,
+                        "code": IapErrors.E_UNKNOWN.rawValue,
+                        "message": error.localizedDescription,
+                        "productId": "unknown"
+                    ]
+                    addError(error: error, errorDict: err)
+                }
+            }
+
+            return purchasedItems.map { serializeTransaction($0) }
+        }
+
         AsyncFunction("buyProduct") { (sku: String, autoFinish: Bool, appAccountToken: String?, quantity: Int, offer: [String: String]) -> [String: Any?]? in
-            guard let productStore = productStore else {
+            guard let productStore = self.productStore else {
                 throw NSError(domain: "ExpoIapModule", code: 1, userInfo: [NSLocalizedDescriptionKey: "Connection not initialized"])
             }
 
@@ -113,7 +214,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
                     if let appAccountToken = appAccountToken, let appAccountUUID = UUID(uuidString: appAccountToken) {
                         options.insert(.appAccountToken(appAccountUUID))
                     }
-                    guard let windowScene = await currentWindowScene() else {
+                    guard let windowScene = await self.currentWindowScene() else {
                         throw NSError(domain: "ExpoIapModule", code: 2, userInfo: [NSLocalizedDescriptionKey: "Could not find window scene"])
                     }
                     let result: Product.PurchaseResult
@@ -124,13 +225,13 @@ public class ExpoIapModule: Module, EXEventEmitter {
                     }
                     switch result {
                     case .success(let verification):
-                        let transaction = try checkVerified(verification)
+                        let transaction = try self.checkVerified(verification)
                         if autoFinish {
                             await transaction.finish()
                             return nil
                         } else {
-                            transactions[String(transaction.id)] = transaction
-                            sendEvent("purchase-updated", serializeTransaction(transaction))
+                            self.transactions[String(transaction.id)] = transaction
+                            self.sendEvent("purchase-updated", serializeTransaction(transaction))
                             return serializeTransaction(transaction)
                         }
                     case .userCancelled:
@@ -148,10 +249,79 @@ public class ExpoIapModule: Module, EXEventEmitter {
             }
         }
 
+        AsyncFunction("isEligibleForIntroOffer") { (groupID: String) -> Bool in
+            return await Product.SubscriptionInfo.isEligibleForIntroOffer(for: groupID)
+        }
+
+        AsyncFunction("subscriptionStatus") { (sku: String) -> [[String: Any?]?]? in
+            guard let productStore = self.productStore else {
+                throw NSError(domain: "ExpoIapModule", code: 1, userInfo: [NSLocalizedDescriptionKey: "Connection not initialized"])
+            }
+
+            do {
+                let product = await productStore.getProduct(productID: sku)
+                let status: [Product.SubscriptionInfo.Status]? = try await product?.subscription?.status
+                guard let status = status else {
+                    return nil
+                }
+                return status.map { serializeSubscriptionStatus($0) }
+            } catch {
+                throw NSError(domain: "ExpoIapModule", code: 2, userInfo: [NSLocalizedDescriptionKey: "Error getting subscription status: \(error.localizedDescription)"])
+            }
+        }
+
+        AsyncFunction("currentEntitlement") { (sku: String) -> [String: Any?]? in
+            guard let productStore = self.productStore else {
+                throw NSError(domain: "ExpoIapModule", code: 1, userInfo: [NSLocalizedDescriptionKey: "Connection not initialized"])
+            }
+
+            if let product = await productStore.getProduct(productID: sku) {
+                if let result = await product.currentEntitlement {
+                    do {
+                        // Check whether the transaction is verified. If it isn’t, catch `failedVerification` error.
+                        let transaction = try self.checkVerified(result)
+                        return serializeTransaction(transaction)
+                    } catch StoreError.failedVerification {
+                        throw NSError(domain: "ExpoIapModule", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to verify transaction for sku \(sku)"])
+                    } catch {
+                        throw NSError(domain: "ExpoIapModule", code: 3, userInfo: [NSLocalizedDescriptionKey: "Error fetching entitlement for sku \(sku): \(error.localizedDescription)"])
+                    }
+                } else {
+                    throw NSError(domain: "ExpoIapModule", code: 4, userInfo: [NSLocalizedDescriptionKey: "Can't find entitlement for sku \(sku)"])
+                }
+            } else {
+                throw NSError(domain: "ExpoIapModule", code: 5, userInfo: [NSLocalizedDescriptionKey: "Can't find product for sku \(sku)"])
+            }
+        }
+
+        AsyncFunction("latestTransaction") { (sku: String) -> [String: Any?]? in
+            guard let productStore = self.productStore else {
+                throw NSError(domain: "ExpoIapModule", code: 1, userInfo: [NSLocalizedDescriptionKey: "Connection not initialized"])
+            }
+
+            if let product = await productStore.getProduct(productID: sku) {
+                if let result = await product.latestTransaction {
+                    do {
+                        // Check whether the transaction is verified. If it isn’t, catch `failedVerification` error.
+                        let transaction = try self.checkVerified(result)
+                        return serializeTransaction(transaction)
+                    } catch StoreError.failedVerification {
+                        throw NSError(domain: "ExpoIapModule", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to verify transaction for sku \(sku)"])
+                    } catch {
+                        throw NSError(domain: "ExpoIapModule", code: 3, userInfo: [NSLocalizedDescriptionKey: "Error fetching latest transaction for sku \(sku): \(error.localizedDescription)"])
+                    }
+                } else {
+                    throw NSError(domain: "ExpoIapModule", code: 4, userInfo: [NSLocalizedDescriptionKey: "Can't find latest transaction for sku \(sku)"])
+                }
+            } else {
+                throw NSError(domain: "ExpoIapModule", code: 5, userInfo: [NSLocalizedDescriptionKey: "Can't find product for sku \(sku)"])
+            }
+        }
+
         AsyncFunction("finishTransaction") { (transactionIdentifier: String) -> Bool in
-            if let transaction = transactions[transactionIdentifier] as? Transaction {
+            if let transaction = self.transactions[transactionIdentifier] {
                 await transaction.finish()
-                transactions.removeValue(forKey: transactionIdentifier)
+                self.transactions.removeValue(forKey: transactionIdentifier)
                 return true
             } else {
                 throw NSError(domain: "ExpoIapModule", code: 8, userInfo: [NSLocalizedDescriptionKey: "Invalid transaction ID"])
@@ -159,7 +329,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
         }
 
         AsyncFunction("getPendingTransactions") { () -> [[String: Any?]?] in
-            return transactions.values.compactMap { $0 as? Transaction }.map { serializeTransaction($0) }
+            return self.transactions.values.map { serializeTransaction($0) }
         }
 
         AsyncFunction("sync") { () -> Bool in
@@ -182,7 +352,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
 
         AsyncFunction("showManageSubscriptions") { () -> Bool in
             #if !os(tvOS)
-            guard let windowScene = await currentWindowScene() else {
+            guard let windowScene = await self.currentWindowScene() else {
                 throw NSError(domain: "ExpoIapModule", code: 11, userInfo: [NSLocalizedDescriptionKey: "Cannot find window scene or not available on macOS"])
             }
             try await AppStore.showManageSubscriptions(in: windowScene)
@@ -191,14 +361,98 @@ public class ExpoIapModule: Module, EXEventEmitter {
             throw NSError(domain: "ExpoIapModule", code: 12, userInfo: [NSLocalizedDescriptionKey: "This method is not available on tvOS"])
             #endif
         }
+
+        AsyncFunction("clearTransaction") { () -> Void in
+            Task {
+                for await result in Transaction.unfinished {
+                    do {
+                        // Check whether the transaction is verified. If it isn’t, catch `failedVerification` error.
+                        let transaction = try self.checkVerified(result)
+                        await transaction.finish()
+                        self.transactions.removeValue(forKey: String(transaction.id))
+                    } catch {
+                        print("Failed to finish transaction")
+                    }
+                }
+            }
+        }
+
+        AsyncFunction("beginRefundRequest") { (sku: String) -> String? in
+            #if !os(tvOS)
+            guard let product = await self.productStore?.getProduct(productID: sku),
+                  let result = await product.latestTransaction else {
+                throw NSError(domain: "ExpoIapModule", code: 5, userInfo: [NSLocalizedDescriptionKey: "Can't find product or transaction for sku \(sku)"])
+            }
+
+            do {
+                let transaction = try self.checkVerified(result)
+                guard let windowScene = await self.currentWindowScene() else {
+                    throw NSError(domain: "ExpoIapModule", code: 11, userInfo: [NSLocalizedDescriptionKey: "Cannot find window scene or not available on macOS"])
+                }
+                let refundStatus = try await transaction.beginRefundRequest(in: windowScene)
+                return serialize(refundStatus)
+            } catch StoreError.failedVerification {
+                throw NSError(domain: "ExpoIapModule", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to verify transaction for sku \(sku)"])
+            } catch {
+                throw NSError(domain: "ExpoIapModule", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to refund purchase: \(error.localizedDescription)"])
+            }
+            #else
+            throw NSError(domain: "ExpoIapModule", code: 12, userInfo: [NSLocalizedDescriptionKey: "This method is not available on tvOS"])
+            #endif
+        }
+
+        Function("disable") {
+            self.removeTransactionObserver()
+            return true
+        }
+    }
+
+    private func addTransactionObserver() {
+        if updateListenerTask == nil {
+            updateListenerTask = listenForTransactions()
+        }
+    }
+
+    private func removeTransactionObserver() {
+        updateListenerTask?.cancel()
+        updateListenerTask = nil
+    }
+
+    private func listenForTransactions() -> Task<Void, Error> {
+        return Task.detached { [weak self] in
+            guard let self = self else { return }
+            for await result in Transaction.updates {
+                do {
+                    let transaction = try self.checkVerified(result)
+                    self.transactions[String(transaction.id)] = transaction
+                    if self.hasListeners {
+                        self.sendEvent("purchase-updated", serializeTransaction(transaction))
+                        self.sendEvent("iap-transaction-updated", ["transaction": serializeTransaction(transaction)])
+                    }
+                } catch {
+                    if self.hasListeners {
+                        let err = [
+                            "responseCode": IapErrors.E_TRANSACTION_VALIDATION_FAILED.rawValue,
+                            "debugMessage": error.localizedDescription,
+                            "code": IapErrors.E_TRANSACTION_VALIDATION_FAILED.rawValue,
+                            "message": error.localizedDescription
+                        ]
+                        self.sendEvent("purchase-error", err)
+                        self.sendEvent("iap-transaction-updated", ["error": err])
+                    }
+                }
+            }
+        }
     }
 
     public func startObserving() {
         hasListeners = true
+        addTransactionObserver()
     }
 
     public func stopObserving() {
         hasListeners = false
+        removeTransactionObserver()
     }
 
     public func supportedEvents() -> [String] {
