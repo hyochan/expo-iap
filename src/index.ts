@@ -6,7 +6,7 @@ import {
 
 // Import the native module. On web, it will be resolved to ExpoIap.web.ts
 // and on native platforms to ExpoIap.ts
-import { ChangeEventPayload } from "./ExpoIap.types";
+import { ChangeEventPayload, Product } from "./ExpoIap.types";
 import ExpoIapModule from "./ExpoIapModule";
 
 // Get the native constant value.
@@ -30,9 +30,12 @@ export function addChangeListener(
 
 export { ChangeEventPayload };
 
-// IAP Implementation
 export function initConnection() {
   return ExpoIapModule.initConnection();
+}
+
+export async function getItems(products: string[]): Promise<Product[]> {
+  return ExpoIapModule.getItems(products);
 }
 
 export async function endConnection(): Promise<boolean> {
