@@ -4,6 +4,7 @@ import {
   Platform,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -11,20 +12,9 @@ import {
 
 import { Product } from "../src/ExpoIap.types";
 
-const productSkus = Platform.select({
-  ios: ["com.cooni.point1000", "com.cooni.point5000"],
+const productSkus = ["com.cooni.point1000", "com.cooni.point5000"];
 
-  android: [
-    "android.test.purchased",
-    "android.test.canceled",
-    "android.test.refunded",
-    "android.test.item_unavailable",
-  ],
-
-  default: [],
-}) as string[];
-
-const operations = ["initConnection", "getItems", "endConnection"];
+const operations = ["initConnection", "getProducts", "endConnection"];
 type Operation = (typeof operations)[number];
 
 export default function App() {
@@ -44,10 +34,11 @@ export default function App() {
       }
     }
 
-    if (operation === "getItems") {
+    if (operation === "getProducts") {
       try {
-        const items = await ExpoIap.getItems(productSkus);
-        setItems(items);
+        const products = await ExpoIap.getProducts(productSkus);
+        console.log('items', products)
+        setItems(products);
       } catch (error) {
         console.error(error);
       }
@@ -57,14 +48,19 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Expo IAP Example</Text>
-      <View style={styles.buttonsWrapper}>
-        {operations.map((operation) => (
-          <Pressable key={operation} onPress={() => handleOperation(operation)}>
-            <View style={styles.buttonView}>
-              <Text>{operation}</Text>
-            </View>
-          </Pressable>
-        ))}
+      <View style={styles.buttons}>
+        <ScrollView contentContainerStyle={styles.buttonsWrapper} horizontal>
+          {operations.map((operation) => (
+            <Pressable
+              key={operation}
+              onPress={() => handleOperation(operation)}
+            >
+              <View style={styles.buttonView}>
+                <Text>{operation}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </ScrollView>
       </View>
       <View style={styles.content}>
         {items.map((item) => (
@@ -88,13 +84,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
   },
+  buttons: {
+    height: 90,
+  },
   buttonsWrapper: {
     padding: 24,
-    alignSelf: "stretch",
 
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    gap: 8,
   },
   buttonView: {
     borderRadius: 8,
