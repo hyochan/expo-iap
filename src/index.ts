@@ -9,6 +9,8 @@ import { Platform } from "react-native";
 
 import { ChangeEventPayload, Product } from "./ExpoIap.types";
 import ExpoIapModule from "./ExpoIapModule";
+import { ProductAndroid } from "./types/ExpoIapAndroid.types";
+import { ProductIos } from "./types/ExpoIapIos.types";
 
 // Get the native constant value.
 export const PI = ExpoIapModule.PI;
@@ -38,8 +40,8 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
 
   return Platform.select({
     ios: async () => {
-      const items = (await ExpoIapModule.getItems(skus)) as Product[];
-      return items.filter((item: Product) => skus.includes(item.id));
+      const items = (await ExpoIapModule.getItems(skus)) as ProductIos[];
+      return items.filter((item: ProductIos) => isProductIos(item));
     },
     android: async () => {
       const products = await ExpoIapModule.getItemsByType("inapp", skus);
@@ -49,6 +51,14 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
     default: () => Promise.reject(new Error("Unsupported Platform")),
   })();
 };
+
+export function isProductAndroid(product: Product): product is ProductAndroid {
+  return (product as ProductAndroid).title !== undefined;
+}
+
+export function isProductIos(product: Product): product is ProductIos {
+  return (product as ProductIos).displayName !== undefined;
+}
 
 export async function endConnection(): Promise<boolean> {
   return ExpoIapModule.endConnection();

@@ -1,7 +1,12 @@
-import * as ExpoIap from "expo-iap";
+import {
+  endConnection,
+  getProducts,
+  initConnection,
+  isProductAndroid,
+  isProductIos,
+} from "expo-iap";
 import { useState } from "react";
 import {
-  Platform,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -22,12 +27,12 @@ export default function App() {
 
   const handleOperation = async (operation: Operation) => {
     if (operation === "initConnection") {
-      console.log("Connected", await ExpoIap.initConnection());
+      console.log("Connected", await initConnection());
       return;
     }
 
     if (operation === "endConnection") {
-      const result = await ExpoIap.endConnection();
+      const result = await endConnection();
 
       if (result) {
         setItems([]);
@@ -36,8 +41,8 @@ export default function App() {
 
     if (operation === "getProducts") {
       try {
-        const products = await ExpoIap.getProducts(productSkus);
-        console.log('items', products)
+        const products = await getProducts(productSkus);
+        console.log("items", products);
         setItems(products);
       } catch (error) {
         console.error(error);
@@ -63,11 +68,24 @@ export default function App() {
         </ScrollView>
       </View>
       <View style={styles.content}>
-        {items.map((item) => (
-          <Text key={item.id}>
-            {item.displayName} - {item.displayPrice} ({item.currency})
-          </Text>
-        ))}
+        {items.map((item) => {
+          if (isProductAndroid(item)) {
+            return (
+              <Text key={item.title}>
+                {item.title} -{" "}
+                {item.oneTimePurchaseOfferDetails?.formattedPrice}
+              </Text>
+            );
+          }
+
+          if (isProductIos(item)) {
+            return (
+              <Text key={item.id}>
+                {item.displayName} - {item.displayPrice}
+              </Text>
+            );
+          }
+        })}
       </View>
     </SafeAreaView>
   );
