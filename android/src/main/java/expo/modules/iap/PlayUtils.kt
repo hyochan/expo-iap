@@ -13,6 +13,7 @@ object PromiseUtils {
     private val promises = HashMap<String, MutableList<Promise>>()
 
     const val TAG = "PromiseUtils"
+    const val E_ACTIVITY_UNAVAILABLE = "E_ACTIVITY_UNAVAILABLE"
     const val E_UNKNOWN = "E_UNKNOWN"
     const val E_NOT_PREPARED = "E_NOT_PREPARED"
     const val E_ALREADY_PREPARED = "E_ALREADY_PREPARED"

@@ -3,6 +3,7 @@ package expo.modules.iap
 import android.content.Context
 import android.util.Log
 import com.android.billingclient.api.*
+import com.android.billingclient.api.BillingFlowParams.SubscriptionUpdateParams
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import expo.modules.kotlin.Promise
