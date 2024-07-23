@@ -131,6 +131,94 @@ class ExpoIapModule : Module(), PurchasesUpdatedListener {
                 }
             }
         }
+
+        AsyncFunction("getAvailableItemsByType") { type: String, promise: Promise ->
+            ensureConnection(promise) { billingClient ->
+                val items = mutableListOf<Map<String, Any?>>()
+                billingClient.queryPurchasesAsync(
+                    QueryPurchasesParams
+                        .newBuilder()
+                        .setProductType(
+                            if (type == "subs") BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP,
+                        ).build(),
+                ) { billingResult: BillingResult, purchases: List<Purchase>? ->
+                    if (!isValidResult(billingResult, promise)) return@queryPurchasesAsync
+                    purchases?.forEach { purchase ->
+                        val item = mutableMapOf<String, Any?>(
+                            "productId" to purchase.products[0], // kept for convenience/backward-compatibility. productIds has the complete list
+                            "productIds" to purchase.products,
+                            "transactionId" to purchase.orderId,
+                            "transactionDate" to purchase.purchaseTime.toDouble(),
+                            "transactionReceipt" to purchase.originalJson,
+                            "orderId" to purchase.orderId,
+                            "purchaseToken" to purchase.purchaseToken,
+                            "developerPayloadAndroid" to purchase.developerPayload,
+                            "signatureAndroid" to purchase.signature,
+                            "purchaseStateAndroid" to purchase.purchaseState,
+                            "isAcknowledgedAndroid" to purchase.isAcknowledged,
+                            "packageNameAndroid" to purchase.packageName,
+                            "obfuscatedAccountIdAndroid" to purchase.accountIdentifiers?.obfuscatedAccountId,
+                            "obfuscatedProfileIdAndroid" to purchase.accountIdentifiers?.obfuscatedProfileId
+                        )
+                        if (type == BillingClient.ProductType.SUBS) {
+                            item["autoRenewingAndroid"] = purchase.isAutoRenewing
+                        }
+                        items.add(item)
+                    }
+                    promise.resolve(items)
+                }
+            }
+        }
+
+        AsyncFunction("getPurchaseHistoryByType") { type: String, promise: Promise ->
+            ensureConnection(promise) { billingClient ->
+                billingClient.queryPurchaseHistoryAsync(
+                    QueryPurchaseHistoryParams
+                        .newBuilder()
+                        .setProductType(
+                            if (type == "subs") BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP
+                        ).build()
+                ) { billingResult: BillingResult, purchaseHistoryRecordList: List<PurchaseHistoryRecord>? ->
+
+                    if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                        PlayUtils.rejectPromiseWithBillingError(promise, billingResult.responseCode)
+                        return@queryPurchaseHistoryAsync
+                    }
+
+                    Log.d(TAG, purchaseHistoryRecordList.toString())
+                    val items = mutableListOf<Map<String, Any?>>()
+                    purchaseHistoryRecordList?.forEach { purchase ->
+                        val item = mutableMapOf<String, Any?>(
+                            "productId" to purchase.products[0],
+                            "productIds" to purchase.products,
+                            "transactionDate" to purchase.purchaseTime.toDouble(),
+                            "transactionReceipt" to purchase.originalJson,
+                            "purchaseToken" to purchase.purchaseToken,
+                            "dataAndroid" to purchase.originalJson,
+                            "signatureAndroid" to purchase.signature,
+                            "developerPayload" to purchase.developerPayload
+                        )
+                        items.add(item)
+                    }
+                    promise.resolve(items)
+                }
+            }
+        }
+    }
+
+    /**
+     * Rejects promise with billing code if BillingResult is not OK
+     */
+    private fun isValidResult(
+        billingResult: BillingResult,
+        promise: Promise,
+    ): Boolean {
+        Log.d(TAG, "responseCode: " + billingResult.responseCode)
+        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+            PlayUtils.rejectPromiseWithBillingError(promise, billingResult.responseCode)
+            return false
+        }
+        return true
     }
 
     private fun ensureConnection(promise: Promise, callback: (billingClient: BillingClient) -> Unit) {
