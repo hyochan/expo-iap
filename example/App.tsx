@@ -1,77 +1,128 @@
-import * as ExpoIap from "expo-iap";
-import { useState } from "react";
 import {
-  Platform,
+  endConnection,
+  getProducts,
+  initConnection,
+  isProductAndroid,
+  isProductIos,
+  purchaseUpdatedListener,
+  requestPurchase,
+} from 'expo-iap';
+import {useEffect, useState} from 'react';
+import {
+  Alert,
+  Button,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   View,
-} from "react-native";
+} from 'react-native';
 
-import { Product } from "../src/ExpoIap.types";
+import {Product, ProductPurchase} from '../src/ExpoIap.types';
 
-const productSkus = Platform.select({
-  ios: ["com.cooni.point1000", "com.cooni.point5000"],
+const productSkus = ['com.cooni.point1000', 'com.cooni.point5000'];
 
-  android: [
-    "android.test.purchased",
-    "android.test.canceled",
-    "android.test.refunded",
-    "android.test.item_unavailable",
-  ],
-
-  default: [],
-}) as string[];
-
-const operations = ["initConnection", "getItems", "endConnection"];
+const operations = ['initConnection', 'getProducts', 'endConnection'];
 type Operation = (typeof operations)[number];
 
 export default function App() {
   const [items, setItems] = useState<Product[]>([]);
 
   const handleOperation = async (operation: Operation) => {
-    if (operation === "initConnection") {
-      console.log("Connected", await ExpoIap.initConnection());
+    if (operation === 'initConnection') {
+      console.log('Connected', await initConnection());
       return;
     }
 
-    if (operation === "endConnection") {
-      const result = await ExpoIap.endConnection();
+    if (operation === 'endConnection') {
+      const result = await endConnection();
 
       if (result) {
         setItems([]);
       }
     }
 
-    if (operation === "getItems") {
+    if (operation === 'getProducts') {
       try {
-        const items = await ExpoIap.getItems(productSkus);
-        setItems(items);
+        const products = await getProducts(productSkus);
+        console.log('items', products);
+        setItems(products);
       } catch (error) {
         console.error(error);
       }
     }
   };
 
+  useEffect(() => {
+    const subscription = purchaseUpdatedListener(
+      (purchase: ProductPurchase) => {
+        Alert.alert('Purchase updated', JSON.stringify(purchase));
+      },
+    );
+
+    return () => {
+      subscription.remove();
+      endConnection();
+    };
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Expo IAP Example</Text>
-      <View style={styles.buttonsWrapper}>
-        {operations.map((operation) => (
-          <Pressable key={operation} onPress={() => handleOperation(operation)}>
-            <View style={styles.buttonView}>
-              <Text>{operation}</Text>
-            </View>
-          </Pressable>
-        ))}
+      <View style={styles.buttons}>
+        <ScrollView contentContainerStyle={styles.buttonsWrapper} horizontal>
+          {operations.map((operation) => (
+            <Pressable
+              key={operation}
+              onPress={() => handleOperation(operation)}
+            >
+              <View style={styles.buttonView}>
+                <Text>{operation}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </ScrollView>
       </View>
       <View style={styles.content}>
-        {items.map((item) => (
-          <Text key={item.id}>
-            {item.displayName} - {item.displayPrice} ({item.currency})
-          </Text>
-        ))}
+        {items.map((item) => {
+          if (isProductAndroid(item)) {
+            return (
+              <View key={item.title}>
+                <Text>
+                  {item.title} -{' '}
+                  {item.oneTimePurchaseOfferDetails?.formattedPrice}
+                </Text>
+                <Button
+                  title="Buy"
+                  onPress={() => {
+                    requestPurchase({
+                      skus: [item.productId],
+                    });
+                  }}
+                />
+              </View>
+            );
+          }
+
+          if (isProductIos(item)) {
+            return (
+              <View key={item.id}>
+                <Text>
+                  {item.displayName} - {item.displayPrice}
+                </Text>
+                <Button
+                  title="Buy"
+                  onPress={() => {
+                    requestPurchase({
+                      sku: item.id,
+                    });
+                  }}
+                />
+              </View>
+            );
+          }
+        })}
       </View>
     </SafeAreaView>
   );
@@ -80,31 +131,31 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
+    backgroundColor: '#fff',
+    alignItems: 'center',
   },
   title: {
     marginTop: 24,
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: 'bold',
+  },
+  buttons: {
+    height: 90,
   },
   buttonsWrapper: {
     padding: 24,
-    alignSelf: "stretch",
 
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    gap: 8,
   },
   buttonView: {
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#000",
+    borderColor: '#000',
     padding: 8,
   },
   content: {
     flex: 1,
-    alignSelf: "stretch",
+    alignSelf: 'stretch',
     padding: 24,
     gap: 12,
   },

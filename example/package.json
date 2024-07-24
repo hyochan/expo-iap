@@ -5,10 +5,12 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "android:bundle": "eas build --profile production --platform android --local"
   },
   "dependencies": {
     "expo": "~51.0.9",
+    "expo-updates": "~0.25.18",
     "react": "18.2.0",
     "react-native": "0.74.1"
   },

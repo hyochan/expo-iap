@@ -43,18 +43,22 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          cache: 'yarn'
+          node-version: 20.x
 
       - name: Install reviewdog
         uses: reviewdog/action-setup@v1
 
-      - name: Install dependencies
-        run: yarn install --immutable
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install modules
+        run: bun install --immutable
+
 
       # - name: Install node_modules for `IapExample/`
       #   run: yarn install --immutable

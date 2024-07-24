@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "expo-iap-example",
-    "slug": "expo-iap-example",
+    "name": "test",
+    "slug": "test-iap",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,7 +20,17 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "versionCode": 4,
       "package": "com.dooboolab.test"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e09f09ee-427e-44fa-b805-132b88f39836"
+      }
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/db487b8b-afc5-4850-8f1b-006e97822308"
     }
   }
 }

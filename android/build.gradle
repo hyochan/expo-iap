@@ -41,3 +41,8 @@ android {
     abortOnError false
   }
 }
+
+dependencies {
+  implementation "com.android.billingclient:billing-ktx:7.0.0"
+  implementation "com.google.android.gms:play-services-base:18.1.0"
+}
