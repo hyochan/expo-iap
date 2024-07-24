@@ -1,4 +1,4 @@
-rootProject.name = 'expo-iap-example'
+rootProject.name = 'test'
 
 dependencyResolutionManagement {
   versionCatalogs {
