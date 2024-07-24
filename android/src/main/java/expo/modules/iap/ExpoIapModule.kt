@@ -29,24 +29,51 @@ class ExpoIapModule : Module(), PurchasesUpdatedListener {
             ?: throw MissingCurrentActivityException()
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
-        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-            sendEvent("purchase-error", mapOf("responseCode" to billingResult.responseCode, "debugMessage" to billingResult.debugMessage))
-        } else if (purchases != null) {
-            val purchaseData = purchases.map { purchase ->
-                mapOf(
+        val responseCode = billingResult.responseCode
+        if (responseCode != BillingClient.BillingResponseCode.OK) {
+            val error = mutableMapOf<String, Any?>(
+                "responseCode" to responseCode,
+                "debugMessage" to billingResult.debugMessage
+            )
+            val errorData = PlayUtils.getBillingResponseData(responseCode)
+            error["code"] = errorData.code
+            error["message"] = errorData.message
+            sendEvent("purchase-error", error)
+            return
+        }
+
+        if (purchases != null) {
+            val promiseItems = mutableListOf<Map<String, Any?>>()
+            purchases.forEach { purchase ->
+                val item = mutableMapOf<String, Any?>(
                     "productId" to purchase.products[0],
+                    "productIds" to purchase.products,
                     "transactionId" to purchase.orderId,
-                    "transactionDate" to purchase.purchaseTime,
+                    "transactionDate" to purchase.purchaseTime.toDouble(),
                     "transactionReceipt" to purchase.originalJson,
                     "purchaseToken" to purchase.purchaseToken,
-                    "isAcknowledged" to purchase.isAcknowledged,
-                    "purchaseState" to purchase.purchaseState
+                    "dataAndroid" to purchase.originalJson,
+                    "signatureAndroid" to purchase.signature,
+                    "autoRenewingAndroid" to purchase.isAutoRenewing,
+                    "isAcknowledgedAndroid" to purchase.isAcknowledged,
+                    "purchaseStateAndroid" to purchase.purchaseState,
+                    "packageNameAndroid" to purchase.packageName,
+                    "developerPayloadAndroid" to purchase.developerPayload
                 )
+                purchase.accountIdentifiers?.let { accountIdentifiers ->
+                    item["obfuscatedAccountIdAndroid"] = accountIdentifiers.obfuscatedAccountId
+                    item["obfuscatedProfileIdAndroid"] = accountIdentifiers.obfuscatedProfileId
+                }
+                promiseItems.add(item.toMap())
+                sendEvent("purchase-updated", item)
             }
-
-            purchaseData.forEach { purchase ->
-                sendEvent("purchase-updated", purchase)
-            }
+        } else {
+            val result = mutableMapOf<String, Any?>(
+                "responseCode" to billingResult.responseCode,
+                "debugMessage" to billingResult.debugMessage,
+                "extraMessage" to "The purchases are null. This is a normal behavior if you have requested DEFERRED proration. If not please report an issue."
+            )
+            sendEvent("purchase-updated", result)
         }
     }
 
@@ -202,6 +229,142 @@ class ExpoIapModule : Module(), PurchasesUpdatedListener {
                         items.add(item)
                     }
                     promise.resolve(items)
+                }
+            }
+        }
+
+        AsyncFunction("buyItemByType") { params: Map<String, Any?>, promise: Promise ->
+            val type = params["type"] as String
+            val skuArr = (params["skuArr"] as? List<*>)?.filterIsInstance<String>()?.toTypedArray() ?: emptyArray()
+            val purchaseToken = params["purchaseToken"] as? String
+            val replacementMode = (params["replacementMode"] as? Double)?.toInt() ?: -1
+            val obfuscatedAccountId = params["obfuscatedAccountId"] as? String
+            val obfuscatedProfileId = params["obfuscatedProfileId"] as? String
+            val offerTokenArr = (params["offerTokenArr"] as? List<*>)?.filterIsInstance<String>()?.toTypedArray() ?: emptyArray()
+            val isOfferPersonalized = params["isOfferPersonalized"] as? Boolean ?: false
+
+            if (currentActivity == null) {
+                throw Exception("getCurrentActivity returned null")
+            }
+
+            ensureConnection(promise) { billingClient ->
+                if (type == BillingClient.ProductType.SUBS && skuArr.size != offerTokenArr.size) {
+                    val debugMessage = "The number of skus (${skuArr.size}) must match: the number of offerTokens (${offerTokenArr.size}) for Subscriptions"
+                    sendEvent("purchase-error", mapOf(
+                        "debugMessage" to debugMessage,
+                        "code" to "E_SKU_OFFER_MISMATCH",
+                        "message" to debugMessage
+                    ))
+                    throw Exception(debugMessage)
+                }
+
+                val productParamsList = skuArr.mapIndexed { index, sku ->
+                    val selectedSku = skus[sku]
+                    if (selectedSku == null) {
+                        val debugMessage = "The sku was not found. Please fetch products first by calling getItems"
+                        sendEvent("purchase-error", mapOf(
+                            "debugMessage" to debugMessage,
+                            "code" to "E_SKU_NOT_FOUND",
+                            "message" to debugMessage,
+                            "productId" to sku
+                        ))
+                        throw Exception(debugMessage)
+                    }
+
+                    val productDetailParams = BillingFlowParams.ProductDetailsParams.newBuilder()
+                        .setProductDetails(selectedSku)
+
+                    if (type == BillingClient.ProductType.SUBS) {
+                        productDetailParams.setOfferToken(offerTokenArr[index])
+                    }
+
+                    productDetailParams.build()
+                }
+
+                val builder = BillingFlowParams.newBuilder()
+                    .setProductDetailsParamsList(productParamsList)
+                    .setIsOfferPersonalized(isOfferPersonalized)
+
+                if (purchaseToken != null) {
+                    val subscriptionUpdateParams = SubscriptionUpdateParams.newBuilder()
+                        .setOldPurchaseToken(purchaseToken)
+
+                    if (type == BillingClient.ProductType.SUBS && replacementMode != -1) {
+                        val mode = when (replacementMode) {
+                            BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.CHARGE_PRORATED_PRICE -> BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.CHARGE_PRORATED_PRICE
+                            BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.WITHOUT_PRORATION -> BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.WITHOUT_PRORATION
+                            BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.DEFERRED -> BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.DEFERRED
+                            BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.WITH_TIME_PRORATION -> BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.WITH_TIME_PRORATION
+                            BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.CHARGE_FULL_PRICE -> BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.CHARGE_FULL_PRICE
+                            else -> BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.UNKNOWN_REPLACEMENT_MODE
+                        }
+                        subscriptionUpdateParams.setSubscriptionReplacementMode(mode)
+                    }
+
+                    builder.setSubscriptionUpdateParams(subscriptionUpdateParams.build())
+                }
+
+                obfuscatedAccountId?.let { builder.setObfuscatedAccountId(it) }
+                obfuscatedProfileId?.let { builder.setObfuscatedProfileId(it) }
+
+                val flowParams = builder.build()
+                val billingResult = billingClient.launchBillingFlow(currentActivity, flowParams)
+
+                if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                    throw Exception("Billing error: ${billingResult.debugMessage}")
+                }
+
+                promise.resolve(true)
+            }
+        }
+
+        AsyncFunction("acknowledgePurchase") { 
+            token: String,
+            promise: Promise ->
+        
+            ensureConnection(promise) { billingClient ->
+                val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
+                    .setPurchaseToken(token)
+                    .build()
+        
+                billingClient.acknowledgePurchase(acknowledgePurchaseParams) { billingResult: BillingResult ->
+                    if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                        PlayUtils.rejectPromiseWithBillingError(promise, billingResult.responseCode)
+                        return@acknowledgePurchase
+                    }
+        
+                    val map = mutableMapOf<String, Any?>()
+                    map["responseCode"] = billingResult.responseCode
+                    map["debugMessage"] = billingResult.debugMessage
+                    val errorData = PlayUtils.getBillingResponseData(billingResult.responseCode)
+                    map["code"] = errorData.code
+                    map["message"] = errorData.message
+                    promise.resolve(map)
+                }
+            }
+        }
+
+        AsyncFunction("consumeProduct") {
+                token: String,
+                promise: Promise ->
+
+            val params = ConsumeParams.newBuilder().setPurchaseToken(token).build()
+
+            ensureConnection(promise) { billingClient ->
+                billingClient.consumeAsync(params) { billingResult: BillingResult, purchaseToken: String? ->
+                    if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                        PlayUtils.rejectPromiseWithBillingError(promise, billingResult.responseCode)
+                        return@consumeAsync
+                    }
+
+                    val map = mutableMapOf<String, Any?>()
+                    map["responseCode"] = billingResult.responseCode
+                    map["debugMessage"] = billingResult.debugMessage
+                    val errorData = PlayUtils.getBillingResponseData(billingResult.responseCode)
+                    map["code"] = errorData.code
+                    map["message"] = errorData.message
+                    map["purchaseToken"] = purchaseToken
+                    promise.resolve(map)
                 }
             }
         }
