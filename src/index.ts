@@ -3,12 +3,10 @@
 import {
   NativeModulesProxy,
   EventEmitter,
-  Subscription,
 } from 'expo-modules-core';
 import {Platform} from 'react-native';
 
 import {
-  ChangeEventPayload,
   Product,
   ProductPurchase,
   ProductType,
@@ -45,12 +43,6 @@ export async function setValueAsync(value: string) {
 export const emitter = new EventEmitter(
   ExpoIapModule ?? NativeModulesProxy.ExpoIap,
 );
-
-export function addChangeListener(
-  listener: (event: ChangeEventPayload) => void,
-): Subscription {
-  return emitter.addListener<ChangeEventPayload>('onChange', listener);
-}
 
 export const purchaseUpdatedListener = (
   listener: (event: Purchase) => void,

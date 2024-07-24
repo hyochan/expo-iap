@@ -105,7 +105,7 @@ class ExpoIapModule :
 
             Constants("PI" to Math.PI)
 
-            Events("onChange", "purchase-error", "purchase-updated")
+            Events("purchase-error", "purchase-updated")
 
             AsyncFunction("initConnection") { promise: Promise ->
                 initBillingClient(promise) { promise.resolve(true) }

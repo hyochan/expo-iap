@@ -1,6 +1,6 @@
 import {Platform} from 'react-native';
 import {emitter} from '..';
-import {Product} from '../ExpoIap.types';
+import {Product, PurchaseError} from '../ExpoIap.types';
 import type {
   ProductIos,
   ProductStatusIos,
@@ -8,16 +8,15 @@ import type {
 } from '../types/ExpoIapIos.types';
 import ExpoIapModule from '../ExpoIapModule';
 
-// Listeners
-export const promotedProductListenerIos = (listener: () => void) => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('This method is only available on iOS');
-  }
-
-  return emitter.addListener('iap-promoted-product', listener);
+type TransactionEvent = {
+  transaction?: TransactionSk2;
+  error?: PurchaseError;
 };
 
-export const transactionUpdatedIos = (listener: () => void) => {
+// Listeners
+export const transactionUpdatedIos = (
+  listener: (event: TransactionEvent) => void,
+) => {
   if (Platform.OS !== 'ios') {
     throw new Error('This method is only available on iOS');
   }

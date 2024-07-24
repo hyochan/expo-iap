@@ -36,8 +36,9 @@ func serializeSubscriptionStatus(_ status: Product.SubscriptionInfo.Status) -> [
 
 func serializeRenewalInfo(_ renewalInfo: VerificationResult<Product.SubscriptionInfo.RenewalInfo>) -> [String: Any?]? {
     switch renewalInfo {
-    case .unverified(_, _):
+    case .unverified:
         return nil
+
     case .verified(let info):
         return [
             "autoRenewStatus": info.willAutoRenew,
@@ -79,7 +80,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
             "PI": Double.pi
         ])
 
-        Events("onChange", "purchase-updated", "purchase-error", "iap-transaction-updated")
+        Events("purchase-updated", "purchase-error", "iap-transaction-updated")
 
         OnStartObserving {
             hasListeners = true
@@ -161,6 +162,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
                         if await self.productStore?.getProduct(productID: transaction.productID) != nil {
                             addTransaction(transaction: transaction)
                         }
+
                     case .nonRenewable:
                         if await self.productStore?.getProduct(productID: transaction.productID) != nil {
                             let currentDate = Date()
@@ -169,6 +171,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
                                 addTransaction(transaction: transaction)
                             }
                         }
+
                     default:
                         break
                     }
@@ -234,8 +237,10 @@ public class ExpoIapModule: Module, EXEventEmitter {
                             self.sendEvent("purchase-updated", serializeTransaction(transaction))
                             return serializeTransaction(transaction)
                         }
+
                     case .userCancelled:
                         throw NSError(domain: "ExpoIapModule", code: 3, userInfo: [NSLocalizedDescriptionKey: "User cancelled the purchase"])
+
                     case .pending:
                         throw NSError(domain: "ExpoIapModule", code: 4, userInfo: [NSLocalizedDescriptionKey: "The payment was deferred"])
                     @unknown default:
@@ -469,6 +474,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
         switch result {
         case .unverified(_, let error):
             throw error
+
         case .verified(let item):
             return item
         }
