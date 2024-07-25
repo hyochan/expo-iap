@@ -26,14 +26,14 @@
   "bugs": {
     "url": "https://github.com/hyochan/issues"
   },
-  "author": "dooboolab <hyochan.dev@gmail.com> (hyochan)",
+  "author": "hyochan <dooboolab@gmail.com> (https://github.com/hyochan)",
   "license": "MIT",
   "homepage": "https://github.com/hyochan#readme",
   "dependencies": {},
   "devDependencies": {
     "@types/react": "^18.0.25",
     "expo-module-scripts": "^3.5.2",
-    "expo-modules-core": "^1.12.12",
+    "expo-modules-core": "^1.12.19",
     "eslint": "8.57.0",
     "eslint-config-expo": "^7.1.2",
     "eslint-config-prettier": "^9.1.0",

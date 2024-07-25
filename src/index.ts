@@ -28,8 +28,6 @@ import {
 } from './types/ExpoIapIos.types';
 import {isProductIos} from './modules/ios';
 
-// eslint-disable-next-line import/export
-export * from './ExpoIapModule';
 export * from './modules/android';
 export * from './modules/ios';
 
