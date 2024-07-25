@@ -1,9 +1,6 @@
 // Import the native module. On web, it will be resolved to ExpoIap.web.ts
 // and on native platforms to ExpoIap.ts
-import {
-  NativeModulesProxy,
-  EventEmitter,
-} from 'expo-modules-core';
+import {NativeModulesProxy, EventEmitter} from 'expo-modules-core';
 import {Platform} from 'react-native';
 
 import {
@@ -245,16 +242,17 @@ export const requestPurchase = (
           );
         }
 
-        const purchase = iosTransactionToPurchaseMap(
-          await ExpoIapModule.buyProduct(
-            sku,
-            andDangerouslyFinishTransactionAutomaticallyIOS,
-            appAccountToken,
-            quantity ?? -1,
-            offerToRecordIos(withOffer),
-          ),
+        const offer = offerToRecordIos(withOffer);
+
+        const result = await ExpoIapModule.buyProduct(
+          sku,
+          andDangerouslyFinishTransactionAutomaticallyIOS,
+          appAccountToken,
+          quantity ?? -1,
+          offer,
         );
 
+        const purchase = iosTransactionToPurchaseMap(result);
         return Promise.resolve(purchase);
       },
       android: async () => {

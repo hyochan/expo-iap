@@ -1,15 +1,24 @@
 import ExpoModulesCore
 import StoreKit
 
+func serializeDebug (_ s: String) -> String? {
+    #if DEBUG
+    return s
+    #else
+    return nil
+    #endif
+}
+
+@available(iOS 15.0, *)
 func serializeProduct(_ p: Product) -> [String: Any?] {
     return [
-        "debugDescription": p.debugDescription,
+        "debugDescription": serializeDebug(p.debugDescription),
         "description": p.description,
         "displayName": p.displayName,
         "displayPrice": p.displayPrice,
         "id": p.id,
         "isFamilyShareable": p.isFamilyShareable,
-        "jsonRepresentation": p.jsonRepresentation,
+        "jsonRepresentation": serializeDebug(String(data: p.jsonRepresentation, encoding: .utf8) ?? ""),
         "price": p.price,
         "subscription": p.subscription,
         "type": p.type,
@@ -17,6 +26,7 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
     ]
 }
 
+@available(iOS 15.0, *)
 func serializeTransaction(_ transaction: Transaction) -> [String: Any?] {
     return [
         "id": transaction.id,
@@ -27,6 +37,7 @@ func serializeTransaction(_ transaction: Transaction) -> [String: Any?] {
     ]
 }
 
+@available(iOS 15.0, *)
 func serializeSubscriptionStatus(_ status: Product.SubscriptionInfo.Status) -> [String: Any?] {
     return [
         "state": status.state.rawValue,
@@ -34,6 +45,7 @@ func serializeSubscriptionStatus(_ status: Product.SubscriptionInfo.Status) -> [
     ]
 }
 
+@available(iOS 15.0, *)
 func serializeRenewalInfo(_ renewalInfo: VerificationResult<Product.SubscriptionInfo.RenewalInfo>) -> [String: Any?]? {
     switch renewalInfo {
     case .unverified:
@@ -52,10 +64,12 @@ func serializeRenewalInfo(_ renewalInfo: VerificationResult<Product.Subscription
     }
 }
 
+@available(iOS 15.0, *)
 func serialize(_ transaction: Transaction, _ result: VerificationResult<Transaction>) -> [String: Any?] {
     return serializeTransaction(transaction)
 }
 
+@available(iOS 15.0, *)
 @Sendable func serialize(_ rs: Transaction.RefundRequestStatus?) -> String? {
     guard let rs = rs else { return nil }
     switch rs {
@@ -199,7 +213,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
             return purchasedItems.map { serializeTransaction($0) }
         }
 
-        AsyncFunction("buyProduct") { (sku: String, autoFinish: Bool, appAccountToken: String?, quantity: Int, offer: [String: String]) -> [String: Any?]? in
+        AsyncFunction("buyProduct") { (sku: String, autoFinish: Bool, appAccountToken: String?, quantity: Int, discountOffer: [String: String]?) -> [String: Any?]? in
             guard let productStore = self.productStore else {
                 throw NSError(domain: "ExpoIapModule", code: 1, userInfo: [NSLocalizedDescriptionKey: "Connection not initialized"])
             }
@@ -211,7 +225,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
                     if quantity > -1 {
                         options.insert(.quantity(quantity))
                     }
-                    if let offerID = offer["offerID"], let keyID = offer["keyID"], let nonce = offer["nonce"], let signature = offer["signature"], let timestamp = offer["timestamp"], let uuidNonce = UUID(uuidString: nonce), let signatureData = signature.data(using: .utf8), let timestampInt = Int(timestamp) {
+                    if let offerID = discountOffer?["identifier"], let keyID = discountOffer?["keyIdentifier"], let nonce = discountOffer?["nonce"], let signature = discountOffer?["signature"], let timestamp = discountOffer?["timestamp"], let uuidNonce = UUID(uuidString: nonce), let signatureData = signature.data(using: .utf8), let timestampInt = Int(timestamp) {
                         options.insert(.promotionalOffer(offerID: offerID, keyID: keyID, nonce: uuidNonce, signature: signatureData, timestamp: timestampInt))
                     }
                     if let appAccountToken = appAccountToken, let appAccountUUID = UUID(uuidString: appAccountToken) {
