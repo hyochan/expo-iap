@@ -194,13 +194,12 @@ const iosTransactionToPurchaseMap = ({
   let transactionReasonIOS;
 
   try {
-    const transactionData = JSON.parse(jsonRepresentation);
-    transactionReasonIOS = transactionData.transactionReason;
+    if (jsonRepresentation) {
+      const transactionData = JSON.parse(jsonRepresentation);
+      transactionReasonIOS = transactionData.transactionReason;
+    }
   } catch (e) {
-    console.log(
-      'AppleSK2.ts react-native-iap: Error parsing jsonRepresentation',
-      e,
-    );
+    console.log('SK2 Error parsing jsonRepresentation', e);
   }
   const purchase: Purchase = {
     productId: productID,
