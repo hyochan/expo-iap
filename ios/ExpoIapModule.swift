@@ -9,6 +9,12 @@ func serializeDebug (_ s: String) -> String? {
     #endif
 }
 
+struct IapEvent {
+    static let PurchaseUpdated = "purchase-updated"
+    static let PurchaseError = "purchase-error"
+    static let TransactionIapUpdated = "iap-transaction-updated"
+}
+
 @available(iOS 15.0, *)
 func serializeProduct(_ p: Product) -> [String: Any?] {
     return [
@@ -81,7 +87,7 @@ func serialize(_ transaction: Transaction, _ result: VerificationResult<Transact
 }
 
 @available(iOS 15.0, *)
-public class ExpoIapModule: Module, EXEventEmitter {
+public class ExpoIapModule: Module {
     private var transactions: [String: Transaction] = [:]
     private var productStore: ProductStore?
     private var hasListeners = false
@@ -94,7 +100,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
             "PI": Double.pi
         ])
 
-        Events("purchase-updated", "purchase-error", "iap-transaction-updated")
+        Events(IapEvent.PurchaseUpdated, IapEvent.PurchaseError, IapEvent.TransactionIapUpdated)
 
         OnStartObserving {
             hasListeners = true
@@ -154,13 +160,13 @@ public class ExpoIapModule: Module, EXEventEmitter {
             func addTransaction(transaction: Transaction) {
                 purchasedItems.append(transaction)
                 if alsoPublishToEventListener {
-                    self.sendEvent("purchase-updated", serializeTransaction(transaction))
+                    self.sendEvent(IapEvent.PurchaseUpdated, serializeTransaction(transaction))
                 }
             }
 
             func addError(error: Error, errorDict: [String: String]) {
                 if alsoPublishToEventListener {
-                    self.sendEvent("purchase-error", errorDict)
+                    self.sendEvent(IapEvent.PurchaseError, errorDict)
                 }
             }
 
@@ -248,7 +254,7 @@ public class ExpoIapModule: Module, EXEventEmitter {
                             return nil
                         } else {
                             self.transactions[String(transaction.id)] = transaction
-                            self.sendEvent("purchase-updated", serializeTransaction(transaction))
+                            self.sendEvent(IapEvent.PurchaseUpdated, serializeTransaction(transaction))
                             return serializeTransaction(transaction)
                         }
 
@@ -445,8 +451,8 @@ public class ExpoIapModule: Module, EXEventEmitter {
                     let transaction = try self.checkVerified(result)
                     self.transactions[String(transaction.id)] = transaction
                     if self.hasListeners {
-                        self.sendEvent("purchase-updated", serializeTransaction(transaction))
-                        self.sendEvent("iap-transaction-updated", ["transaction": serializeTransaction(transaction)])
+                        self.sendEvent(IapEvent.PurchaseUpdated, serializeTransaction(transaction))
+                        self.sendEvent(IapEvent.TransactionIapUpdated, ["transaction": serializeTransaction(transaction)])
                     }
                 } catch {
                     if self.hasListeners {
@@ -456,8 +462,8 @@ public class ExpoIapModule: Module, EXEventEmitter {
                             "code": IapErrors.E_TRANSACTION_VALIDATION_FAILED.rawValue,
                             "message": error.localizedDescription
                         ]
-                        self.sendEvent("purchase-error", err)
-                        self.sendEvent("iap-transaction-updated", ["error": err])
+                        self.sendEvent(IapEvent.PurchaseError, err)
+                        self.sendEvent(IapEvent.TransactionIapUpdated, ["error": err])
                     }
                 }
             }
@@ -472,10 +478,6 @@ public class ExpoIapModule: Module, EXEventEmitter {
     public func stopObserving() {
         hasListeners = false
         removeTransactionObserver()
-    }
-
-    public func supportedEvents() -> [String] {
-        return ["purchase-updated", "purchase-error", "iap-transaction-updated"]
     }
 
     private func currentWindowScene() async -> UIWindowScene? {

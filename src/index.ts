@@ -31,6 +31,12 @@ export * from './modules/ios';
 // Get the native constant value.
 export const PI = ExpoIapModule.PI;
 
+export enum IapEvent {
+  PurchaseUpdated = 'purchase-updated',
+  PurchaseError = 'purchase-error',
+  TransactionIapUpdated = 'iap-transaction-updated',
+}
+
 export async function setValueAsync(value: string) {
   return await ExpoIapModule.setValueAsync(value);
 }
@@ -42,14 +48,17 @@ export const emitter = new EventEmitter(
 export const purchaseUpdatedListener = (
   listener: (event: Purchase) => void,
 ) => {
-  const emitterSubscription = emitter.addListener('purchase-updated', listener);
+  const emitterSubscription = emitter.addListener(
+    IapEvent.PurchaseUpdated,
+    listener,
+  );
   return emitterSubscription;
 };
 
 export const purchaseErrorListener = (
   listener: (error: PurchaseError) => void,
 ) => {
-  return emitter.addListener<PurchaseError>('purchase-error', listener);
+  return emitter.addListener<PurchaseError>(IapEvent.PurchaseError, listener);
 };
 
 export function initConnection() {

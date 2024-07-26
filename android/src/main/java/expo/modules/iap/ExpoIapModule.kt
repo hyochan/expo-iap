@@ -34,6 +34,11 @@ class ExpoIapModule :
         const val EMPTY_SKU_LIST = "EMPTY_SKU_LIST"
     }
 
+    object IapEvent {
+        const val PURCHASE_UPDATED = "purchase-updated"
+        const val PURCHASE_ERROR = "purchase-error"
+    }
+
     private var billingClientCache: BillingClient? = null
     private val skus: MutableMap<String, ProductDetails> = mutableMapOf()
     private val context: Context
@@ -57,7 +62,7 @@ class ExpoIapModule :
             val errorData = PlayUtils.getBillingResponseData(responseCode)
             error["code"] = errorData.code
             error["message"] = errorData.message
-            sendEvent("purchase-error", error)
+            sendEvent(IapEvent.PURCHASE_ERROR, error.toMap())
             return
         }
 
@@ -85,7 +90,7 @@ class ExpoIapModule :
                     item["obfuscatedProfileIdAndroid"] = accountIdentifiers.obfuscatedProfileId
                 }
                 promiseItems.add(item.toMap())
-                sendEvent("purchase-updated", item)
+                sendEvent(IapEvent.PURCHASE_UPDATED, item.toMap())
             }
         } else {
             val result =
@@ -95,7 +100,7 @@ class ExpoIapModule :
                     "extraMessage" to
                         "The purchases are null. This is a normal behavior if you have requested DEFERRED proration. If not please report an issue.",
                 )
-            sendEvent("purchase-updated", result)
+            sendEvent(IapEvent.PURCHASE_UPDATED, result.toMap())
         }
     }
 
@@ -105,7 +110,7 @@ class ExpoIapModule :
 
             Constants("PI" to Math.PI)
 
-            Events("purchase-error", "purchase-updated")
+            Events(IapEvent.PURCHASE_UPDATED, IapEvent.PURCHASE_ERROR)
 
             AsyncFunction("initConnection") { promise: Promise ->
                 initBillingClient(promise) { promise.resolve(true) }
@@ -303,7 +308,7 @@ class ExpoIapModule :
                         val debugMessage =
                             "The number of skus (${skuArr.size}) must match: the number of offerTokens (${offerTokenArr.size}) for Subscriptions"
                         sendEvent(
-                            "purchase-error",
+                            IapEvent.PURCHASE_ERROR,
                             mapOf(
                                 "debugMessage" to debugMessage,
                                 "code" to "E_SKU_OFFER_MISMATCH",
@@ -320,7 +325,7 @@ class ExpoIapModule :
                                 val debugMessage =
                                     "The sku was not found. Please fetch products first by calling getItems"
                                 sendEvent(
-                                    "purchase-error",
+                                    IapEvent.PURCHASE_ERROR,
                                     mapOf(
                                         "debugMessage" to debugMessage,
                                         "code" to "E_SKU_NOT_FOUND",

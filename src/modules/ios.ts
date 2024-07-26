@@ -1,5 +1,5 @@
 import {Platform} from 'react-native';
-import {emitter} from '..';
+import {emitter, IapEvent} from '..';
 import {Product, PurchaseError} from '../ExpoIap.types';
 import type {
   ProductIos,
@@ -21,7 +21,7 @@ export const transactionUpdatedIos = (
     throw new Error('This method is only available on iOS');
   }
 
-  return emitter.addListener('iap-transaction-updated', listener);
+  return emitter.addListener(IapEvent.TransactionIapUpdated, listener);
 };
 
 // Functions
