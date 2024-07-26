@@ -12,6 +12,7 @@ import {useEffect, useState} from 'react';
 import {
   Alert,
   Button,
+  InteractionManager,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -22,7 +23,7 @@ import {
 
 import {Product, ProductPurchase, PurchaseError} from '../src/ExpoIap.types';
 
-const productSkus = ['com.cooni.point1000', 'com.cooni.point5000'];
+const productSkus = ['com.cooni.point1000', 'com.cooni.point5000', 'com.cooni.con5000'];
 
 const operations = ['initConnection', 'getProducts', 'endConnection'];
 type Operation = (typeof operations)[number];
@@ -58,13 +59,17 @@ export default function App() {
   useEffect(() => {
     const purchaseUpdatedSubs = purchaseUpdatedListener(
       (purchase: ProductPurchase) => {
-        Alert.alert('Purchase updated', JSON.stringify(purchase));
+        InteractionManager.runAfterInteractions(() => {
+          Alert.alert('Purchase updated', JSON.stringify(purchase));
+        });
       },
     );
 
     const purchaseErrorSubs = purchaseErrorListener(
       (error: PurchaseError) => {
-        Alert.alert('Purchase error', JSON.stringify(error));
+        InteractionManager.runAfterInteractions(() => {
+          Alert.alert('Purchase error', JSON.stringify(error));
+        });
       },
     );
 
