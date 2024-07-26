@@ -388,7 +388,11 @@ class ExpoIapModule :
                     val billingResult = billingClient.launchBillingFlow(currentActivity, flowParams)
 
                     if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                        throw Exception("Billing error: ${billingResult.debugMessage}")
+                        promise.reject(
+                            "Billing Error",
+                            billingResult.debugMessage,
+                            null,
+                        )
                     }
 
                     promise.resolve(true)

@@ -1,12 +1,17 @@
 import {
   endConnection,
+  finishTransaction,
   getProducts,
+  getSubscriptions,
   initConnection,
   isProductAndroid,
   isProductIos,
+  isSubscriptionProductAndroid,
+  isSubscriptionProductIos,
   purchaseErrorListener,
   purchaseUpdatedListener,
   requestPurchase,
+  requestSubscription,
 } from 'expo-iap';
 import {useEffect, useState} from 'react';
 import {
@@ -21,57 +26,90 @@ import {
   View,
 } from 'react-native';
 
-import {Product, ProductPurchase, PurchaseError} from '../src/ExpoIap.types';
+import {
+  Product,
+  ProductPurchase,
+  PurchaseError,
+  SubscriptionProduct,
+} from '../src/ExpoIap.types';
+import {RequestSubscriptionAndroidProps} from '../src/types/ExpoIapAndroid.types';
 
-const productSkus = ['com.cooni.point1000', 'com.cooni.point5000', 'com.cooni.con5000'];
+const productSkus = [
+  'com.cooni.point1000',
+  'com.cooni.point5000',
+  'com.cooni.con5000',
+];
 
-const operations = ['initConnection', 'getProducts', 'endConnection'];
+const subscriptionSkus = ['com.cooni.subscription1000'];
+
+const operations = [
+  'initConnection',
+  'getProducts',
+  'getSubscriptions',
+  'endConnection',
+];
 type Operation = (typeof operations)[number];
 
 export default function App() {
-  const [items, setItems] = useState<Product[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [subscriptions, setSubscriptions] = useState<SubscriptionProduct[]>([]);
 
   const handleOperation = async (operation: Operation) => {
-    if (operation === 'initConnection') {
-      console.log('Connected', await initConnection());
-      return;
-    }
+    switch (operation) {
+      case 'initConnection':
+        if (await initConnection()) setIsConnected(true);
+        return;
 
-    if (operation === 'endConnection') {
-      const result = await endConnection();
+      case 'endConnection':
+        if (await endConnection()) {
+          setProducts([]);
+          setIsConnected(false);
+        }
+        break;
 
-      if (result) {
-        setItems([]);
-      }
-    }
+      case 'getProducts':
+        try {
+          const products = await getProducts(productSkus);
+          setProducts(products);
+        } catch (error) {
+          console.error(error);
+        }
+        break;
 
-    if (operation === 'getProducts') {
-      try {
-        const products = await getProducts(productSkus);
-        console.log('items', products);
-        setItems(products);
-      } catch (error) {
-        console.error(error);
-      }
+      case 'getSubscriptions':
+        try {
+          const subscriptions = await getSubscriptions(subscriptionSkus);
+          setSubscriptions(subscriptions);
+        } catch (error) {
+          console.error(error);
+        }
+        break;
+
+      default:
+        console.log('Unknown operation');
     }
   };
 
   useEffect(() => {
     const purchaseUpdatedSubs = purchaseUpdatedListener(
       (purchase: ProductPurchase) => {
+        finishTransaction({
+          purchase,
+          isConsumable: true,
+        });
+
         InteractionManager.runAfterInteractions(() => {
           Alert.alert('Purchase updated', JSON.stringify(purchase));
         });
       },
     );
 
-    const purchaseErrorSubs = purchaseErrorListener(
-      (error: PurchaseError) => {
-        InteractionManager.runAfterInteractions(() => {
-          Alert.alert('Purchase error', JSON.stringify(error));
-        });
-      },
-    );
+    const purchaseErrorSubs = purchaseErrorListener((error: PurchaseError) => {
+      InteractionManager.runAfterInteractions(() => {
+        Alert.alert('Purchase error', JSON.stringify(error));
+      });
+    });
 
     return () => {
       purchaseUpdatedSubs.remove();
@@ -98,44 +136,99 @@ export default function App() {
         </ScrollView>
       </View>
       <View style={styles.content}>
-        {items.map((item) => {
-          if (isProductAndroid(item)) {
-            return (
-              <View key={item.title}>
-                <Text>
-                  {item.title} -{' '}
-                  {item.oneTimePurchaseOfferDetails?.formattedPrice}
-                </Text>
-                <Button
-                  title="Buy"
-                  onPress={() => {
-                    requestPurchase({
-                      skus: [item.productId],
-                    });
-                  }}
-                />
-              </View>
-            );
-          }
+        {!isConnected ? (
+          <Text>Not connected</Text>
+        ) : (
+          <View style={{gap: 12}}>
+            <Text style={{fontSize: 20}}>Products</Text>
+            {products.map((item) => {
+              if (isProductAndroid(item)) {
+                return (
+                  <View key={item.title} style={{gap: 12}}>
+                    <Text>
+                      {item.title} -{' '}
+                      {item.oneTimePurchaseOfferDetails?.formattedPrice}
+                    </Text>
+                    <Button
+                      title="Buy"
+                      onPress={() => {
+                        requestPurchase({
+                          skus: [item.productId],
+                        });
+                      }}
+                    />
+                  </View>
+                );
+              }
 
-          if (isProductIos(item)) {
-            return (
-              <View key={item.id}>
-                <Text>
-                  {item.displayName} - {item.displayPrice}
-                </Text>
-                <Button
-                  title="Buy"
-                  onPress={() => {
-                    requestPurchase({
-                      sku: item.id,
-                    });
-                  }}
-                />
-              </View>
-            );
-          }
-        })}
+              if (isProductIos(item)) {
+                return (
+                  <View key={item.id} style={{gap: 12}}>
+                    <Text>
+                      {item.displayName} - {item.displayPrice}
+                    </Text>
+                    <Button
+                      title="Buy"
+                      onPress={() => {
+                        requestPurchase({
+                          sku: item.id,
+                        });
+                      }}
+                    />
+                  </View>
+                );
+              }
+            })}
+
+            <Text style={{fontSize: 20}}>Subscriptions</Text>
+            {subscriptions.map((item) => {
+              if (isSubscriptionProductAndroid(item)) {
+                return item.subscriptionOfferDetails?.map((offer) => (
+                  <View key={offer.offerId} style={{gap: 12}}>
+                    <Text>
+                      {item.title} -{' '}
+                      {offer.pricingPhases.pricingPhaseList
+                        .map((ppl) => ppl.billingPeriod)
+                        .join(',')}
+                    </Text>
+                    <Button
+                      title="Subscribe"
+                      onPress={() => {
+                        requestSubscription({
+                          skus: [item.productId],
+                          ...(offer.offerToken && {
+                            subscriptionOffers: [
+                              {
+                                sku: item.productId,
+                                offerToken: offer.offerToken,
+                              },
+                            ],
+                          }),
+                        } as RequestSubscriptionAndroidProps);
+                      }}
+                    />
+                  </View>
+                ));
+              }
+
+              if (isSubscriptionProductIos(item)) {
+                return (
+                  <View key={item.id} style={{gap: 12}}>
+                    <Text>
+                      {item.displayName} - {item.displayPrice}
+                    </Text>
+                    <Button
+                      title="Subscribe"
+                      onPress={() => {
+                        requestSubscription({sku: item.id});
+                      }}
+                    />
+                  </View>
+                );
+              }
+            })}
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );

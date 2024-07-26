@@ -1,9 +1,10 @@
 import {Platform} from 'react-native';
 import {emitter, IapEvent} from '..';
-import {Product, PurchaseError} from '../ExpoIap.types';
+import {Product, PurchaseError, SubscriptionProduct} from '../ExpoIap.types';
 import type {
   ProductIos,
   ProductStatusIos,
+  SubscriptionProductIos,
   TransactionSk2,
 } from '../types/ExpoIapIos.types';
 import ExpoIapModule from '../ExpoIapModule';
@@ -26,7 +27,13 @@ export const transactionUpdatedIos = (
 
 // Functions
 export function isProductIos(product: Product): product is ProductIos {
-  return (product as ProductIos).displayName !== undefined;
+  return (product as ProductIos)?.displayName !== undefined;
+}
+
+export function isSubscriptionProductIos(
+  product: SubscriptionProduct,
+): product is SubscriptionProductIos {
+  return (product as SubscriptionProductIos)?.displayName !== undefined;
 }
 
 /**

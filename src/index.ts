@@ -15,11 +15,12 @@ import {
   SubscriptionPurchase,
 } from './ExpoIap.types';
 import ExpoIapModule from './ExpoIapModule';
-import {RequestPurchaseAndroidProps} from './types/ExpoIapAndroid.types';
+import {RequestPurchaseAndroidProps, RequestSubscriptionAndroidProps} from './types/ExpoIapAndroid.types';
 import {
   PaymentDiscount,
   ProductIos,
   RequestPurchaseIosProps,
+  RequestSubscriptionIosProps,
   SubscriptionProductIos,
   TransactionSk2,
 } from './types/ExpoIapIos.types';
@@ -305,7 +306,7 @@ export const requestSubscription = (
           appAccountToken,
           quantity,
           withOffer,
-        } = request;
+        } = request as RequestSubscriptionIosProps;
 
         if (andDangerouslyFinishTransactionAutomaticallyIOS) {
           console.warn(
@@ -327,27 +328,20 @@ export const requestSubscription = (
         return Promise.resolve(purchase);
       },
       android: async () => {
-        if (
-          !('subscriptionOffers' in request) ||
-          request.subscriptionOffers.length === 0
-        ) {
-          throw new Error(
-            'subscriptionOffers are required for Google Play subscriptions',
-          );
-        }
-
+        console.log('requestSubscription', request);
         const {
-          subscriptionOffers,
-          purchaseTokenAndroid,
-          replacementModeAndroid = -1,
+          skus,
+          isOfferPersonalized,
           obfuscatedAccountIdAndroid,
           obfuscatedProfileIdAndroid,
-          isOfferPersonalized,
-        } = request;
+          subscriptionOffers,
+          replacementModeAndroid,
+          purchaseTokenAndroid,
+        } = request as RequestSubscriptionAndroidProps;
 
         return ExpoIapModule.buyItemByType({
           type: ProductType.Subscription,
-          skuArr: subscriptionOffers.map((so) => so.sku),
+          skuArr: skus.map((so) => so),
           purchaseToken: purchaseTokenAndroid,
           replacementMode: replacementModeAndroid,
           obfuscatedAccountId: obfuscatedAccountIdAndroid,
