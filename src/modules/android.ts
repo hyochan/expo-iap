@@ -1,10 +1,14 @@
 import {Linking} from 'react-native';
-import {Product, PurchaseResult} from '../ExpoIap.types';
-import {ProductAndroid, ReceiptAndroid} from '../types/ExpoIapAndroid.types';
+import {Product, PurchaseResult, SubscriptionProduct} from '../ExpoIap.types';
+import {ProductAndroid, ReceiptAndroid, SubscriptionProductAndroid} from '../types/ExpoIapAndroid.types';
 import ExpoIapModule from '../ExpoIapModule';
 
 export function isProductAndroid(product: Product): product is ProductAndroid {
-  return (product as ProductAndroid).title !== undefined;
+  return (product as ProductAndroid)?.title !== undefined;
+}
+
+export function isSubscriptionProductAndroid(product: SubscriptionProduct): product is SubscriptionProductAndroid {
+  return (product as SubscriptionProductAndroid)?.title !== undefined;
 }
 
 /**
