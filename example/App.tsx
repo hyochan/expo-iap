@@ -1,6 +1,5 @@
 import {
   endConnection,
-  finishTransaction,
   getProducts,
   getSubscriptions,
   initConnection,
@@ -94,11 +93,6 @@ export default function App() {
   useEffect(() => {
     const purchaseUpdatedSubs = purchaseUpdatedListener(
       (purchase: ProductPurchase) => {
-        finishTransaction({
-          purchase,
-          isConsumable: true,
-        });
-
         InteractionManager.runAfterInteractions(() => {
           Alert.alert('Purchase updated', JSON.stringify(purchase));
         });
