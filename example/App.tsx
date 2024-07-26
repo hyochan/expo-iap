@@ -4,6 +4,7 @@ import {
   initConnection,
   isProductAndroid,
   isProductIos,
+  purchaseErrorListener,
   purchaseUpdatedListener,
   requestPurchase,
 } from 'expo-iap';
@@ -19,7 +20,7 @@ import {
   View,
 } from 'react-native';
 
-import {Product, ProductPurchase} from '../src/ExpoIap.types';
+import {Product, ProductPurchase, PurchaseError} from '../src/ExpoIap.types';
 
 const productSkus = ['com.cooni.point1000', 'com.cooni.point5000'];
 
@@ -55,14 +56,21 @@ export default function App() {
   };
 
   useEffect(() => {
-    const subscription = purchaseUpdatedListener(
+    const purchaseUpdatedSubs = purchaseUpdatedListener(
       (purchase: ProductPurchase) => {
         Alert.alert('Purchase updated', JSON.stringify(purchase));
       },
     );
 
+    const purchaseErrorSubs = purchaseErrorListener(
+      (error: PurchaseError) => {
+        Alert.alert('Purchase error', JSON.stringify(error));
+      },
+    );
+
     return () => {
-      subscription.remove();
+      purchaseUpdatedSubs.remove();
+      purchaseErrorSubs.remove();
       endConnection();
     };
   }, []);
