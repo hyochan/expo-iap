@@ -1,6 +1,6 @@
 {
   "name": "expo-iap",
-  "version": "0.1.0",
+  "version": "2.0.0-rc.1",
   "description": "In App Purchase module in Expo",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -22,7 +22,7 @@
     "expo-iap",
     "ExpoIap"
   ],
-  "repository": "https://github.com/hyochan",
+  "repository": "https://github.com/hyochan/expo-iap",
   "bugs": {
     "url": "https://github.com/hyochan/issues"
   },
