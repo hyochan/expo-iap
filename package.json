@@ -14,7 +14,10 @@
     "expo-module": "expo-module",
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android",
-    "lint:kotlin": "ktlint --format ./android"
+    "lint:kotlin": "ktlint --format ./android",
+    "build:plugin": "tsc --build plugin",
+    "clean:plugin": "expo-module clean plugin",
+    "lint:plugin": "eslint plugin/src/*"
   },
   "keywords": [
     "react-native",

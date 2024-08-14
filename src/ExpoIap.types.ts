@@ -115,7 +115,7 @@ export class PurchaseError implements Error {
     public code?: ErrorCode,
     public productId?: string,
   ) {
-    this.name = '[react-native-iap]: PurchaseError';
+    this.name = '[expo-iap]: PurchaseError';
     this.message = message;
     this.responseCode = responseCode;
     this.debugMessage = debugMessage;
