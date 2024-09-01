@@ -25,6 +25,7 @@
   "typescript.preferences.importModuleSpecifier": "relative",
   "prettier.configPath": ".prettierrc.js",
   "cSpell.words": [
+    "hyochan",
     "Pressable",
     "Skus"
   ]

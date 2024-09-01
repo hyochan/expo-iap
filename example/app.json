@@ -17,7 +17,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dooboolab.test"
+      "bundleIdentifier": "com.crossplatformkorea.test"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +25,7 @@
         "backgroundColor": "#ffffff"
       },
       "versionCode": 4,
-      "package": "com.dooboolab.test"
+      "package": "com.crossplatformkorea.test"
     },
     "extra": {
       "eas": {

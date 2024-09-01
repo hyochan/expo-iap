@@ -1,4 +1,4 @@
-package com.dooboolab.test
+package com.crossplatformkorea.test
 
 import android.os.Build
 import android.os.Bundle

@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.dooboolab.test</string>
+          <string>com.crossplatformkorea.test</string>
         </array>
       </dict>
     </array>

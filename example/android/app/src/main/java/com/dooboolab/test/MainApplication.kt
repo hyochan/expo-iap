@@ -1,4 +1,4 @@
-package com.dooboolab.test
+package com.crossplatformkorea.test
 
 import android.app.Application
 import android.content.res.Configuration

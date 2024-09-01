@@ -83,9 +83,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.dooboolab.test'
+    namespace 'com.crossplatformkorea.test'
     defaultConfig {
-        applicationId 'com.dooboolab.test'
+        applicationId 'com.crossplatformkorea.test'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 4

@@ -1,4 +1,4 @@
-# expo-iap
+<img src="https://github.com/user-attachments/assets/f51a4b1b-b257-47bf-afe7-5ef8692f0594" height="200"/>
 
 In App Purchase module in Expo
 
@@ -23,17 +23,10 @@ npm install expo-iap
 
 ### Configure for iOS
 
-Run `npx pod-install` after installing the npm package.
-Sine we only support `StoreKit`, `deploymentTarget` should be `15.0`.
+Run `npx pod-install` after installing the npm package. Sine we only support `StoreKit`, `deploymentTarget` should be `15.0`.
 
 ```json
 "ios": {
   "deploymentTarget": "15.0"
 },
 ```
-
-### Configure for Android
-
-# Contributing
-
-Contributions are very welcome! Please refer to guidelines described in the [contributing guide]( https://github.com/expo/expo#contributing).
