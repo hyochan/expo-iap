@@ -30,3 +30,12 @@ Run `npx pod-install` after installing the npm package. Sine we only support `St
   "deploymentTarget": "15.0"
 },
 ```
+
+## Sponsors
+
+### <p style="color: gold;">Gold Tier</p>
+
+| [NAMI](https://namiml.com) |
+| :-: |
+| <a href="https://namiml.com"><img src="https://github.com/dooboolab-community/react-native-iap/assets/27461460/89d71f61-bb73-400a-83bd-fe0f96eb726e" width="450"/></a> |
+| Since 2023 Dec |
