@@ -11,6 +11,7 @@ import {
   purchaseUpdatedListener,
   requestPurchase,
   requestSubscription,
+  // eslint-disable-next-line import/no-unresolved
 } from 'expo-iap';
 import {useEffect, useState} from 'react';
 import {

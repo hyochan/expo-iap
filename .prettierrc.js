@@ -5,5 +5,5 @@ module.exports = {
   singleQuote: true,
   jsxSingleQuote: false,
   bracketSpacing: false,
-  proseWrap: "never"
+  proseWrap: 'never',
 };

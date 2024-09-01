@@ -15,7 +15,10 @@ import {
   SubscriptionPurchase,
 } from './ExpoIap.types';
 import ExpoIapModule from './ExpoIapModule';
-import {RequestPurchaseAndroidProps, RequestSubscriptionAndroidProps} from './types/ExpoIapAndroid.types';
+import {
+  RequestPurchaseAndroidProps,
+  RequestSubscriptionAndroidProps,
+} from './types/ExpoIapAndroid.types';
 import {
   PaymentDiscount,
   ProductIos,

@@ -26,8 +26,7 @@ assignees: ''
 - react-native:
 - Platforms (iOS, Android, emulator, simulator, device):
 
-**To Reproduce**
-Steps to reproduce the behavior:
+**To Reproduce** Steps to reproduce the behavior:
 
 1. Go to '...'
 2. Press '...'
