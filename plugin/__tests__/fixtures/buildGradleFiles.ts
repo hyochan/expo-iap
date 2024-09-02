@@ -45,30 +45,6 @@ missingDimensionStrategy "store", "play"
         versionName "1.16.2"
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()`;
 
-const appBuildGradleWithAmazonStoreIAP = `
-apply plugin: "com.android.application"
-
-import com.android.build.OutputFile
-
-def reactNativeArchitectures() {
-    def value = project.getProperties().get("reactNativeArchitectures")
-    return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
-}
-
-android {
-    ndkVersion rootProject.ext.ndkVersion
-
-    compileSdkVersion rootProject.ext.compileSdkVersion
-
-    defaultConfig {
-missingDimensionStrategy "store", "amazon"
-        applicationId 'com.test.withIAP'
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 34
-        versionName "1.16.2"
-        buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()`;
-
 const appBuildGradleWithBothIAP = `
 apply plugin: "com.android.application"
 
@@ -89,11 +65,6 @@ productFlavors {
   googlePlay {
     dimension "appstore"
     missingDimensionStrategy "store", "play"
-  }
-
-  amazon {
-    dimension "appstore"
-    missingDimensionStrategy "store", "amazon"
   }
 }
 
@@ -155,7 +126,6 @@ supportLibVersion = "28.0.0"
   }`;
 
 export {
-  appBuildGradleWithAmazonStoreIAP,
   appBuildGradleWithBothIAP,
   appBuildGradleWithoutIAP,
   appBuildGradleWithPlayStoreIAP,
