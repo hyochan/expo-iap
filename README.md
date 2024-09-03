@@ -1,4 +1,8 @@
-<img src="https://github.com/user-attachments/assets/f51a4b1b-b257-47bf-afe7-5ef8692f0594" height="200"/>
+<img src="https://github.com/user-attachments/assets/f51a4b1b-b257-47bf-afe7-5ef8692f0594" />
+
+[![Version](http://img.shields.io/npm/v/expo-iap.svg?style=flat-square)](https://npmjs.org/package/expo-iap)
+[![Download](http://img.shields.io/npm/dm/expo-iap.svg?style=flat-square)](https://npmjs.org/package/expo-iap)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhyochan%2Fexpo-iap.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhyochan%2Fexpo-iap?ref=badge_shield&issueType=license)
 
 In App Purchase module in Expo
 
@@ -27,7 +31,7 @@ npm install expo-iap
 
 ### Configure for iOS
 
-Run `npx pod-install` after installing the npm package. Sine we only support `StoreKit`, `deploymentTarget` should be `15.0`.
+Run `npx pod-install` after installing the npm package. Sine we only support `StoreKit2`, `deploymentTarget` should be `15.0`.
 
 ```json
 "ios": {
