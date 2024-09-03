@@ -1,6 +1,5 @@
 import {
   WarningAggregator,
-  withAppBuildGradle,
   withProjectBuildGradle,
 } from 'expo/config-plugins';
 import {ConfigPlugin, createRunOncePlugin} from 'expo/config-plugins';
@@ -20,10 +19,6 @@ const addToBuildGradle = (
   return lines.join('\n');
 };
 
-export const modifyAppBuildGradle = (buildGradle: string) => {
-  return buildGradle;
-};
-
 export const modifyProjectBuildGradle = (buildGradle: string) => {
   const supportLibVersion = `supportLibVersion = "28.0.0"`;
   if (buildGradle.includes(supportLibVersion)) {
@@ -33,15 +28,6 @@ export const modifyProjectBuildGradle = (buildGradle: string) => {
 };
 
 const withIAPAndroid: ConfigPlugin = (config) => {
-  // eslint-disable-next-line @typescript-eslint/no-shadow
-  config = withAppBuildGradle(config, (config) => {
-    config.modResults.contents = modifyAppBuildGradle(
-      config.modResults.contents,
-    );
-    return config;
-  });
-
-  // eslint-disable-next-line @typescript-eslint/no-shadow
   config = withProjectBuildGradle(config, (config) => {
     config.modResults.contents = modifyProjectBuildGradle(
       config.modResults.contents,
@@ -59,7 +45,6 @@ const withIAP: ConfigPlugin<Props | undefined> = (config, props) => {
   } catch (error) {
     WarningAggregator.addWarningAndroid(
       'expo-iap',
-
       `There was a problem configuring expo-iap in your native Android project: ${error}`,
     );
   }
