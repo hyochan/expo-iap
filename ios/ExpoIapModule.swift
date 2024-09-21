@@ -241,11 +241,18 @@ public class ExpoIapModule: Module {
                         throw NSError(domain: "ExpoIapModule", code: 2, userInfo: [NSLocalizedDescriptionKey: "Could not find window scene"])
                     }
                     let result: Product.PurchaseResult
-                    if #available(iOS 17.0, *) {
+                    #if swift(>=5.9)
+                    if #available(iOS 17.0, tvOS 17.0, *) {
                         result = try await product.purchase(confirmIn: windowScene, options: options)
                     } else {
+                        #if !os(visionOS)
                         result = try await product.purchase(options: options)
+                        #endif
                     }
+                    #elseif !os(visionOS)
+                    result = try await product.purchase(options: options)
+                    #endif
+
                     switch result {
                     case .success(let verification):
                         let transaction = try self.checkVerified(verification)
