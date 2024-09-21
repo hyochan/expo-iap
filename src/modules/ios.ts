@@ -9,7 +9,7 @@ import type {
 } from '../types/ExpoIapIos.types';
 import ExpoIapModule from '../ExpoIapModule';
 
-type TransactionEvent = {
+export type TransactionEvent = {
   transaction?: TransactionSk2;
   error?: PurchaseError;
 };

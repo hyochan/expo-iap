@@ -398,3 +398,5 @@ export const finishTransaction = ({
     }) || (() => Promise.reject(new Error('Unsupported Platform')))
   )();
 };
+
+export * from './useIap';
