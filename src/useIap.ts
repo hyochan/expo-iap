@@ -1,21 +1,25 @@
-import RNIap, {
+import {
   endConnection,
   initConnection,
   purchaseErrorListener,
   purchaseUpdatedListener,
   transactionUpdatedIos,
-} from '../';
+  getProducts,
+  getAvailablePurchases,
+  getPurchaseHistory,
+  getSubscriptions,
+} from './';
 
 import {useCallback, useEffect, useState} from 'react';
 import {
   Product,
   ProductPurchase,
+  Purchase,
   PurchaseError,
   PurchaseResult,
   SubscriptionProduct,
   SubscriptionPurchase,
 } from './ExpoIap.types';
-import {Purchase} from '../build/ExpoIap.types';
 import {TransactionEvent} from './modules/ios';
 import {TransactionSk2} from './types/ExpoIapIos.types';
 import {Subscription} from 'expo-modules-core';
@@ -66,23 +70,23 @@ export function useIAP(): IAP_STATUS {
   const [currentPurchaseError, setCurrentPurchaseError] =
     useState<PurchaseError>();
 
-  const getProducts = useCallback(async (skus: string[]): Promise<void> => {
-    setProducts(await RNIap.getProducts(skus));
+  const requestProducts = useCallback(async (skus: string[]): Promise<void> => {
+    setProducts(await getProducts(skus));
   }, []);
 
-  const getSubscriptions = useCallback(
+  const requestSubscriptions = useCallback(
     async (skus: string[]): Promise<void> => {
-      setSubscriptions(await RNIap.getSubscriptions(skus));
+      setSubscriptions(await getSubscriptions(skus));
     },
     [],
   );
 
-  const getAvailablePurchases = useCallback(async (): Promise<void> => {
-    setAvailablePurchases(await RNIap.getAvailablePurchases());
+  const requestAvailablePurchases = useCallback(async (): Promise<void> => {
+    setAvailablePurchases(await getAvailablePurchases());
   }, []);
 
-  const getPurchaseHistories = useCallback(async (): Promise<void> => {
-    setPurchaseHistories(await RNIap.getPurchaseHistory());
+  const requestPurchaseHistories = useCallback(async (): Promise<void> => {
+    setPurchaseHistories(await getPurchaseHistory());
   }, []);
 
   const finishTransaction = useCallback(
@@ -176,9 +180,9 @@ export function useIAP(): IAP_STATUS {
     availablePurchases,
     currentPurchase,
     currentPurchaseError,
-    getProducts,
-    getSubscriptions,
-    getAvailablePurchases,
-    getPurchaseHistories,
+    getProducts: requestProducts,
+    getSubscriptions: requestSubscriptions,
+    getAvailablePurchases: requestAvailablePurchases,
+    getPurchaseHistories: requestPurchaseHistories,
   };
 }
