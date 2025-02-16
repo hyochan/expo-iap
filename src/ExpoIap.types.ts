@@ -35,7 +35,8 @@ enum PurchaseStateAndroid {
 }
 
 export type ProductPurchase = {
-  productId: string;
+  productID: string;
+  originalID: number;
   transactionId?: string;
   transactionDate: number;
   transactionReceipt: string;
