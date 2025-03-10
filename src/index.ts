@@ -21,13 +21,16 @@ import {
 } from './types/ExpoIapAndroid.types';
 import {
   PaymentDiscount,
-  ProductIos,
   RequestPurchaseIosProps,
   RequestSubscriptionIosProps,
-  SubscriptionProductIos,
   TransactionSk2,
 } from './types/ExpoIapIos.types';
-import {isProductIos} from './modules/ios';
+
+import {isProductIos, isSubscriptionProductIos} from './modules/ios';
+import {
+  isProductAndroid,
+  isSubscriptionProductAndroid,
+} from './modules/android';
 
 export * from './modules/android';
 export * from './modules/ios';
@@ -76,16 +79,15 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
 
   return Platform.select({
     ios: async () => {
-      const items = (await ExpoIapModule.getItems(skus)) as ProductIos[];
-      return items.filter((item: ProductIos) => isProductIos(item));
+      const items = await ExpoIapModule.getItems(skus);
+      return items.filter((item) => isProductIos<Product>(item));
     },
     android: async () => {
       const products = await ExpoIapModule.getItemsByType(
         ProductType.InAppPurchase,
         skus,
       );
-
-      return products;
+      return products.filter((product) => isProductAndroid<Product>(product));
     },
     default: () => Promise.reject(new Error('Unsupported Platform')),
   })();
@@ -99,15 +101,23 @@ export const getSubscriptions = async (
   }
 
   return Platform.select({
-    ios: async (): Promise<SubscriptionProductIos[]> => {
-      const items: SubscriptionProductIos[] = (
-        (await ExpoIapModule.getItems(skus)) as SubscriptionProductIos[]
-      ).filter((item: SubscriptionProductIos) => skus.includes(item.id));
+    ios: async () => {
+      const rawItems = await ExpoIapModule.getItems(skus);
 
-      return items;
+      return rawItems.filter(
+        (item: SubscriptionProduct) =>
+          isSubscriptionProductIos(item) &&
+          skus.includes((item as SubscriptionProduct).id),
+      );
     },
     android: async () => {
-      return ExpoIapModule.getItemsByType('subs', skus);
+      const rawItems = await ExpoIapModule.getItemsByType('subs', skus);
+
+      return rawItems.filter(
+        (el: SubscriptionProduct) =>
+          isSubscriptionProductAndroid(el) &&
+          skus.includes((el as SubscriptionProduct).id),
+      );
     },
     default: () => Promise.reject(new Error('Unsupported Platform')),
   })();
@@ -215,11 +225,12 @@ const iosTransactionToPurchaseMap = ({
     console.log('SK2 Error parsing jsonRepresentation', e);
   }
   const purchase: Purchase = {
-    productId: productID,
+    id: productID,
+    ids: [productID],
     transactionId: String(id),
-    transactionDate: purchaseDate, //??
-    transactionReceipt: '', // Not available
-    purchaseToken: '', //Not available
+    transactionDate: purchaseDate,
+    transactionReceipt: '',
+    purchaseToken: '',
     quantityIOS: purchasedQuantity,
     originalTransactionDateIOS: originalPurchaseDate,
     originalTransactionIdentifierIOS: originalID,

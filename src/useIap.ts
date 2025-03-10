@@ -108,17 +108,17 @@ export function useIAP(): IAP_STATUS {
       } catch (err) {
         throw err;
       } finally {
-        if (purchase.productId === currentPurchase?.productId) {
+        if (purchase.id === currentPurchase?.id) {
           setCurrentPurchase(undefined);
         }
 
-        if (purchase.productId === currentPurchaseError?.productId) {
+        if (purchase.id === currentPurchaseError?.productId) {  // Note that PurchaseError still uses productId
           setCurrentPurchaseError(undefined);
         }
       }
     },
     [
-      currentPurchase?.productId,
+      currentPurchase?.id,
       currentPurchaseError?.productId,
       setCurrentPurchase,
       setCurrentPurchaseError,

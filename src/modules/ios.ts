@@ -1,12 +1,7 @@
 import {Platform} from 'react-native';
 import {emitter, IapEvent} from '..';
-import {Product, PurchaseError, SubscriptionProduct} from '../ExpoIap.types';
-import type {
-  ProductIos,
-  ProductStatusIos,
-  SubscriptionProductIos,
-  TransactionSk2,
-} from '../types/ExpoIapIos.types';
+import {PurchaseError} from '../ExpoIap.types';
+import type {ProductStatusIos, TransactionSk2} from '../types/ExpoIapIos.types';
 import ExpoIapModule from '../ExpoIapModule';
 
 export type TransactionEvent = {
@@ -25,17 +20,25 @@ export const transactionUpdatedIos = (
   return emitter.addListener(IapEvent.TransactionIapUpdated, listener);
 };
 
+// Type guards
+export function isProductIos<T extends {platform?: string}>(
+  item: unknown,
+): item is T & {platform: 'ios'} {
+  return (
+    item != null &&
+    typeof item === 'object' &&
+    'platform' in item &&
+    item.platform === 'ios'
+  );
+}
+
+export function isSubscriptionProductIos<T extends {platform?: string}>(
+  item: unknown,
+): item is T & {platform: 'ios'} {
+  return isProductIos(item);
+}
+
 // Functions
-export function isProductIos(product: Product): product is ProductIos {
-  return (product as ProductIos)?.displayName !== undefined;
-}
-
-export function isSubscriptionProductIos(
-  product: SubscriptionProduct,
-): product is SubscriptionProductIos {
-  return (product as SubscriptionProductIos)?.displayName !== undefined;
-}
-
 /**
  * Sync state with Appstore (iOS only)
  * https://developer.apple.com/documentation/storekit/appstore/3791906-sync

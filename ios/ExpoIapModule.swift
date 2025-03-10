@@ -16,6 +16,31 @@ struct IapEvent {
 }
 
 @available(iOS 15.0, *)
+func iosTransactionToPurchaseMap(_ transaction: Transaction) -> [String: Any?] {
+    return [
+        "id": transaction.productID,
+        "ids": [transaction.productID],
+        "transactionId": String(transaction.id),
+        "transactionDate": transaction.purchaseDate.timeIntervalSince1970 * 1000,
+        "transactionReceipt": "", // Not available in StoreKit 2
+        "purchaseToken": "", // Not available in iOS, included for cross-platform compatibility
+        "quantityIOS": transaction.purchasedQuantity,
+        "originalTransactionDateIOS": transaction.originalPurchaseDate?.timeIntervalSince1970 * 1000,
+        "originalTransactionIdentifierIOS": transaction.originalID,
+        "expirationDate": transaction.expirationDate?.timeIntervalSince1970 * 1000,
+        "webOrderLineItemID": transaction.webOrderLineItemID,
+        "appAccountToken": transaction.appAccountToken?.uuidString,
+        "ownershipType": transaction.ownershipType.rawValue,
+        "jsonRepresentation": serializeDebug(String(data: transaction.jsonRepresentation, encoding: .utf8) ?? ""),
+        "environment": transaction.environment?.rawValue ?? "unknown",
+        "isUpgraded": transaction.isUpgraded,
+        "signedDate": transaction.signedDate.timeIntervalSince1970 * 1000,
+        "revocationDate": transaction.revocationDate?.timeIntervalSince1970 * 1000,
+        "revocationReason": transaction.revocationReason?.rawValue
+    ]
+}
+
+@available(iOS 15.0, *)
 func serializeProduct(_ p: Product) -> [String: Any?] {
     return [
         "debugDescription": serializeDebug(p.debugDescription),
@@ -23,22 +48,25 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
         "displayName": p.displayName,
         "displayPrice": p.displayPrice,
         "id": p.id,
+        "title": p.displayName, 
         "isFamilyShareable": p.isFamilyShareable,
         "jsonRepresentation": serializeDebug(String(data: p.jsonRepresentation, encoding: .utf8) ?? ""),
         "price": p.price,
         "subscription": p.subscription,
         "type": p.type,
-        "currency": p.priceFormatStyle.currencyCode
+        "currency": p.priceFormatStyle.currencyCode,
+        "platform": "ios"  // Add platform identifier
     ]
 }
 
 @available(iOS 15.0, *)
 func serializeTransaction(_ transaction: Transaction) -> [String: Any?] {
     return [
-        "id": transaction.id,
-        "productID": transaction.productID,
-        "purchaseDate": transaction.purchaseDate,
-        "expirationDate": transaction.expirationDate,
+        "id": transaction.productID,  // Changed from productId
+        "transactionId": String(transaction.id),
+        "transactionDate": transaction.purchaseDate.timeIntervalSince1970,
+        "originalTransactionDateIOS": transaction.originalPurchaseDate?.timeIntervalSince1970,
+        "expirationDate": transaction.expirationDate?.timeIntervalSince1970,
         "originalID": transaction.originalID
     ]
 }

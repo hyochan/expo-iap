@@ -3,10 +3,6 @@ import {
   getProducts,
   getSubscriptions,
   initConnection,
-  isProductAndroid,
-  isProductIos,
-  isSubscriptionProductAndroid,
-  isSubscriptionProductIos,
   purchaseErrorListener,
   purchaseUpdatedListener,
   requestPurchase,
@@ -137,7 +133,7 @@ export default function App() {
           <View style={{gap: 12}}>
             <Text style={{fontSize: 20}}>Products</Text>
             {products.map((item) => {
-              if (isProductAndroid(item)) {
+              if (item.platform === 'android') {
                 return (
                   <View key={item.title} style={{gap: 12}}>
                     <Text>
@@ -148,7 +144,7 @@ export default function App() {
                       title="Buy"
                       onPress={() => {
                         requestPurchase({
-                          skus: [item.productId],
+                          skus: [item.id],
                         });
                       }}
                     />
@@ -156,11 +152,11 @@ export default function App() {
                 );
               }
 
-              if (isProductIos(item)) {
+              if (item.platform === 'ios') {
                 return (
                   <View key={item.id} style={{gap: 12}}>
                     <Text>
-                      {item.displayName} - {item.displayPrice}
+                      {item.title} - {item.displayPrice}
                     </Text>
                     <Button
                       title="Buy"
@@ -177,7 +173,7 @@ export default function App() {
 
             <Text style={{fontSize: 20}}>Subscriptions</Text>
             {subscriptions.map((item) => {
-              if (isSubscriptionProductAndroid(item)) {
+              if (item.platform === 'android') {
                 return item.subscriptionOfferDetails?.map((offer) => (
                   <View key={offer.offerId} style={{gap: 12}}>
                     <Text>
@@ -190,11 +186,11 @@ export default function App() {
                       title="Subscribe"
                       onPress={() => {
                         requestSubscription({
-                          skus: [item.productId],
+                          skus: [item.id],
                           ...(offer.offerToken && {
                             subscriptionOffers: [
                               {
-                                sku: item.productId,
+                                sku: item.id,
                                 offerToken: offer.offerToken,
                               },
                             ],
@@ -206,7 +202,7 @@ export default function App() {
                 ));
               }
 
-              if (isSubscriptionProductIos(item)) {
+              if (item.platform === 'ios') {
                 return (
                   <View key={item.id} style={{gap: 12}}>
                     <Text>

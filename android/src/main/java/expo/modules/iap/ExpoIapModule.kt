@@ -71,8 +71,8 @@ class ExpoIapModule :
             purchases.forEach { purchase ->
                 val item =
                     mutableMapOf<String, Any?>(
-                        "productId" to purchase.products[0],
-                        "productIds" to purchase.products,
+                        "id" to purchase.products[0],  // Changed from productId
+                        "ids" to purchase.products, // Changed from productIds
                         "transactionId" to purchase.orderId,
                         "transactionDate" to purchase.purchaseTime.toDouble(),
                         "transactionReceipt" to purchase.originalJson,
@@ -160,11 +160,12 @@ class ExpoIapModule :
                                 skus[productDetails.productId] = productDetails
 
                                 mapOf(
-                                    "productId" to productDetails.productId,
+                                    "id" to productDetails.productId,
                                     "title" to productDetails.title,
                                     "description" to productDetails.description,
-                                    "productType" to productDetails.productType,
-                                    "name" to productDetails.name,
+                                    "type" to productDetails.productType,
+                                    "displayName" to productDetails.name,
+                                    "platform" to "android",  // Add platform identifier
                                     "oneTimePurchaseOfferDetails" to
                                         productDetails.oneTimePurchaseOfferDetails?.let {
                                             mapOf(
@@ -220,8 +221,8 @@ class ExpoIapModule :
                             val item =
                                 mutableMapOf<String, Any?>(
                                     // kept for convenience/backward-compatibility. productIds has the complete list
-                                    "productId" to purchase.products[0],
-                                    "productIds" to purchase.products,
+                                    "id" to purchase.products[0],
+                                    "ids" to purchase.products,
                                     "transactionId" to purchase.orderId,
                                     "transactionDate" to purchase.purchaseTime.toDouble(),
                                     "transactionReceipt" to purchase.originalJson,
@@ -268,8 +269,8 @@ class ExpoIapModule :
                         purchaseHistoryRecordList?.forEach { purchase ->
                             val item =
                                 mutableMapOf<String, Any?>(
-                                    "productId" to purchase.products[0],
-                                    "productIds" to purchase.products,
+                                    "id" to purchase.products[0],
+                                    "ids" to purchase.products,
                                     "transactionDate" to purchase.purchaseTime.toDouble(),
                                     "transactionReceipt" to purchase.originalJson,
                                     "purchaseToken" to purchase.purchaseToken,

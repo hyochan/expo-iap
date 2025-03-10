@@ -1,3 +1,5 @@
+import {BaseProduct} from '../ExpoIap.types';
+
 type SubscriptionIosPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | '';
 type PaymentMode = '' | 'FREETRIAL' | 'PAYASYOUGO' | 'PAYUPFRONT';
 
@@ -18,16 +20,12 @@ type SubscriptionInfo = {
   subscriptionPeriod: SubscriptionIosPeriod;
 };
 
-export type ProductIos = {
-  currency: string;
-  description: string;
+export type ProductIos = BaseProduct & {
   displayName: string;
   displayPrice: string;
-  id: string;
-  type: 'autoRenewable' | 'consumable' | 'nonConsumable' | 'nonRenewable';
+  type: 'autoRenewable' | 'consumable' | 'nonConsumable' | 'nonRenewable'; // Maps to 'type' in base Product
   isFamilyShareable: boolean;
   jsonRepresentation: string;
-  price: number;
   subscription: SubscriptionInfo;
   introductoryPriceNumberOfPeriodsIOS?: string;
   introductoryPriceSubscriptionPeriodIOS?: SubscriptionIosPeriod;

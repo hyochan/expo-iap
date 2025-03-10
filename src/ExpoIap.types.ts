@@ -10,19 +10,42 @@ import {
   RequestSubscriptionIosProps,
   SubscriptionProductIos,
 } from './types/ExpoIapIos.types';
+
 export type ChangeEventPayload = {
   value: string;
 };
 
-export type Product = ProductAndroid | ProductIos;
+/**
+ * Base product type with common properties shared between iOS and Android
+ */
+export type BaseProduct = {
+  id: string;
+  title: string;
+  description: string;
+  type: ProductType;
+  displayName?: string;
+  displayPrice?: string;
+  price?: number;
+  currency?: string;
+};
+
+// Define literal platform types for better type discrimination
+export type IosPlatform = {platform: 'ios'};
+export type AndroidPlatform = {platform: 'android'};
+
 export enum ProductType {
   InAppPurchase = 'inapp',
   Subscription = 'subs',
 }
 
+// Union type for platform-specific product types with proper discriminators
+export type Product =
+  | (ProductAndroid & AndroidPlatform)
+  | (ProductIos & IosPlatform);
+
 export type SubscriptionProduct =
-  | SubscriptionProductAndroid
-  | SubscriptionProductIos;
+  | (SubscriptionProductAndroid & AndroidPlatform)
+  | (SubscriptionProductIos & IosPlatform);
 
 export type RequestPurchaseProps =
   | RequestPurchaseIosProps
@@ -35,7 +58,7 @@ enum PurchaseStateAndroid {
 }
 
 export type ProductPurchase = {
-  productId: string;
+  id: string;
   transactionId?: string;
   transactionDate: number;
   transactionReceipt: string;
@@ -47,7 +70,7 @@ export type ProductPurchase = {
   verificationResultIOS?: string;
   appAccountToken?: string;
   //Android
-  productIds?: string[];
+  ids?: string[]; // Changed from productIds
   dataAndroid?: string;
   signatureAndroid?: string;
   autoRenewingAndroid?: boolean;

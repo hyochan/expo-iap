@@ -1,3 +1,5 @@
+import {BaseProduct} from '../ExpoIap.types';
+
 type OneTimePurchaseOfferDetails = {
   priceCurrencyCode: string;
   formattedPrice: string;
@@ -25,11 +27,7 @@ type PricingPhase = {
   recurrenceMode: number;
 };
 
-export type ProductAndroid = {
-  productId: string;
-  title: string;
-  description: string;
-  productType: string;
+export type ProductAndroid = BaseProduct & {
   name: string;
   oneTimePurchaseOfferDetails?: OneTimePurchaseOfferDetails;
   subscriptionOfferDetails?: SubscriptionOfferDetail[];
@@ -54,10 +52,6 @@ type SubscriptionOfferAndroid = {
 };
 
 export type SubscriptionProductAndroid = ProductAndroid & {
-  name: string;
-  title: string;
-  description: string;
-  productId: string;
   subscriptionOfferDetails: SubscriptionOfferAndroid[];
 };
 
