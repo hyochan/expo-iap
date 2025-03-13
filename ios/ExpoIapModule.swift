@@ -25,8 +25,10 @@ func serializeTransaction(_ transaction: Transaction) -> [String: Any?] {
     var webOrderLineItemId: Int? = nil
     var jsonData: [String: Any]? = nil
     
-    if let jsonRep = transaction.jsonRepresentation, 
-       let jsonObj = try? JSONSerialization.jsonObject(with: jsonRep) as? [String: Any] {
+    // JSON representation handling
+    do {
+        let jsonRep = transaction.jsonRepresentation
+        let jsonObj = try JSONSerialization.jsonObject(with: jsonRep) as! [String: Any]
         jsonData = jsonObj
         if let reason = jsonObj["transactionReason"] as? String {
             transactionReasonIos = reason
@@ -34,6 +36,8 @@ func serializeTransaction(_ transaction: Transaction) -> [String: Any?] {
         if let webOrderId = jsonObj["webOrderLineItemID"] as? NSNumber {
             webOrderLineItemId = webOrderId.intValue
         }
+    } catch {
+        print("Error parsing JSON representation: \(error)")
     }
 
     // Create base purchase object that matches Purchase type in TypeScript
@@ -48,47 +52,58 @@ func serializeTransaction(_ transaction: Transaction) -> [String: Any?] {
         
         // iOS specific fields - basic info
         "quantityIos": transaction.purchasedQuantity,
-        "originalTransactionDateIos": transaction.originalPurchaseDate?.timeIntervalSince1970 * 1000,
+        "originalTransactionDateIos": transaction.originalPurchaseDate.timeIntervalSince1970 * 1000,
         "originalTransactionIdentifierIos": transaction.originalID,
-        "verificationResultIos": transaction.verificationResult?.rawValue,
         "appAccountToken": transaction.appAccountToken?.uuidString,
-        
-        // Environment and Storefront
-        "environmentIos": transaction.environment?.rawValue,
-        "storefrontCountryCodeIos": transaction.storefront?.countryCode,
-        
-        // Transaction Identifiers
-        "webOrderLineItemIdIos": webOrderLineItemId,
         
         // App and Product Identifiers
         "appBundleIdIos": transaction.appBundleID,
         "productTypeIos": transaction.productType.rawValue,
         "subscriptionGroupIdIos": transaction.subscriptionGroupID,
         
+        // Transaction Identifiers
+        "webOrderLineItemIdIos": webOrderLineItemId,
+        
         // Purchase and Expiration Dates
-        "expirationDateIos": transaction.expirationDate?.timeIntervalSince1970 * 1000,
+        "expirationDateIos": transaction.expirationDate.map { $0.timeIntervalSince1970 * 1000 },
         
         // Purchase Details
         "isUpgradedIos": transaction.isUpgraded,
         "ownershipTypeIos": transaction.ownershipType.rawValue,
         
-        // Transaction Reason
-        "reasonIos": transaction.reason.rawValue,
-        "reasonStringRepresentationIos": transaction.reasonStringRepresentation,
-        "transactionReasonIos": transactionReasonIos,
-        
         // Revocation Status
-        "revocationDateIos": transaction.revocationDate?.timeIntervalSince1970 * 1000,
+        "revocationDateIos": transaction.revocationDate.map { $0.timeIntervalSince1970 * 1000 },
         "revocationReasonIos": transaction.revocationReason?.rawValue
     ]
     
-    // Add offer information if available
-    if let offer = transaction.offer {
-        purchaseMap["offerIos"] = [
-            "id": offer.id,
-            "type": offer.type.rawValue,
-            "paymentMode": offer.paymentMode.rawValue
-        ]
+    // Environment (iOS 16.0+)
+    if #available(iOS 16.0, *) {
+        purchaseMap["environmentIos"] = transaction.environment.rawValue
+    }
+    
+    // Storefront (iOS 17.0+)
+    if #available(iOS 17.0, *) {
+        purchaseMap["storefrontCountryCodeIos"] = transaction.storefront.countryCode
+    }
+    
+    // Transaction Reason (iOS 17.0+)
+    if #available(iOS 17.0, *) {
+        purchaseMap["reasonIos"] = transaction.reason.rawValue
+    }
+    
+    // reasonStringRepresentation과 transactionReasonIos는 명시적 타입 처리
+    purchaseMap["reasonStringRepresentationIos"] = transaction.reasonStringRepresentation
+    purchaseMap["transactionReasonIos"] = transactionReasonIos
+    
+    // Add offer information if available with proper availability check
+    if #available(iOS 17.2, *) {
+        if let offer = transaction.offer {
+            purchaseMap["offerIos"] = [
+                "id": offer.id as Any,
+                "type": offer.type.rawValue,
+                "paymentMode": offer.paymentMode?.rawValue ?? ""
+            ]
+        }
     }
     
     // Add additional pricing info if available
@@ -111,7 +126,7 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
         "displayName": p.displayName,
         "displayPrice": p.displayPrice,
         "id": p.id,
-        "title": p.displayName, 
+        "title": p.displayName,
         "isFamilyShareable": p.isFamilyShareable,
         "jsonRepresentation": serializeDebug(String(data: p.jsonRepresentation, encoding: .utf8) ?? ""),
         "price": p.price,
@@ -120,11 +135,6 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
         "currency": p.priceFormatStyle.currencyCode,
         "platform": "ios"  // Add platform identifier
     ]
-}
-
-@available(iOS 15.0, *)
-func serialize(_ transaction: Transaction, _ result: VerificationResult<Transaction>) -> [String: Any?] {
-    return serializeTransaction(transaction)
 }
 
 @available(iOS 15.0, *)
@@ -166,22 +176,6 @@ func serializeRenewalInfo(_ renewalInfo: VerificationResult<Product.Subscription
 }
 
 @available(iOS 15.0, *)
-func serialize(_ transaction: Transaction, _ result: VerificationResult<Transaction>) -> [String: Any?] {
-    return serializeTransaction(transaction)
-}
-
-@available(iOS 15.0, *)
-@Sendable func serialize(_ rs: Transaction.RefundRequestStatus?) -> String? {
-    guard let rs = rs else { return nil }
-    switch rs {
-    case .success: return "success"
-    case .userCancelled: return "userCancelled"
-    default:
-        return nil
-    }
-}
-
-@available(iOS 15.0, *)
 public class ExpoIapModule: Module {
     private var transactions: [String: Transaction] = [:]
     private var productStore: ProductStore?
@@ -198,12 +192,12 @@ public class ExpoIapModule: Module {
         Events(IapEvent.PurchaseUpdated, IapEvent.PurchaseError, IapEvent.TransactionIapUpdated)
 
         OnStartObserving {
-            hasListeners = true
+            self.hasListeners = true
             self.addTransactionObserver()
         }
 
         OnStopObserving {
-            hasListeners = false
+            self.hasListeners = false
             self.removeTransactionObserver()
         }
 
@@ -405,7 +399,6 @@ public class ExpoIapModule: Module {
             if let product = await productStore.getProduct(productID: sku) {
                 if let result = await product.currentEntitlement {
                     do {
-                        // Check whether the transaction is verified. If it isn’t, catch `failedVerification` error.
                         let transaction = try self.checkVerified(result)
                         return serializeTransaction(transaction)
                     } catch StoreError.failedVerification {
@@ -429,7 +422,6 @@ public class ExpoIapModule: Module {
             if let product = await productStore.getProduct(productID: sku) {
                 if let result = await product.latestTransaction {
                     do {
-                        // Check whether the transaction is verified. If it isn’t, catch `failedVerification` error.
                         let transaction = try self.checkVerified(result)
                         return serializeTransaction(transaction)
                     } catch StoreError.failedVerification {
@@ -493,7 +485,6 @@ public class ExpoIapModule: Module {
             Task {
                 for await result in Transaction.unfinished {
                     do {
-                        // Check whether the transaction is verified. If it isn’t, catch `failedVerification` error.
                         let transaction = try self.checkVerified(result)
                         await transaction.finish()
                         self.transactions.removeValue(forKey: String(transaction.id))

@@ -31,12 +31,16 @@ import {
 import {RequestSubscriptionAndroidProps} from '../src/types/ExpoIapAndroid.types';
 
 const productSkus = [
-  'com.cooni.point1000',
-  'com.cooni.point5000',
-  'com.cooni.con5000',
+  'cpk.points.1000',
+  'cpk.points.5000',
+  'cpk.points.10000',
+  'cpk.points.30000',
 ];
 
-const subscriptionSkus = ['com.cooni.subscription1000'];
+const subscriptionSkus = [
+  'cpk.membership.monthly.bronze',
+  'cpk.membership.monthly.silver',
+];
 
 const operations = [
   'initConnection',
@@ -50,6 +54,10 @@ export default function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionProduct[]>([]);
+
+  console.log('isConnected', isConnected);
+  console.log('products', products);
+  console.log('subscriptions', subscriptions);
 
   const handleOperation = async (operation: Operation) => {
     switch (operation) {

@@ -70,6 +70,7 @@ export function initConnection() {
 }
 
 export const getProducts = async (skus: string[]): Promise<Product[]> => {
+  console.log('getProducts', skus);
   if (!skus?.length) {
     return Promise.reject(new Error('"skus" is required'));
   }
@@ -77,6 +78,7 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
   return Platform.select({
     ios: async () => {
       const items = await ExpoIapModule.getItems(skus);
+      console.log('items', items);
       return items.filter((item: unknown) => isProductIos<Product>(item));
     },
     android: async () => {
