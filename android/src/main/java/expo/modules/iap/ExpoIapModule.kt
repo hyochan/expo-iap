@@ -71,8 +71,8 @@ class ExpoIapModule :
             purchases.forEach { purchase ->
                 val item =
                     mutableMapOf<String, Any?>(
-                        "id" to purchase.products[0],  // Changed from productId
-                        "ids" to purchase.products, // Changed from productIds
+                        "id" to purchase.products.firstOrNull() ?: "",
+                        "ids" to purchase.products,
                         "transactionId" to purchase.orderId,
                         "transactionDate" to purchase.purchaseTime.toDouble(),
                         "transactionReceipt" to purchase.originalJson,
@@ -221,7 +221,7 @@ class ExpoIapModule :
                             val item =
                                 mutableMapOf<String, Any?>(
                                     // kept for convenience/backward-compatibility. productIds has the complete list
-                                    "id" to purchase.products[0],
+                                    "id" to purchase.products.firstOrNull() ?: "",
                                     "ids" to purchase.products,
                                     "transactionId" to purchase.orderId,
                                     "transactionDate" to purchase.purchaseTime.toDouble(),
@@ -269,7 +269,7 @@ class ExpoIapModule :
                         purchaseHistoryRecordList?.forEach { purchase ->
                             val item =
                                 mutableMapOf<String, Any?>(
-                                    "id" to purchase.products[0],
+                                    "id" to purchase.products.firstOrNull() ?: "",
                                     "ids" to purchase.products,
                                     "transactionDate" to purchase.purchaseTime.toDouble(),
                                     "transactionReceipt" to purchase.originalJson,
