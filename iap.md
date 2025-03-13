@@ -28,6 +28,22 @@ Run `npx pod-install` after installing the npm package. Since `expo-iap` uses `S
 
 No additional configuration is required beyond installing the package, as `expo-iap` leverages Google Play Billing internally.
 
+### Configure with Expo Config Plugin
+
+Add 'expo-iap' to the plugins array in your app.json or app.config.js file:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      "expo-iap"
+    ]
+  }
+}
+```
+
+This plugin automatically sets up the necessary Android configuration, including adding the BILLING permission to your AndroidManifest.xml.
+
 ## IAP Types
 
 `expo-iap` supports the following In-App Purchase types, aligned with platform-specific APIs (Google Play Billing for Android, StoreKit2 for iOS).
