@@ -2,7 +2,6 @@
 // and on native platforms to ExpoIap.ts
 import {NativeModulesProxy, EventEmitter} from 'expo-modules-core';
 import {Platform} from 'react-native';
-
 import {
   Product,
   ProductPurchase,
@@ -23,9 +22,7 @@ import {
   PaymentDiscount,
   RequestPurchaseIosProps,
   RequestSubscriptionIosProps,
-  TransactionSk2,
 } from './types/ExpoIapIos.types';
-
 import {isProductIos, isSubscriptionProductIos} from './modules/ios';
 import {
   isProductAndroid,
@@ -129,11 +126,9 @@ export async function endConnection(): Promise<boolean> {
 
 export const getPurchaseHistory = ({
   alsoPublishToEventListener = false,
-  automaticallyFinishRestoredTransactions = true,
   onlyIncludeActiveItems = false,
 }: {
   alsoPublishToEventListener?: boolean;
-  automaticallyFinishRestoredTransactions?: boolean;
   onlyIncludeActiveItems?: boolean;
 } = {}): Promise<ProductPurchase[]> =>
   (
@@ -160,11 +155,9 @@ export const getPurchaseHistory = ({
 
 export const getAvailablePurchases = ({
   alsoPublishToEventListener = false,
-  automaticallyFinishRestoredTransactions = false,
   onlyIncludeActiveItems = true,
 }: {
   alsoPublishToEventListener?: boolean;
-  automaticallyFinishRestoredTransactions?: boolean;
   onlyIncludeActiveItems?: boolean;
 } = {}): Promise<ProductPurchase[]> =>
   (
@@ -203,44 +196,6 @@ const offerToRecordIos = (
   };
 };
 
-const iosTransactionToPurchaseMap = ({
-  id,
-  originalPurchaseDate,
-  productID,
-  purchaseDate,
-  purchasedQuantity,
-  originalID,
-  verificationResult,
-  appAccountToken,
-  jsonRepresentation,
-}: TransactionSk2): Purchase => {
-  let transactionReasonIOS;
-
-  try {
-    if (jsonRepresentation) {
-      const transactionData = JSON.parse(jsonRepresentation);
-      transactionReasonIOS = transactionData.transactionReason;
-    }
-  } catch (e) {
-    console.log('SK2 Error parsing jsonRepresentation', e);
-  }
-  const purchase: Purchase = {
-    id: productID,
-    ids: [productID],
-    transactionId: String(id),
-    transactionDate: purchaseDate,
-    transactionReceipt: '',
-    purchaseToken: '',
-    quantityIOS: purchasedQuantity,
-    originalTransactionDateIOS: originalPurchaseDate,
-    originalTransactionIdentifierIOS: originalID,
-    verificationResultIOS: verificationResult ?? '',
-    appAccountToken: appAccountToken ?? '',
-    transactionReasonIOS: transactionReasonIOS ?? '',
-  };
-  return purchase;
-};
-
 export const requestPurchase = (
   request: RequestPurchaseIosProps | RequestPurchaseAndroidProps,
 ): Promise<ProductPurchase | ProductPurchase[] | void> =>
@@ -251,31 +206,17 @@ export const requestPurchase = (
           throw new Error('sku is required for iOS purchase');
         }
 
-        const {
-          sku,
-          andDangerouslyFinishTransactionAutomaticallyIOS = false,
-          appAccountToken,
-          quantity,
-          withOffer,
-        } = request;
-
-        if (andDangerouslyFinishTransactionAutomaticallyIOS) {
-          console.warn(
-            'You are dangerously allowing expo-iap to finish your transaction automatically. You should set andDangerouslyFinishTransactionAutomatically to false when calling requestPurchase and call finishTransaction manually when you have delivered the purchased goods to the user. It defaults to true to provide backwards compatibility. Will default to false in version 4.0.0.',
-          );
-        }
+        const {sku, appAccountToken, quantity, withOffer} = request;
 
         const offer = offerToRecordIos(withOffer);
 
-        const result = await ExpoIapModule.buyProduct(
+        const purchase = await ExpoIapModule.buyProduct(
           sku,
-          andDangerouslyFinishTransactionAutomaticallyIOS,
           appAccountToken,
           quantity ?? -1,
           offer,
         );
 
-        const purchase = iosTransactionToPurchaseMap(result);
         return Promise.resolve(purchase);
       },
       android: async () => {
@@ -314,32 +255,19 @@ export const requestSubscription = (
           throw new Error('sku is required for iOS subscriptions');
         }
 
-        const {
-          sku,
-          andDangerouslyFinishTransactionAutomaticallyIOS = false,
-          appAccountToken,
-          quantity,
-          withOffer,
-        } = request as RequestSubscriptionIosProps;
-
-        if (andDangerouslyFinishTransactionAutomaticallyIOS) {
-          console.warn(
-            'You are dangerously allowing expo-iap to finish your transaction automatically. You should set andDangerouslyFinishTransactionAutomatically to false when calling requestPurchase and call finishTransaction manually when you have delivered the purchased goods to the user. It defaults to true to provide backwards compatibility. Will default to false in version 4.0.0.',
-          );
-        }
+        const {sku, appAccountToken, quantity, withOffer} =
+          request as RequestSubscriptionIosProps;
 
         const offer = offerToRecordIos(withOffer);
 
-        const purchase = iosTransactionToPurchaseMap(
-          await ExpoIapModule.buyProduct(
-            sku,
-            andDangerouslyFinishTransactionAutomaticallyIOS,
-            appAccountToken,
-            quantity ?? -1,
-            offer,
-          ),
+        const purchase = await ExpoIapModule.buyProduct(
+          sku,
+          appAccountToken,
+          quantity ?? -1,
+          offer,
         );
-        return Promise.resolve(purchase);
+
+        return Promise.resolve(purchase as SubscriptionPurchase);
       },
       android: async () => {
         console.log('requestSubscription', request);

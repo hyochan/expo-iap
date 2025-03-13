@@ -1,11 +1,11 @@
 import {Platform} from 'react-native';
 import {emitter, IapEvent} from '..';
-import {PurchaseError} from '../ExpoIap.types';
-import type {ProductStatusIos, TransactionSk2} from '../types/ExpoIapIos.types';
+import {ProductPurchase, PurchaseError} from '../ExpoIap.types';
+import type {ProductStatusIos} from '../types/ExpoIapIos.types';
 import ExpoIapModule from '../ExpoIapModule';
 
 export type TransactionEvent = {
-  transaction?: TransactionSk2;
+  transaction?: ProductPurchase;
   error?: PurchaseError;
 };
 
@@ -61,13 +61,13 @@ export const subscriptionStatus = (sku: string): Promise<ProductStatusIos[]> =>
 /**
  *
  */
-export const currentEntitlement = (sku: string): Promise<TransactionSk2> =>
+export const currentEntitlement = (sku: string): Promise<ProductPurchase> =>
   ExpoIapModule.currentEntitlement(sku);
 
 /**
  *
  */
-export const latestTransaction = (sku: string): Promise<TransactionSk2> =>
+export const latestTransaction = (sku: string): Promise<ProductPurchase> =>
   ExpoIapModule.latestTransaction(sku);
 
 /**

@@ -2,7 +2,7 @@
 
 ## Installation in Managed Expo Projects
 
-For [managed](https://docs.expo.dev/archive/managed-vs-bare/) Expo projects, follow the installation instructions in the [API documentation for the latest stable release](#api-documentation). If the link shows no documentation, this library isn’t yet supported in managed workflows—it’s likely awaiting inclusion in a future Expo SDK release.
+For [managed](https://docs.expo.dev/archive/managed-vs-bare/) Expo projects, follow the installation instructions in the [API documentation for the latest stable release](#api-documentation). If the link shows no documentation, this library isn't yet supported in managed workflows—it's likely awaiting inclusion in a future Expo SDK release.
 
 ## Installation in Bare React Native Projects
 
@@ -91,7 +91,7 @@ These properties are shared between Android and iOS, defined in `BaseProduct`.
 
 - **`SubscriptionProductIos`**
   - `discounts?: Discount[]`: Discount details (e.g., identifier, price).
-  - `introductoryPrice?: string`: Introductory pricing details (with additional iOS-specific fields like `introductoryPricePaymentModeIOS`).
+  - `introductoryPrice?: string`: Introductory pricing details (with additional iOS-specific fields like `introductoryPricePaymentModeIos`).
 
 ## Purchase Type
 
@@ -120,27 +120,42 @@ These properties are shared between Android and iOS, defined in `ProductPurchase
   - `purchaseStateAndroid?: PurchaseStateAndroid`: Purchase state (e.g., PURCHASED, PENDING).
 
 - **`SubscriptionPurchase` (Android Extensions)**
-
   - `autoRenewingAndroid?: boolean`: Subscription auto-renewal status.
-
-- **`ReceiptAndroid`**
-  - Additional fields like `betaProduct: boolean`, `cancelDate: number | null`, and `freeTrialEndDate: number`.
 
 ### iOS-Only Purchase Types
 
 - **`ProductPurchase` (iOS Extensions)**
 
-  - `quantityIOS?: number`: Purchase quantity.
-  - `originalTransactionDateIOS?: number`: Original transaction date.
-  - `originalTransactionIdentifierIOS?: string`: Original transaction ID.
-  - `verificationResultIOS?: string`: Verification result.
+  - `quantityIos?: number`: Purchase quantity.
+  - `originalTransactionDateIos?: number`: Original transaction date.
+  - `originalTransactionIdentifierIos?: string`: Original transaction ID.
+  - `verificationResultIos?: string`: Verification result.
   - `appAccountToken?: string`: App account token.
+  - `expirationDateIos?: number`: Expiration date for subscriptions.
+  - `webOrderLineItemIdIos?: number`: Web order line item ID.
+  - `environmentIos?: string`: App Store environment.
+  - `storefrontCountryCodeIos?: string`: App Store storefront country code.
+  - `appBundleIdIos?: string`: App bundle ID.
+  - `productTypeIos?: string`: Product type (e.g., "autoRenewable").
+  - `subscriptionGroupIdIos?: string`: Subscription group ID.
+  - `isUpgradedIos?: boolean`: Whether the subscription was upgraded.
+  - `ownershipTypeIos?: string`: Ownership type (e.g., individual, family sharing).
+  - `reasonIos?: string`: Transaction reason.
+  - `transactionReasonIos?: string`: Detailed transaction reason.
+  - `revocationDateIos?: number`: Date of revocation if refunded.
+  - `revocationReasonIos?: string`: Reason for revocation.
 
 - **`SubscriptionPurchase` (iOS Extensions)**
+  - All the iOS-specific fields from `ProductPurchase`
+  - Automatic subscription-specific handling based on product type
 
-  - `originalTransactionDateIOS?: number`: Original purchase date.
-  - `originalTransactionIdentifierIOS?: string`: Original transaction ID.
-  - `transactionReasonIOS?: TransactionReason | string`: Reason for the transaction (e.g., PURCHASE, RENEWAL).
+## Implementation Notes
 
-- **`TransactionSk2`**
-  - StoreKit2-specific fields like `appBundleID: string`, `expirationDate: number`, and `offerID: string`.
+### Platform-Uniform Purchase Handling
+
+`expo-iap` now processes transactions directly to `Purchase` or `SubscriptionPurchase` types on both platforms:
+
+- **iOS**: StoreKit 2 transactions are directly mapped to `Purchase`/`SubscriptionPurchase` objects with iOS-specific fields using camelCase naming convention (e.g., `expirationDateIos`).
+- **Android**: Google Play Billing purchases are similarly mapped to the same types with Android-specific fields.
+
+This approach eliminates intermediate conversion layers, making the code more maintainable while still providing access to platform-specific details when needed.

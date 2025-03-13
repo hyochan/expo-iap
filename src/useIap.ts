@@ -9,7 +9,6 @@ import {
   getPurchaseHistory,
   getSubscriptions,
 } from './';
-
 import {useCallback, useEffect, useState} from 'react';
 import {
   Product,
@@ -21,13 +20,12 @@ import {
   SubscriptionPurchase,
 } from './ExpoIap.types';
 import {TransactionEvent} from './modules/ios';
-import {TransactionSk2} from './types/ExpoIapIos.types';
 import {Subscription} from 'expo-modules-core';
 
 type IAP_STATUS = {
   connected: boolean;
   products: Product[];
-  promotedProductsIOS: TransactionSk2[];
+  promotedProductsIOS: ProductPurchase[];
   subscriptions: SubscriptionProduct[];
   purchaseHistories: ProductPurchase[];
   availablePurchases: ProductPurchase[];
@@ -56,7 +54,7 @@ export function useIAP(): IAP_STATUS {
   const [connected, setConnected] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [promotedProductsIOS, setPromotedProductsIOS] = useState<
-    TransactionSk2[]
+    ProductPurchase[]
   >([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionProduct[]>([]);
   const [purchaseHistories, setPurchaseHistories] = useState<ProductPurchase[]>(
@@ -66,7 +64,6 @@ export function useIAP(): IAP_STATUS {
     ProductPurchase[]
   >([]);
   const [currentPurchase, setCurrentPurchase] = useState<ProductPurchase>();
-
   const [currentPurchaseError, setCurrentPurchaseError] =
     useState<PurchaseError>();
 
