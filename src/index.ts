@@ -311,17 +311,14 @@ export const requestSubscription = (
 export const finishTransaction = ({
   purchase,
   isConsumable,
-  developerPayloadAndroid,
 }: {
   purchase: Purchase;
   isConsumable?: boolean;
-  developerPayloadAndroid?: string;
 }): Promise<PurchaseResult | boolean> => {
   return (
     Platform.select({
       ios: async () => {
         const transactionId = purchase.transactionId;
-
         if (!transactionId) {
           return Promise.reject(
             new Error('transactionId required to finish iOS transaction'),
@@ -331,21 +328,16 @@ export const finishTransaction = ({
         return Promise.resolve(true);
       },
       android: async () => {
-        if (purchase?.purchaseToken) {
-          if (!isConsumable) {
-            return Promise.reject(
-              new Error('purchase is not suitable to be purchased'),
-            );
-          }
-
-          return ExpoIapModule.consumeProduct(
-            purchase.purchaseToken,
-            developerPayloadAndroid,
+        if (!purchase?.purchaseToken) {
+          return Promise.reject(
+            new Error('purchaseToken is required to finish transaction'),
           );
         }
-        return Promise.reject(
-          new Error('purchase is not suitable to be purchased'),
-        );
+        if (isConsumable) {
+          return ExpoIapModule.consumeProduct(purchase.purchaseToken);
+        } else {
+          return ExpoIapModule.acknowledgePurchase(purchase.purchaseToken);
+        }
       },
     }) || (() => Promise.reject(new Error('Unsupported Platform')))
   )();
