@@ -41,12 +41,12 @@ export enum IapEvent {
   TransactionIapUpdated = 'iap-transaction-updated',
 }
 
-export async function setValueAsync(value: string) {
-  return await ExpoIapModule.setValueAsync(value);
+export function setValueAsync(value: string) {
+  return ExpoIapModule.setValueAsync(value);
 }
 
 export const emitter = new EventEmitter(
-  ExpoIapModule ?? NativeModulesProxy.ExpoIap,
+  ExpoIapModule || NativeModulesProxy.ExpoIap,
 );
 
 export const purchaseUpdatedListener = (
@@ -104,7 +104,6 @@ export const getSubscriptions = async (
   return Platform.select({
     ios: async () => {
       const rawItems = await ExpoIapModule.getItems(skus);
-
       return rawItems.filter((item: unknown) => {
         if (!isSubscriptionProductIos(item)) return false;
         return (
@@ -118,7 +117,6 @@ export const getSubscriptions = async (
     },
     android: async () => {
       const rawItems = await ExpoIapModule.getItemsByType('subs', skus);
-
       return rawItems.filter((item: unknown) => {
         if (!isSubscriptionProductAndroid(item)) return false;
         return (
@@ -157,11 +155,9 @@ export const getPurchaseHistory = ({
         const products = await ExpoIapModule.getPurchaseHistoryByType(
           ProductType.InAppPurchase,
         );
-
         const subscriptions = await ExpoIapModule.getPurchaseHistoryByType(
           ProductType.Subscription,
         );
-
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
@@ -185,11 +181,9 @@ export const getAvailablePurchases = ({
         const products = await ExpoIapModule.getAvailableItemsByType(
           ProductType.InAppPurchase,
         );
-
         const subscriptions = await ExpoIapModule.getAvailableItemsByType(
           ProductType.Subscription,
         );
-
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
@@ -219,32 +213,26 @@ export const requestPurchase = (
         if (!('sku' in request)) {
           throw new Error('sku is required for iOS purchase');
         }
-
         const {sku, appAccountToken, quantity, withOffer} = request;
-
         const offer = offerToRecordIos(withOffer);
-
         const purchase = await ExpoIapModule.buyProduct(
           sku,
           appAccountToken,
           quantity ?? -1,
           offer,
         );
-
         return Promise.resolve(purchase);
       },
       android: async () => {
         if (!('skus' in request) || !request.skus.length) {
           throw new Error('skus is required for Android purchase');
         }
-
         const {
           skus,
           obfuscatedAccountIdAndroid,
           obfuscatedProfileIdAndroid,
           isOfferPersonalized,
         } = request;
-
         return ExpoIapModule.buyItemByType({
           type: ProductType.InAppPurchase,
           skuArr: skus,
@@ -268,19 +256,15 @@ export const requestSubscription = (
         if (!('sku' in request)) {
           throw new Error('sku is required for iOS subscriptions');
         }
-
         const {sku, appAccountToken, quantity, withOffer} =
           request as RequestSubscriptionIosProps;
-
         const offer = offerToRecordIos(withOffer);
-
         const purchase = await ExpoIapModule.buyProduct(
           sku,
           appAccountToken,
           quantity ?? -1,
           offer,
         );
-
         return Promise.resolve(purchase as SubscriptionPurchase);
       },
       android: async () => {
@@ -293,7 +277,6 @@ export const requestSubscription = (
           replacementModeAndroid,
           purchaseTokenAndroid,
         } = request as RequestSubscriptionAndroidProps;
-
         return ExpoIapModule.buyItemByType({
           type: ProductType.Subscription,
           skuArr: skus.map((so) => so),
