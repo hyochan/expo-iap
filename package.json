@@ -1,9 +1,9 @@
 {
   "name": "expo-iap",
-  "version": "2.2.0-rc.3",
+  "version": "2.2.0-rc.4",
   "description": "In App Purchase module in Expo",
   "main": "build/index.js",
-  "types": "build/index.ts",
+  "types": "build/index.d.ts",
   "scripts": {
     "build:compile": "expo-module tsc",
     "build:copy": "mkdir -p build && rsync -a --include '*/' --include '*.ts' --exclude '*' src/ build/",
@@ -16,6 +16,7 @@
     "lint:tsc": "tsc -p tsconfig.json --noEmit --skipLibCheck",
     "lint:ci": "yarn lint:tsc && yarn lint:eslint && yarn lint:prettier",
     "test": "expo-module test",
+    "prepare": "expo-module prepare",
     "expo-module": "expo-module",
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android",
