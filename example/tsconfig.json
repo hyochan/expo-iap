@@ -3,8 +3,18 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "expo-iap": ["../src/index"],
-      "expo-iap/*": ["../src/*"]
+      "expo-iap": [
+        "../src/index"
+      ],
+      "expo-iap/*": [
+        "../src/*"
+      ]
     }
-  }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
 }
