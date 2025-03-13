@@ -23,7 +23,6 @@ type SubscriptionInfo = {
 export type ProductIos = ProductBase & {
   displayName: string;
   displayPrice: string;
-  type: 'autoRenewable' | 'consumable' | 'nonConsumable' | 'nonRenewable'; // Maps to 'type' in base Product
   isFamilyShareable: boolean;
   jsonRepresentation: string;
   subscription: SubscriptionInfo;
