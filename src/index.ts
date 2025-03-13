@@ -77,14 +77,16 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
   return Platform.select({
     ios: async () => {
       const items = await ExpoIapModule.getItems(skus);
-      return items.filter((item) => isProductIos<Product>(item));
+      return items.filter((item: unknown) => isProductIos<Product>(item));
     },
     android: async () => {
       const products = await ExpoIapModule.getItemsByType(
         ProductType.InAppPurchase,
         skus,
       );
-      return products.filter((product) => isProductAndroid<Product>(product));
+      return products.filter((product: unknown) =>
+        isProductAndroid<Product>(product),
+      );
     },
     default: () => Promise.reject(new Error('Unsupported Platform')),
   })();
@@ -101,20 +103,30 @@ export const getSubscriptions = async (
     ios: async () => {
       const rawItems = await ExpoIapModule.getItems(skus);
 
-      return rawItems.filter(
-        (item: SubscriptionProduct) =>
-          isSubscriptionProductIos(item) &&
-          skus.includes((item as SubscriptionProduct).id),
-      );
+      return rawItems.filter((item: unknown) => {
+        if (!isSubscriptionProductIos(item)) return false;
+        return (
+          typeof item === 'object' &&
+          item !== null &&
+          'id' in item &&
+          typeof item.id === 'string' &&
+          skus.includes(item.id)
+        );
+      }) as SubscriptionProduct[];
     },
     android: async () => {
       const rawItems = await ExpoIapModule.getItemsByType('subs', skus);
 
-      return rawItems.filter(
-        (el: SubscriptionProduct) =>
-          isSubscriptionProductAndroid(el) &&
-          skus.includes((el as SubscriptionProduct).id),
-      );
+      return rawItems.filter((item: unknown) => {
+        if (!isSubscriptionProductAndroid(item)) return false;
+        return (
+          typeof item === 'object' &&
+          item !== null &&
+          'id' in item &&
+          typeof item.id === 'string' &&
+          skus.includes(item.id)
+        );
+      }) as SubscriptionProduct[];
     },
     default: () => Promise.reject(new Error('Unsupported Platform')),
   })();
@@ -270,7 +282,6 @@ export const requestSubscription = (
         return Promise.resolve(purchase as SubscriptionPurchase);
       },
       android: async () => {
-        console.log('requestSubscription', request);
         const {
           skus,
           isOfferPersonalized,
