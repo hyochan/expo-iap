@@ -213,10 +213,11 @@ export const requestPurchase = (
         if (!('sku' in request)) {
           throw new Error('sku is required for iOS purchase');
         }
-        const {sku, appAccountToken, quantity, withOffer} = request;
+        const {sku, autoFinish, appAccountToken, quantity, withOffer} = request;
         const offer = offerToRecordIos(withOffer);
         const purchase = await ExpoIapModule.buyProduct(
           sku,
+          autoFinish ?? true,
           appAccountToken,
           quantity ?? -1,
           offer,
@@ -256,11 +257,12 @@ export const requestSubscription = (
         if (!('sku' in request)) {
           throw new Error('sku is required for iOS subscriptions');
         }
-        const {sku, appAccountToken, quantity, withOffer} =
+        const {sku, autoFinish, appAccountToken, quantity, withOffer} =
           request as RequestSubscriptionIosProps;
         const offer = offerToRecordIos(withOffer);
         const purchase = await ExpoIapModule.buyProduct(
           sku,
+          autoFinish ?? true,
           appAccountToken,
           quantity ?? -1,
           offer,

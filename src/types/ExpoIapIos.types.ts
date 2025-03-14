@@ -79,6 +79,7 @@ export type RequestPurchaseIosProps = {
   /**
    * UUID representing user account
    */
+  autoFinish?: boolean;
   appAccountToken?: string;
   quantity?: number;
   withOffer?: PaymentDiscount;
