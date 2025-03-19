@@ -15,6 +15,7 @@ import {
 } from './ExpoIap.types';
 import ExpoIapModule from './ExpoIapModule';
 import {
+  ProductPurchaseAndroid,
   RequestPurchaseAndroidProps,
   RequestSubscriptionAndroidProps,
 } from './types/ExpoIapAndroid.types';
@@ -323,20 +324,20 @@ export const finishTransaction = ({
         return Promise.resolve(true);
       },
       android: async () => {
-        // Check if the purchase is from Android by checking the platform property
-        if (
-          purchase.platform !== 'android' ||
-          !('purchaseTokenAndroid' in purchase)
-        ) {
+        const androidPurchase = purchase as ProductPurchaseAndroid;
+
+        if (!('purchaseTokenAndroid' in androidPurchase)) {
           return Promise.reject(
-            new Error('purchaseTokenAndroid is required to finish transaction'),
+            new Error('purchaseToken is required to finish transaction'),
           );
         }
         if (isConsumable) {
-          return ExpoIapModule.consumeProduct(purchase.purchaseTokenAndroid);
+          return ExpoIapModule.consumeProduct(
+            androidPurchase.purchaseTokenAndroid,
+          );
         } else {
           return ExpoIapModule.acknowledgePurchase(
-            purchase.purchaseTokenAndroid,
+            androidPurchase.purchaseTokenAndroid,
           );
         }
       },

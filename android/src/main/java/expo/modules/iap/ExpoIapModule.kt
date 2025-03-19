@@ -32,6 +32,7 @@ class ExpoIapModule :
         const val E_INIT_CONNECTION = "E_INIT_CONNECTION"
         const val E_QUERY_PRODUCT = "E_QUERY_PRODUCT"
         const val EMPTY_SKU_LIST = "EMPTY_SKU_LIST"
+        private const val PROMISE_BUY_ITEM = "PROMISE_BUY_ITEM"
     }
 
     object IapEvent {
@@ -62,7 +63,12 @@ class ExpoIapModule :
             val errorData = PlayUtils.getBillingResponseData(responseCode)
             error["code"] = errorData.code
             error["message"] = errorData.message
-            sendEvent(IapEvent.PURCHASE_ERROR, error.toMap())
+            try {
+                sendEvent(IapEvent.PURCHASE_ERROR, error.toMap())
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
+            }
+            PromiseUtils.rejectPromisesForKey(PROMISE_BUY_ITEM, errorData.code, errorData.message, null)
             return
         }
 
@@ -90,8 +96,13 @@ class ExpoIapModule :
                     item["obfuscatedProfileIdAndroid"] = accountIdentifiers.obfuscatedProfileId
                 }
                 promiseItems.add(item.toMap())
-                sendEvent(IapEvent.PURCHASE_UPDATED, item.toMap())
+                try {
+                    sendEvent(IapEvent.PURCHASE_UPDATED, item.toMap())
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to send PURCHASE_UPDATED event: ${e.message}")
+                }
             }
+            PromiseUtils.resolvePromisesForKey(PROMISE_BUY_ITEM, promiseItems)
         } else {
             val result =
                 mutableMapOf<String, Any?>(
@@ -100,7 +111,12 @@ class ExpoIapModule :
                     "extraMessage" to
                         "The purchases are null. This is a normal behavior if you have requested DEFERRED proration. If not please report an issue.",
                 )
-            sendEvent(IapEvent.PURCHASE_UPDATED, result.toMap())
+            try {
+                sendEvent(IapEvent.PURCHASE_UPDATED, result.toMap())
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send PURCHASE_UPDATED event: ${e.message}")
+            }
+            PromiseUtils.resolvePromisesForKey(PROMISE_BUY_ITEM, result)
         }
     }
 
@@ -301,22 +317,29 @@ class ExpoIapModule :
                 val isOfferPersonalized = params["isOfferPersonalized"] as? Boolean ?: false
 
                 if (currentActivity == null) {
-                    throw Exception("getCurrentActivity returned null")
+                    promise.reject("E_UNKNOWN", "getCurrentActivity returned null", null)
+                    return@AsyncFunction
                 }
 
                 ensureConnection(promise) { billingClient ->
+                    PromiseUtils.addPromiseForKey(PROMISE_BUY_ITEM, promise)
+
                     if (type == BillingClient.ProductType.SUBS && skuArr.size != offerTokenArr.size) {
-                        val debugMessage =
-                            "The number of skus (${skuArr.size}) must match: the number of offerTokens (${offerTokenArr.size}) for Subscriptions"
-                        sendEvent(
-                            IapEvent.PURCHASE_ERROR,
-                            mapOf(
-                                "debugMessage" to debugMessage,
-                                "code" to "E_SKU_OFFER_MISMATCH",
-                                "message" to debugMessage,
-                            ),
-                        )
-                        throw Exception(debugMessage)
+                        val debugMessage = "The number of skus (${skuArr.size}) must match: the number of offerTokens (${offerTokenArr.size}) for Subscriptions"
+                        try {
+                            sendEvent(
+                                IapEvent.PURCHASE_ERROR,
+                                mapOf(
+                                    "debugMessage" to debugMessage,
+                                    "code" to "E_SKU_OFFER_MISMATCH",
+                                    "message" to debugMessage,
+                                )
+                            )
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
+                        }
+                        promise.reject("E_SKU_OFFER_MISMATCH", debugMessage, null)
+                        return@ensureConnection
                     }
 
                     val productParamsList =
@@ -325,16 +348,21 @@ class ExpoIapModule :
                             if (selectedSku == null) {
                                 val debugMessage =
                                     "The sku was not found. Please fetch products first by calling getItems"
-                                sendEvent(
-                                    IapEvent.PURCHASE_ERROR,
-                                    mapOf(
-                                        "debugMessage" to debugMessage,
-                                        "code" to "E_SKU_NOT_FOUND",
-                                        "message" to debugMessage,
-                                        "productId" to sku,
-                                    ),
-                                )
-                                throw Exception(debugMessage)
+                                try {
+                                    sendEvent(
+                                        IapEvent.PURCHASE_ERROR,
+                                        mapOf(
+                                            "debugMessage" to debugMessage,
+                                            "code" to "E_SKU_NOT_FOUND",
+                                            "message" to debugMessage,
+                                            "productId" to sku,
+                                        ),
+                                    )
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
+                                }
+                                promise.reject("E_SKU_NOT_FOUND", debugMessage, null)
+                                return@ensureConnection
                             }
 
                             val productDetailParams =
@@ -378,7 +406,6 @@ class ExpoIapModule :
                                 }
                             subscriptionUpdateParams.setSubscriptionReplacementMode(mode)
                         }
-
                         builder.setSubscriptionUpdateParams(subscriptionUpdateParams.build())
                     }
 
@@ -389,14 +416,10 @@ class ExpoIapModule :
                     val billingResult = billingClient.launchBillingFlow(currentActivity, flowParams)
 
                     if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                        promise.reject(
-                            "Billing Error",
-                            billingResult.debugMessage,
-                            null,
-                        )
+                        val errorData = PlayUtils.getBillingResponseData(billingResult.responseCode)
+                        promise.reject(errorData.code, billingResult.debugMessage, null)
+                        return@ensureConnection
                     }
-
-                    promise.resolve(true)
                 }
             }
 
