@@ -46,7 +46,6 @@ export type PurchaseBase = {
   transactionId?: string;
   transactionDate: number;
   transactionReceipt: string;
-  purchaseToken?: string;
 };
 
 // Union type for platform-specific product types with proper discriminators
@@ -83,7 +82,7 @@ export type PurchaseResult = {
   debugMessage?: string;
   code?: string;
   message?: string;
-  purchaseToken?: string;
+  purchaseTokenAndroid?: string;
 };
 
 export enum ErrorCode {

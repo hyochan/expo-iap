@@ -76,7 +76,7 @@ class ExpoIapModule :
                         "transactionId" to purchase.orderId,
                         "transactionDate" to purchase.purchaseTime.toDouble(),
                         "transactionReceipt" to purchase.originalJson,
-                        "purchaseToken" to purchase.purchaseToken,
+                        "purchaseTokenAndroid" to purchase.purchaseToken,
                         "dataAndroid" to purchase.originalJson,
                         "signatureAndroid" to purchase.signature,
                         "autoRenewingAndroid" to purchase.isAutoRenewing,
@@ -227,7 +227,7 @@ class ExpoIapModule :
                                     "transactionDate" to purchase.purchaseTime.toDouble(),
                                     "transactionReceipt" to purchase.originalJson,
                                     "orderId" to purchase.orderId,
-                                    "purchaseToken" to purchase.purchaseToken,
+                                    "purchaseTokenAndroid" to purchase.purchaseToken,
                                     "developerPayloadAndroid" to purchase.developerPayload,
                                     "signatureAndroid" to purchase.signature,
                                     "purchaseStateAndroid" to purchase.purchaseState,
@@ -273,7 +273,7 @@ class ExpoIapModule :
                                     "ids" to purchase.products,
                                     "transactionDate" to purchase.purchaseTime.toDouble(),
                                     "transactionReceipt" to purchase.originalJson,
-                                    "purchaseToken" to purchase.purchaseToken,
+                                    "purchaseTokenAndroid" to purchase.purchaseToken,
                                     "dataAndroid" to purchase.originalJson,
                                     "signatureAndroid" to purchase.signature,
                                     "developerPayload" to purchase.developerPayload,
@@ -455,7 +455,7 @@ class ExpoIapModule :
                         val errorData = PlayUtils.getBillingResponseData(billingResult.responseCode)
                         map["code"] = errorData.code
                         map["message"] = errorData.message
-                        map["purchaseToken"] = purchaseToken
+                        map["purchaseTokenAndroid"] = purchaseToken
                         promise.resolve(map)
                     }
                 }

@@ -323,15 +323,21 @@ export const finishTransaction = ({
         return Promise.resolve(true);
       },
       android: async () => {
-        if (!purchase?.purchaseToken) {
+        // Check if the purchase is from Android by checking the platform property
+        if (
+          purchase.platform !== 'android' ||
+          !('purchaseTokenAndroid' in purchase)
+        ) {
           return Promise.reject(
-            new Error('purchaseToken is required to finish transaction'),
+            new Error('purchaseTokenAndroid is required to finish transaction'),
           );
         }
         if (isConsumable) {
-          return ExpoIapModule.consumeProduct(purchase.purchaseToken);
+          return ExpoIapModule.consumeProduct(purchase.purchaseTokenAndroid);
         } else {
-          return ExpoIapModule.acknowledgePurchase(purchase.purchaseToken);
+          return ExpoIapModule.acknowledgePurchase(
+            purchase.purchaseTokenAndroid,
+          );
         }
       },
     }) || (() => Promise.reject(new Error('Unsupported Platform')))

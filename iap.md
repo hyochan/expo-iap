@@ -143,17 +143,38 @@ This section describes purchase properties in `expo-iap`.
 | `transactionId`      | `string?` | Transaction ID (optional) |
 | `transactionDate`    | `number`  | Unix timestamp            |
 | `transactionReceipt` | `string`  | Receipt data              |
-| `purchaseToken`      | `string?` | Purchase token (optional) |
 
 ### Android-Only Purchase Types
 
-- **`ProductPurchase`**: Adds `ids`, `dataAndroid`, `signatureAndroid`, `purchaseStateAndroid`.
-- **`SubscriptionPurchase`**: Includes `autoRenewingAndroid`.
+- **`ProductPurchase`**:
+  - Adds the following properties specific to in-app product purchases:
+    - **`ids`**: `string[]` - A list of product IDs associated with the purchase (for multi-item purchases).
+    - **`dataAndroid`**: `string` - The raw purchase data from Google Play (e.g., JSON payload).
+    - **`signatureAndroid`**: `string` - The cryptographic signature from Google Play to verify the purchase's authenticity.
+    - **`purchaseStateAndroid`**: `number` - The state of the purchase (e.g., 0 = purchased, 1 = canceled, 2 = pending).
+
+- **`SubscriptionPurchase`**:
+  - Extends the base properties and includes:
+    - **`autoRenewingAndroid`**: `boolean` - Indicates whether the subscription automatically renews (true) or not (false).
+
+- **`purchaseTokenAndroid`**:
+  - **Description**: A unique identifier provided by Google Play for each purchase, used to track, verify, and manage the transaction. For example, it is required to "consume" a consumable product (e.g., in-game coins) or query purchase details via the Google Play Developer API.
 
 ### iOS-Only Purchase Types
 
-- **`ProductPurchase`**: Adds fields like `quantityIos`, `expirationDateIos`, `subscriptionGroupIdIos`.
-- **`SubscriptionPurchase`**: Extends with subscription-specific handling.
+- **`ProductPurchase`**:
+  - Extends the base purchase properties with iOS-specific fields:
+    - **`quantityIos`**: `number` - The quantity of the product purchased (e.g., how many units of an item were bought).
+    - **`expirationDateIos`**: `number?` - The expiration date of the purchase as a Unix timestamp (in milliseconds), if applicable (optional, may be null for non-expiring products).
+    - **`subscriptionGroupIdIos`**: `string?` - The identifier of the subscription group this product belongs to, used for managing related subscriptions in the App Store (optional, may be null for non-subscription products).
+
+- **`SubscriptionPurchase`**:
+  - Extends the base purchase properties with iOS-specific subscription handling:
+    - Includes all fields from `ProductPurchase` where applicable, plus additional subscription-specific logic.
+    - May include fields like:
+      - **`expirationDateIos`**: `number?` - The date and time when the subscription expires, represented as a Unix timestamp (in milliseconds), unless auto-renewed.
+      - **`autoRenewingIos`**: `boolean` - Indicates whether the subscription is set to automatically renew (true) or not (false).
+    - Handles subscription-specific features such as renewals, grace periods, and App Store receipt validation.
 
 ## Implementation Notes
 
@@ -200,7 +221,7 @@ export default function SimpleIAP() {
 
     // Handle purchase updates
     const purchaseListener = purchaseUpdatedListener(async (purchase) => {
-      if (purchase.transactionReceipt) {
+      if (purchase) {
         await finishTransaction({purchase, isConsumable: true});
         alert('Purchase completed!');
       }
@@ -327,7 +348,7 @@ export default function IAPWithHook() {
 
   // Handle purchase updates and errors
   useEffect(() => {
-    if (currentPurchase?.transactionReceipt) {
+    if (currentPurchase) {
       InteractionManager.runAfterInteractions(async () => {
         try {
           await finishTransaction({

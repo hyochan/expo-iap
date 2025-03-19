@@ -115,6 +115,7 @@ export enum PurchaseStateAndroid {
 
 export type ProductPurchaseAndroid = PurchaseBase & {
   ids?: string[];
+  purchaseTokenAndroid?: string;
   dataAndroid?: string;
   signatureAndroid?: string;
   autoRenewingAndroid?: boolean;
