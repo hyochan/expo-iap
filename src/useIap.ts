@@ -7,6 +7,7 @@ import {
   getProducts,
   getAvailablePurchases,
   getPurchaseHistory,
+  finishTransaction as finishTransactionInternal,
   getSubscriptions,
 } from './';
 import {useCallback, useEffect, useState, useRef} from 'react';
@@ -35,11 +36,9 @@ type IAP_STATUS = {
   finishTransaction: ({
     purchase,
     isConsumable,
-    developerPayloadAndroid,
   }: {
     purchase: Purchase;
     isConsumable?: boolean;
-    developerPayloadAndroid?: string;
   }) => Promise<string | boolean | PurchaseResult | void>;
   getAvailablePurchases: () => Promise<void>;
   getPurchaseHistories: () => Promise<void>;
@@ -94,17 +93,14 @@ export function useIAP(): IAP_STATUS {
     async ({
       purchase,
       isConsumable,
-      developerPayloadAndroid,
     }: {
       purchase: ProductPurchase;
       isConsumable?: boolean;
-      developerPayloadAndroid?: string;
     }): Promise<string | boolean | PurchaseResult | void> => {
       try {
-        return await finishTransaction({
+        return await finishTransactionInternal({
           purchase,
           isConsumable,
-          developerPayloadAndroid,
         });
       } catch (err) {
         throw err;
