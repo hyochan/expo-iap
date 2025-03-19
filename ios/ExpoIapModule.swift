@@ -17,104 +17,84 @@ struct IapEvent {
 
 @available(iOS 15.0, *)
 func serializeTransaction(_ transaction: Transaction) -> [String: Any?] {
-    // Determine if this is a subscription by productType or expirationDate
     let isSubscription =
         transaction.productType.rawValue.lowercased().contains("renewable")
         || transaction.expirationDate != nil
 
-    // Parse transaction reason from jsonRepresentation if available
     var transactionReasonIos: String? = nil
     var webOrderLineItemId: Int? = nil
     var jsonData: [String: Any]? = nil
+    var jwsReceipt: String = ""
 
-    // JSON representation handling
+    let jsonRep = transaction.jsonRepresentation
+    jwsReceipt = String(data: jsonRep, encoding: .utf8) ?? ""
+
     do {
-        let jsonRep = transaction.jsonRepresentation
-        let jsonObj = try JSONSerialization.jsonObject(with: jsonRep) as! [String: Any]
-        jsonData = jsonObj
-        if let reason = jsonObj["transactionReason"] as? String {
-            transactionReasonIos = reason
-        }
-        if let webOrderId = jsonObj["webOrderLineItemID"] as? NSNumber {
-            webOrderLineItemId = webOrderId.intValue
+        if let jsonObj = try JSONSerialization.jsonObject(with: jsonRep) as? [String: Any] {
+            jsonData = jsonObj
+            transactionReasonIos = jsonObj["transactionReason"] as? String
+            if let webOrderId = jsonObj["webOrderLineItemID"] as? NSNumber {
+                webOrderLineItemId = webOrderId.intValue
+            }
         }
     } catch {
         print("Error parsing JSON representation: \(error)")
     }
 
-    // Create base purchase object that matches Purchase type in TypeScript
     var purchaseMap: [String: Any?] = [
-        // Core purchase fields
         "id": transaction.productID,
         "ids": [transaction.productID],
         "transactionId": String(transaction.id),
         "transactionDate": transaction.purchaseDate.timeIntervalSince1970 * 1000,
-        "transactionReceipt": "",  // Not available in StoreKit 2
-        "purchaseToken": "",  // Not applicable on iOS
+        "transactionReceipt": jwsReceipt,
 
-        // iOS specific fields - basic info
         "quantityIos": transaction.purchasedQuantity,
         "originalTransactionDateIos": transaction.originalPurchaseDate.timeIntervalSince1970 * 1000,
         "originalTransactionIdentifierIos": transaction.originalID,
         "appAccountToken": transaction.appAccountToken?.uuidString,
 
-        // App and Product Identifiers
         "appBundleIdIos": transaction.appBundleID,
         "productTypeIos": transaction.productType.rawValue,
         "subscriptionGroupIdIos": transaction.subscriptionGroupID,
 
-        // Transaction Identifiers
         "webOrderLineItemIdIos": webOrderLineItemId,
 
-        // Purchase and Expiration Dates
         "expirationDateIos": transaction.expirationDate.map { $0.timeIntervalSince1970 * 1000 },
 
-        // Purchase Details
         "isUpgradedIos": transaction.isUpgraded,
         "ownershipTypeIos": transaction.ownershipType.rawValue,
 
-        // Revocation Status
         "revocationDateIos": transaction.revocationDate.map { $0.timeIntervalSince1970 * 1000 },
         "revocationReasonIos": transaction.revocationReason?.rawValue,
+        "transactionReasonIos": transactionReasonIos,
     ]
 
-    // Environment (iOS 16.0+)
     if #available(iOS 16.0, *) {
         purchaseMap["environmentIos"] = transaction.environment.rawValue
     }
 
-    // Storefront (iOS 17.0+)
     if #available(iOS 17.0, *) {
         purchaseMap["storefrontCountryCodeIos"] = transaction.storefront.countryCode
-    }
-
-    // Transaction Reason (iOS 17.0+)
-    if #available(iOS 17.0, *) {
         purchaseMap["reasonIos"] = transaction.reason.rawValue
     }
 
-    // reasonStringRepresentation과 transactionReasonIos는 명시적 타입 처리
-    purchaseMap["reasonStringRepresentationIos"] = transaction.reasonStringRepresentation
-    purchaseMap["transactionReasonIos"] = transactionReasonIos
-
-    // Add offer information if available with proper availability check
     if #available(iOS 17.2, *) {
         if let offer = transaction.offer {
             purchaseMap["offerIos"] = [
-                "id": offer.id as Any,
+                "id": offer.id,
                 "type": offer.type.rawValue,
                 "paymentMode": offer.paymentMode?.rawValue ?? "",
             ]
         }
     }
 
-    // Add additional pricing info if available
-    if #available(iOS 15.4, *), let priceInfo = jsonData?["price"] as? NSNumber {
-        purchaseMap["priceIos"] = priceInfo.doubleValue
-    }
-
-    if #available(iOS 15.4, *), let currencyInfo = jsonData?["currency"] as? String {
-        purchaseMap["currencyIos"] = currencyInfo
+    if #available(iOS 15.4, *), let jsonData = jsonData {
+        if let price = jsonData["price"] as? NSNumber {
+            purchaseMap["priceIos"] = price.doubleValue
+        }
+        if let currency = jsonData["currency"] as? String {
+            purchaseMap["currencyIos"] = currency
+        }
     }
 
     return purchaseMap
@@ -136,7 +116,7 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
         "subscription": p.subscription,
         "type": p.type,
         "currency": p.priceFormatStyle.currencyCode,
-        "platform": "ios",  // Add platform identifier
+        "platform": "ios",
     ]
 }
 
@@ -166,7 +146,6 @@ func serializeRenewalInfo(_ renewalInfo: VerificationResult<Product.Subscription
     switch renewalInfo {
     case .unverified:
         return nil
-
     case .verified(let info):
         return [
             "autoRenewStatus": info.willAutoRenew,
@@ -220,18 +199,13 @@ public class ExpoIapModule: Module {
 
             do {
                 let fetchedProducts = try await Product.products(for: skus)
-
                 await productStore.performOnActor { isolatedStore in
-                    fetchedProducts.forEach({ product in
+                    fetchedProducts.forEach { product in
                         isolatedStore.addProduct(product)
-                    })
+                    }
                 }
-
                 let products = await productStore.getAllProducts()
-
-                return products.map { (prod: Product) -> [String: Any?]? in
-                    return serializeProduct(prod)
-                }.compactMap { $0 }
+                return products.map { serializeProduct($0) }.compactMap { $0 }
             } catch {
                 print("Error fetching items: \(error)")
                 throw error
@@ -242,7 +216,6 @@ public class ExpoIapModule: Module {
             guard let productStore = self.productStore else {
                 return false
             }
-
             await productStore.removeAll()
             self.transactions.removeAll()
             self.productStore = nil
@@ -283,7 +256,6 @@ public class ExpoIapModule: Module {
                         {
                             addTransaction(transaction: transaction)
                         }
-
                     case .nonRenewable:
                         if await self.productStore?.getProduct(productID: transaction.productID)
                             != nil
@@ -295,7 +267,6 @@ public class ExpoIapModule: Module {
                                 addTransaction(transaction: transaction)
                             }
                         }
-
                     default:
                         break
                     }
@@ -387,16 +358,14 @@ public class ExpoIapModule: Module {
                             return nil
                         } else {
                             self.transactions[String(transaction.id)] = transaction
-                            self.sendEvent(
-                                IapEvent.PurchaseUpdated, serializeTransaction(transaction))
-                            return serializeTransaction(transaction)
+                            let serialized = serializeTransaction(transaction)
+                            self.sendEvent(IapEvent.PurchaseUpdated, serialized)
+                            return serialized
                         }
-
                     case .userCancelled:
                         throw NSError(
                             domain: "ExpoIapModule", code: 3,
                             userInfo: [NSLocalizedDescriptionKey: "User cancelled the purchase"])
-
                     case .pending:
                         throw NSError(
                             domain: "ExpoIapModule", code: 4,
@@ -678,10 +647,9 @@ public class ExpoIapModule: Module {
                     let transaction = try self.checkVerified(result)
                     self.transactions[String(transaction.id)] = transaction
                     if self.hasListeners {
-                        self.sendEvent(IapEvent.PurchaseUpdated, serializeTransaction(transaction))
-                        self.sendEvent(
-                            IapEvent.TransactionIapUpdated,
-                            ["transaction": serializeTransaction(transaction)])
+                        let serialized = serializeTransaction(transaction)
+                        self.sendEvent(IapEvent.PurchaseUpdated, serialized)
+                        self.sendEvent(IapEvent.TransactionIapUpdated, ["transaction": serialized])
                     }
                 } catch {
                     if self.hasListeners {
@@ -719,7 +687,6 @@ public class ExpoIapModule: Module {
         switch result {
         case .unverified(_, let error):
             throw error
-
         case .verified(let item):
             return item
         }
