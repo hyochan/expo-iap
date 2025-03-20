@@ -47,6 +47,7 @@ func serializeTransaction(_ transaction: Transaction) -> [String: Any?] {
         "transactionId": String(transaction.id),
         "transactionDate": transaction.purchaseDate.timeIntervalSince1970 * 1000,
         "transactionReceipt": jwsReceipt,
+        "platform": "ios",
 
         "quantityIos": transaction.purchasedQuantity,
         "originalTransactionDateIos": transaction.originalPurchaseDate.timeIntervalSince1970 * 1000,
@@ -136,6 +137,7 @@ func serializeSubscriptionStatus(_ status: Product.SubscriptionInfo.Status) -> [
     return [
         "state": status.state.rawValue,
         "renewalInfo": serializeRenewalInfo(status.renewalInfo),
+        "platform": "ios",
     ]
 }
 
@@ -155,6 +157,7 @@ func serializeRenewalInfo(_ renewalInfo: VerificationResult<Product.Subscription
             "currentProductID": info.currentProductID,
             "debugDescription": info.debugDescription,
             "gracePeriodExpirationDate": info.gracePeriodExpirationDate,
+            "platform": "ios",
         ]
     }
 }

@@ -90,6 +90,7 @@ class ExpoIapModule :
                         "purchaseStateAndroid" to purchase.purchaseState,
                         "packageNameAndroid" to purchase.packageName,
                         "developerPayloadAndroid" to purchase.developerPayload,
+                        "platform" to "android",
                     )
                 purchase.accountIdentifiers?.let { accountIdentifiers ->
                     item["obfuscatedAccountIdAndroid"] = accountIdentifiers.obfuscatedAccountId
@@ -106,6 +107,7 @@ class ExpoIapModule :
         } else {
             val result =
                 mutableMapOf<String, Any?>(
+                    "platform" to "android",
                     "responseCode" to billingResult.responseCode,
                     "debugMessage" to billingResult.debugMessage,
                     "extraMessage" to
@@ -181,7 +183,7 @@ class ExpoIapModule :
                                     "description" to productDetails.description,
                                     "type" to productDetails.productType,
                                     "displayName" to productDetails.name,
-                                    "platform" to "android",  // Add platform identifier
+                                    "platform" to "android",
                                     "oneTimePurchaseOfferDetails" to
                                         productDetails.oneTimePurchaseOfferDetails?.let {
                                             mapOf(
@@ -251,6 +253,7 @@ class ExpoIapModule :
                                     "packageNameAndroid" to purchase.packageName,
                                     "obfuscatedAccountIdAndroid" to purchase.accountIdentifiers?.obfuscatedAccountId,
                                     "obfuscatedProfileIdAndroid" to purchase.accountIdentifiers?.obfuscatedProfileId,
+                                    "platform" to "android",
                                 )
                             if (type == BillingClient.ProductType.SUBS) {
                                 item["autoRenewingAndroid"] = purchase.isAutoRenewing
@@ -293,6 +296,7 @@ class ExpoIapModule :
                                     "dataAndroid" to purchase.originalJson,
                                     "signatureAndroid" to purchase.signature,
                                     "developerPayload" to purchase.developerPayload,
+                                    "platform" to "android",
                                 )
                             items.add(item)
                         }
