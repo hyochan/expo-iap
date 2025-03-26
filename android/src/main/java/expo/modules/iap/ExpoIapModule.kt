@@ -179,8 +179,10 @@ class ExpoIapModule :
 
                                 val currency = productDetails.oneTimePurchaseOfferDetails?.priceCurrencyCode
                                     ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.priceCurrencyCode
+                                    ?: "Unknown"
                                 val displayPrice = productDetails.oneTimePurchaseOfferDetails?.formattedPrice
                                     ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
+                                    ?: "N/A"
 
                                 mapOf(
                                     "id" to productDetails.productId,
