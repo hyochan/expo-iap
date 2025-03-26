@@ -177,6 +177,11 @@ class ExpoIapModule :
                             productDetailsList.map { productDetails ->
                                 skus[productDetails.productId] = productDetails
 
+                                val currency = productDetails.oneTimePurchaseOfferDetails?.priceCurrencyCode
+                                    ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.priceCurrencyCode
+                                val displayPrice = productDetails.oneTimePurchaseOfferDetails?.formattedPrice
+                                    ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
+
                                 mapOf(
                                     "id" to productDetails.productId,
                                     "title" to productDetails.title,
@@ -184,6 +189,8 @@ class ExpoIapModule :
                                     "type" to productDetails.productType,
                                     "displayName" to productDetails.name,
                                     "platform" to "android",
+                                    "currency" to currency,
+                                    "displayPrice" to displayPrice,
                                     "oneTimePurchaseOfferDetails" to
                                         productDetails.oneTimePurchaseOfferDetails?.let {
                                             mapOf(

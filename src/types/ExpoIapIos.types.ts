@@ -22,7 +22,6 @@ type SubscriptionInfo = {
 
 export type ProductIos = ProductBase & {
   displayName: string;
-  displayPrice: string;
   isFamilyShareable: boolean;
   jsonRepresentation: string;
   subscription: SubscriptionInfo;

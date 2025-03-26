@@ -26,9 +26,9 @@ export type ProductBase = {
   description: string;
   type: ProductType;
   displayName?: string;
-  displayPrice?: string;
+  displayPrice: string;
+  currency: string;
   price?: number;
-  currency?: string;
 };
 
 // Define literal platform types for better type discrimination
