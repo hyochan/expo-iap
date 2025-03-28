@@ -15,12 +15,6 @@ export function isProductAndroid<T extends {platform?: string}>(
   );
 }
 
-export function isSubscriptionProductAndroid<T extends {platform?: string}>(
-  item: unknown,
-): item is T & {platform: 'android'} {
-  return isProductAndroid(item);
-}
-
 /**
  * Deep link to subscriptions screen on Android.
  * @param {string} sku The product's SKU (on Android)

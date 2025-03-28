@@ -34,11 +34,7 @@ export type ProductBase = {
 // Define literal platform types for better type discrimination
 export type IosPlatform = {platform: 'ios'};
 export type AndroidPlatform = {platform: 'android'};
-
-export enum ProductType {
-  InAppPurchase = 'inapp',
-  Subscription = 'subs',
-}
+export type ProductType = 'inapp' | 'subs';
 
 // Common base purchase type
 export type PurchaseBase = {

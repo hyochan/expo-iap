@@ -9,6 +9,7 @@ import {
   getPurchaseHistory,
   finishTransaction as finishTransactionInternal,
   getSubscriptions,
+  requestPurchase as requestPurchaseInternal,
 } from './';
 import {useCallback, useEffect, useState, useRef} from 'react';
 import {
@@ -24,7 +25,7 @@ import {TransactionEvent} from './modules/ios';
 import {Subscription} from 'expo-modules-core';
 import {Platform} from 'react-native';
 
-type IAP_STATUS = {
+type UseIap = {
   connected: boolean;
   products: Product[];
   promotedProductsIOS: ProductPurchase[];
@@ -40,13 +41,14 @@ type IAP_STATUS = {
     purchase: Purchase;
     isConsumable?: boolean;
   }) => Promise<string | boolean | PurchaseResult | void>;
-  getAvailablePurchases: () => Promise<void>;
-  getPurchaseHistories: () => Promise<void>;
+  getAvailablePurchases: (skus: string[]) => Promise<void>;
+  getPurchaseHistories: (skus: string[]) => Promise<void>;
   getProducts: (skus: string[]) => Promise<void>;
   getSubscriptions: (skus: string[]) => Promise<void>;
+  requestPurchase: typeof requestPurchaseInternal;
 };
 
-export function useIAP(): IAP_STATUS {
+export function useIAP(): UseIap {
   const [connected, setConnected] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [promotedProductsIOS, setPromotedProductsIOS] = useState<
@@ -63,29 +65,31 @@ export function useIAP(): IAP_STATUS {
   const [currentPurchaseError, setCurrentPurchaseError] =
     useState<PurchaseError>();
 
-  // 구독을 훅 인스턴스별로 관리하기 위한 ref
   const subscriptionsRef = useRef<{
     purchaseUpdate?: Subscription;
     purchaseError?: Subscription;
     promotedProductsIos?: Subscription;
   }>({});
 
-  const requestProducts = useCallback(async (skus: string[]): Promise<void> => {
-    setProducts(await getProducts(skus));
-  }, []);
+  const getProductsInternal = useCallback(
+    async (skus: string[]): Promise<void> => {
+      setProducts(await getProducts(skus));
+    },
+    [],
+  );
 
-  const requestSubscriptions = useCallback(
+  const getSubscriptionsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
       setSubscriptions(await getSubscriptions(skus));
     },
     [],
   );
 
-  const requestAvailablePurchases = useCallback(async (): Promise<void> => {
+  const getAvailablePurchasesInternal = useCallback(async (): Promise<void> => {
     setAvailablePurchases(await getAvailablePurchases());
   }, []);
 
-  const requestPurchaseHistories = useCallback(async (): Promise<void> => {
+  const getPurchaseHistoriesInternal = useCallback(async (): Promise<void> => {
     setPurchaseHistories(await getPurchaseHistory());
   }, []);
 
@@ -172,9 +176,10 @@ export function useIAP(): IAP_STATUS {
     availablePurchases,
     currentPurchase,
     currentPurchaseError,
-    getProducts: requestProducts,
-    getSubscriptions: requestSubscriptions,
-    getAvailablePurchases: requestAvailablePurchases,
-    getPurchaseHistories: requestPurchaseHistories,
+    getAvailablePurchases: getAvailablePurchasesInternal,
+    getPurchaseHistories: getPurchaseHistoriesInternal,
+    getProducts: getProductsInternal,
+    getSubscriptions: getSubscriptionsInternal,
+    requestPurchase: requestPurchaseInternal,
   };
 }

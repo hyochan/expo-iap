@@ -1,14 +1,3 @@
-import {
-  endConnection,
-  getProducts,
-  getSubscriptions,
-  initConnection,
-  purchaseErrorListener,
-  purchaseUpdatedListener,
-  requestPurchase,
-  requestSubscription,
-  // eslint-disable-next-line import/no-unresolved
-} from 'expo-iap';
 import {useEffect, useState} from 'react';
 import {
   Alert,
@@ -21,14 +10,8 @@ import {
   Text,
   View,
 } from 'react-native';
-
-import {
-  Product,
-  ProductPurchase,
-  PurchaseError,
-  SubscriptionProduct,
-} from '../src/ExpoIap.types';
-import {RequestSubscriptionAndroidProps} from '../src/types/ExpoIapAndroid.types';
+// eslint-disable-next-line import/no-unresolved
+import {useIAP} from 'expo-iap';
 
 const productSkus = [
   'cpk.points.1000',
@@ -42,84 +25,79 @@ const subscriptionSkus = [
   'cpk.membership.monthly.silver',
 ];
 
-const operations = [
-  'initConnection',
-  'getProducts',
-  'getSubscriptions',
-  'endConnection',
-];
+const operations = ['getProducts', 'getSubscriptions'] as const;
 type Operation = (typeof operations)[number];
 
 export default function App() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [subscriptions, setSubscriptions] = useState<SubscriptionProduct[]>([]);
+  const {
+    connected,
+    products,
+    subscriptions,
+    currentPurchase,
+    currentPurchaseError,
+    getProducts,
+    getSubscriptions,
+    requestPurchase,
+  } = useIAP();
 
-  console.log('isConnected', isConnected);
-  console.log('products', products);
-  console.log('subscriptions', subscriptions);
+  const [isReady, setIsReady] = useState(false);
+
+  // Fetch products and subscriptions only when connected
+  useEffect(() => {
+    if (!connected) return;
+
+    const initializeIAP = async () => {
+      try {
+        await Promise.all([
+          getProducts(productSkus),
+          getSubscriptions(subscriptionSkus),
+        ]);
+        setIsReady(true);
+      } catch (error) {
+        console.error('Error initializing IAP:', error);
+      }
+    };
+    initializeIAP();
+  }, [connected, getProducts, getSubscriptions]);
+
+  // Handle purchase updates and errors
+  useEffect(() => {
+    if (currentPurchase) {
+      InteractionManager.runAfterInteractions(() => {
+        Alert.alert('Purchase updated', JSON.stringify(currentPurchase));
+      });
+    }
+
+    if (currentPurchaseError) {
+      InteractionManager.runAfterInteractions(() => {
+        Alert.alert('Purchase error', JSON.stringify(currentPurchaseError));
+      });
+    }
+  }, [currentPurchase, currentPurchaseError]);
 
   const handleOperation = async (operation: Operation) => {
-    switch (operation) {
-      case 'initConnection':
-        if (await initConnection()) setIsConnected(true);
-        return;
+    if (!connected) {
+      Alert.alert('Not Connected', 'Please wait for IAP to connect.');
+      return;
+    }
 
-      case 'endConnection':
-        if (await endConnection()) {
-          setProducts([]);
-          setIsConnected(false);
-        }
-        break;
-
-      case 'getProducts':
-        try {
-          const products = await getProducts(productSkus);
-          setProducts(products);
-        } catch (error) {
-          console.error(error);
-        }
-        break;
-
-      case 'getSubscriptions':
-        try {
-          const subscriptions = await getSubscriptions(subscriptionSkus);
-          setSubscriptions(subscriptions);
-        } catch (error) {
-          console.error(error);
-        }
-        break;
-
-      default:
-        console.log('Unknown operation');
+    try {
+      switch (operation) {
+        case 'getProducts':
+          await getProducts(productSkus);
+          break;
+        case 'getSubscriptions':
+          await getSubscriptions(subscriptionSkus);
+          break;
+      }
+    } catch (error) {
+      console.error(`Error in ${operation}:`, error);
     }
   };
 
-  useEffect(() => {
-    const purchaseUpdatedSubs = purchaseUpdatedListener(
-      (purchase: ProductPurchase) => {
-        InteractionManager.runAfterInteractions(() => {
-          Alert.alert('Purchase updated', JSON.stringify(purchase));
-        });
-      },
-    );
-
-    const purchaseErrorSubs = purchaseErrorListener((error: PurchaseError) => {
-      InteractionManager.runAfterInteractions(() => {
-        Alert.alert('Purchase error', JSON.stringify(error));
-      });
-    });
-
-    return () => {
-      purchaseUpdatedSubs.remove();
-      purchaseErrorSubs.remove();
-      endConnection();
-    };
-  }, []);
-
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Expo IAP Example</Text>
+      <Text style={styles.title}>Expo IAP Example with useIAP</Text>
       <View style={styles.buttons}>
         <ScrollView contentContainerStyle={styles.buttonsWrapper} horizontal>
           {operations.map((operation) => (
@@ -135,8 +113,10 @@ export default function App() {
         </ScrollView>
       </View>
       <View style={styles.content}>
-        {!isConnected ? (
+        {!connected ? (
           <Text>Not connected</Text>
+        ) : !isReady ? (
+          <Text>Loading...</Text>
         ) : (
           <View style={{gap: 12}}>
             <Text style={{fontSize: 20}}>Products</Text>
@@ -152,7 +132,9 @@ export default function App() {
                       title="Buy"
                       onPress={() => {
                         requestPurchase({
-                          skus: [item.id],
+                          request: {
+                            skus: [item.id],
+                          },
                         });
                       }}
                     />
@@ -170,7 +152,7 @@ export default function App() {
                       title="Buy"
                       onPress={() => {
                         requestPurchase({
-                          sku: item.id,
+                          request: {skus: [item.id]},
                         });
                       }}
                     />
@@ -193,17 +175,20 @@ export default function App() {
                     <Button
                       title="Subscribe"
                       onPress={() => {
-                        requestSubscription({
-                          skus: [item.id],
-                          ...(offer.offerToken && {
-                            subscriptionOffers: [
-                              {
-                                sku: item.id,
-                                offerToken: offer.offerToken,
-                              },
-                            ],
-                          }),
-                        } as RequestSubscriptionAndroidProps);
+                        requestPurchase({
+                          request: {
+                            skus: [item.id],
+                            subscriptionOffers: offer.offerToken
+                              ? [
+                                  {
+                                    sku: item.id,
+                                    offerToken: offer.offerToken,
+                                  },
+                                ]
+                              : [],
+                          },
+                          type: 'subs',
+                        });
                       }}
                     />
                   </View>
@@ -219,7 +204,10 @@ export default function App() {
                     <Button
                       title="Subscribe"
                       onPress={() => {
-                        requestSubscription({sku: item.id});
+                        requestPurchase({
+                          request: {sku: item.id},
+                          type: 'subs',
+                        });
                       }}
                     />
                   </View>
@@ -249,7 +237,6 @@ const styles = StyleSheet.create({
   },
   buttonsWrapper: {
     padding: 24,
-
     gap: 8,
   },
   buttonView: {

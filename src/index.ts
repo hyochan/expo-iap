@@ -5,7 +5,6 @@ import {Platform} from 'react-native';
 import {
   Product,
   ProductPurchase,
-  ProductType,
   Purchase,
   PurchaseError,
   PurchaseResult,
@@ -24,16 +23,13 @@ import {
   RequestPurchaseIosProps,
   RequestSubscriptionIosProps,
 } from './types/ExpoIapIos.types';
-import {isProductIos, isSubscriptionProductIos} from './modules/ios';
-import {
-  isProductAndroid,
-  isSubscriptionProductAndroid,
-} from './modules/android';
+import {isProductIos} from './modules/ios';
+import {isProductAndroid} from './modules/android';
 
 export * from './modules/android';
 export * from './modules/ios';
 
-// Get the native constant value.
+// Get the native constant value
 export const PI = ExpoIapModule.PI;
 
 export enum IapEvent {
@@ -81,11 +77,7 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
       return items.filter((item: unknown) => isProductIos<Product>(item));
     },
     android: async () => {
-      const products = await ExpoIapModule.getItemsByType(
-        ProductType.InAppPurchase,
-        skus,
-      );
-
+      const products = await ExpoIapModule.getItemsByType('inapp', skus);
       return products.filter((product: unknown) =>
         isProductAndroid<Product>(product),
       );
@@ -105,7 +97,7 @@ export const getSubscriptions = async (
     ios: async () => {
       const rawItems = await ExpoIapModule.getItems(skus);
       return rawItems.filter((item: unknown) => {
-        if (!isSubscriptionProductIos(item)) return false;
+        if (!isProductIos(item)) return false;
         return (
           typeof item === 'object' &&
           item !== null &&
@@ -118,7 +110,7 @@ export const getSubscriptions = async (
     android: async () => {
       const rawItems = await ExpoIapModule.getItemsByType('subs', skus);
       return rawItems.filter((item: unknown) => {
-        if (!isSubscriptionProductAndroid(item)) return false;
+        if (!isProductAndroid(item)) return false;
         return (
           typeof item === 'object' &&
           item !== null &&
@@ -152,12 +144,9 @@ export const getPurchaseHistory = ({
         );
       },
       android: async () => {
-        const products = await ExpoIapModule.getPurchaseHistoryByType(
-          ProductType.InAppPurchase,
-        );
-        const subscriptions = await ExpoIapModule.getPurchaseHistoryByType(
-          ProductType.Subscription,
-        );
+        const products = await ExpoIapModule.getPurchaseHistoryByType('inapp');
+        const subscriptions =
+          await ExpoIapModule.getPurchaseHistoryByType('subs');
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
@@ -178,12 +167,9 @@ export const getAvailablePurchases = ({
           onlyIncludeActiveItems,
         ),
       android: async () => {
-        const products = await ExpoIapModule.getAvailableItemsByType(
-          ProductType.InAppPurchase,
-        );
-        const subscriptions = await ExpoIapModule.getAvailableItemsByType(
-          ProductType.Subscription,
-        );
+        const products = await ExpoIapModule.getAvailableItemsByType('inapp');
+        const subscriptions =
+          await ExpoIapModule.getAvailableItemsByType('subs');
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
@@ -192,9 +178,7 @@ export const getAvailablePurchases = ({
 const offerToRecordIos = (
   offer: PaymentDiscount | undefined,
 ): Record<keyof PaymentDiscount, string> | undefined => {
-  if (!offer) {
-    return undefined;
-  }
+  if (!offer) return undefined;
   return {
     identifier: offer.identifier,
     keyIdentifier: offer.keyIdentifier,
@@ -204,44 +188,77 @@ const offerToRecordIos = (
   };
 };
 
+// Define discriminated union with explicit type parameter
+type PurchaseRequest =
+  | {
+      request: RequestPurchaseIosProps | RequestPurchaseAndroidProps;
+      type?: 'inapp';
+    }
+  | {
+      request: RequestSubscriptionAndroidProps | RequestSubscriptionIosProps;
+      type: 'subs';
+    };
+
+// Type guards for request objects
+const isIosRequest = (
+  request: any,
+): request is RequestPurchaseIosProps | RequestSubscriptionIosProps =>
+  'sku' in request && typeof request.sku === 'string';
+
 export const requestPurchase = (
-  request: RequestPurchaseIosProps | RequestPurchaseAndroidProps,
-): Promise<ProductPurchase | ProductPurchase[] | void> =>
-  (
-    Platform.select({
-      ios: async () => {
-        if (!('sku' in request)) {
-          throw new Error('sku is required for iOS purchase');
-        }
-        const {
-          sku,
-          andDangerouslyFinishTransactionAutomaticallyIOS = false,
-          appAccountToken,
-          quantity,
-          withOffer,
-        } = request;
-        const offer = offerToRecordIos(withOffer);
-        const purchase = await ExpoIapModule.buyProduct(
-          sku,
-          andDangerouslyFinishTransactionAutomaticallyIOS,
-          appAccountToken,
-          quantity ?? -1,
-          offer,
-        );
-        return Promise.resolve(purchase);
-      },
-      android: async () => {
-        if (!('skus' in request) || !request.skus.length) {
-          throw new Error('skus is required for Android purchase');
-        }
-        const {
-          skus,
-          obfuscatedAccountIdAndroid,
-          obfuscatedProfileIdAndroid,
-          isOfferPersonalized,
-        } = request;
+  requestObj: PurchaseRequest,
+): Promise<
+  | ProductPurchase
+  | SubscriptionPurchase
+  | ProductPurchase[]
+  | SubscriptionPurchase[]
+  | void
+> => {
+  const {request, type = 'inapp'} = requestObj;
+
+  if (Platform.OS === 'ios') {
+    if (!isIosRequest(request)) {
+      throw new Error(
+        'Invalid request for iOS. The `sku` property is required and must be a string.',
+      );
+    }
+
+    const {
+      sku,
+      andDangerouslyFinishTransactionAutomaticallyIOS = false,
+      appAccountToken,
+      quantity,
+      withOffer,
+    } = request;
+
+    return (async () => {
+      const offer = offerToRecordIos(withOffer);
+      const purchase = await ExpoIapModule.buyProduct(
+        sku,
+        andDangerouslyFinishTransactionAutomaticallyIOS,
+        appAccountToken,
+        quantity ?? -1,
+        offer,
+      );
+
+      return type === 'inapp'
+        ? (purchase as ProductPurchase)
+        : (purchase as SubscriptionPurchase);
+    })();
+  }
+
+  if (Platform.OS === 'android') {
+    if (type === 'inapp') {
+      const {
+        skus,
+        obfuscatedAccountIdAndroid,
+        obfuscatedProfileIdAndroid,
+        isOfferPersonalized,
+      } = request as RequestPurchaseAndroidProps;
+
+      return (async () => {
         return ExpoIapModule.buyItemByType({
-          type: ProductType.InAppPurchase,
+          type: 'inapp',
           skuArr: skus,
           purchaseToken: undefined,
           replacementMode: -1,
@@ -249,60 +266,58 @@ export const requestPurchase = (
           obfuscatedProfileId: obfuscatedProfileIdAndroid,
           offerTokenArr: [],
           isOfferPersonalized: isOfferPersonalized ?? false,
-        });
-      },
-    }) || Promise.resolve
-  )();
+        }) as Promise<ProductPurchase[]>;
+      })();
+    }
 
-export const requestSubscription = (
-  request: RequestSubscriptionProps,
-): Promise<SubscriptionPurchase | SubscriptionPurchase[] | null | void> =>
-  (
-    Platform.select({
-      ios: async () => {
-        if (!('sku' in request)) {
-          throw new Error('sku is required for iOS subscriptions');
-        }
-        const {
-          sku,
-          andDangerouslyFinishTransactionAutomaticallyIOS = false,
-          appAccountToken,
-          quantity,
-          withOffer,
-        } = request as RequestSubscriptionIosProps;
-        const offer = offerToRecordIos(withOffer);
-        const purchase = await ExpoIapModule.buyProduct(
-          sku,
-          andDangerouslyFinishTransactionAutomaticallyIOS,
-          appAccountToken,
-          quantity ?? -1,
-          offer,
-        );
-        return Promise.resolve(purchase as SubscriptionPurchase);
-      },
-      android: async () => {
-        const {
-          skus,
-          isOfferPersonalized,
-          obfuscatedAccountIdAndroid,
-          obfuscatedProfileIdAndroid,
-          subscriptionOffers,
-          replacementModeAndroid,
-          purchaseTokenAndroid,
-        } = request as RequestSubscriptionAndroidProps;
+    if (type === 'subs') {
+      const {
+        skus,
+        obfuscatedAccountIdAndroid,
+        obfuscatedProfileIdAndroid,
+        isOfferPersonalized,
+        subscriptionOffers = [],
+        replacementModeAndroid = -1,
+        purchaseTokenAndroid,
+      } = request as RequestSubscriptionAndroidProps;
+
+      return (async () => {
         return ExpoIapModule.buyItemByType({
-          type: ProductType.Subscription,
-          skuArr: skus.map((so) => so),
+          type: 'subs',
+          skuArr: skus,
           purchaseToken: purchaseTokenAndroid,
           replacementMode: replacementModeAndroid,
           obfuscatedAccountId: obfuscatedAccountIdAndroid,
           obfuscatedProfileId: obfuscatedProfileIdAndroid,
           offerTokenArr: subscriptionOffers.map((so) => so.offerToken),
           isOfferPersonalized: isOfferPersonalized ?? false,
-        });
-      },
-    }) || (() => Promise.resolve(null))
-  )();
+        }) as Promise<SubscriptionPurchase[]>;
+      })();
+    }
+
+    throw new Error(
+      "Invalid request for Android: Expected a 'RequestPurchaseAndroidProps' object with a valid 'skus' array or a 'RequestSubscriptionAndroidProps' object with 'skus' and 'subscriptionOffers'.",
+    );
+  }
+
+  return Promise.resolve(); // Fallback for unsupported platforms
+};
+
+/**
+ * @deprecated Use `requestPurchase({ request, type: 'subs' })` instead. This method will be removed in version 3.0.0+.
+ */
+export const requestSubscription = async (
+  request: RequestSubscriptionProps,
+): Promise<SubscriptionPurchase | SubscriptionPurchase[] | null | void> => {
+  console.warn(
+    "`requestSubscription` is deprecated. Use `requestPurchase({ request, type: 'subs' })` instead. This method will be removed in version 3.0.0+.",
+  );
+  return (await requestPurchase({request, type: 'subs'})) as
+    | SubscriptionPurchase
+    | SubscriptionPurchase[]
+    | null
+    | void;
+};
 
 export const finishTransaction = ({
   purchase,

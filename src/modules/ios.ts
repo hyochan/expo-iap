@@ -32,12 +32,6 @@ export function isProductIos<T extends {platform?: string}>(
   );
 }
 
-export function isSubscriptionProductIos<T extends {platform?: string}>(
-  item: unknown,
-): item is T & {platform: 'ios'} {
-  return isProductIos(item);
-}
-
 // Functions
 /**
  * Sync state with Appstore (iOS only)
