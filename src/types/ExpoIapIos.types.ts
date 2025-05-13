@@ -109,7 +109,6 @@ export type ProductPurchaseIos = PurchaseBase & {
   quantityIos?: number;
   originalTransactionDateIos?: number;
   originalTransactionIdentifierIos?: string;
-  verificationResultIos?: string;
   appAccountToken?: string;
   // iOS additional fields from StoreKit 2
   expirationDateIos?: number;
