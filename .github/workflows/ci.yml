@@ -8,6 +8,7 @@ on:
       - 'src/**'
       - 'scripts/**'
       - 'test/**'
+      - 'plugin/**'
       - '*.md'
       - '*.json'
       - '*.js'
@@ -58,7 +59,6 @@ jobs:
 
       - name: Install modules
         run: bun install --immutable
-
 
       # - name: Install node_modules for `IapExample/`
       #   run: yarn install --immutable
