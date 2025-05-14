@@ -237,7 +237,7 @@ public class ExpoIapModule: Module {
             func addTransaction(transaction: Transaction, jwsRepresentationIos: String? = nil) {
                 purchasedItemsSerialized.append(serializeTransaction(transaction, jwsRepresentationIos: jwsRepresentationIos))
                 if alsoPublishToEventListener {
-                    self.sendEvent(IapEvent.PurchaseUpdated, serializeTransaction(transaction))
+                    self.sendEvent(IapEvent.PurchaseUpdated, serializeTransaction(transaction, jwsRepresentationIos: jwsRepresentationIos))
                 }
             }
 
