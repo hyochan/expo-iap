@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
 
 group = 'expo.modules.iap'
 version = '0.1.0'
@@ -40,4 +41,10 @@ android {
   lintOptions {
     abortOnError false
   }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7"
+    implementation "com.android.billingclient:billing-ktx:7.0.0"
+    implementation "com.google.android.gms:play-services-base:18.1.0"
 }

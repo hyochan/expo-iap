@@ -1,7 +1,7 @@
 import {
   WarningAggregator,
   withAndroidManifest,
-  withProjectBuildGradle,
+  withAppBuildGradle,
   ConfigPlugin,
   createRunOncePlugin,
 } from 'expo/config-plugins';
@@ -27,16 +27,10 @@ const addLineToGradle = (
   return lines.join('\n');
 };
 
-const modifyProjectBuildGradle = (gradle: string): string => {
+const modifyAppBuildGradle = (gradle: string): string => {
   let modified = gradle;
 
-  // 1. supportLibVersion
-  const supportLib = `supportLibVersion = "28.0.0"`;
-  if (!modified.includes(supportLib)) {
-    modified = addLineToGradle(modified, /ext\s*{/, supportLib);
-  }
-
-  // 2. billing library
+  // Add billing library dependencies to app-level build.gradle
   const billingDep = `    implementation "com.android.billingclient:billing-ktx:7.0.0"`;
   const gmsDep = `    implementation "com.google.android.gms:play-services-base:18.1.0"`;
   if (!modified.includes(billingDep)) {
@@ -50,8 +44,9 @@ const modifyProjectBuildGradle = (gradle: string): string => {
 };
 
 const withIAPAndroid: ConfigPlugin = (config) => {
-  config = withProjectBuildGradle(config, (config) => {
-    config.modResults.contents = modifyProjectBuildGradle(
+  // Add IAP dependencies to app build.gradle
+  config = withAppBuildGradle(config, (config) => {
+    config.modResults.contents = modifyAppBuildGradle(
       config.modResults.contents,
     );
     return config;
