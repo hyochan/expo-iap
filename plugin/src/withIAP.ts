@@ -2,34 +2,51 @@ import {
   WarningAggregator,
   withAndroidManifest,
   withProjectBuildGradle,
+  ConfigPlugin,
+  createRunOncePlugin,
 } from 'expo/config-plugins';
-import {ConfigPlugin, createRunOncePlugin} from 'expo/config-plugins';
 
 const pkg = require('../../package.json');
 
-const addToBuildGradle = (
-  newLine: string,
+const addLineToGradle = (
+  content: string,
   anchor: RegExp | string,
-  offset: number,
-  buildGradle: string,
-) => {
-  const lines = buildGradle.split('\n');
-  const lineIndex = lines.findIndex((line) => line.match(anchor));
-  if (lineIndex === -1) {
-    console.warn('Anchor "ext" not found in build.gradle, appending to end');
-    lines.push(newLine);
+  lineToAdd: string,
+  offset: number = 1,
+): string => {
+  const lines = content.split('\n');
+  const index = lines.findIndex((line) => line.match(anchor));
+  if (index === -1) {
+    console.warn(
+      `Anchor "${anchor}" not found in build.gradle. Appending to end.`,
+    );
+    lines.push(lineToAdd);
   } else {
-    lines.splice(lineIndex + offset, 0, newLine);
+    lines.splice(index + offset, 0, lineToAdd);
   }
   return lines.join('\n');
 };
 
-export const modifyProjectBuildGradle = (buildGradle: string) => {
-  const supportLibVersion = `supportLibVersion = "28.0.0"`;
-  if (buildGradle.includes(supportLibVersion)) {
-    return buildGradle;
+const modifyProjectBuildGradle = (gradle: string): string => {
+  let modified = gradle;
+
+  // 1. supportLibVersion
+  const supportLib = `supportLibVersion = "28.0.0"`;
+  if (!modified.includes(supportLib)) {
+    modified = addLineToGradle(modified, /ext\s*{/, supportLib);
   }
-  return addToBuildGradle(supportLibVersion, 'ext', 1, buildGradle);
+
+  // 2. billing library
+  const billingDep = `    implementation "com.android.billingclient:billing-ktx:7.0.0"`;
+  const gmsDep = `    implementation "com.google.android.gms:play-services-base:18.1.0"`;
+  if (!modified.includes(billingDep)) {
+    modified = addLineToGradle(modified, /dependencies\s*{/, billingDep);
+  }
+  if (!modified.includes(gmsDep)) {
+    modified = addLineToGradle(modified, /dependencies\s*{/, gmsDep, 1);
+  }
+
+  return modified;
 };
 
 const withIAPAndroid: ConfigPlugin = (config) => {
@@ -40,28 +57,27 @@ const withIAPAndroid: ConfigPlugin = (config) => {
     return config;
   });
 
-  // Adding BILLING permission to AndroidManifest.xml
   config = withAndroidManifest(config, (config) => {
-    console.log('Modifying AndroidManifest.xml...');
     const manifest = config.modResults;
-
     if (!manifest.manifest['uses-permission']) {
       manifest.manifest['uses-permission'] = [];
     }
 
     const permissions = manifest.manifest['uses-permission'];
-    const billingPermission = {
-      $: {'android:name': 'com.android.vending.BILLING'},
-    };
-    if (
-      !permissions.some(
-        (perm: any) => perm.$['android:name'] === 'com.android.vending.BILLING',
-      )
-    ) {
-      permissions.push(billingPermission);
-      console.log('Added com.android.vending.BILLING to permissions');
+    const billingPerm = {$: {'android:name': 'com.android.vending.BILLING'}};
+
+    const alreadyExists = permissions.some(
+      (p) => p.$['android:name'] === 'com.android.vending.BILLING',
+    );
+    if (!alreadyExists) {
+      permissions.push(billingPerm);
+      console.log(
+        '✅ Added com.android.vending.BILLING to AndroidManifest.xml',
+      );
     } else {
-      console.log('com.android.vending.BILLING already exists in manifest');
+      console.log(
+        'ℹ️ com.android.vending.BILLING already exists in AndroidManifest.xml',
+      );
     }
 
     return config;
@@ -70,20 +86,18 @@ const withIAPAndroid: ConfigPlugin = (config) => {
   return config;
 };
 
-interface Props {}
-
-const withIAP: ConfigPlugin<Props | undefined> = (config, props) => {
+const withIAP: ConfigPlugin = (config, _props) => {
   try {
-    console.log('Applying expo-iap plugin...');
-    config = withIAPAndroid(config);
+    console.log('🛠️ Applying expo-iap config plugin...');
+    return withIAPAndroid(config);
   } catch (error) {
     WarningAggregator.addWarningAndroid(
       'expo-iap',
-      `There was a problem configuring expo-iap in your native Android project: ${error}`,
+      `expo-iap plugin encountered an error: ${error}`,
     );
-    console.error('Error in expo-iap plugin:', error);
+    console.error('expo-iap plugin error:', error);
+    return config;
   }
-  return config;
 };
 
 export default createRunOncePlugin(withIAP, pkg.name, pkg.version);
