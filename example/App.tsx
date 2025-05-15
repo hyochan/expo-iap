@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Platform,
 } from 'react-native';
 // eslint-disable-next-line import/no-unresolved
 import {useIAP} from 'expo-iap';
@@ -25,12 +26,13 @@ const subscriptionSkus = [
   'cpk.membership.monthly.silver',
 ];
 
-const operations = ['getProducts', 'getSubscriptions'] as const;
+const operations = ['getProducts', 'getSubscriptions', 'validateReceipt'] as const;
 type Operation = (typeof operations)[number];
 
 export default function App() {
   const [syncError, setSyncError] = useState<Error | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [validationResult, setValidationResult] = useState<any>(null);
 
   const {
     connected,
@@ -41,6 +43,7 @@ export default function App() {
     getProducts,
     getSubscriptions,
     requestPurchase,
+    validateReceipt,
   } = useIAP({
     onPurchaseSuccess: (purchase) => {
       InteractionManager.runAfterInteractions(() => {
@@ -112,9 +115,42 @@ export default function App() {
         case 'getSubscriptions':
           await getSubscriptions(subscriptionSkus);
           break;
+        case 'validateReceipt':
+          // Choose the first product for validation as an example
+          const productToValidate = products.length > 0 ? products[0].id : 
+            (subscriptions.length > 0 ? subscriptions[0].id : null);
+          
+          if (!productToValidate) {
+            Alert.alert('No Products', 'Please fetch products first');
+            return;
+          }
+
+          setValidationResult(null);
+
+          if (Platform.OS === 'ios') {
+            const result = await validateReceipt(productToValidate);
+            setValidationResult(result);
+            Alert.alert(
+              'iOS Receipt Validation', 
+              `Result: ${result.isValid ? 'Valid' : 'Invalid'}\n` +
+              `Receipt data available: ${result.receiptData ? 'Yes' : 'No'}\n` +
+              `JWS data available: ${result.jwsRepresentation ? 'Yes' : 'No'}`
+            );
+          } else if (Platform.OS === 'android') {
+            Alert.alert(
+              'Android Receipt Validation',
+              'Android receipt validation requires additional server parameters.\n\n' +
+              'For a real app, you would need:\n' +
+              '- packageName\n' +
+              '- productToken\n' +
+              '- accessToken'
+            );
+          }
+          break;
       }
     } catch (error) {
       console.error(`Error in ${operation}:`, error);
+      Alert.alert(`Error in ${operation}`, String(error));
     }
   };
 
@@ -145,6 +181,16 @@ export default function App() {
           ))}
         </ScrollView>
       </View>
+
+      {validationResult && (
+        <View style={styles.validationResult}>
+          <Text style={styles.validationTitle}>Receipt Validation Result:</Text>
+          <Text>Valid: {validationResult.isValid ? 'Yes' : 'No'}</Text>
+          <Text>Receipt data: {validationResult.receiptData ? 'Available' : 'Not available'}</Text>
+          <Text>JWS data: {validationResult.jwsRepresentation ? 'Available' : 'Not available'}</Text>
+        </View>
+      )}
+
       <View style={styles.content}>
         {!connected ? (
           <Text>Not connected</Text>
@@ -294,5 +340,16 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#cc0000',
     fontWeight: '600',
+  },
+  validationResult: {
+    backgroundColor: '#f0f0f0',
+    padding: 12,
+    borderRadius: 8,
+    width: '90%',
+    marginVertical: 10,
+  },
+  validationTitle: {
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
 });
