@@ -201,8 +201,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         console.warn('Failed to refresh subscription status:', error);
       }
     },
-    [getSubscriptionsInternal, getAvailablePurchasesInternal, subscriptions],
+    [getAvailablePurchasesInternal, getSubscriptionsInternal, subscriptions],
   );
+
   const validateReceipt = useCallback(
     async (
       sku: string,

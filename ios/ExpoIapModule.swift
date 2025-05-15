@@ -647,24 +647,7 @@ public class ExpoIapModule: Module {
         }
 
         AsyncFunction("getReceiptData") { () -> String? in
-            if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
-               FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
-                do {
-                    let receiptData = try Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
-                    return receiptData.base64EncodedString(options: [])
-                } catch {
-                    throw NSError(
-                        domain: "ExpoIapModule", code: 13,
-                        userInfo: [
-                            NSLocalizedDescriptionKey:
-                                "Error reading receipt data: \(error.localizedDescription)"
-                        ])
-                }
-            } else {
-                throw NSError(
-                    domain: "ExpoIapModule", code: 14,
-                    userInfo: [NSLocalizedDescriptionKey: "App Store receipt not found"])
-            }
+            return try self.getReceiptDataInternal()
         }
         
         AsyncFunction("isTransactionVerified") { (sku: String) -> Bool in
@@ -712,23 +695,12 @@ public class ExpoIapModule: Module {
             }
             
             // Get receipt data
-            var receiptData: String? = nil
-            if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
-               FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
-                do {
-                    let receiptDataRaw = try Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
-                    receiptData = receiptDataRaw.base64EncodedString(options: [])
-                } catch {
-                    throw NSError(
-                        domain: "ExpoIapModule", code: 13,
-                        userInfo: [NSLocalizedDescriptionKey: "Error reading receipt data: \(error.localizedDescription)"]
-                    )
-                }
-            } else {
-                throw NSError(
-                    domain: "ExpoIapModule", code: 14,
-                    userInfo: [NSLocalizedDescriptionKey: "App Store receipt not found"]
-                )
+            var receiptData: String = ""
+            do {
+                receiptData = try self.getReceiptDataInternal()
+            } catch {
+                // Continue with validation even if receipt retrieval fails
+                // Error will be reflected by empty receipt data
             }
             
             var isValid = false
@@ -752,7 +724,7 @@ public class ExpoIapModule: Module {
             
             return [
                 "isValid": isValid,
-                "receiptData": receiptData ?? "",
+                "receiptData": receiptData,
                 "jwsRepresentation": jwsRepresentation ?? "",
                 "latestTransaction": latestTransaction as Any
             ]
@@ -901,6 +873,27 @@ public class ExpoIapModule: Module {
             }
             
             self.pollingSkus.removeAll()
+        }
+    }
+    
+    private func getReceiptDataInternal() throws -> String {
+        if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
+           FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
+            do {
+                let receiptData = try Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
+                return receiptData.base64EncodedString(options: [])
+            } catch {
+                throw NSError(
+                    domain: "ExpoIapModule", code: 13,
+                    userInfo: [
+                        NSLocalizedDescriptionKey:
+                            "Error reading receipt data: \(error.localizedDescription)"
+                    ])
+            }
+        } else {
+            throw NSError(
+                domain: "ExpoIapModule", code: 14,
+                userInfo: [NSLocalizedDescriptionKey: "App Store receipt not found"])
         }
     }
 }
