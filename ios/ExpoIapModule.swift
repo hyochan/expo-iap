@@ -840,14 +840,18 @@ public class ExpoIapModule: Module {
         subscriptionPollingTask = Task {
             try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
             
-            var previousStatuses: [String: Product.SubscriptionInfo.RenewalState] = [:]
+            var previousStatuses: [String: Bool] = [:] // Track auto-renewal state with Bool
             
             for sku in self.pollingSkus {
                 guard let product = await self.productStore?.getProduct(productID: sku),
                       let status = try? await product.subscription?.status.first else { continue }
                 
-                previousStatuses[sku] = status.renewalInfo.verified?.willAutoRenew == true ? 
-                    .willRenew : .willNotRenew
+                // Track willAutoRenew as a bool value
+                var willAutoRenew = false
+                if case .verified(let info) = status.renewalInfo {
+                    willAutoRenew = info.willAutoRenew
+                }
+                previousStatuses[sku] = willAutoRenew
             }
             
             for _ in 1...5 {
@@ -860,18 +864,29 @@ public class ExpoIapModule: Module {
                 for sku in self.pollingSkus {
                     guard let product = await self.productStore?.getProduct(productID: sku),
                           let status = try? await product.subscription?.status.first,
-                          let transaction = await product.latestTransaction?.verified else { continue }
+                          let result = await product.latestTransaction else { continue }
                     
-                    let currentRenewalState = status.renewalInfo.verified?.willAutoRenew == true ? 
-                        Product.SubscriptionInfo.RenewalState.willRenew : 
-                        Product.SubscriptionInfo.RenewalState.willNotRenew
+                    // Try to verify the transaction
+                    let transaction: Transaction
+                    do {
+                        transaction = try self.checkVerified(result)
+                    } catch {
+                        continue // Skip if verification fails
+                    }
                     
-                    if let previousState = previousStatuses[sku], 
-                       previousState != currentRenewalState {
+                    // Track current auto-renewal state
+                    var currentWillAutoRenew = false
+                    if case .verified(let info) = status.renewalInfo {
+                        currentWillAutoRenew = info.willAutoRenew
+                    }
+                    
+                    // Compare with previous state
+                    if let previousWillAutoRenew = previousStatuses[sku], 
+                       previousWillAutoRenew != currentWillAutoRenew {
                         
                         var purchaseMap = serializeTransaction(transaction)
                         
-                        if let renewalInfo = status.renewalInfo.verified {
+                        if case .verified(let renewalInfo) = status.renewalInfo {
                             if let renewalInfoDict = serializeRenewalInfo(.verified(renewalInfo)) {
                                 purchaseMap["renewalInfo"] = renewalInfoDict
                             }
@@ -880,7 +895,7 @@ public class ExpoIapModule: Module {
                         self.sendEvent(IapEvent.PurchaseUpdated, purchaseMap)
                         self.sendEvent(IapEvent.TransactionIapUpdated, ["transaction": purchaseMap])
                         
-                        previousStatuses[sku] = currentRenewalState
+                        previousStatuses[sku] = currentWillAutoRenew
                     }
                 }
             }
