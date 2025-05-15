@@ -11,6 +11,8 @@ import {
   getSubscriptions,
   requestPurchase as requestPurchaseInternal,
   sync,
+  validateReceiptIos,
+  validateReceiptAndroid,
 } from './';
 import {useCallback, useEffect, useState, useRef} from 'react';
 import {
@@ -49,6 +51,12 @@ type UseIap = {
   getProducts: (skus: string[]) => Promise<void>;
   getSubscriptions: (skus: string[]) => Promise<void>;
   requestPurchase: typeof requestPurchaseInternal;
+  validateReceipt: (sku: string, androidOptions?: {
+    packageName: string;
+    productToken: string;
+    accessToken: string;
+    isSub?: boolean;
+  }) => Promise<any>;
 };
 
 export interface UseIAPOptions {
@@ -179,6 +187,32 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       console.warn('Failed to refresh subscription status:', error);
     }
   }, [getSubscriptionsInternal, getAvailablePurchasesInternal, subscriptions]);
+  const validateReceipt = useCallback(
+    async (sku: string, androidOptions?: {
+      packageName: string;
+      productToken: string;
+      accessToken: string;
+      isSub?: boolean;
+    }) => {
+      if (Platform.OS === 'ios') {
+        return await validateReceiptIos(sku);
+      } else if (Platform.OS === 'android') {
+        if (!androidOptions || !androidOptions.packageName || !androidOptions.productToken || !androidOptions.accessToken) {
+          throw new Error('Android validation requires packageName, productToken, and accessToken');
+        }
+        return await validateReceiptAndroid({
+          packageName: androidOptions.packageName,
+          productId: sku,
+          productToken: androidOptions.productToken,
+          accessToken: androidOptions.accessToken,
+          isSub: androidOptions.isSub,
+        });
+      } else {
+        throw new Error('Platform not supported');
+      }
+    },
+    [],
+  );
 
   const initIapWithSubscriptions = useCallback(async (): Promise<void> => {
     const result = await initConnection();
@@ -259,5 +293,6 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     getProducts: getProductsInternal,
     getSubscriptions: getSubscriptionsInternal,
     requestPurchase: requestPurchaseWithReset,
+    validateReceipt,
   };
 }

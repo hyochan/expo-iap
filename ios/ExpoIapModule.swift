@@ -645,6 +645,110 @@ public class ExpoIapModule: Module {
             self.removeTransactionObserver()
             return true
         }
+
+        AsyncFunction("getReceiptData") { () -> String? in
+            if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
+               FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
+                do {
+                    let receiptData = try Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
+                    return receiptData.base64EncodedString(options: [])
+                } catch {
+                    throw NSError(
+                        domain: "ExpoIapModule", code: 13,
+                        userInfo: [
+                            NSLocalizedDescriptionKey:
+                                "Error reading receipt data: \(error.localizedDescription)"
+                        ])
+                }
+            } else {
+                throw NSError(
+                    domain: "ExpoIapModule", code: 14,
+                    userInfo: [NSLocalizedDescriptionKey: "App Store receipt not found"])
+            }
+        }
+        
+        AsyncFunction("isTransactionVerified") { (sku: String) -> Bool in
+            guard let productStore = self.productStore else {
+                throw NSError(
+                    domain: "ExpoIapModule", code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Connection not initialized"])
+            }
+            
+            if let product = await productStore.getProduct(productID: sku),
+               let result = await product.latestTransaction {
+                do {
+                    // If this doesn't throw, the transaction is verified
+                    _ = try self.checkVerified(result)
+                    return true
+                } catch {
+                    return false
+                }
+            }
+            return false
+        }
+        
+        AsyncFunction("getTransactionJws") { (sku: String) -> String? in
+            guard let productStore = self.productStore else {
+                throw NSError(
+                    domain: "ExpoIapModule", code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Connection not initialized"])
+            }
+            
+            if let product = await productStore.getProduct(productID: sku),
+               let result = await product.latestTransaction {
+                return result.jwsRepresentation
+            } else {
+                throw NSError(
+                    domain: "ExpoIapModule", code: 5,
+                    userInfo: [NSLocalizedDescriptionKey: "Can't find transaction for sku \(sku)"])
+            }
+        }
+        
+        AsyncFunction("validateReceiptIos") { (sku: String) -> [String: Any] in
+            guard let productStore = self.productStore else {
+                throw NSError(
+                    domain: "ExpoIapModule", code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Connection not initialized"])
+            }
+            
+            // Get receipt data
+            var receiptData: String? = nil
+            if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
+               FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
+                do {
+                    let receiptDataRaw = try Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
+                    receiptData = receiptDataRaw.base64EncodedString(options: [])
+                } catch {
+                    print("Error reading receipt data: \(error.localizedDescription)")
+                }
+            }
+            
+            var isValid = false
+            var jwsRepresentation: String? = nil
+            var latestTransaction: [String: Any?]? = nil
+            
+            // Get JWS representation and verify transaction
+            if let product = await productStore.getProduct(productID: sku),
+               let result = await product.latestTransaction {
+                jwsRepresentation = result.jwsRepresentation
+                
+                do {
+                    // If this doesn't throw, the transaction is verified
+                    let transaction = try self.checkVerified(result)
+                    isValid = true
+                    latestTransaction = serializeTransaction(transaction, jwsRepresentationIos: result.jwsRepresentation)
+                } catch {
+                    isValid = false
+                }
+            }
+            
+            return [
+                "isValid": isValid,
+                "receiptData": receiptData ?? "",
+                "jwsRepresentation": jwsRepresentation ?? "",
+                "latestTransaction": latestTransaction as Any
+            ]
+        }
     }
 
     private func addTransactionObserver() {
