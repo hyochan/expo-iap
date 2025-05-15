@@ -381,8 +381,12 @@ public class ExpoIapModule: Module {
                         let transaction = try self.checkVerified(verification)
                         
                         // Debug: Log JWS representation
-                        logDebug("buyProduct JWS: exists")
-                        logDebug("buyProduct JWS length: \(verification.jwsRepresentation.count)")
+                        if let jwsRepresentation = verification.jwsRepresentation {
+                            logDebug("buyProduct JWS: exists")
+                            logDebug("buyProduct JWS length: \(jwsRepresentation.count)")
+                        } else {
+                            logDebug("buyProduct JWS: does not exist")
+                        }
                         
                         if andDangerouslyFinishTransactionAutomatically {
                             await transaction.finish()
