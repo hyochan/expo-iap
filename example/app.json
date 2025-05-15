@@ -20,6 +20,7 @@
       "package": "com.crossplatformkorea.cpk"
     },
     "plugins": [
+      "expo-iap",
       "expo-router",
       [
         "expo-splash-screen",

@@ -54,6 +54,7 @@ type UseIap = {
 export interface UseIAPOptions {
   onPurchaseSuccess?: (purchase: ProductPurchase | SubscriptionPurchase) => void;
   onPurchaseError?: (error: PurchaseError) => void;
+  onSyncError?: (error: Error) => void;
 }
 
 export function useIAP(options?: UseIAPOptions): UseIap {
@@ -159,8 +160,14 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const refreshSubscriptionStatus = useCallback(async (productId: string) => {
     try {
       if (Platform.OS === 'ios') {
-        await sync().catch(() => {
-          // Ignore errors as sync might require user password
+        await sync().catch((error) => {
+          // Pass the error to the developer's handler if provided
+          if (optionsRef.current?.onSyncError) {
+            optionsRef.current.onSyncError(error);
+          } else {
+            // Fallback to original behavior
+            console.warn('Sync error occurred. This might require user password:', error);
+          }
         });
       }
       

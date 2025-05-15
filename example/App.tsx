@@ -29,6 +29,9 @@ const operations = ['getProducts', 'getSubscriptions'] as const;
 type Operation = (typeof operations)[number];
 
 export default function App() {
+  const [syncError, setSyncError] = useState<Error | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
   const {
     connected,
     products,
@@ -38,9 +41,29 @@ export default function App() {
     getProducts,
     getSubscriptions,
     requestPurchase,
-  } = useIAP();
-
-  const [isReady, setIsReady] = useState(false);
+  } = useIAP({
+    onPurchaseSuccess: (purchase) => {
+      InteractionManager.runAfterInteractions(() => {
+        Alert.alert('Purchase successful', JSON.stringify(purchase));
+      });
+    },
+    onPurchaseError: (error) => {
+      InteractionManager.runAfterInteractions(() => {
+        Alert.alert('Purchase failed', JSON.stringify(error));
+      });
+    },
+    onSyncError: (error) => {
+      console.log('Sync error occurred:', error);
+      setSyncError(error);
+      InteractionManager.runAfterInteractions(() => {
+        Alert.alert(
+          'Sync Error',
+          'Failed to synchronize with App Store. You may need to enter your password to verify subscriptions.',
+          [{text: 'OK', onPress: () => setSyncError(null)}],
+        );
+      });
+    },
+  });
 
   // Fetch products and subscriptions only when connected
   useEffect(() => {
@@ -98,6 +121,16 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Expo IAP Example with useIAP</Text>
+
+      {/* Display sync error banner if there's an error */}
+      {syncError && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>
+            Sync error: Please verify your App Store credentials
+          </Text>
+        </View>
+      )}
+
       <View style={styles.buttons}>
         <ScrollView contentContainerStyle={styles.buttonsWrapper} horizontal>
           {operations.map((operation) => (
@@ -250,5 +283,16 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     padding: 24,
     gap: 12,
+  },
+  errorBanner: {
+    backgroundColor: '#ffcccc',
+    padding: 8,
+    width: '100%',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  errorText: {
+    color: '#cc0000',
+    fontWeight: '600',
   },
 });
