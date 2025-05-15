@@ -870,7 +870,8 @@ public class ExpoIapModule: Module {
                     if let previousWillAutoRenew = previousStatuses[sku], 
                        previousWillAutoRenew != currentWillAutoRenew {
                         
-                        var purchaseMap = serializeTransaction(transaction)
+                        // Use the jwsRepresentation when serializing the transaction
+                        var purchaseMap = serializeTransaction(transaction, jwsRepresentationIos: result.jwsRepresentation)
                         
                         if case .verified(let renewalInfo) = status.renewalInfo {
                             if let renewalInfoDict = serializeRenewalInfo(.verified(renewalInfo)) {
