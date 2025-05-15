@@ -761,7 +761,7 @@ public class ExpoIapModule: Module {
                     let transaction = try self.checkVerified(result)
                     self.transactions[String(transaction.id)] = transaction
                     if self.hasListeners {
-                        let serialized = serializeTransaction(transaction)
+                        let serialized = serializeTransaction(transaction, jwsRepresentationIos: result.jwsRepresentation)
                         self.sendEvent(IapEvent.PurchaseUpdated, serialized)
                         self.sendEvent(IapEvent.TransactionIapUpdated, ["transaction": serialized])
                     }
@@ -835,7 +835,7 @@ public class ExpoIapModule: Module {
                 }
                 previousStatuses[sku] = willAutoRenew
             }
-            
+
             for _ in 1...5 {
                 try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
                 if Task.isCancelled {
