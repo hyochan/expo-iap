@@ -99,6 +99,12 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     promotedProductsIos?: Subscription;
   }>({});
 
+  const subscriptionsRefState = useRef<SubscriptionProduct[]>([]);
+
+  useEffect(() => {
+    subscriptionsRefState.current = subscriptions;
+  }, [subscriptions]);
+
   const clearCurrentPurchase = useCallback(() => {
     setCurrentPurchase(undefined);
   }, []);
@@ -193,7 +199,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
           });
         }
 
-        if (subscriptions.some((sub) => sub.id === productId)) {
+        if (subscriptionsRefState.current.some((sub) => sub.id === productId)) {
           await getSubscriptionsInternal([productId]);
           await getAvailablePurchasesInternal();
         }
@@ -201,7 +207,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         console.warn('Failed to refresh subscription status:', error);
       }
     },
-    [getAvailablePurchasesInternal, getSubscriptionsInternal, subscriptions],
+    [getAvailablePurchasesInternal, getSubscriptionsInternal],
   );
 
   const validateReceipt = useCallback(
