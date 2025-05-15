@@ -719,8 +719,16 @@ public class ExpoIapModule: Module {
                     let receiptDataRaw = try Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
                     receiptData = receiptDataRaw.base64EncodedString(options: [])
                 } catch {
-                    print("Error reading receipt data: \(error.localizedDescription)")
+                    throw NSError(
+                        domain: "ExpoIapModule", code: 13,
+                        userInfo: [NSLocalizedDescriptionKey: "Error reading receipt data: \(error.localizedDescription)"]
+                    )
                 }
+            } else {
+                throw NSError(
+                    domain: "ExpoIapModule", code: 14,
+                    userInfo: [NSLocalizedDescriptionKey: "App Store receipt not found"]
+                )
             }
             
             var isValid = false
