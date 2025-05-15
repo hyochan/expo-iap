@@ -9,6 +9,12 @@ func serializeDebug(_ s: String) -> String? {
     #endif
 }
 
+func logDebug(_ message: String) {
+    #if DEBUG
+        print("DEBUG - \(message)")
+    #endif
+}
+
 struct IapEvent {
     static let PurchaseUpdated = "purchase-updated"
     static let PurchaseError = "purchase-error"
@@ -71,10 +77,10 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: Stri
     ]
 
     if (jwsRepresentationIos != nil) {
-        print("DEBUG - serializeTransaction adding jwsRepresentationIos with length: \(jwsRepresentationIos!.count)")
+        logDebug("serializeTransaction adding jwsRepresentationIos with length: \(jwsRepresentationIos!.count)")
         purchaseMap["jwsRepresentationIos"] = jwsRepresentationIos
     } else {
-        print("DEBUG - serializeTransaction jwsRepresentationIos is nil")
+        logDebug("serializeTransaction jwsRepresentationIos is nil")
     }
     
     if #available(iOS 16.0, *) {
@@ -241,16 +247,16 @@ public class ExpoIapModule: Module {
 
             func addTransaction(transaction: Transaction, jwsRepresentationIos: String? = nil) {
                 // Debug: Log JWS representation
-                print("DEBUG - getAvailableItems JWS: \(jwsRepresentationIos != nil ? "exists" : "nil")")
+                logDebug("getAvailableItems JWS: \(jwsRepresentationIos != nil ? "exists" : "nil")")
                 if let jws = jwsRepresentationIos {
-                    print("DEBUG - getAvailableItems JWS length: \(jws.count)")
+                    logDebug("getAvailableItems JWS length: \(jws.count)")
                 }
                 
                 let serialized = serializeTransaction(transaction, jwsRepresentationIos: jwsRepresentationIos)
                 purchasedItemsSerialized.append(serialized)
                 
                 // Debug: Check if jwsRepresentationIos is included in serialized result
-                print("DEBUG - getAvailableItems serialized includes JWS: \(serialized["jwsRepresentationIos"] != nil)")
+                logDebug("getAvailableItems serialized includes JWS: \(serialized["jwsRepresentationIos"] != nil)")
                 
                 if alsoPublishToEventListener {
                     self.sendEvent(IapEvent.PurchaseUpdated, serialized)
@@ -375,8 +381,8 @@ public class ExpoIapModule: Module {
                         let transaction = try self.checkVerified(verification)
                         
                         // Debug: Log JWS representation
-                        print("DEBUG - buyProduct JWS: exists")
-                        print("DEBUG - buyProduct JWS length: \(verification.jwsRepresentation.count)")
+                        logDebug("buyProduct JWS: exists")
+                        logDebug("buyProduct JWS length: \(verification.jwsRepresentation.count)")
                         
                         if andDangerouslyFinishTransactionAutomatically {
                             await transaction.finish()
@@ -386,7 +392,7 @@ public class ExpoIapModule: Module {
                             let serialized = serializeTransaction(transaction, jwsRepresentationIos: verification.jwsRepresentation)
                             
                             // Debug: Check if jwsRepresentationIos is included in serialized result
-                            print("DEBUG - buyProduct serialized includes JWS: \(serialized["jwsRepresentationIos"] != nil)")
+                            logDebug("buyProduct serialized includes JWS: \(serialized["jwsRepresentationIos"] != nil)")
                             
                             self.sendEvent(IapEvent.PurchaseUpdated, serialized)
                             return serialized
