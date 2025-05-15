@@ -172,6 +172,8 @@ public class ExpoIapModule: Module {
     private var productStore: ProductStore?
     private var hasListeners = false
     private var updateListenerTask: Task<Void, Error>?
+    private var subscriptionPollingTask: Task<Void, Error>?
+    private var pollingSkus: Set<String> = []
 
     public func definition() -> ModuleDefinition {
         Name("ExpoIap")
@@ -560,7 +562,17 @@ public class ExpoIapModule: Module {
                                 "Cannot find window scene or not available on macOS"
                         ])
                 }
+                
+                // Get all subscription products before showing the management UI
+                let subscriptionSkus = await self.getAllSubscriptionProductIds()
+                self.pollingSkus = Set(subscriptionSkus)
+                
+                // Show the management UI
                 try await AppStore.showManageSubscriptions(in: windowScene)
+                
+                // Start polling for status changes
+                self.pollForSubscriptionStatusChanges()
+                
                 return true
             #else
                 throw NSError(
@@ -696,6 +708,72 @@ public class ExpoIapModule: Module {
             throw error
         case .verified(let item):
             return item
+        }
+    }
+
+    private func getAllSubscriptionProductIds() async -> [String] {
+        guard let productStore = self.productStore else { return [] }
+        let products = await productStore.getAllProducts()
+        return products.compactMap { product in
+            if product.subscription != nil {
+                return product.id
+            }
+            return nil
+        }
+    }
+
+    private func pollForSubscriptionStatusChanges() {
+        subscriptionPollingTask?.cancel()
+        
+        subscriptionPollingTask = Task {
+            try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
+            
+            var previousStatuses: [String: Product.SubscriptionInfo.RenewalState] = [:]
+            
+            for sku in self.pollingSkus {
+                guard let product = await self.productStore?.getProduct(productID: sku),
+                      let status = try? await product.subscription?.status.first else { continue }
+                
+                previousStatuses[sku] = status.renewalInfo.verified?.willAutoRenew == true ? 
+                    .willRenew : .willNotRenew
+            }
+            
+            for _ in 1...5 {
+                try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+                
+                if Task.isCancelled {
+                    return
+                }
+                
+                for sku in self.pollingSkus {
+                    guard let product = await self.productStore?.getProduct(productID: sku),
+                          let status = try? await product.subscription?.status.first,
+                          let transaction = await product.latestTransaction?.verified else { continue }
+                    
+                    let currentRenewalState = status.renewalInfo.verified?.willAutoRenew == true ? 
+                        Product.SubscriptionInfo.RenewalState.willRenew : 
+                        Product.SubscriptionInfo.RenewalState.willNotRenew
+                    
+                    if let previousState = previousStatuses[sku], 
+                       previousState != currentRenewalState {
+                        
+                        var purchaseMap = serializeTransaction(transaction)
+                        
+                        if let renewalInfo = status.renewalInfo.verified {
+                            if let renewalInfoDict = serializeRenewalInfo(.verified(renewalInfo)) {
+                                purchaseMap["renewalInfo"] = renewalInfoDict
+                            }
+                        }
+                        
+                        self.sendEvent(IapEvent.PurchaseUpdated, purchaseMap)
+                        self.sendEvent(IapEvent.TransactionIapUpdated, ["transaction": purchaseMap])
+                        
+                        previousStatuses[sku] = currentRenewalState
+                    }
+                }
+            }
+            
+            self.pollingSkus.removeAll()
         }
     }
 }

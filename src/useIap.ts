@@ -10,6 +10,7 @@ import {
   finishTransaction as finishTransactionInternal,
   getSubscriptions,
   requestPurchase as requestPurchaseInternal,
+  sync,
 } from './';
 import {useCallback, useEffect, useState, useRef} from 'react';
 import {
@@ -155,6 +156,23 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     [clearCurrentPurchase, clearCurrentPurchaseError],
   );
 
+  const refreshSubscriptionStatus = useCallback(async (productId: string) => {
+    try {
+      if (Platform.OS === 'ios') {
+        await sync().catch(() => {
+          // Ignore errors as sync might require user password
+        });
+      }
+      
+      if (subscriptions.some(sub => sub.id === productId)) {
+        await getSubscriptionsInternal([productId]);
+        await getAvailablePurchasesInternal();
+      }
+    } catch (error) {
+      console.warn('Failed to refresh subscription status:', error);
+    }
+  }, [getSubscriptionsInternal, getAvailablePurchasesInternal, subscriptions]);
+
   const initIapWithSubscriptions = useCallback(async (): Promise<void> => {
     const result = await initConnection();
     setConnected(result);
@@ -164,6 +182,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         async (purchase: Purchase | SubscriptionPurchase) => {
           setCurrentPurchaseError(undefined);
           setCurrentPurchase(purchase);
+
+          if ('expirationDateIos' in purchase) {
+            await refreshSubscriptionStatus(purchase.id);
+          }
 
           if (optionsRef.current?.onPurchaseSuccess) {
             optionsRef.current.onPurchaseSuccess(purchase);
@@ -184,17 +206,21 @@ export function useIAP(options?: UseIAPOptions): UseIap {
 
       if (Platform.OS === 'ios') {
         subscriptionsRef.current.promotedProductsIos = transactionUpdatedIos(
-          (event: TransactionEvent) => {
-            setPromotedProductsIOS((prevProducts) =>
-              event.transaction
-                ? [...prevProducts, event.transaction]
-                : prevProducts,
-            );
+          async (event: TransactionEvent) => {
+            if (event.transaction) {
+              setPromotedProductsIOS((prevProducts) => 
+                [...prevProducts, event.transaction!]
+              );
+              
+              if ('expirationDateIos' in event.transaction) {
+                await refreshSubscriptionStatus(event.transaction.id);
+              }
+            }
           },
         );
       }
     }
-  }, []);
+  }, [refreshSubscriptionStatus]);
 
   useEffect(() => {
     initIapWithSubscriptions();

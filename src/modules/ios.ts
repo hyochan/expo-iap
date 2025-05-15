@@ -72,7 +72,10 @@ export const beginRefundRequest = (sku: string): Promise<RefundRequestStatus> =>
   ExpoIapModule.beginRefundRequest(sku);
 
 /**
- *
+ * Shows the system UI for managing subscriptions.
+ * When the user changes subscription renewal status, the system will emit events to 
+ * purchaseUpdatedListener and transactionUpdatedIos listeners.
+ * @returns {Promise<null>}
  */
 export const showManageSubscriptions = (): Promise<null> =>
   ExpoIapModule.showManageSubscriptions();
