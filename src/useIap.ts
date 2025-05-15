@@ -34,6 +34,8 @@ type UseIap = {
   availablePurchases: ProductPurchase[];
   currentPurchase?: ProductPurchase;
   currentPurchaseError?: PurchaseError;
+  clearCurrentPurchase: () => void;
+  clearCurrentPurchaseError: () => void;
   finishTransaction: ({
     purchase,
     isConsumable,
@@ -48,7 +50,12 @@ type UseIap = {
   requestPurchase: typeof requestPurchaseInternal;
 };
 
-export function useIAP(): UseIap {
+export interface UseIAPOptions {
+  onPurchaseSuccess?: (purchase: ProductPurchase | SubscriptionPurchase) => void;
+  onPurchaseError?: (error: PurchaseError) => void;
+}
+
+export function useIAP(options?: UseIAPOptions): UseIap {
   const [connected, setConnected] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [promotedProductsIOS, setPromotedProductsIOS] = useState<
@@ -65,11 +72,25 @@ export function useIAP(): UseIap {
   const [currentPurchaseError, setCurrentPurchaseError] =
     useState<PurchaseError>();
 
+  const optionsRef = useRef<UseIAPOptions | undefined>(options);
+
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
+
   const subscriptionsRef = useRef<{
     purchaseUpdate?: Subscription;
     purchaseError?: Subscription;
     promotedProductsIos?: Subscription;
   }>({});
+
+  const clearCurrentPurchase = useCallback(() => {
+    setCurrentPurchase(undefined);
+  }, []);
+
+  const clearCurrentPurchaseError = useCallback(() => {
+    setCurrentPurchaseError(undefined);
+  }, []);
 
   const getProductsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
@@ -110,14 +131,28 @@ export function useIAP(): UseIap {
         throw err;
       } finally {
         if (purchase.id === currentPurchase?.id) {
-          setCurrentPurchase(undefined);
+          clearCurrentPurchase();
         }
         if (purchase.id === currentPurchaseError?.productId) {
-          setCurrentPurchaseError(undefined);
+          clearCurrentPurchaseError();
         }
       }
     },
-    [currentPurchase?.id, currentPurchaseError?.productId],
+    [currentPurchase?.id, currentPurchaseError?.productId, clearCurrentPurchase, clearCurrentPurchaseError],
+  );
+
+  const requestPurchaseWithReset = useCallback(
+    async (requestObj: Parameters<typeof requestPurchaseInternal>[0]) => {
+      clearCurrentPurchase();
+      clearCurrentPurchaseError();
+      
+      try {
+        return await requestPurchaseInternal(requestObj);
+      } catch (error) {
+        throw error;
+      }
+    },
+    [clearCurrentPurchase, clearCurrentPurchaseError],
   );
 
   const initIapWithSubscriptions = useCallback(async (): Promise<void> => {
@@ -129,6 +164,10 @@ export function useIAP(): UseIap {
         async (purchase: Purchase | SubscriptionPurchase) => {
           setCurrentPurchaseError(undefined);
           setCurrentPurchase(purchase);
+
+          if (optionsRef.current?.onPurchaseSuccess) {
+            optionsRef.current.onPurchaseSuccess(purchase);
+          }
         },
       );
 
@@ -136,6 +175,10 @@ export function useIAP(): UseIap {
         (error: PurchaseError) => {
           setCurrentPurchase(undefined);
           setCurrentPurchaseError(error);
+
+          if (optionsRef.current?.onPurchaseError) {
+            optionsRef.current.onPurchaseError(error);
+          }
         },
       );
 
@@ -176,10 +219,12 @@ export function useIAP(): UseIap {
     availablePurchases,
     currentPurchase,
     currentPurchaseError,
+    clearCurrentPurchase,
+    clearCurrentPurchaseError,
     getAvailablePurchases: getAvailablePurchasesInternal,
     getPurchaseHistories: getPurchaseHistoriesInternal,
     getProducts: getProductsInternal,
     getSubscriptions: getSubscriptionsInternal,
-    requestPurchase: requestPurchaseInternal,
+    requestPurchase: requestPurchaseWithReset,
   };
 }
