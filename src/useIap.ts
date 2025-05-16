@@ -60,6 +60,7 @@ type UseIap = {
       isSub?: boolean;
     },
   ) => Promise<any>;
+  restorePurchases: () => Promise<void>; // 구매 복원 함수 추가
 };
 
 export interface UseIAPOptions {
@@ -68,6 +69,7 @@ export interface UseIAPOptions {
   ) => void;
   onPurchaseError?: (error: PurchaseError) => void;
   onSyncError?: (error: Error) => void;
+  shouldAutoSyncPurchases?: boolean; // New option to control auto-syncing
 }
 
 export function useIAP(options?: UseIAPOptions): UseIap {
@@ -184,21 +186,6 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const refreshSubscriptionStatus = useCallback(
     async (productId: string) => {
       try {
-        if (Platform.OS === 'ios') {
-          await sync().catch((error) => {
-            // Pass the error to the developer's handler if provided
-            if (optionsRef.current?.onSyncError) {
-              optionsRef.current.onSyncError(error);
-            } else {
-              // Fallback to original behavior
-              console.warn(
-                'Sync error occurred. This might require user password:',
-                error,
-              );
-            }
-          });
-        }
-
         if (subscriptionsRefState.current.some((sub) => sub.id === productId)) {
           await getSubscriptionsInternal([productId]);
           await getAvailablePurchasesInternal();
@@ -209,6 +196,23 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     },
     [getAvailablePurchasesInternal, getSubscriptionsInternal],
   );
+
+  const restorePurchases = useCallback(async (): Promise<void> => {
+    try {
+      if (Platform.OS === 'ios') {
+        await sync().catch((error) => {
+          if (optionsRef.current?.onSyncError) {
+            optionsRef.current.onSyncError(error);
+          } else {
+            console.warn('Error restoring purchases:', error);
+          }
+        });
+      }
+      await getAvailablePurchasesInternal();
+    } catch (error) {
+      console.warn('Failed to restore purchases:', error);
+    }
+  }, [getAvailablePurchasesInternal]);
 
   const validateReceipt = useCallback(
     async (
@@ -327,5 +331,6 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     getSubscriptions: getSubscriptionsInternal,
     requestPurchase: requestPurchaseWithReset,
     validateReceipt,
+    restorePurchases,
   };
 }
