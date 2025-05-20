@@ -91,16 +91,6 @@ Manually apply the following changes:
 
    If there’s no `ext` block, append it at the end.
 
-2. **Update `android/app/src/main/AndroidManifest.xml`**  
-   Add the BILLING permission:
-
-   ```xml
-   <manifest ...>
-       <uses-permission android:name="com.android.vending.BILLING" />
-       <!-- Other manifest content... -->
-   </manifest>
-   ```
-
 ## Current State & Feedback
 
 Updates are in progress to improve reliability and address remaining edge cases. For production apps, test thoroughly. Contributions (docs, code, or bug reports) are welcome—especially detailed error logs or use cases!
