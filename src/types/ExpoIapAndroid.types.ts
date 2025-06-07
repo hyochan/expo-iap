@@ -53,7 +53,7 @@ export type RequestPurchaseAndroidProps = {
   isOfferPersonalized?: boolean; // For AndroidBilling V5 https://developer.android.com/google/play/billing/integrate#personalized-price
 };
 
-enum ReplacementModesAndroid {
+export enum ReplacementModesAndroid {
   UNKNOWN_REPLACEMENT_MODE = 0,
   WITH_TIME_PRORATION = 1,
   CHARGE_PRORATED_PRICE = 2,

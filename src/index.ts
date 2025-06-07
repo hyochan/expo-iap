@@ -28,6 +28,9 @@ import {isProductAndroid} from './modules/android';
 
 export * from './modules/android';
 export * from './modules/ios';
+export {
+  ReplacementModesAndroid,
+} from './types/ExpoIapAndroid.types';
 
 // Get the native constant value
 export const PI = ExpoIapModule.PI;
