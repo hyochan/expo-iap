@@ -89,6 +89,27 @@ export function useIAP(options?: UseIAPOptions): UseIap {
 
   const optionsRef = useRef<UseIAPOptions | undefined>(options);
 
+  // Helper function to merge arrays with duplicate checking
+  const mergeWithDuplicateCheck = useCallback(
+    <T>(
+      existingItems: T[],
+      newItems: T[],
+      getKey: (item: T) => string,
+    ): T[] => {
+      const merged = [...existingItems];
+      newItems.forEach((newItem) => {
+        const isDuplicate = merged.some(
+          (existingItem) => getKey(existingItem) === getKey(newItem),
+        );
+        if (!isDuplicate) {
+          merged.push(newItem);
+        }
+      });
+      return merged;
+    },
+    [],
+  );
+
   useEffect(() => {
     optionsRef.current = options;
   }, [options]);
@@ -116,40 +137,29 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const getProductsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
       const newProducts = await getProducts(skus);
-      setProducts((prevProducts) => {
-        const mergedProducts = [...prevProducts];
-        newProducts.forEach((newProduct) => {
-          const isDuplicate = mergedProducts.some(
-            (existingProduct) => existingProduct.id === newProduct.id,
-          );
-          if (!isDuplicate) {
-            mergedProducts.push(newProduct);
-          }
-        });
-        return mergedProducts;
-      });
+      setProducts((prevProducts) =>
+        mergeWithDuplicateCheck(
+          prevProducts,
+          newProducts,
+          (product) => product.id,
+        ),
+      );
     },
-    [],
+    [mergeWithDuplicateCheck],
   );
 
   const getSubscriptionsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
       const newSubscriptions = await getSubscriptions(skus);
-      setSubscriptions((prevSubscriptions) => {
-        const mergedSubscriptions = [...prevSubscriptions];
-        newSubscriptions.forEach((newSubscription) => {
-          const isDuplicate = mergedSubscriptions.some(
-            (existingSubscription) =>
-              existingSubscription.id === newSubscription.id,
-          );
-          if (!isDuplicate) {
-            mergedSubscriptions.push(newSubscription);
-          }
-        });
-        return mergedSubscriptions;
-      });
+      setSubscriptions((prevSubscriptions) =>
+        mergeWithDuplicateCheck(
+          prevSubscriptions,
+          newSubscriptions,
+          (subscription) => subscription.id,
+        ),
+      );
     },
-    [],
+    [mergeWithDuplicateCheck],
   );
 
   const getAvailablePurchasesInternal = useCallback(async (): Promise<void> => {
@@ -310,16 +320,13 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         subscriptionsRef.current.promotedProductsIos = purchaseUpdatedListener(
           async (purchase: Purchase | SubscriptionPurchase) => {
             // Add to promoted products if it's a promoted transaction (avoid duplicates)
-            setPromotedProductsIOS((prevProducts) => {
-              const isDuplicate = prevProducts.some(
-                (prevPurchase) =>
-                  prevPurchase.transactionId === purchase.transactionId,
-              );
-              if (isDuplicate) {
-                return prevProducts;
-              }
-              return [...prevProducts, purchase as ProductPurchase];
-            });
+            setPromotedProductsIOS((prevProducts) =>
+              mergeWithDuplicateCheck(
+                prevProducts,
+                [purchase as ProductPurchase],
+                (product) => product.transactionId || product.id,
+              ),
+            );
 
             // Refresh subscription status if it's a subscription purchase
             if ('expirationDateIos' in purchase) {
@@ -329,7 +336,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         );
       }
     }
-  }, [refreshSubscriptionStatus]);
+  }, [refreshSubscriptionStatus, mergeWithDuplicateCheck]);
 
   useEffect(() => {
     initIapWithSubscriptions();

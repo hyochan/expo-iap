@@ -1,6 +1,11 @@
 import {Platform} from 'react-native';
 import {purchaseUpdatedListener} from '..';
-import {ProductPurchase, PurchaseError} from '../ExpoIap.types';
+import {
+  ProductPurchase,
+  PurchaseError,
+  Purchase,
+  SubscriptionPurchase,
+} from '../ExpoIap.types';
 import type {ProductStatusIos} from '../types/ExpoIapIos.types';
 import ExpoIapModule from '../ExpoIapModule';
 
@@ -12,14 +17,14 @@ export type TransactionEvent = {
 // Listeners
 /**
  * @deprecated Use `purchaseUpdatedListener` instead. This function will be removed in a future version.
- * 
+ *
  * The `transactionUpdatedIos` function is redundant as it simply wraps `purchaseUpdatedListener`.
  * You can achieve the same functionality by using `purchaseUpdatedListener` directly.
- * 
+ *
  * @example
  * // Instead of:
  * // transactionUpdatedIos((event) => { ... });
- * 
+ *
  * // Use:
  * // purchaseUpdatedListener((purchase) => { ... });
  */
@@ -30,11 +35,37 @@ export const transactionUpdatedIos = (
     throw new Error('This method is only available on iOS');
   }
 
+  const isProductPurchase = (item: unknown): item is ProductPurchase => {
+    return (
+      item != null &&
+      typeof item === 'object' &&
+      'id' in item &&
+      'transactionId' in item &&
+      'platform' in item
+    );
+  };
+
+  // Helper function to safely convert Purchase to TransactionEvent
+  const mapPurchaseToTransactionEvent = (
+    purchase: Purchase | SubscriptionPurchase,
+  ): TransactionEvent => {
+    // Validate the purchase object before casting
+    if (isProductPurchase(purchase)) {
+      return {
+        transaction: purchase as ProductPurchase,
+      };
+    }
+
+    // Fallback: create a basic TransactionEvent structure
+    return {
+      transaction: purchase as ProductPurchase,
+    };
+  };
+
   return purchaseUpdatedListener((purchase) => {
     // Convert Purchase to TransactionEvent format for backward compatibility
-    listener({
-      transaction: purchase as ProductPurchase,
-    });
+    const event = mapPurchaseToTransactionEvent(purchase);
+    listener(event);
   });
 };
 
@@ -91,7 +122,7 @@ export const beginRefundRequest = (sku: string): Promise<RefundRequestStatus> =>
 
 /**
  * Shows the system UI for managing subscriptions.
- * When the user changes subscription renewal status, the system will emit events to 
+ * When the user changes subscription renewal status, the system will emit events to
  * purchaseUpdatedListener and transactionUpdatedIos listeners.
  * @returns {Promise<null>}
  */
@@ -102,10 +133,10 @@ export const showManageSubscriptions = (): Promise<null> =>
  * Get the receipt data from the iOS device.
  * This returns the base64 encoded receipt data which can be sent to your server
  * for verification with Apple's server.
- * 
+ *
  * NOTE: For proper security, always verify receipts on your server using
  * Apple's verifyReceipt endpoint, not directly from the app.
- * 
+ *
  * @returns {Promise<string>} Base64 encoded receipt data
  */
 export const getReceiptIos = (): Promise<string> => {
@@ -118,7 +149,7 @@ export const getReceiptIos = (): Promise<string> => {
 /**
  * Check if a transaction is verified through StoreKit 2.
  * StoreKit 2 performs local verification of transaction JWS signatures.
- * 
+ *
  * @param {string} sku The product's SKU (on iOS)
  * @returns {Promise<boolean>} True if the transaction is verified
  */
@@ -132,7 +163,7 @@ export const isTransactionVerified = (sku: string): Promise<boolean> => {
 /**
  * Get the JWS representation of a purchase for server-side verification.
  * The JWS (JSON Web Signature) can be verified on your server using Apple's public keys.
- * 
+ *
  * @param {string} sku The product's SKU (on iOS)
  * @returns {Promise<string>} JWS representation of the transaction
  */
