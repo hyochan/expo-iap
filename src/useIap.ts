@@ -3,7 +3,6 @@ import {
   initConnection,
   purchaseErrorListener,
   purchaseUpdatedListener,
-  transactionUpdatedIos,
   getProducts,
   getAvailablePurchases,
   getPurchaseHistory,
@@ -24,7 +23,6 @@ import {
   SubscriptionProduct,
   SubscriptionPurchase,
 } from './ExpoIap.types';
-import {TransactionEvent} from './modules/ios';
 import {EventSubscription} from 'expo-modules-core';
 import {Platform} from 'react-native';
 
@@ -283,16 +281,18 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       );
 
       if (Platform.OS === 'ios') {
-        subscriptionsRef.current.promotedProductsIos = transactionUpdatedIos(
-          async (event: TransactionEvent) => {
-            setPromotedProductsIOS((prevProducts) =>
-              event.transaction
-                ? [...prevProducts, event.transaction]
-                : prevProducts,
-            );
+        // iOS promoted products are handled through regular purchase updates
+        subscriptionsRef.current.promotedProductsIos = purchaseUpdatedListener(
+          async (purchase: Purchase | SubscriptionPurchase) => {
+            // Add to promoted products if it's a promoted transaction
+            setPromotedProductsIOS((prevProducts) => [
+              ...prevProducts,
+              purchase as ProductPurchase,
+            ]);
 
-            if (event.transaction && 'expirationDateIos' in event.transaction) {
-              await refreshSubscriptionStatus(event.transaction.id);
+            // Refresh subscription status if it's a subscription purchase
+            if ('expirationDateIos' in purchase) {
+              await refreshSubscriptionStatus(purchase.id);
             }
           },
         );

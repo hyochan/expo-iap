@@ -1,5 +1,5 @@
 import {Platform} from 'react-native';
-import {emitter, IapEvent} from '..';
+import {purchaseUpdatedListener} from '..';
 import {ProductPurchase, PurchaseError} from '../ExpoIap.types';
 import type {ProductStatusIos} from '../types/ExpoIapIos.types';
 import ExpoIapModule from '../ExpoIapModule';
@@ -10,6 +10,19 @@ export type TransactionEvent = {
 };
 
 // Listeners
+/**
+ * @deprecated Use `purchaseUpdatedListener` instead. This function will be removed in a future version.
+ * 
+ * The `transactionUpdatedIos` function is redundant as it simply wraps `purchaseUpdatedListener`.
+ * You can achieve the same functionality by using `purchaseUpdatedListener` directly.
+ * 
+ * @example
+ * // Instead of:
+ * // transactionUpdatedIos((event) => { ... });
+ * 
+ * // Use:
+ * // purchaseUpdatedListener((purchase) => { ... });
+ */
 export const transactionUpdatedIos = (
   listener: (event: TransactionEvent) => void,
 ) => {
@@ -17,7 +30,12 @@ export const transactionUpdatedIos = (
     throw new Error('This method is only available on iOS');
   }
 
-  return emitter.addListener(IapEvent.TransactionIapUpdated, listener);
+  return purchaseUpdatedListener((purchase) => {
+    // Convert Purchase to TransactionEvent format for backward compatibility
+    listener({
+      transaction: purchase as ProductPurchase,
+    });
+  });
 };
 
 // Type guards

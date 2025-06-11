@@ -18,7 +18,6 @@ func logDebug(_ message: String) {
 struct IapEvent {
     static let PurchaseUpdated = "purchase-updated"
     static let PurchaseError = "purchase-error"
-    static let TransactionIapUpdated = "iap-transaction-updated"
 }
 
 @available(iOS 15.0, *)
@@ -191,7 +190,7 @@ public class ExpoIapModule: Module {
             "PI": Double.pi
         ])
 
-        Events(IapEvent.PurchaseUpdated, IapEvent.PurchaseError, IapEvent.TransactionIapUpdated)
+        Events(IapEvent.PurchaseUpdated, IapEvent.PurchaseError)
 
         OnStartObserving {
             self.hasListeners = true
@@ -774,7 +773,6 @@ public class ExpoIapModule: Module {
                     if self.hasListeners {
                         let serialized = serializeTransaction(transaction, jwsRepresentationIos: result.jwsRepresentation)
                         self.sendEvent(IapEvent.PurchaseUpdated, serialized)
-                        self.sendEvent(IapEvent.TransactionIapUpdated, ["transaction": serialized])
                     }
                 } catch {
                     if self.hasListeners {
@@ -785,7 +783,6 @@ public class ExpoIapModule: Module {
                             "message": error.localizedDescription,
                         ]
                         self.sendEvent(IapEvent.PurchaseError, err)
-                        self.sendEvent(IapEvent.TransactionIapUpdated, ["error": err])
                     }
                 }
             }
