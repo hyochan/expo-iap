@@ -882,7 +882,6 @@ public class ExpoIapModule: Module {
                         }
                         
                         self.sendEvent(IapEvent.PurchaseUpdated, purchaseMap)
-                        self.sendEvent(IapEvent.TransactionIapUpdated, ["transaction": purchaseMap])
                         previousStatuses[sku] = currentWillAutoRenew
                     }
                 }

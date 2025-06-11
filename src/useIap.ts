@@ -284,11 +284,16 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         // iOS promoted products are handled through regular purchase updates
         subscriptionsRef.current.promotedProductsIos = purchaseUpdatedListener(
           async (purchase: Purchase | SubscriptionPurchase) => {
-            // Add to promoted products if it's a promoted transaction
-            setPromotedProductsIOS((prevProducts) => [
-              ...prevProducts,
-              purchase as ProductPurchase,
-            ]);
+            // Add to promoted products if it's a promoted transaction (avoid duplicates)
+            setPromotedProductsIOS((prevProducts) => {
+              const isDuplicate = prevProducts.some(
+                (prevPurchase) => prevPurchase.transactionId === purchase.transactionId
+              );
+              if (isDuplicate) {
+                return prevProducts;
+              }
+              return [...prevProducts, purchase as ProductPurchase];
+            });
 
             // Refresh subscription status if it's a subscription purchase
             if ('expirationDateIos' in purchase) {

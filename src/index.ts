@@ -35,13 +35,25 @@ export const PI = ExpoIapModule.PI;
 export enum IapEvent {
   PurchaseUpdated = 'purchase-updated',
   PurchaseError = 'purchase-error',
+  /** @deprecated Use PurchaseUpdated instead. This will be removed in a future version. */
+  TransactionIapUpdated = 'iap-transaction-updated',
 }
 
 export function setValueAsync(value: string) {
   return ExpoIapModule.setValueAsync(value);
 }
 
-export const emitter = ExpoIapModule || NativeModulesProxy.ExpoIap;
+// Ensure the emitter has proper EventEmitter interface
+export const emitter = (ExpoIapModule || NativeModulesProxy.ExpoIap) as {
+  addListener: (
+    eventName: string,
+    listener: (...args: any[]) => void,
+  ) => {remove: () => void};
+  removeListener: (
+    eventName: string,
+    listener: (...args: any[]) => void,
+  ) => void;
+};
 
 export const purchaseUpdatedListener = (
   listener: (event: Purchase) => void,
@@ -151,9 +163,8 @@ export const getPurchaseHistory = ({
       },
       android: async () => {
         const products = await ExpoIapModule.getPurchaseHistoryByType('inapp');
-        const subscriptions = await ExpoIapModule.getPurchaseHistoryByType(
-          'subs',
-        );
+        const subscriptions =
+          await ExpoIapModule.getPurchaseHistoryByType('subs');
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
@@ -175,9 +186,8 @@ export const getAvailablePurchases = ({
         ),
       android: async () => {
         const products = await ExpoIapModule.getAvailableItemsByType('inapp');
-        const subscriptions = await ExpoIapModule.getAvailableItemsByType(
-          'subs',
-        );
+        const subscriptions =
+          await ExpoIapModule.getAvailableItemsByType('subs');
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
