@@ -115,14 +115,39 @@ export function useIAP(options?: UseIAPOptions): UseIap {
 
   const getProductsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
-      setProducts(await getProducts(skus));
+      const newProducts = await getProducts(skus);
+      setProducts((prevProducts) => {
+        const mergedProducts = [...prevProducts];
+        newProducts.forEach((newProduct) => {
+          const isDuplicate = mergedProducts.some(
+            (existingProduct) => existingProduct.id === newProduct.id,
+          );
+          if (!isDuplicate) {
+            mergedProducts.push(newProduct);
+          }
+        });
+        return mergedProducts;
+      });
     },
     [],
   );
 
   const getSubscriptionsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
-      setSubscriptions(await getSubscriptions(skus));
+      const newSubscriptions = await getSubscriptions(skus);
+      setSubscriptions((prevSubscriptions) => {
+        const mergedSubscriptions = [...prevSubscriptions];
+        newSubscriptions.forEach((newSubscription) => {
+          const isDuplicate = mergedSubscriptions.some(
+            (existingSubscription) =>
+              existingSubscription.id === newSubscription.id,
+          );
+          if (!isDuplicate) {
+            mergedSubscriptions.push(newSubscription);
+          }
+        });
+        return mergedSubscriptions;
+      });
     },
     [],
   );
@@ -287,7 +312,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
             // Add to promoted products if it's a promoted transaction (avoid duplicates)
             setPromotedProductsIOS((prevProducts) => {
               const isDuplicate = prevProducts.some(
-                (prevPurchase) => prevPurchase.transactionId === purchase.transactionId
+                (prevPurchase) =>
+                  prevPurchase.transactionId === purchase.transactionId,
               );
               if (isDuplicate) {
                 return prevProducts;
