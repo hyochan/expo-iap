@@ -123,8 +123,7 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
         "id": p.id,
         "title": p.displayName,
         "isFamilyShareable": p.isFamilyShareable,
-        "jsonRepresentation": serializeDebug(
-            String(data: p.jsonRepresentation, encoding: .utf8) ?? ""),
+        "jsonRepresentation": String(data: p.jsonRepresentation, encoding: .utf8),
         "price": p.price,
         "subscription": p.subscription,
         "type": p.type,
