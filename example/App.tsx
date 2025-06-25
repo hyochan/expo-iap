@@ -231,7 +231,7 @@ export default function App() {
                       title="Buy"
                       onPress={() => {
                         requestPurchase({
-                          request: {skus: [item.id]},
+                          request: {sku: item.id},
                         });
                       }}
                     />
