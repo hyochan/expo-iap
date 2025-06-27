@@ -4,7 +4,7 @@
 
 ## Overview
 
-`expo-iap` is an Expo module for handling in-app purchases (IAP) on iOS (StoreKit 2) and Android (Google Play Billing). It supports consumables, non-consumables, and subscriptions. Unlike [`react-native-iap`](https://github.com/hyochan/react-native-iap), which requires native setup, `expo-iap` integrates seamlessly into Expo's [managed workflow](https://docs.expo.dev/archive/managed-vs-bare)—no ejecting needed! However, you’ll need a [development client](https://docs.expo.dev/development/introduction/) instead of Expo Go for full functionality. Starting from version 2.2.8, most features of `react-native-iap` have been ported.
+`expo-iap` is an Expo module for handling in-app purchases (IAP) on iOS (StoreKit 2) and Android (Google Play Billing). It supports consumables, non-consumables, and subscriptions. Unlike [`react-native-iap`](https://github.com/hyochan/react-native-iap), which requires native setup, `expo-iap` integrates seamlessly into Expo's managed workflow! However, you’ll need a [development client](https://docs.expo.dev/development/introduction/) instead of Expo Go for full functionality. Starting from version 2.2.8, most features of `react-native-iap` have been ported.
 
 ## Installation
 
