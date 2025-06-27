@@ -8,7 +8,7 @@
 
 ## Installation
 
-`expo-iap` is compatible with [Expo SDK](https://expo.dev) 51+ and supports both managed workflows and React Native CLI projects. Official documentation is in progress for SDK inclusion (see [Expo IAP Documentation](link-to-docs)).
+`expo-iap` is compatible with [Expo SDK](https://expo.dev) 51+ and supports both managed workflows and React Native CLI projects. Official documentation is in progress for SDK inclusion (see [Expo IAP Documentation](https://github.com/hyochan/expo-iap/blob/main/iap.md#expo-iap-documentation)).
 
 ### Add the Package
 
