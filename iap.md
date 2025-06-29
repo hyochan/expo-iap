@@ -199,8 +199,8 @@ Transactions map to `Purchase` or `SubscriptionPurchase` with platform-specific 
 Below is a simple example of fetching products and making a purchase with `expo-iap` in a managed workflow, updated to use the new `requestPurchase` signature:
 
 ```tsx
-import { useEffect, useState } from 'react';
-import { Button, Text, View } from 'react-native';
+import {useEffect, useState} from 'react';
+import {Button, Text, View} from 'react-native';
 import {
   initConnection,
   endConnection,
@@ -227,7 +227,7 @@ export default function SimpleIAP() {
 
     const purchaseListener = purchaseUpdatedListener(async (purchase) => {
       if (purchase) {
-        await finishTransaction({ purchase, isConsumable: true });
+        await finishTransaction({purchase, isConsumable: true});
         alert('Purchase completed!');
       }
     });
@@ -242,12 +242,12 @@ export default function SimpleIAP() {
   const buyItem = async () => {
     if (!product) return;
     await requestPurchase({
-      request: { skus: [product.id] }, // Android expects 'skus'; iOS would use 'sku'
+      request: {skus: [product.id]}, // Android expects 'skus'; iOS would use 'sku'
     });
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
       <Text>{isConnected ? 'Connected' : 'Connecting...'}</Text>
       {product ? (
         <>
@@ -262,35 +262,49 @@ export default function SimpleIAP() {
 }
 ```
 
-## Using useIAP Hook
+## Using `useIAP` Hook
 
-The `useIAP` hook simplifies managing in-app purchases. Below is an example updated to use the new `requestPurchase` signature:
+The `useIAP` hook from `expo-iap` lets you manage in-app purchases in functional React components. This example reflects a **real-world production use case** with:
+
+- Consumable & subscription support
+- Purchase lifecycle management
+- Platform-specific `requestPurchase` formats
+- UX alerts and loading states
+- Optional receipt validation before finishing the transaction
+
+### 🧭 Flow Overview
+
+| Step | Description |
+| --- | --- |
+| 1️⃣ | Wait for `connected === true` before fetching products and subscriptions |
+| 2️⃣ | Render UI with products/subscriptions dynamically from store |
+| 3️⃣ | Trigger purchases via `requestPurchase()` (with Android/iOS handling) |
+| 4️⃣ | When `currentPurchase` updates, validate & finish the transaction |
+| 5️⃣ | Handle `currentPurchaseError` for graceful UX |
+
+### ✅ Realistic Example with `useIAP`
 
 ```tsx
-import { useEffect, useState } from 'react';
+import {useEffect, useState, useCallback} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
   View,
-  Pressable,
+  Text,
+  ScrollView,
   Button,
-  InteractionManager,
   Alert,
+  Platform,
+  InteractionManager,
 } from 'react-native';
-import { useIAP } from 'expo-iap';
-import type { ProductPurchase, SubscriptionProduct } from 'expo-iap';
+import {useIAP} from 'expo-iap';
+import type {
+  ProductAndroid,
+  ProductPurchaseAndroid,
+} from 'expo-iap/build/types/ExpoIapAndroid.types';
 
-// Define SKUs
-const productSkus = ['cpk.points.1000', 'cpk.points.5000', 'cpk.points.10000', 'cpk.points.30000'];
-const subscriptionSkus = ['cpk.membership.monthly.bronze', 'cpk.membership.monthly.silver'];
+const productSkus = ['dev.hyo.luent.10bulbs', 'dev.hyo.luent.30bulbs'];
+const subscriptionSkus = ['dev.hyo.luent.premium'];
 
-// Define operations
-const operations = ['getProducts', 'getSubscriptions'] as const;
-type Operation = (typeof operations)[number];
-
-export default function IAPWithHook() {
+export default function PurchaseScreen() {
   const {
     connected,
     products,
@@ -299,185 +313,188 @@ export default function IAPWithHook() {
     currentPurchaseError,
     getProducts,
     getSubscriptions,
-    finishTransaction,
     requestPurchase,
+    finishTransaction,
+    validateReceipt,
   } = useIAP();
 
   const [isReady, setIsReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch products and subscriptions only when connected
+  // 1️⃣ Initialize products & subscriptions
   useEffect(() => {
     if (!connected) return;
 
-    const initializeIAP = async () => {
+    const loadStoreItems = async () => {
       try {
-        await Promise.all([getProducts(productSkus), getSubscriptions(subscriptionSkus)]);
+        await getProducts(productSkus);
+        await getSubscriptions(subscriptionSkus);
         setIsReady(true);
-      } catch (error) {
-        console.error('Error initializing IAP:', error);
+      } catch (e) {
+        console.error('IAP init error:', e);
       }
     };
-    initializeIAP();
-  }, [connected, getProducts, getSubscriptions]);
 
-  // Handle purchase updates and errors
+    loadStoreItems();
+  }, [connected]);
+
+  // 2️⃣ Purchase handler when currentPurchase updates
   useEffect(() => {
-    if (currentPurchase) {
-      InteractionManager.runAfterInteractions(async () => {
-        try {
-          await finishTransaction({
-            purchase: currentPurchase,
-            isConsumable: currentPurchase.productType === 'inapp',
-          });
-          Alert.alert('Purchase Successful', JSON.stringify(currentPurchase));
-        } catch (error) {
-          console.error('Error finishing transaction:', error);
-          Alert.alert('Transaction Error', String(error));
-        }
-      });
-    }
+    if (!currentPurchase) return;
 
+    const handlePurchase = async () => {
+      try {
+        setIsLoading(true);
+
+        const productId = currentPurchase.id;
+        const isConsumable = productSkus.includes(productId);
+
+        // ✅ Optionally validate receipt before finishing
+        let isValid = true;
+        if (Platform.OS === 'ios') {
+          const result = await validateReceipt(productId);
+          isValid = result?.isValid ?? true;
+        } else if (Platform.OS === 'android') {
+          const token = (currentPurchase as ProductPurchaseAndroid)
+            .purchaseTokenAndroid;
+          const packageName = 'your.android.package.name';
+
+          const result = await validateReceipt(productId, {
+            productToken: token,
+            packageName,
+            isSub: subscriptionSkus.includes(productId),
+          });
+          isValid = result?.isValid ?? true;
+        }
+
+        if (!isValid) {
+          Alert.alert('Invalid purchase', 'Receipt validation failed');
+          return;
+        }
+
+        // 🧾 Finish transaction (important!)
+        await finishTransaction({
+          purchase: currentPurchase,
+          isConsumable,
+        });
+
+        // ✅ Grant item or unlock feature
+        Alert.alert(
+          'Thank you!',
+          isConsumable
+            ? 'Bulbs added to your account!'
+            : 'Premium subscription activated.',
+        );
+      } catch (err) {
+        console.error('Finish transaction error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    handlePurchase();
+  }, [currentPurchase]);
+
+  // 3️⃣ Error handling
+  useEffect(() => {
     if (currentPurchaseError) {
       InteractionManager.runAfterInteractions(() => {
-        Alert.alert('Purchase Error', JSON.stringify(currentPurchaseError));
+        Alert.alert('Purchase error', currentPurchaseError.message);
       });
+      setIsLoading(false);
     }
-  }, [currentPurchase, currentPurchaseError, finishTransaction]);
+  }, [currentPurchaseError]);
 
-  // Handle operation buttons
-  const handleOperation = async (operation: Operation) => {
-    if (!connected) {
-      Alert.alert('Not Connected', 'Please wait for IAP to connect.');
-      return;
-    }
+  // 4️⃣ Purchase trigger
+  const handleBuy = useCallback(
+    async (productId: string, type?: 'subs') => {
+      try {
+        setIsLoading(true);
 
-    try {
-      switch (operation) {
-        case 'getProducts':
-          await getProducts(productSkus);
-          break;
-        case 'getSubscriptions':
-          await getSubscriptions(subscriptionSkus);
-          break;
+        if (Platform.OS === 'ios') {
+          await requestPurchase({
+            request: {sku: productId},
+            type,
+          });
+        } else {
+          const request: any = {skus: [productId]};
+
+          if (type === 'subs') {
+            const sub = subscriptions.find(
+              (s) => s.id === productId,
+            ) as ProductAndroid;
+            const offers =
+              sub?.subscriptionOfferDetails?.map((offer) => ({
+                sku: productId,
+                offerToken: offer.offerToken,
+              })) || [];
+
+            request.subscriptionOffers = offers;
+          }
+
+          await requestPurchase({request, type});
+        }
+      } catch (err) {
+        console.error('Purchase request failed:', err);
+        Alert.alert(
+          'Error',
+          err instanceof Error ? err.message : 'Purchase failed',
+        );
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error(`Error in ${operation}:`, error);
-    }
-  };
+    },
+    [subscriptions],
+  );
 
-  if (!connected) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Connecting to IAP...</Text>
-      </SafeAreaView>
-    );
-  }
+  if (!connected) return <Text>Connecting to store...</Text>;
+  if (!isReady) return <Text>Loading products...</Text>;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Expo IAP with useIAP Hook</Text>
-      <View style={styles.buttons}>
-        <ScrollView contentContainerStyle={styles.buttonsWrapper} horizontal>
-          {operations.map((operation) => (
-            <Pressable key={operation} onPress={() => handleOperation(operation)}>
-              <View style={styles.buttonView}>
-                <Text>{operation}</Text>
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
-      <View style={styles.content}>
-        {!isReady ? (
-          <Text>Loading...</Text>
-        ) : (
-          <View style={{ gap: 12 }}>
-            <Text style={{ fontSize: 20 }}>Products</Text>
-            {products.map((item) => (
-              <View key={item.id} style={{ gap: 12 }}>
-                <Text>
-                  {item.title} -{' '}
-                  {item.platform === 'android'
-                    ? item.oneTimePurchaseOfferDetails?.formattedPrice
-                    : item.displayPrice}
-                </Text>
-                <Button
-                  title="Buy"
-                  onPress={() =>
-                    requestPurchase({
-                      request: item.platform === 'android' ? { skus: [item.id] } : { sku: item.id },
-                    })
-                  }
-                />
-              </View>
-            ))}
+    <ScrollView contentContainerStyle={{padding: 20}}>
+      <Text style={{fontSize: 18, fontWeight: 'bold'}}>💡 Bulb Packs</Text>
+      {products.map((p) => (
+        <View key={p.id} style={{marginVertical: 10}}>
+          <Text>
+            {p.title} - {p.displayPrice}
+          </Text>
+          <Button
+            title={isLoading ? 'Processing...' : 'Buy'}
+            onPress={() => handleBuy(p.id)}
+            disabled={isLoading}
+          />
+        </View>
+      ))}
 
-            <Text style={{ fontSize: 20 }}>Subscriptions</Text>
-            {subscriptions.map((item) => (
-              <View key={item.id} style={{ gap: 12 }}>
-                <Text>
-                  {item.title || item.displayName} -{' '}
-                  {item.platform === 'android' && item.subscriptionOfferDetails
-                    ? item.subscriptionOfferDetails[0]?.pricingPhases.pricingPhaseList[0].formattedPrice
-                    : item.displayPrice}
-                </Text>
-                <Button
-                  title="Subscribe"
-                  onPress={() =>
-                    requestPurchase({
-                      request:
-                        item.platform === 'android'
-                          ? {
-                              skus: [item.id],
-                              subscriptionOffers:
-                                item.subscriptionOfferDetails?.map((offer) => ({
-                                  sku: item.id,
-                                  offerToken: offer.offerToken,
-                                })) || [],
-                            }
-                          : { sku: item.id },
-                      type: 'subs',
-                    })
-                  }
-                />
-              </View>
-            ))}
-          </View>
-        )}
-      </View>
-    </SafeAreaView>
+      <Text style={{fontSize: 18, fontWeight: 'bold', marginTop: 30}}>
+        ⭐ Subscription
+      </Text>
+      {subscriptions.map((s) => (
+        <View key={s.id} style={{marginVertical: 10}}>
+          <Text>
+            {s.title} - {s.displayPrice}
+          </Text>
+          <Button
+            title={isLoading ? 'Processing...' : 'Subscribe'}
+            onPress={() => handleBuy(s.id, 'subs')}
+            disabled={isLoading}
+          />
+        </View>
+      ))}
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-  },
-  title: {
-    marginTop: 24,
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  buttons: {
-    height: 90,
-  },
-  buttonsWrapper: {
-    padding: 24,
-    gap: 8,
-  },
-  buttonView: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#000',
-    padding: 8,
-  },
-  content: {
-    flex: 1,
-    alignSelf: 'stretch',
-    padding: 24,
-    gap: 12,
-  },
-});
 ```
+
+---
+
+물론입니다. 아래는 보다 자연스럽고 요약된 느낌으로 다듬은 영어 버전입니다:
+
+---
+
+### 🔎 Key Benefits of This Approach
+
+- ✅ Supports **both Android and iOS**, with platform-aware purchase handling
+- ✅ Covers **both consumable items and subscriptions**
+- ✅ Includes a **receipt validation flow** using `validateReceipt` (server-ready)
+- ✅ Handles iOS cases where **auto-finishing transactions is disabled**
+- ✅ Provides **user-friendly error and loading state management**
