@@ -7,7 +7,7 @@ expo-iap now provides a centralized error code management system that ensures co
 ## Problem Solved
 
 Previously, users experienced inconsistent error codes:
-- iOS returned numeric error codes (e.g., "3" for user cancellation)
+- iOS returned numeric error codes (e.g., "2" for user cancellation)
 - Android returned string error codes (e.g., "E_USER_CANCELLED" for user cancellation)
 - The TypeScript enum didn't align with platform-specific implementations
 
@@ -104,7 +104,7 @@ const isSupported = ErrorCodeUtils.isValidForPlatform(ErrorCode.E_USER_CANCELLED
 
 ```typescript
 // iOS would return numeric codes
-if (error.code === '3') {
+if (error.code === '2') {
   // Handle user cancellation
 }
 
@@ -129,9 +129,10 @@ if (error.code === ErrorCode.E_USER_CANCELLED) {
 
 ### iOS Changes
 
-- Updated `IapErrors` enum in `Types.swift` to use proper string raw values
-- Modified all hardcoded error codes in `ExpoIapModule.swift` to use enum values
-- Fixed user cancellation error to return `E_USER_CANCELLED` instead of "3"
+- Removed the `IapErrors` enum from `Types.swift` entirely to eliminate native error code duplication
+- Updated all error throwing in `ExpoIapModule.swift` to use string error codes directly (e.g., "E_USER_CANCELLED", "E_SERVICE_ERROR")
+- Fixed user cancellation error to return `E_USER_CANCELLED` instead of the previous numeric code "2"
+- Native StoreKit errors are now passed through directly while custom errors use standardized string codes
 
 ### Android Changes
 
@@ -160,4 +161,4 @@ This is a **non-breaking change** for most users:
 - New error code system provides additional functionality
 - Users can migrate gradually to the new system
 
-The only potential breaking change is for iOS users who were checking for the hardcoded "3" error code for user cancellation, which now correctly returns `ErrorCode.E_USER_CANCELLED`.
+The only potential breaking change is for iOS users who were checking for specific numeric error codes like "2" for user cancellation, which now correctly returns `ErrorCode.E_USER_CANCELLED`.

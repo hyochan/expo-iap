@@ -186,7 +186,32 @@ public class ExpoIapModule: Module {
         Name("ExpoIap")
 
         Constants([
-            "PI": Double.pi
+            "ERROR_CODES": [
+                "E_UNKNOWN": IapErrorCode.unknown,
+                "E_SERVICE_ERROR": IapErrorCode.serviceError,
+                "E_USER_CANCELLED": IapErrorCode.userCancelled,
+                "E_USER_ERROR": IapErrorCode.userError,
+                "E_ITEM_UNAVAILABLE": IapErrorCode.itemUnavailable,
+                "E_REMOTE_ERROR": IapErrorCode.remoteError,
+                "E_NETWORK_ERROR": IapErrorCode.networkError,
+                "E_RECEIPT_FAILED": IapErrorCode.receiptFailed,
+                "E_RECEIPT_FINISHED_FAILED": IapErrorCode.receiptFinishedFailed,
+                "E_NOT_PREPARED": IapErrorCode.notPrepared,
+                "E_NOT_ENDED": IapErrorCode.notEnded,
+                "E_ALREADY_OWNED": IapErrorCode.alreadyOwned,
+                "E_DEVELOPER_ERROR": IapErrorCode.developerError,
+                "E_PURCHASE_ERROR": IapErrorCode.purchaseError,
+                "E_SYNC_ERROR": IapErrorCode.syncError,
+                "E_DEFERRED_PAYMENT": IapErrorCode.deferredPayment,
+                "E_TRANSACTION_VALIDATION_FAILED": IapErrorCode.transactionValidationFailed,
+                "E_BILLING_RESPONSE_JSON_PARSE_ERROR": IapErrorCode.billingResponseJsonParseError,
+                "E_INTERRUPTED": IapErrorCode.interrupted,
+                "E_IAP_NOT_AVAILABLE": IapErrorCode.iapNotAvailable,
+                "E_ACTIVITY_UNAVAILABLE": IapErrorCode.activityUnavailable,
+                "E_ALREADY_PREPARED": IapErrorCode.alreadyPrepared,
+                "E_PENDING": IapErrorCode.pending,
+                "E_CONNECTION_CLOSED": IapErrorCode.connectionClosed,
+            ]
         ])
 
         Events(IapEvent.PurchaseUpdated, IapEvent.PurchaseError)
@@ -208,7 +233,7 @@ public class ExpoIapModule: Module {
 
         AsyncFunction("getItems") { (skus: [String]) -> [[String: Any?]?] in
             guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: "1")
+                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.notPrepared)
             }
 
             do {
@@ -294,9 +319,9 @@ public class ExpoIapModule: Module {
                     }
                 } catch StoreError.failedVerification {
                     let err = [
-                        "responseCode": IapErrors.E_TRANSACTION_VALIDATION_FAILED.rawValue,
+                        "responseCode": IapErrorCode.transactionValidationFailed,
                         "debugMessage": StoreError.failedVerification.localizedDescription,
-                        "code": IapErrors.E_TRANSACTION_VALIDATION_FAILED.rawValue,
+                        "code": IapErrorCode.transactionValidationFailed,
                         "message": StoreError.failedVerification.localizedDescription,
                         "productId": "unknown",
                     ]
@@ -305,9 +330,9 @@ public class ExpoIapModule: Module {
                     }
                 } catch {
                     let err = [
-                        "responseCode": IapErrors.E_UNKNOWN.rawValue,
+                        "responseCode": IapErrorCode.unknown,
                         "debugMessage": error.localizedDescription,
-                        "code": IapErrors.E_UNKNOWN.rawValue,
+                        "code": IapErrorCode.unknown,
                         "message": error.localizedDescription,
                         "productId": "unknown",
                     ]
@@ -325,7 +350,7 @@ public class ExpoIapModule: Module {
                 appAccountToken: String?, quantity: Int, discountOffer: [String: String]?
             ) -> [String: Any?]? in
             guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: "1")
+                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
             }
 
             let product: Product? = await productStore.getProduct(productID: sku)
@@ -355,7 +380,7 @@ public class ExpoIapModule: Module {
                         options.insert(.appAccountToken(appAccountUUID))
                     }
                     guard let windowScene = await self.currentWindowScene() else {
-                        throw Exception(name: "ExpoIapModule", description: "Could not find window scene", code: "2")
+                        throw Exception(name: "ExpoIapModule", description: "Could not find window scene", code: IapErrorCode.serviceError)
                     }
                     let result: Product.PurchaseResult
                     #if swift(>=5.9)
@@ -398,20 +423,20 @@ public class ExpoIapModule: Module {
                             return serialized
                         }
                     case .userCancelled:
-                        throw Exception(name: "ExpoIapModule", description: "User cancelled the purchase", code: "3")
+                        throw Exception(name: "ExpoIapModule", description: "User cancelled the purchase", code: IapErrorCode.userCancelled)
                     case .pending:
-                        throw Exception(name: "ExpoIapModule", description: "The payment was deferred", code: "4")
+                        throw Exception(name: "ExpoIapModule", description: "The payment was deferred", code: IapErrorCode.deferredPayment)
                     @unknown default:
-                        throw Exception(name: "ExpoIapModule", description: "Unknown purchase result", code: "5")
+                        throw Exception(name: "ExpoIapModule", description: "Unknown purchase result", code: IapErrorCode.unknown)
                     }
                 } catch {
                     if error is Exception {
                         throw error
                     }
-                    throw Exception(name: "ExpoIapModule", description: "Purchase failed: \(error.localizedDescription)", code: "6")
+                    throw Exception(name: "ExpoIapModule", description: "Purchase failed: \(error.localizedDescription)", code: IapErrorCode.purchaseError)
                 }
             } else {
-                throw Exception(name: "ExpoIapModule", description: "Invalid product ID", code: "7")
+                throw Exception(name: "ExpoIapModule", description: "Invalid product ID", code: IapErrorCode.itemUnavailable)
             }
         }
 
@@ -421,7 +446,7 @@ public class ExpoIapModule: Module {
 
         AsyncFunction("subscriptionStatus") { (sku: String) -> [[String: Any?]?]? in
             guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: "1")
+                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
             }
 
             do {
@@ -436,13 +461,13 @@ public class ExpoIapModule: Module {
                 if error is Exception {
                     throw error
                 }
-                throw Exception(name: "ExpoIapModule", description: "Error getting subscription status: \(error.localizedDescription)", code: "2")
+                throw Exception(name: "ExpoIapModule", description: "Error getting subscription status: \(error.localizedDescription)", code: IapErrorCode.serviceError)
             }
         }
 
         AsyncFunction("currentEntitlement") { (sku: String) -> [String: Any?]? in
             guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: "1")
+                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
             }
 
             if let product = await productStore.getProduct(productID: sku) {
@@ -451,24 +476,24 @@ public class ExpoIapModule: Module {
                         let transaction = try self.checkVerified(result)
                         return serializeTransaction(transaction)
                     } catch StoreError.failedVerification {
-                        throw Exception(name: "ExpoIapModule", description: "Failed to verify transaction for sku \(sku)", code: "2")
+                        throw Exception(name: "ExpoIapModule", description: "Failed to verify transaction for sku \(sku)", code: IapErrorCode.transactionValidationFailed)
                     } catch {
                         if error is Exception {
                             throw error
                         }
-                        throw Exception(name: "ExpoIapModule", description: "Error fetching entitlement for sku \(sku): \(error.localizedDescription)", code: "3")
+                        throw Exception(name: "ExpoIapModule", description: "Error fetching entitlement for sku \(sku): \(error.localizedDescription)", code: IapErrorCode.serviceError)
                     }
                 } else {
-                    throw Exception(name: "ExpoIapModule", description: "Can't find entitlement for sku \(sku)", code: "4")
+                    throw Exception(name: "ExpoIapModule", description: "Can't find entitlement for sku \(sku)", code: IapErrorCode.itemUnavailable)
                 }
             } else {
-                throw Exception(name: "ExpoIapModule", description: "Can't find product for sku \(sku)", code: "5")
+                throw Exception(name: "ExpoIapModule", description: "Can't find product for sku \(sku)", code: IapErrorCode.itemUnavailable)
             }
         }
 
         AsyncFunction("latestTransaction") { (sku: String) -> [String: Any?]? in
             guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: "1")
+                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
             }
 
             if let product = await productStore.getProduct(productID: sku) {
@@ -477,18 +502,18 @@ public class ExpoIapModule: Module {
                         let transaction = try self.checkVerified(result)
                         return serializeTransaction(transaction)
                     } catch StoreError.failedVerification {
-                        throw Exception(name: "ExpoIapModule", description: "Failed to verify transaction for sku \(sku)", code: "2")
+                        throw Exception(name: "ExpoIapModule", description: "Failed to verify transaction for sku \(sku)", code: IapErrorCode.transactionValidationFailed)
                     } catch {
                         if error is Exception {
                             throw error
                         }
-                        throw Exception(name: "ExpoIapModule", description: "Error fetching latest transaction for sku \(sku): \(error.localizedDescription)", code: "3")
+                        throw Exception(name: "ExpoIapModule", description: "Error fetching latest transaction for sku \(sku): \(error.localizedDescription)", code: IapErrorCode.serviceError)
                     }
                 } else {
-                    throw Exception(name: "ExpoIapModule", description: "Can't find latest transaction for sku \(sku)", code: "4")
+                    throw Exception(name: "ExpoIapModule", description: "Can't find latest transaction for sku \(sku)", code: IapErrorCode.itemUnavailable)
                 }
             } else {
-                throw Exception(name: "ExpoIapModule", description: "Can't find product for sku \(sku)", code: "5")
+                throw Exception(name: "ExpoIapModule", description: "Can't find product for sku \(sku)", code: IapErrorCode.itemUnavailable)
             }
         }
 
@@ -498,7 +523,7 @@ public class ExpoIapModule: Module {
                 self.transactions.removeValue(forKey: transactionIdentifier)
                 return true
             } else {
-                throw Exception(name: "ExpoIapModule", description: "Invalid transaction ID", code: "8")
+                throw Exception(name: "ExpoIapModule", description: "Invalid transaction ID", code: IapErrorCode.developerError)
             }
         }
 
@@ -514,7 +539,7 @@ public class ExpoIapModule: Module {
                 if error is Exception {
                     throw error
                 }
-                throw Exception(name: "ExpoIapModule", description: "Error synchronizing with the AppStore: \(error.localizedDescription)", code: "9")
+                throw Exception(name: "ExpoIapModule", description: "Error synchronizing with the AppStore: \(error.localizedDescription)", code: IapErrorCode.syncError)
             }
         }
 
@@ -523,14 +548,14 @@ public class ExpoIapModule: Module {
                 SKPaymentQueue.default().presentCodeRedemptionSheet()
                 return true
             #else
-                throw Exception(name: "ExpoIapModule", description: "This method is not available on tvOS", code: "10")
+                throw Exception(name: "ExpoIapModule", description: "This method is not available on tvOS", code: IapErrorCode.serviceError)
             #endif
         }
 
         AsyncFunction("showManageSubscriptions") { () -> Bool in
             #if !os(tvOS)
                 guard let windowScene = await self.currentWindowScene() else {
-                    throw Exception(name: "ExpoIapModule", description: "Cannot find window scene or not available on macOS", code: "11")
+                    throw Exception(name: "ExpoIapModule", description: "Cannot find window scene or not available on macOS", code: IapErrorCode.serviceError)
                 }
                 // Get all subscription products before showing the management UI
                 let subscriptionSkus = await self.getAllSubscriptionProductIds()
@@ -541,7 +566,7 @@ public class ExpoIapModule: Module {
                 self.pollForSubscriptionStatusChanges()
                 return true
             #else
-                throw Exception(name: "ExpoIapModule", description: "This method is not available on tvOS", code: "12")
+                throw Exception(name: "ExpoIapModule", description: "This method is not available on tvOS", code: IapErrorCode.serviceError)
             #endif
         }
 
@@ -567,26 +592,26 @@ public class ExpoIapModule: Module {
                 guard let product = await self.productStore?.getProduct(productID: sku),
                     let result = await product.latestTransaction
                 else {
-                    throw Exception(name: "ExpoIapModule", description: "Can't find product or transaction for sku \(sku)", code: "5")
+                    throw Exception(name: "ExpoIapModule", description: "Can't find product or transaction for sku \(sku)", code: IapErrorCode.itemUnavailable)
                 }
 
                 do {
                     let transaction = try self.checkVerified(result)
                     guard let windowScene = await self.currentWindowScene() else {
-                        throw Exception(name: "ExpoIapModule", description: "Cannot find window scene or not available on macOS", code: "11")
+                        throw Exception(name: "ExpoIapModule", description: "Cannot find window scene or not available on macOS", code: IapErrorCode.serviceError)
                     }
                     let refundStatus = try await transaction.beginRefundRequest(in: windowScene)
                     return serialize(refundStatus)
                 } catch StoreError.failedVerification {
-                    throw Exception(name: "ExpoIapModule", description: "Failed to verify transaction for sku \(sku)", code: "2")
+                    throw Exception(name: "ExpoIapModule", description: "Failed to verify transaction for sku \(sku)", code: IapErrorCode.transactionValidationFailed)
                 } catch {
                     if error is Exception {
                         throw error
                     }
-                    throw Exception(name: "ExpoIapModule", description: "Failed to refund purchase: \(error.localizedDescription)", code: "3")
+                    throw Exception(name: "ExpoIapModule", description: "Failed to refund purchase: \(error.localizedDescription)", code: IapErrorCode.serviceError)
                 }
             #else
-                throw Exception(name: "ExpoIapModule", description: "This method is not available on tvOS", code: "12")
+                throw Exception(name: "ExpoIapModule", description: "This method is not available on tvOS", code: IapErrorCode.serviceError)
             #endif
         }
 
@@ -601,7 +626,7 @@ public class ExpoIapModule: Module {
 
         AsyncFunction("isTransactionVerified") { (sku: String) -> Bool in
             guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: "1")
+                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
             }
             
             if let product = await productStore.getProduct(productID: sku),
@@ -619,20 +644,20 @@ public class ExpoIapModule: Module {
 
         AsyncFunction("getTransactionJws") { (sku: String) -> String? in
             guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: "1")
+                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
             }
             
             if let product = await productStore.getProduct(productID: sku),
                let result = await product.latestTransaction {
                 return result.jwsRepresentation
             } else {
-                throw Exception(name: "ExpoIapModule", description: "Can't find transaction for sku \(sku)", code: "5")
+                throw Exception(name: "ExpoIapModule", description: "Can't find transaction for sku \(sku)", code: IapErrorCode.itemUnavailable)
             }
         }
 
         AsyncFunction("validateReceiptIos") { (sku: String) -> [String: Any] in
             guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: "1")
+                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
             }
             
             // Get receipt data
@@ -697,9 +722,9 @@ public class ExpoIapModule: Module {
                 } catch {
                     if self.hasListeners {
                         let err = [
-                            "responseCode": IapErrors.E_TRANSACTION_VALIDATION_FAILED.rawValue,
+                            "responseCode": IapErrorCode.transactionValidationFailed,
                             "debugMessage": error.localizedDescription,
-                            "code": IapErrors.E_TRANSACTION_VALIDATION_FAILED.rawValue,
+                            "code": IapErrorCode.transactionValidationFailed,
                             "message": error.localizedDescription,
                         ]
                         self.sendEvent(IapEvent.PurchaseError, err)
@@ -817,10 +842,10 @@ public class ExpoIapModule: Module {
                 let receiptData = try Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
                 return receiptData.base64EncodedString(options: [])
             } catch {
-                throw Exception(name: "ExpoIapModule", description: "Error reading receipt data: \(error.localizedDescription)", code: "13")
+                throw Exception(name: "ExpoIapModule", description: "Error reading receipt data: \(error.localizedDescription)", code: IapErrorCode.receiptFailed)
             }
         } else {
-            throw Exception(name: "ExpoIapModule", description: "App Store receipt not found", code: "14")
+            throw Exception(name: "ExpoIapModule", description: "App Store receipt not found", code: IapErrorCode.receiptFailed)
         }
     }
 }

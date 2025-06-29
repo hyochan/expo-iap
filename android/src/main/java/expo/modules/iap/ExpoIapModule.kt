@@ -28,9 +28,20 @@ class ExpoIapModule :
     PurchasesUpdatedListener {
     companion object {
         const val TAG = "ExpoIapModule"
+        
+        // Error codes for IAP operations
         const val E_NOT_PREPARED = "E_NOT_PREPARED"
         const val E_INIT_CONNECTION = "E_INIT_CONNECTION"
         const val E_QUERY_PRODUCT = "E_QUERY_PRODUCT"
+        const val E_UNKNOWN = "E_UNKNOWN"
+        const val E_SKU_OFFER_MISMATCH = "E_SKU_OFFER_MISMATCH"
+        const val E_SKU_NOT_FOUND = "E_SKU_NOT_FOUND"
+        const val E_USER_CANCELLED = "E_USER_CANCELLED"
+        const val E_DEVELOPER_ERROR = "E_DEVELOPER_ERROR"
+        const val E_ITEM_UNAVAILABLE = "E_ITEM_UNAVAILABLE"
+        const val E_SERVICE_ERROR = "E_SERVICE_ERROR"
+        const val E_PURCHASE_ERROR = "E_PURCHASE_ERROR"
+        
         const val EMPTY_SKU_LIST = "EMPTY_SKU_LIST"
         private const val PROMISE_BUY_ITEM = "PROMISE_BUY_ITEM"
     }
@@ -126,7 +137,21 @@ class ExpoIapModule :
         ModuleDefinition {
             Name("ExpoIap")
 
-            Constants("PI" to Math.PI)
+            Constants(
+                "ERROR_CODES" to mapOf(
+                    "E_UNKNOWN" to E_UNKNOWN,
+                    "E_USER_CANCELLED" to E_USER_CANCELLED,
+                    "E_NOT_PREPARED" to E_NOT_PREPARED,
+                    "E_SERVICE_ERROR" to E_SERVICE_ERROR,
+                    "E_ITEM_UNAVAILABLE" to E_ITEM_UNAVAILABLE,
+                    "E_PURCHASE_ERROR" to E_PURCHASE_ERROR,
+                    "E_DEVELOPER_ERROR" to E_DEVELOPER_ERROR,
+                    "E_SKU_NOT_FOUND" to E_SKU_NOT_FOUND,
+                    "E_SKU_OFFER_MISMATCH" to E_SKU_OFFER_MISMATCH,
+                    "E_INIT_CONNECTION" to E_INIT_CONNECTION,
+                    "E_QUERY_PRODUCT" to E_QUERY_PRODUCT,
+                )
+            )
 
             Events(IapEvent.PURCHASE_UPDATED, IapEvent.PURCHASE_ERROR)
 
@@ -330,7 +355,7 @@ class ExpoIapModule :
                 val isOfferPersonalized = params["isOfferPersonalized"] as? Boolean ?: false
 
                 if (currentActivity == null) {
-                    promise.reject("E_UNKNOWN", "getCurrentActivity returned null", null)
+                    promise.reject(E_UNKNOWN, "getCurrentActivity returned null", null)
                     return@AsyncFunction
                 }
 
@@ -344,14 +369,14 @@ class ExpoIapModule :
                                 IapEvent.PURCHASE_ERROR,
                                 mapOf(
                                     "debugMessage" to debugMessage,
-                                    "code" to "E_SKU_OFFER_MISMATCH",
+                                    "code" to E_SKU_OFFER_MISMATCH,
                                     "message" to debugMessage,
                                 )
                             )
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
                         }
-                        promise.reject("E_SKU_OFFER_MISMATCH", debugMessage, null)
+                        promise.reject(E_SKU_OFFER_MISMATCH, debugMessage, null)
                         return@ensureConnection
                     }
 
@@ -366,7 +391,7 @@ class ExpoIapModule :
                                         IapEvent.PURCHASE_ERROR,
                                         mapOf(
                                             "debugMessage" to debugMessage,
-                                            "code" to "E_SKU_NOT_FOUND",
+                                            "code" to E_SKU_NOT_FOUND,
                                             "message" to debugMessage,
                                             "productId" to sku,
                                         ),
@@ -374,7 +399,7 @@ class ExpoIapModule :
                                 } catch (e: Exception) {
                                     Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
                                 }
-                                promise.reject("E_SKU_NOT_FOUND", debugMessage, null)
+                                promise.reject(E_SKU_NOT_FOUND, debugMessage, null)
                                 return@ensureConnection
                             }
 

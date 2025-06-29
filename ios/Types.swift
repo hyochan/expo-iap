@@ -12,24 +12,32 @@ public enum StoreError: Error {
     case failedVerification
 }
 
-enum IapErrors: String, CaseIterable {
-    case E_UNKNOWN = "E_UNKNOWN"
-    case E_SERVICE_ERROR = "E_SERVICE_ERROR"
-    case E_USER_CANCELLED = "E_USER_CANCELLED"
-    case E_USER_ERROR = "E_USER_ERROR"
-    case E_ITEM_UNAVAILABLE = "E_ITEM_UNAVAILABLE"
-    case E_REMOTE_ERROR = "E_REMOTE_ERROR"
-    case E_NETWORK_ERROR = "E_NETWORK_ERROR"
-    case E_RECEIPT_FAILED = "E_RECEIPT_FAILED"
-    case E_RECEIPT_FINISHED_FAILED = "E_RECEIPT_FINISHED_FAILED"
-    case E_DEVELOPER_ERROR = "E_DEVELOPER_ERROR"
-    case E_PURCHASE_ERROR = "E_PURCHASE_ERROR"
-    case E_SYNC_ERROR = "E_SYNC_ERROR"
-    case E_DEFERRED_PAYMENT = "E_DEFERRED_PAYMENT"
-    case E_TRANSACTION_VALIDATION_FAILED = "E_TRANSACTION_VALIDATION_FAILED"
-    func asInt() -> Int {
-        return IapErrors.allCases.firstIndex(of: self)!
-    }
+// Error codes for IAP operations - centralized error code management
+struct IapErrorCode {
+    static let unknown = "E_UNKNOWN"
+    static let serviceError = "E_SERVICE_ERROR"
+    static let userCancelled = "E_USER_CANCELLED"
+    static let userError = "E_USER_ERROR"
+    static let itemUnavailable = "E_ITEM_UNAVAILABLE"
+    static let remoteError = "E_REMOTE_ERROR"
+    static let networkError = "E_NETWORK_ERROR"
+    static let receiptFailed = "E_RECEIPT_FAILED"
+    static let receiptFinishedFailed = "E_RECEIPT_FINISHED_FAILED"
+    static let notPrepared = "E_NOT_PREPARED"
+    static let notEnded = "E_NOT_ENDED"
+    static let alreadyOwned = "E_ALREADY_OWNED"
+    static let developerError = "E_DEVELOPER_ERROR"
+    static let purchaseError = "E_PURCHASE_ERROR"
+    static let syncError = "E_SYNC_ERROR"
+    static let deferredPayment = "E_DEFERRED_PAYMENT"
+    static let transactionValidationFailed = "E_TRANSACTION_VALIDATION_FAILED"
+    static let billingResponseJsonParseError = "E_BILLING_RESPONSE_JSON_PARSE_ERROR"
+    static let interrupted = "E_INTERRUPTED"
+    static let iapNotAvailable = "E_IAP_NOT_AVAILABLE"
+    static let activityUnavailable = "E_ACTIVITY_UNAVAILABLE"
+    static let alreadyPrepared = "E_ALREADY_PREPARED"
+    static let pending = "E_PENDING"
+    static let connectionClosed = "E_CONNECTION_CLOSED"
 }
 
 // Based on https://stackoverflow.com/a/40135192/570612
