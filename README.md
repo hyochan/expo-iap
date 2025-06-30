@@ -14,8 +14,9 @@ The `expo-iap` module has been migrated from [react-native-iap](https://github.c
 
 # API documentation
 
-- [Documentation](./docs/IAP.md)
-- [Error Code Management](./docs/ERROR_CODES.md)
+- [📚 Complete Setup Guide](./docs/SETUP_GUIDE.md) - **Comprehensive beginner's guide**
+- [📖 API Documentation](./docs/IAP.md)
+- [🔧 Error Code Management](./docs/ERROR_CODES.md)
 
 ## Installation
 
