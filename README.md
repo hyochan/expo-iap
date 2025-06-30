@@ -1,6 +1,6 @@
 # Expo IAP
 
-| In app purchase module in [Expo](https://expo.dev)
+| In app purchase module in [Expo](https://docs.expo.dev/guides/in-app-purchases)
 
 <div>
   <img src="https://github.com/user-attachments/assets/3257a1e0-800b-441b-8522-94c35ce751d2" width="400" />

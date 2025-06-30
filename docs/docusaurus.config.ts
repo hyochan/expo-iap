@@ -153,7 +153,7 @@ const config: Config = {
             },
             {
               label: 'Expo Documentation',
-              href: 'https://docs.expo.dev/',
+              href: 'https://docs.expo.dev/guides/in-app-purchases',
             },
           ],
         },
