@@ -5,32 +5,32 @@ package expo.modules.iap
  * Single source of truth for all error codes used across the module
  */
 object IapErrorCode {
-    private val codes = listOf(
-        "E_NOT_PREPARED",
-        "E_INIT_CONNECTION", 
-        "E_QUERY_PRODUCT",
-        "E_UNKNOWN",
-        "E_SKU_OFFER_MISMATCH",
-        "E_SKU_NOT_FOUND",
-        "E_USER_CANCELLED",
-        "E_DEVELOPER_ERROR",
-        "E_ITEM_UNAVAILABLE",
-        "E_SERVICE_ERROR",
-        "E_PURCHASE_ERROR"
-    ).associateWith { it }
+    private val codes = mapOf(
+        "E_NOT_PREPARED" to "E_NOT_PREPARED",
+        "E_INIT_CONNECTION" to "E_INIT_CONNECTION", 
+        "E_QUERY_PRODUCT" to "E_QUERY_PRODUCT",
+        "E_UNKNOWN" to "E_UNKNOWN",
+        "E_SKU_OFFER_MISMATCH" to "E_SKU_OFFER_MISMATCH",
+        "E_SKU_NOT_FOUND" to "E_SKU_NOT_FOUND",
+        "E_USER_CANCELLED" to "E_USER_CANCELLED",
+        "E_DEVELOPER_ERROR" to "E_DEVELOPER_ERROR",
+        "E_ITEM_UNAVAILABLE" to "E_ITEM_UNAVAILABLE",
+        "E_SERVICE_ERROR" to "E_SERVICE_ERROR",
+        "E_PURCHASE_ERROR" to "E_PURCHASE_ERROR"
+    )
     
-    // Constants for code usage - automatically generated
-    val E_NOT_PREPARED by lazy { codes["E_NOT_PREPARED"]!! }
-    val E_INIT_CONNECTION by lazy { codes["E_INIT_CONNECTION"]!! }
-    val E_QUERY_PRODUCT by lazy { codes["E_QUERY_PRODUCT"]!! }
-    val E_UNKNOWN by lazy { codes["E_UNKNOWN"]!! }
-    val E_SKU_OFFER_MISMATCH by lazy { codes["E_SKU_OFFER_MISMATCH"]!! }
-    val E_SKU_NOT_FOUND by lazy { codes["E_SKU_NOT_FOUND"]!! }
-    val E_USER_CANCELLED by lazy { codes["E_USER_CANCELLED"]!! }
-    val E_DEVELOPER_ERROR by lazy { codes["E_DEVELOPER_ERROR"]!! }
-    val E_ITEM_UNAVAILABLE by lazy { codes["E_ITEM_UNAVAILABLE"]!! }
-    val E_SERVICE_ERROR by lazy { codes["E_SERVICE_ERROR"]!! }
-    val E_PURCHASE_ERROR by lazy { codes["E_PURCHASE_ERROR"]!! }
+    // Constants for code usage - Android specific error codes
+    const val E_NOT_PREPARED = "E_NOT_PREPARED"
+    const val E_INIT_CONNECTION = "E_INIT_CONNECTION"
+    const val E_QUERY_PRODUCT = "E_QUERY_PRODUCT"
+    const val E_UNKNOWN = "E_UNKNOWN"
+    const val E_SKU_OFFER_MISMATCH = "E_SKU_OFFER_MISMATCH"
+    const val E_SKU_NOT_FOUND = "E_SKU_NOT_FOUND"
+    const val E_USER_CANCELLED = "E_USER_CANCELLED"
+    const val E_DEVELOPER_ERROR = "E_DEVELOPER_ERROR"
+    const val E_ITEM_UNAVAILABLE = "E_ITEM_UNAVAILABLE"
+    const val E_SERVICE_ERROR = "E_SERVICE_ERROR"
+    const val E_PURCHASE_ERROR = "E_PURCHASE_ERROR"
     
     // Convert to map for Constants export
     fun toMap() = codes
