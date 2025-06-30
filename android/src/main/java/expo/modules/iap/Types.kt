@@ -5,20 +5,6 @@ package expo.modules.iap
  * Single source of truth for all error codes used across the module
  */
 object IapErrorCode {
-    private val codes = mapOf(
-        "E_NOT_PREPARED" to "E_NOT_PREPARED",
-        "E_INIT_CONNECTION" to "E_INIT_CONNECTION", 
-        "E_QUERY_PRODUCT" to "E_QUERY_PRODUCT",
-        "E_UNKNOWN" to "E_UNKNOWN",
-        "E_SKU_OFFER_MISMATCH" to "E_SKU_OFFER_MISMATCH",
-        "E_SKU_NOT_FOUND" to "E_SKU_NOT_FOUND",
-        "E_USER_CANCELLED" to "E_USER_CANCELLED",
-        "E_DEVELOPER_ERROR" to "E_DEVELOPER_ERROR",
-        "E_ITEM_UNAVAILABLE" to "E_ITEM_UNAVAILABLE",
-        "E_SERVICE_ERROR" to "E_SERVICE_ERROR",
-        "E_PURCHASE_ERROR" to "E_PURCHASE_ERROR"
-    )
-    
     // Constants for code usage - Android specific error codes
     const val E_NOT_PREPARED = "E_NOT_PREPARED"
     const val E_INIT_CONNECTION = "E_INIT_CONNECTION"
@@ -32,8 +18,20 @@ object IapErrorCode {
     const val E_SERVICE_ERROR = "E_SERVICE_ERROR"
     const val E_PURCHASE_ERROR = "E_PURCHASE_ERROR"
     
-    // Convert to map for Constants export
-    fun toMap() = codes
+    // Convert to map for Constants export - safe pattern without dictionary lookups
+    fun toMap() = mapOf(
+        "E_NOT_PREPARED" to E_NOT_PREPARED,
+        "E_INIT_CONNECTION" to E_INIT_CONNECTION,
+        "E_QUERY_PRODUCT" to E_QUERY_PRODUCT,
+        "E_UNKNOWN" to E_UNKNOWN,
+        "E_SKU_OFFER_MISMATCH" to E_SKU_OFFER_MISMATCH,
+        "E_SKU_NOT_FOUND" to E_SKU_NOT_FOUND,
+        "E_USER_CANCELLED" to E_USER_CANCELLED,
+        "E_DEVELOPER_ERROR" to E_DEVELOPER_ERROR,
+        "E_ITEM_UNAVAILABLE" to E_ITEM_UNAVAILABLE,
+        "E_SERVICE_ERROR" to E_SERVICE_ERROR,
+        "E_PURCHASE_ERROR" to E_PURCHASE_ERROR
+    )
 }
 
 /**
