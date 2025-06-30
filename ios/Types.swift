@@ -40,34 +40,37 @@ struct IapErrorCode {
     static let pending = "E_PENDING"
     static let connectionClosed = "E_CONNECTION_CLOSED"
     
-    // Convert to dictionary for Constants export - safe pattern without dictionary lookups
+    // Cached dictionary for Constants export - using constants as keys to avoid duplication
+    private static let _cachedDictionary: [String: String] = [
+        unknown: unknown,
+        serviceError: serviceError,
+        userCancelled: userCancelled,
+        userError: userError,
+        itemUnavailable: itemUnavailable,
+        remoteError: remoteError,
+        networkError: networkError,
+        receiptFailed: receiptFailed,
+        receiptFinishedFailed: receiptFinishedFailed,
+        notPrepared: notPrepared,
+        notEnded: notEnded,
+        alreadyOwned: alreadyOwned,
+        developerError: developerError,
+        purchaseError: purchaseError,
+        syncError: syncError,
+        deferredPayment: deferredPayment,
+        transactionValidationFailed: transactionValidationFailed,
+        billingResponseJsonParseError: billingResponseJsonParseError,
+        interrupted: interrupted,
+        iapNotAvailable: iapNotAvailable,
+        activityUnavailable: activityUnavailable,
+        alreadyPrepared: alreadyPrepared,
+        pending: pending,
+        connectionClosed: connectionClosed
+    ]
+    
+    // Return cached dictionary - no allocation on repeated calls
     static func toDictionary() -> [String: String] {
-        return [
-            "E_UNKNOWN": unknown,
-            "E_SERVICE_ERROR": serviceError,
-            "E_USER_CANCELLED": userCancelled,
-            "E_USER_ERROR": userError,
-            "E_ITEM_UNAVAILABLE": itemUnavailable,
-            "E_REMOTE_ERROR": remoteError,
-            "E_NETWORK_ERROR": networkError,
-            "E_RECEIPT_FAILED": receiptFailed,
-            "E_RECEIPT_FINISHED_FAILED": receiptFinishedFailed,
-            "E_NOT_PREPARED": notPrepared,
-            "E_NOT_ENDED": notEnded,
-            "E_ALREADY_OWNED": alreadyOwned,
-            "E_DEVELOPER_ERROR": developerError,
-            "E_PURCHASE_ERROR": purchaseError,
-            "E_SYNC_ERROR": syncError,
-            "E_DEFERRED_PAYMENT": deferredPayment,
-            "E_TRANSACTION_VALIDATION_FAILED": transactionValidationFailed,
-            "E_BILLING_RESPONSE_JSON_PARSE_ERROR": billingResponseJsonParseError,
-            "E_INTERRUPTED": interrupted,
-            "E_IAP_NOT_AVAILABLE": iapNotAvailable,
-            "E_ACTIVITY_UNAVAILABLE": activityUnavailable,
-            "E_ALREADY_PREPARED": alreadyPrepared,
-            "E_PENDING": pending,
-            "E_CONNECTION_CLOSED": connectionClosed
-        ]
+        return _cachedDictionary
     }
 }
 

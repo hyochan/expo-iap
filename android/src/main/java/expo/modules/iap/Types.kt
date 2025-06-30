@@ -18,20 +18,24 @@ object IapErrorCode {
     const val E_SERVICE_ERROR = "E_SERVICE_ERROR"
     const val E_PURCHASE_ERROR = "E_PURCHASE_ERROR"
     
-    // Convert to map for Constants export - safe pattern without dictionary lookups
-    fun toMap() = mapOf(
-        "E_NOT_PREPARED" to E_NOT_PREPARED,
-        "E_INIT_CONNECTION" to E_INIT_CONNECTION,
-        "E_QUERY_PRODUCT" to E_QUERY_PRODUCT,
-        "E_UNKNOWN" to E_UNKNOWN,
-        "E_SKU_OFFER_MISMATCH" to E_SKU_OFFER_MISMATCH,
-        "E_SKU_NOT_FOUND" to E_SKU_NOT_FOUND,
-        "E_USER_CANCELLED" to E_USER_CANCELLED,
-        "E_DEVELOPER_ERROR" to E_DEVELOPER_ERROR,
-        "E_ITEM_UNAVAILABLE" to E_ITEM_UNAVAILABLE,
-        "E_SERVICE_ERROR" to E_SERVICE_ERROR,
-        "E_PURCHASE_ERROR" to E_PURCHASE_ERROR
+    // Cached map for Constants export - initialized once at class loading time
+    // Using constants as keys to avoid duplication and ensure type safety
+    private val _cachedMap: Map<String, String> = mapOf(
+        E_NOT_PREPARED to E_NOT_PREPARED,
+        E_INIT_CONNECTION to E_INIT_CONNECTION,
+        E_QUERY_PRODUCT to E_QUERY_PRODUCT,
+        E_UNKNOWN to E_UNKNOWN,
+        E_SKU_OFFER_MISMATCH to E_SKU_OFFER_MISMATCH,
+        E_SKU_NOT_FOUND to E_SKU_NOT_FOUND,
+        E_USER_CANCELLED to E_USER_CANCELLED,
+        E_DEVELOPER_ERROR to E_DEVELOPER_ERROR,
+        E_ITEM_UNAVAILABLE to E_ITEM_UNAVAILABLE,
+        E_SERVICE_ERROR to E_SERVICE_ERROR,
+        E_PURCHASE_ERROR to E_PURCHASE_ERROR
     )
+    
+    // Return cached map reference - no new allocations on repeated calls
+    fun toMap(): Map<String, String> = _cachedMap
 }
 
 /**
