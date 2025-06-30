@@ -6348,7 +6348,7 @@ expo-modules-core@1.12.12:
   dependencies:
     invariant "^2.2.4"
 
-expo-modules-core@~2.4.0:
+expo-modules-core@^2.4.0:
   version "2.4.0"
   resolved "https://registry.npmjs.org/expo-modules-core/-/expo-modules-core-2.4.0.tgz"
   integrity sha512-Ko5eHBdvuMykjw9P9C9PF54/wBSsGOxaOjx92I5BwgKvEmUwN3UrXFV4CXzlLVbLfSYUQaLcB220xmPfgvT7Fg==

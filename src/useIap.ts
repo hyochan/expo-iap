@@ -23,8 +23,8 @@ import {
   SubscriptionProduct,
   SubscriptionPurchase,
 } from './ExpoIap.types';
-import {Subscription} from 'expo-modules-core';
 import {Platform} from 'react-native';
+import {EventSubscription} from 'expo-modules-core';
 
 type UseIap = {
   connected: boolean;
@@ -115,9 +115,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   }, [options]);
 
   const subscriptionsRef = useRef<{
-  purchaseUpdate?: Subscription;
-  purchaseError?: Subscription;
-  promotedProductsIos?: Subscription;
+    purchaseUpdate?: EventSubscription;
+    purchaseError?: EventSubscription;
+    promotedProductsIos?: EventSubscription;
   }>({});
 
   const subscriptionsRefState = useRef<SubscriptionProduct[]>([]);
