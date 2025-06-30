@@ -20,7 +20,11 @@
     "lint:kotlin": "ktlint --format ./android",
     "build:plugin": "tsc --build plugin",
     "clean:plugin": "expo-module clean plugin",
-    "lint:plugin": "eslint plugin/src/*"
+    "lint:plugin": "eslint plugin/src/*",
+    "docs:start": "cd docs && bun run start",
+    "docs:build": "cd docs && bun run build",
+    "docs:serve": "cd docs && bun run serve",
+    "docs:install": "cd docs && bun install --yarn"
   },
   "keywords": [
     "react-native",
