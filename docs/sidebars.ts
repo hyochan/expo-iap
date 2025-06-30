@@ -49,6 +49,7 @@ const sidebars: SidebarsConfig = {
         id: 'api/index',
       },
       items: [
+        'api/types',
         'api/methods/core-methods',
         'api/methods/listeners',
         'api/use-iap',

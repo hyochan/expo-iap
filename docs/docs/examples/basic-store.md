@@ -468,7 +468,7 @@ You can customize this example by:
 
 ## Next Steps
 
-- Implement proper [receipt validation](../guides/purchases#receipt-validation)
+- Implement proper [receipt validation](../guides/purchases#purchase-flow-best-practices)
 - Add [purchase restoration](../guides/purchases#purchase-restoration)
 - Handle [subscription management](../api/methods/core-methods#deeplinktosubscriptions)
 - Add comprehensive [error handling](../guides/troubleshooting)

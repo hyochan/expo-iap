@@ -386,4 +386,4 @@ const { requestPurchase } = useIAP({
 - [Error Handling Guide](../guides/error-handling)
 - [useIAP Hook](./use-iap)
 - [Types Reference](./types)
-- [Troubleshooting](../troubleshooting)
+- [Troubleshooting](../guides/troubleshooting)

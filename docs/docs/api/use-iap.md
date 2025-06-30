@@ -396,4 +396,4 @@ const { requestPurchase } = useIAP({
 - [Error Codes Reference](./error-codes)
 - [Types Reference](./types)
 - [Error Handling Guide](../guides/error-handling)
-- [Purchase Flow Guide](../guides/purchase-flow)
+- [Purchase Flow Guide](../guides/lifecycle)

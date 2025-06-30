@@ -51,7 +51,7 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-@media screen and (max-width: 996px) {
+@media screen and (max-width: 1200px) {
   .heroBanner {
     padding: 2rem;
   }
@@ -73,10 +73,17 @@
 .buttons {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   margin-top: 2rem;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+/* Center buttons when text is centered on smaller screens */
+@media screen and (max-width: 1200px) {
+  .buttons {
+    justify-content: center;
+  }
 }
 
 @media screen and (max-width: 600px) {

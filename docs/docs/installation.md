@@ -134,4 +134,4 @@ If you encounter issues during installation:
    npx react-native start --reset-cache
    ```
 
-For more help, check our [Troubleshooting Guide](./troubleshooting) or [open an issue](https://github.com/hyochan/expo-iap/issues) on GitHub.
+For more help, check our [Troubleshooting Guide](./guides/troubleshooting) or [open an issue](https://github.com/hyochan/expo-iap/issues) on GitHub.
