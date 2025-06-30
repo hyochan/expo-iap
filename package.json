@@ -49,5 +49,8 @@
     "expo": "*",
     "react": "*",
     "react-native": "*"
+  },
+  "expo": {
+    "plugin": "./app.plugin.js"
   }
 }

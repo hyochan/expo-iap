@@ -20,7 +20,7 @@
       "package": "com.crossplatformkorea.cpk"
     },
     "plugins": [
-      "expo-iap",
+      "../app.plugin.js",
       "expo-router",
       [
         "expo-splash-screen",
@@ -31,7 +31,6 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "../app.plugin.js",
       "expo-build-properties"
     ],
     "experiments": {
