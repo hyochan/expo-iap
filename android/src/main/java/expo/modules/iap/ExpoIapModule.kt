@@ -28,27 +28,6 @@ class ExpoIapModule :
     PurchasesUpdatedListener {
     companion object {
         const val TAG = "ExpoIapModule"
-        
-        // Error codes for IAP operations
-        const val E_NOT_PREPARED = "E_NOT_PREPARED"
-        const val E_INIT_CONNECTION = "E_INIT_CONNECTION"
-        const val E_QUERY_PRODUCT = "E_QUERY_PRODUCT"
-        const val E_UNKNOWN = "E_UNKNOWN"
-        const val E_SKU_OFFER_MISMATCH = "E_SKU_OFFER_MISMATCH"
-        const val E_SKU_NOT_FOUND = "E_SKU_NOT_FOUND"
-        const val E_USER_CANCELLED = "E_USER_CANCELLED"
-        const val E_DEVELOPER_ERROR = "E_DEVELOPER_ERROR"
-        const val E_ITEM_UNAVAILABLE = "E_ITEM_UNAVAILABLE"
-        const val E_SERVICE_ERROR = "E_SERVICE_ERROR"
-        const val E_PURCHASE_ERROR = "E_PURCHASE_ERROR"
-        
-        const val EMPTY_SKU_LIST = "EMPTY_SKU_LIST"
-        private const val PROMISE_BUY_ITEM = "PROMISE_BUY_ITEM"
-    }
-
-    object IapEvent {
-        const val PURCHASE_UPDATED = "purchase-updated"
-        const val PURCHASE_ERROR = "purchase-error"
     }
 
     private var billingClientCache: BillingClient? = null
@@ -79,7 +58,7 @@ class ExpoIapModule :
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
             }
-            PromiseUtils.rejectPromisesForKey(PROMISE_BUY_ITEM, errorData.code, errorData.message, null)
+            PromiseUtils.rejectPromisesForKey(IapConstants.PROMISE_BUY_ITEM, errorData.code, errorData.message, null)
             return
         }
 
@@ -114,7 +93,7 @@ class ExpoIapModule :
                     Log.e(TAG, "Failed to send PURCHASE_UPDATED event: ${e.message}")
                 }
             }
-            PromiseUtils.resolvePromisesForKey(PROMISE_BUY_ITEM, promiseItems)
+            PromiseUtils.resolvePromisesForKey(IapConstants.PROMISE_BUY_ITEM, promiseItems)
         } else {
             val result =
                 mutableMapOf<String, Any?>(
@@ -129,7 +108,7 @@ class ExpoIapModule :
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to send PURCHASE_UPDATED event: ${e.message}")
             }
-            PromiseUtils.resolvePromisesForKey(PROMISE_BUY_ITEM, result)
+            PromiseUtils.resolvePromisesForKey(IapConstants.PROMISE_BUY_ITEM, result)
         }
     }
 
@@ -138,19 +117,7 @@ class ExpoIapModule :
             Name("ExpoIap")
 
             Constants(
-                "ERROR_CODES" to mapOf(
-                    "E_UNKNOWN" to E_UNKNOWN,
-                    "E_USER_CANCELLED" to E_USER_CANCELLED,
-                    "E_NOT_PREPARED" to E_NOT_PREPARED,
-                    "E_SERVICE_ERROR" to E_SERVICE_ERROR,
-                    "E_ITEM_UNAVAILABLE" to E_ITEM_UNAVAILABLE,
-                    "E_PURCHASE_ERROR" to E_PURCHASE_ERROR,
-                    "E_DEVELOPER_ERROR" to E_DEVELOPER_ERROR,
-                    "E_SKU_NOT_FOUND" to E_SKU_NOT_FOUND,
-                    "E_SKU_OFFER_MISMATCH" to E_SKU_OFFER_MISMATCH,
-                    "E_INIT_CONNECTION" to E_INIT_CONNECTION,
-                    "E_QUERY_PRODUCT" to E_QUERY_PRODUCT,
-                )
+                "ERROR_CODES" to IapErrorCode.toMap()
             )
 
             Events(IapEvent.PURCHASE_UPDATED, IapEvent.PURCHASE_ERROR)
@@ -178,7 +145,7 @@ class ExpoIapModule :
                         }
 
                     if (skuList.isEmpty()) {
-                        promise.reject(EMPTY_SKU_LIST, "The SKU list is empty.", null)
+                        promise.reject(IapConstants.EMPTY_SKU_LIST, "The SKU list is empty.", null)
                         return@ensureConnection
                     }
 
@@ -191,7 +158,7 @@ class ExpoIapModule :
                     billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
                         if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                             promise.reject(
-                                E_QUERY_PRODUCT,
+                                IapErrorCode.E_QUERY_PRODUCT,
                                 "Error querying product details: ${billingResult.debugMessage}",
                                 null,
                             )
@@ -355,12 +322,12 @@ class ExpoIapModule :
                 val isOfferPersonalized = params["isOfferPersonalized"] as? Boolean ?: false
 
                 if (currentActivity == null) {
-                    promise.reject(E_UNKNOWN, "getCurrentActivity returned null", null)
+                    promise.reject(IapErrorCode.E_UNKNOWN, "getCurrentActivity returned null", null)
                     return@AsyncFunction
                 }
 
                 ensureConnection(promise) { billingClient ->
-                    PromiseUtils.addPromiseForKey(PROMISE_BUY_ITEM, promise)
+                    PromiseUtils.addPromiseForKey(IapConstants.PROMISE_BUY_ITEM, promise)
 
                     if (type == BillingClient.ProductType.SUBS && skuArr.size != offerTokenArr.size) {
                         val debugMessage = "The number of skus (${skuArr.size}) must match: the number of offerTokens (${offerTokenArr.size}) for Subscriptions"
@@ -369,14 +336,14 @@ class ExpoIapModule :
                                 IapEvent.PURCHASE_ERROR,
                                 mapOf(
                                     "debugMessage" to debugMessage,
-                                    "code" to E_SKU_OFFER_MISMATCH,
+                                    "code" to IapErrorCode.E_SKU_OFFER_MISMATCH,
                                     "message" to debugMessage,
                                 )
                             )
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
                         }
-                        promise.reject(E_SKU_OFFER_MISMATCH, debugMessage, null)
+                        promise.reject(IapErrorCode.E_SKU_OFFER_MISMATCH, debugMessage, null)
                         return@ensureConnection
                     }
 
@@ -391,7 +358,7 @@ class ExpoIapModule :
                                         IapEvent.PURCHASE_ERROR,
                                         mapOf(
                                             "debugMessage" to debugMessage,
-                                            "code" to E_SKU_NOT_FOUND,
+                                            "code" to IapErrorCode.E_SKU_NOT_FOUND,
                                             "message" to debugMessage,
                                             "productId" to sku,
                                         ),
@@ -399,7 +366,7 @@ class ExpoIapModule :
                                 } catch (e: Exception) {
                                     Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
                                 }
-                                promise.reject(E_SKU_NOT_FOUND, debugMessage, null)
+                                promise.reject(IapErrorCode.E_SKU_NOT_FOUND, debugMessage, null)
                                 return@ensureConnection
                             }
 
@@ -560,7 +527,7 @@ class ExpoIapModule :
         ) {
             Log.i(TAG, "Google Play Services are not available on this device")
             promise.reject(
-                E_NOT_PREPARED,
+                IapErrorCode.E_NOT_PREPARED,
                 "Google Play Services are not available on this device",
                 null,
             )
@@ -579,7 +546,7 @@ class ExpoIapModule :
                 override fun onBillingSetupFinished(billingResult: BillingResult) {
                     if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                         promise.reject(
-                            E_INIT_CONNECTION,
+                            IapErrorCode.E_INIT_CONNECTION,
                             "Billing setup finished with error: ${billingResult.debugMessage}",
                             null,
                         )

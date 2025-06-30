@@ -186,32 +186,7 @@ public class ExpoIapModule: Module {
         Name("ExpoIap")
 
         Constants([
-            "ERROR_CODES": [
-                "E_UNKNOWN": IapErrorCode.unknown,
-                "E_SERVICE_ERROR": IapErrorCode.serviceError,
-                "E_USER_CANCELLED": IapErrorCode.userCancelled,
-                "E_USER_ERROR": IapErrorCode.userError,
-                "E_ITEM_UNAVAILABLE": IapErrorCode.itemUnavailable,
-                "E_REMOTE_ERROR": IapErrorCode.remoteError,
-                "E_NETWORK_ERROR": IapErrorCode.networkError,
-                "E_RECEIPT_FAILED": IapErrorCode.receiptFailed,
-                "E_RECEIPT_FINISHED_FAILED": IapErrorCode.receiptFinishedFailed,
-                "E_NOT_PREPARED": IapErrorCode.notPrepared,
-                "E_NOT_ENDED": IapErrorCode.notEnded,
-                "E_ALREADY_OWNED": IapErrorCode.alreadyOwned,
-                "E_DEVELOPER_ERROR": IapErrorCode.developerError,
-                "E_PURCHASE_ERROR": IapErrorCode.purchaseError,
-                "E_SYNC_ERROR": IapErrorCode.syncError,
-                "E_DEFERRED_PAYMENT": IapErrorCode.deferredPayment,
-                "E_TRANSACTION_VALIDATION_FAILED": IapErrorCode.transactionValidationFailed,
-                "E_BILLING_RESPONSE_JSON_PARSE_ERROR": IapErrorCode.billingResponseJsonParseError,
-                "E_INTERRUPTED": IapErrorCode.interrupted,
-                "E_IAP_NOT_AVAILABLE": IapErrorCode.iapNotAvailable,
-                "E_ACTIVITY_UNAVAILABLE": IapErrorCode.activityUnavailable,
-                "E_ALREADY_PREPARED": IapErrorCode.alreadyPrepared,
-                "E_PENDING": IapErrorCode.pending,
-                "E_CONNECTION_CLOSED": IapErrorCode.connectionClosed,
-            ]
+            "ERROR_CODES": IapErrorCode.toDictionary()
         ])
 
         Events(IapEvent.PurchaseUpdated, IapEvent.PurchaseError)
