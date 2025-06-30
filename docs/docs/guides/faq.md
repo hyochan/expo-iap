@@ -290,8 +290,6 @@ const getProductsWithCache = async (skus) => {
 
 ## Migration and Updates
 
-## Migration and Updates
-
 ### How do I migrate from react-native-iap?
 
 `expo-iap` is the official successor to `react-native-iap`. The migration is straightforward with these key changes:
@@ -387,6 +385,68 @@ This happens when:
 - Trying to purchase a non-consumable product again
 - Previous transaction wasn't finished properly
 - Need to restore purchases instead
+
+### [iOS] purchaseUpdatedListener is called twice after finishTransaction
+
+**Issue:** On iOS, `purchaseUpdatedListener` may be called twice for the same transaction when using `andDangerouslyFinishTransactionAutomaticallyIOS: false` and manually calling `finishTransaction()`.
+
+**Symptoms:**
+- First call: Immediate after successful purchase
+- Second call: After `finishTransaction()` is called (or on app restart for products)
+- Both calls have the same `transactionId`
+
+**Example:**
+```tsx
+// This pattern may cause duplicate calls
+const purchaseListener = purchaseUpdatedListener(async (purchase) => {
+  console.log('Purchase received:', purchase.transactionId);
+  await validateOnServer(purchase);
+  await finishTransaction({ purchase, isConsumable: false });
+  // ⚠️ Listener may be called again after finishTransaction
+});
+
+await requestPurchase({
+  sku: 'your.product.id',
+  andDangerouslyFinishTransactionAutomaticallyIOS: false,
+});
+```
+
+**Workaround:**
+Track processed transactions to avoid duplicate processing:
+
+```tsx
+const processedTransactions = new Set();
+
+const purchaseListener = purchaseUpdatedListener(async (purchase) => {
+  const transactionId = purchase.transactionId;
+  
+  // Skip if already processed
+  if (processedTransactions.has(transactionId)) {
+    console.log('Transaction already processed:', transactionId);
+    return;
+  }
+  
+  // Mark as processed
+  processedTransactions.add(transactionId);
+  
+  try {
+    console.log('Processing purchase:', transactionId);
+    await validateOnServer(purchase);
+    await finishTransaction({ purchase, isConsumable: false });
+  } catch (error) {
+    // Remove from processed set if validation fails
+    processedTransactions.delete(transactionId);
+    console.error('Purchase processing failed:', error);
+  }
+});
+```
+
+**Root Cause:**
+This appears to be an Apple StoreKit behavior where finishing a transaction triggers another purchase notification. This is a known iOS platform limitation, not specific to expo-iap.
+
+**Related Issues:**
+- [GitHub Issue #56](https://github.com/hyochan/expo-iap/issues/56)
+- [react-native-iap Issue #2713](https://github.com/hyochan/react-native-iap/issues/2713)
 
 ## Still Need Help?
 
