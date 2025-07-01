@@ -2,7 +2,11 @@
 sidebar_position: 2
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Android Setup
+
+<AdFitTopFixed />
 
 Setting up in-app purchases for Android requires configuration in Google Play Console and proper Android app setup.
 

@@ -4,7 +4,11 @@ sidebar_label: Migration Guide
 sidebar_position: 6
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Migration from react-native-iap
+
+<AdFitTopFixed />
 
 This guide helps you migrate from `react-native-iap` to `expo-iap`. While the APIs are similar, there are some key differences and improvements in `expo-iap`.
 
@@ -23,25 +27,27 @@ npm install expo-iap
 ### Hook Usage
 
 **react-native-iap:**
+
 ```tsx
-import { useIAP, withIAPContext } from 'react-native-iap';
+import {useIAP, withIAPContext} from 'react-native-iap';
 
 // Had to wrap app with context
 const AppWithIAP = withIAPContext(App);
 
 function App() {
-  const { connected, products, getProducts } = useIAP();
+  const {connected, products, getProducts} = useIAP();
   // ...
 }
 ```
 
 **expo-iap:**
+
 ```tsx
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
 // No context wrapper needed
 function App() {
-  const { connected, products, getProducts } = useIAP();
+  const {connected, products, getProducts} = useIAP();
   // Connection and listeners are automatically managed
 }
 ```
@@ -49,20 +55,22 @@ function App() {
 ### Error Handling
 
 **react-native-iap:**
+
 ```tsx
 try {
-  await requestPurchase({ sku: 'product_id' });
+  await requestPurchase({sku: 'product_id'});
 } catch (error) {
   console.error(error.code, error.message);
 }
 ```
 
 **expo-iap:**
+
 ```tsx
-import { IAPError } from 'expo-iap';
+import {IAPError} from 'expo-iap';
 
 try {
-  await requestPurchase({ sku: 'product_id' });
+  await requestPurchase({sku: 'product_id'});
 } catch (error) {
   if (error instanceof IAPError) {
     // Enhanced error handling with better typing
@@ -112,8 +120,9 @@ import {
 ### 3. Remove Context Wrapper
 
 **Before:**
+
 ```tsx
-import { withIAPContext } from 'react-native-iap';
+import {withIAPContext} from 'react-native-iap';
 
 const App = () => {
   return <YourAppContent />;
@@ -123,6 +132,7 @@ export default withIAPContext(App);
 ```
 
 **After:**
+
 ```tsx
 // No wrapper needed
 const App = () => {
@@ -137,6 +147,7 @@ export default App;
 The `useIAP` hook signature is mostly the same, but with better TypeScript support:
 
 **Before:**
+
 ```tsx
 const {
   connected,
@@ -153,6 +164,7 @@ const {
 ```
 
 **After:**
+
 ```tsx
 const {
   connected,
@@ -174,6 +186,7 @@ const {
 Enhance error handling with the new error types:
 
 **Before:**
+
 ```tsx
 useEffect(() => {
   if (currentPurchaseError) {
@@ -183,8 +196,9 @@ useEffect(() => {
 ```
 
 **After:**
+
 ```tsx
-import { IAPError } from 'expo-iap';
+import {IAPError} from 'expo-iap';
 
 useEffect(() => {
   if (currentPurchaseError) {
@@ -212,9 +226,9 @@ Most method signatures remain the same, but with improved TypeScript definitions
 
 ```tsx
 // Both libraries have the same signature
-await getProducts({ skus: ['product1', 'product2'] });
-await requestPurchase({ sku: 'product_id' });
-await finishTransaction({ purchase });
+await getProducts({skus: ['product1', 'product2']});
+await requestPurchase({sku: 'product_id'});
+await finishTransaction({purchase});
 ```
 
 ### New Methods
@@ -222,19 +236,19 @@ await finishTransaction({ purchase });
 expo-iap includes some additional utility methods:
 
 ```tsx
-import { validateReceiptIos, validateReceiptAndroid } from 'expo-iap';
+import {validateReceiptIos, validateReceiptAndroid} from 'expo-iap';
 
 // Platform-specific receipt validation helpers
 const isValidIos = await validateReceiptIos({
   receiptBody: purchase.transactionReceipt,
-  password: 'your_shared_secret'
+  password: 'your_shared_secret',
 });
 
 const isValidAndroid = await validateReceiptAndroid({
   packageName: 'com.yourapp',
   productId: purchase.productId,
   productToken: purchase.purchaseToken,
-  accessToken: 'your_access_token'
+  accessToken: 'your_access_token',
 });
 ```
 
@@ -245,20 +259,20 @@ const isValidAndroid = await validateReceiptAndroid({
 Create a simple test to ensure basic functionality works:
 
 ```tsx
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
 export default function MigrationTest() {
-  const { connected, getProducts } = useIAP();
+  const {connected, getProducts} = useIAP();
 
   useEffect(() => {
     if (connected) {
       console.log('✅ Connection successful');
-      
-      getProducts({ skus: ['test_product'] })
-        .then(products => {
+
+      getProducts({skus: ['test_product']})
+        .then((products) => {
           console.log('✅ Products fetched:', products.length);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error('❌ Product fetch failed:', error);
         });
     }
@@ -281,11 +295,11 @@ Test the complete purchase flow:
 const testPurchaseFlow = async () => {
   try {
     // 1. Fetch products
-    const products = await getProducts({ skus: ['test_product'] });
+    const products = await getProducts({skus: ['test_product']});
     console.log('✅ Products fetched');
 
     // 2. Request purchase
-    await requestPurchase({ sku: 'test_product' });
+    await requestPurchase({sku: 'test_product'});
     console.log('✅ Purchase requested');
 
     // 3. Purchase handling will be automatic with useIAP
@@ -302,13 +316,13 @@ Ensure error handling transitions properly:
 ```tsx
 const testErrorHandling = () => {
   // Test with invalid product ID
-  getProducts({ skus: ['invalid_product'] })
-    .then(products => {
+  getProducts({skus: ['invalid_product']})
+    .then((products) => {
       if (products.length === 0) {
         console.log('✅ Empty products handled correctly');
       }
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('✅ Error handled:', error.code);
     });
 };
@@ -322,10 +336,10 @@ If you're getting context errors:
 
 ```tsx
 // ❌ This is no longer needed
-import { withIAPContext } from 'expo-iap';
+import {withIAPContext} from 'expo-iap';
 
 // ✅ Just use the hook directly
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 ```
 
 ### 2. TypeScript Errors
@@ -334,10 +348,10 @@ Update your TypeScript types if you were using custom interfaces:
 
 ```tsx
 // Before
-import { Product, Purchase } from 'react-native-iap';
+import {Product, Purchase} from 'react-native-iap';
 
 // After
-import { Product, Purchase } from 'expo-iap';
+import {Product, Purchase} from 'expo-iap';
 ```
 
 ### 3. Purchase Listeners
@@ -345,8 +359,9 @@ import { Product, Purchase } from 'expo-iap';
 If you were using manual listeners, consider switching to the hook:
 
 **Before:**
+
 ```tsx
-import { purchaseUpdatedListener } from 'react-native-iap';
+import {purchaseUpdatedListener} from 'react-native-iap';
 
 useEffect(() => {
   const subscription = purchaseUpdatedListener((purchase) => {
@@ -358,8 +373,9 @@ useEffect(() => {
 ```
 
 **After (using hook):**
+
 ```tsx
-const { currentPurchase } = useIAP();
+const {currentPurchase} = useIAP();
 
 useEffect(() => {
   if (currentPurchase) {

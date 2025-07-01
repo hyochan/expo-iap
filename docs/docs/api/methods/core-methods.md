@@ -4,7 +4,11 @@ sidebar_label: Core Methods
 sidebar_position: 1
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Core Methods
+
+<AdFitTopFixed />
 
 This section covers the core methods available in expo-iap for managing in-app purchases.
 
@@ -13,7 +17,7 @@ This section covers the core methods available in expo-iap for managing in-app p
 Initializes the connection to the store. This method must be called before any other store operations.
 
 ```tsx
-import { initConnection } from 'expo-iap';
+import {initConnection} from 'expo-iap';
 
 const initialize = async () => {
   try {
@@ -34,7 +38,7 @@ const initialize = async () => {
 Ends the connection to the store and cleans up resources.
 
 ```tsx
-import { endConnection } from 'expo-iap';
+import {endConnection} from 'expo-iap';
 
 const cleanup = async () => {
   try {
@@ -55,14 +59,14 @@ const cleanup = async () => {
 Fetches product information from the store.
 
 ```tsx
-import { getProducts } from 'expo-iap';
+import {getProducts} from 'expo-iap';
 
 const fetchProducts = async () => {
   try {
     const products = await getProducts({
-      skus: ['com.example.product1', 'com.example.product2']
+      skus: ['com.example.product1', 'com.example.product2'],
     });
-    
+
     console.log('Products:', products);
     return products;
   } catch (error) {
@@ -72,12 +76,14 @@ const fetchProducts = async () => {
 ```
 
 **Parameters:**
+
 - `params` (object):
   - `skus` (string[]): Array of product IDs to fetch
 
 **Returns:** `Promise<Product[]>`
 
 **Product Interface:**
+
 ```tsx
 interface Product {
   productId: string;
@@ -100,14 +106,14 @@ interface Product {
 Fetches subscription product information from the store.
 
 ```tsx
-import { getSubscriptions } from 'expo-iap';
+import {getSubscriptions} from 'expo-iap';
 
 const fetchSubscriptions = async () => {
   try {
     const subscriptions = await getSubscriptions({
-      skus: ['com.example.premium_monthly', 'com.example.premium_yearly']
+      skus: ['com.example.premium_monthly', 'com.example.premium_yearly'],
     });
-    
+
     console.log('Subscriptions:', subscriptions);
     return subscriptions;
   } catch (error) {
@@ -117,6 +123,7 @@ const fetchSubscriptions = async () => {
 ```
 
 **Parameters:**
+
 - `params` (object):
   - `skus` (string[]): Array of subscription IDs to fetch
 
@@ -127,12 +134,12 @@ const fetchSubscriptions = async () => {
 Initiates a purchase request for a product.
 
 ```tsx
-import { requestPurchase } from 'expo-iap';
+import {requestPurchase} from 'expo-iap';
 
 const buyProduct = async (productId: string) => {
   try {
     await requestPurchase({
-      sku: productId
+      sku: productId,
     });
     // Purchase result will be delivered via purchase listeners
   } catch (error) {
@@ -142,6 +149,7 @@ const buyProduct = async (productId: string) => {
 ```
 
 **Parameters:**
+
 - `params` (object):
   - `sku` (string): Product ID to purchase
   - `subscriptionOffers?` (array): For Android subscriptions
@@ -157,7 +165,7 @@ const buyProduct = async (productId: string) => {
 Initiates a subscription purchase request.
 
 ```tsx
-import { requestSubscription } from 'expo-iap';
+import {requestSubscription} from 'expo-iap';
 
 const buySubscription = async (subscriptionId: string) => {
   try {
@@ -166,9 +174,9 @@ const buySubscription = async (subscriptionId: string) => {
       subscriptionOffers: [
         {
           sku: subscriptionId,
-          offerToken: 'offer_token_from_product'
-        }
-      ]
+          offerToken: 'offer_token_from_product',
+        },
+      ],
     });
   } catch (error) {
     console.error('Subscription request failed:', error);
@@ -177,6 +185,7 @@ const buySubscription = async (subscriptionId: string) => {
 ```
 
 **Parameters:**
+
 - `params` (object):
   - `sku` (string): Subscription ID to purchase
   - `subscriptionOffers?` (array): Android subscription offers
@@ -189,23 +198,23 @@ const buySubscription = async (subscriptionId: string) => {
 Completes a purchase transaction. Must be called after successful receipt validation.
 
 ```tsx
-import { finishTransaction } from 'expo-iap';
+import {finishTransaction} from 'expo-iap';
 
 const completePurchase = async (purchase) => {
   try {
     // Validate receipt on your server first
     const isValid = await validateReceiptOnServer(purchase);
-    
+
     if (isValid) {
       // Grant purchase to user
       await grantPurchaseToUser(purchase);
-      
+
       // Finish the transaction
       await finishTransaction({
         purchase,
-        isConsumable: true // Set to true for consumable products
+        isConsumable: true, // Set to true for consumable products
       });
-      
+
       console.log('Transaction completed');
     }
   } catch (error) {
@@ -215,6 +224,7 @@ const completePurchase = async (purchase) => {
 ```
 
 **Parameters:**
+
 - `params` (object):
   - `purchase` (Purchase): The purchase object to finish
   - `isConsumable?` (boolean): Whether the product is consumable (Android)
@@ -226,12 +236,12 @@ const completePurchase = async (purchase) => {
 Retrieves available purchases for restoration (non-consumable products and subscriptions).
 
 ```tsx
-import { getAvailablePurchases } from 'expo-iap';
+import {getAvailablePurchases} from 'expo-iap';
 
 const restorePurchases = async () => {
   try {
     const purchases = await getAvailablePurchases();
-    
+
     for (const purchase of purchases) {
       // Validate and restore each purchase
       const isValid = await validateReceiptOnServer(purchase);
@@ -239,7 +249,7 @@ const restorePurchases = async () => {
         await grantPurchaseToUser(purchase);
       }
     }
-    
+
     console.log('Purchases restored');
   } catch (error) {
     console.error('Failed to restore purchases:', error);
@@ -254,7 +264,7 @@ const restorePurchases = async () => {
 Retrieves purchase history for the user.
 
 ```tsx
-import { getPurchaseHistory } from 'expo-iap';
+import {getPurchaseHistory} from 'expo-iap';
 
 const fetchPurchaseHistory = async () => {
   try {
@@ -274,7 +284,7 @@ const fetchPurchaseHistory = async () => {
 Opens the platform-specific subscription management UI.
 
 ```tsx
-import { deepLinkToSubscriptions } from 'expo-iap';
+import {deepLinkToSubscriptions} from 'expo-iap';
 
 const openSubscriptionSettings = () => {
   try {
@@ -312,10 +322,10 @@ interface Purchase {
 All methods can throw errors that should be handled appropriately:
 
 ```tsx
-import { IAPError } from 'expo-iap';
+import {IAPError} from 'expo-iap';
 
 try {
-  await requestPurchase({ sku: 'product_id' });
+  await requestPurchase({sku: 'product_id'});
 } catch (error) {
   if (error instanceof IAPError) {
     switch (error.code) {

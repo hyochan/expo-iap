@@ -4,12 +4,15 @@ sidebar_label: Purchases
 sidebar_position: 2
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Purchases
+
+<AdFitTopFixed />
 
 > :warning: **Purchase Flow Redesign** :warning:
 >
-> The `purchase` flow has been updated as a result of the findings in issue [#307](https://github.com/hyochan/react-native-iap/issues/307).
-> The resulting flow has been redesign to not rely on `Promise` or `Callback`.
+> The `purchase` flow has been updated as a result of the findings in issue [#307](https://github.com/hyochan/react-native-iap/issues/307). The resulting flow has been redesign to not rely on `Promise` or `Callback`.
 >
 > Below are some of the specific reasons for the redesign:
 >
@@ -129,9 +132,9 @@ class App extends Component {
 For a more modern approach using React hooks, here's a comprehensive implementation:
 
 ```tsx
-import React, { useEffect, useState, useCallback } from 'react';
-import { Platform, Alert, InteractionManager } from 'react-native';
-import { useIAP } from 'expo-iap';
+import React, {useEffect, useState, useCallback} from 'react';
+import {Platform, Alert, InteractionManager} from 'react-native';
+import {useIAP} from 'expo-iap';
 
 // Define your product SKUs
 const bulbPackSkus = ['dev.hyo.luent.10bulbs', 'dev.hyo.luent.30bulbs'];
@@ -180,7 +183,8 @@ export default function PurchaseScreen() {
           return await validateReceipt(sku);
         } else if (Platform.OS === 'android') {
           const purchaseToken = purchase.purchaseTokenAndroid;
-          const packageName = purchase.packageNameAndroid || 'your.package.name';
+          const packageName =
+            purchase.packageNameAndroid || 'your.package.name';
           const isSub = subscriptionSkus.includes(sku);
 
           return await validateReceipt(sku, {
@@ -189,13 +193,13 @@ export default function PurchaseScreen() {
             isSub,
           });
         }
-        return { isValid: true }; // Default for unsupported platforms
+        return {isValid: true}; // Default for unsupported platforms
       } catch (error) {
         console.error('Receipt validation failed:', error);
-        return { isValid: false };
+        return {isValid: false};
       }
     },
-    [validateReceipt]
+    [validateReceipt],
   );
 
   // Handle successful purchases
@@ -209,7 +213,7 @@ export default function PurchaseScreen() {
   useEffect(() => {
     if (currentPurchaseError) {
       setIsLoading(false);
-      
+
       // Don't show error for user cancellation
       if (currentPurchaseError.code === 'E_USER_CANCELLED') {
         return;
@@ -217,7 +221,7 @@ export default function PurchaseScreen() {
 
       Alert.alert(
         'Purchase Error',
-        'Failed to complete purchase. Please try again.'
+        'Failed to complete purchase. Please try again.',
       );
       console.error('Purchase error:', currentPurchaseError);
     }
@@ -229,14 +233,14 @@ export default function PurchaseScreen() {
       console.log('Processing purchase:', purchase);
 
       const productId = purchase.id;
-      
+
       // Validate receipt on your server
       const validationResult = await handleValidateReceipt(productId, purchase);
-      
+
       if (validationResult.isValid) {
         // Determine if this is a consumable product
         const isConsumable = bulbPackSkus.includes(productId);
-        
+
         // Finish the transaction
         await finishTransaction({
           purchase,
@@ -245,16 +249,16 @@ export default function PurchaseScreen() {
 
         // Record purchase in your database
         await recordPurchaseInDatabase(purchase, productId);
-        
+
         // Update local state (e.g., add bulbs, enable premium features)
         await updateLocalState(productId);
-        
+
         // Show success message
         showSuccessMessage(productId);
       } else {
         Alert.alert(
           'Validation Error',
-          'Purchase could not be validated. Please contact support.'
+          'Purchase could not be validated. Please contact support.',
         );
       }
     } catch (error) {
@@ -268,7 +272,10 @@ export default function PurchaseScreen() {
   // Request purchase for products
   const handlePurchaseBulbs = async (productId: string) => {
     if (!connected) {
-      Alert.alert('Not Connected', 'Store connection unavailable. Please try again later.');
+      Alert.alert(
+        'Not Connected',
+        'Store connection unavailable. Please try again later.',
+      );
       return;
     }
 
@@ -284,7 +291,7 @@ export default function PurchaseScreen() {
         });
       } else {
         await requestPurchase({
-          request: { skus: [productId] },
+          request: {skus: [productId]},
         });
       }
     } catch (error) {
@@ -296,7 +303,10 @@ export default function PurchaseScreen() {
   // Request purchase for subscriptions
   const handlePurchaseSubscription = async (subscriptionId: string) => {
     if (!connected) {
-      Alert.alert('Not Connected', 'Store connection unavailable. Please try again later.');
+      Alert.alert(
+        'Not Connected',
+        'Store connection unavailable. Please try again later.',
+      );
       return;
     }
 
@@ -305,18 +315,20 @@ export default function PurchaseScreen() {
 
       if (Platform.OS === 'ios') {
         await requestPurchase({
-          request: { sku: subscriptionId },
+          request: {sku: subscriptionId},
           type: 'subs',
         });
       } else if (Platform.OS === 'android') {
         // Find subscription to get offer details
-        const subscription = subscriptions.find(s => s.id === subscriptionId);
-        
+        const subscription = subscriptions.find((s) => s.id === subscriptionId);
+
         if (subscription?.subscriptionOfferDetails?.length > 0) {
-          const subscriptionOffers = subscription.subscriptionOfferDetails.map(offer => ({
-            sku: subscriptionId,
-            offerToken: offer.offerToken,
-          }));
+          const subscriptionOffers = subscription.subscriptionOfferDetails.map(
+            (offer) => ({
+              sku: subscriptionId,
+              offerToken: offer.offerToken,
+            }),
+          );
 
           await requestPurchase({
             request: {
@@ -330,7 +342,7 @@ export default function PurchaseScreen() {
           await requestPurchase({
             request: {
               skus: [subscriptionId],
-              subscriptionOffers: [{ sku: subscriptionId, offerToken: '' }],
+              subscriptionOffers: [{sku: subscriptionId, offerToken: ''}],
             },
             type: 'subs',
           });
@@ -344,7 +356,7 @@ export default function PurchaseScreen() {
 
   const recordPurchaseInDatabase = async (purchase: any, productId: string) => {
     // Implement your database recording logic here
-    console.log('Recording purchase in database:', { purchase, productId });
+    console.log('Recording purchase in database:', {purchase, productId});
   };
 
   const updateLocalState = async (productId: string) => {
@@ -363,9 +375,15 @@ export default function PurchaseScreen() {
     InteractionManager.runAfterInteractions(() => {
       if (bulbPackSkus.includes(productId)) {
         const bulbCount = productId.includes('10bulbs') ? 10 : 30;
-        Alert.alert('Thank You!', `${bulbCount} bulbs have been added to your account.`);
+        Alert.alert(
+          'Thank You!',
+          `${bulbCount} bulbs have been added to your account.`,
+        );
       } else if (subscriptionSkus.includes(productId)) {
-        Alert.alert('Thank You!', 'Premium subscription activated successfully.');
+        Alert.alert(
+          'Thank You!',
+          'Premium subscription activated successfully.',
+        );
       }
     });
   };
@@ -384,11 +402,11 @@ export default function PurchaseScreen() {
 ### 3. Request a Purchase
 
 ```tsx
-import { requestPurchase } from 'expo-iap';
+import {requestPurchase} from 'expo-iap';
 
 const handleBuyProduct = async (sku) => {
   try {
-    await requestPurchase({ sku });
+    await requestPurchase({sku});
   } catch (err) {
     // standardized err.code and err.message available
     console.warn(err.code, err.message);
@@ -403,12 +421,12 @@ const handleBuySubscription = async (subscriptionId: string) => {
   try {
     if (Platform.OS === 'ios') {
       await requestPurchase({
-        request: { sku: subscriptionId },
+        request: {sku: subscriptionId},
         type: 'subs',
       });
     } else if (Platform.OS === 'android') {
       // Find the subscription product to get its offer details
-      const subscription = subscriptions.find(s => s.id === subscriptionId);
+      const subscription = subscriptions.find((s) => s.id === subscriptionId);
 
       if (!subscription) {
         throw new Error(`Subscription with ID ${subscriptionId} not found`);
@@ -417,10 +435,12 @@ const handleBuySubscription = async (subscriptionId: string) => {
       // Check if the subscription has offer details
       if (subscription.subscriptionOfferDetails?.length > 0) {
         // Create subscription offers with matching offerTokens
-        const subscriptionOffers = subscription.subscriptionOfferDetails.map(offer => ({
-          sku: subscriptionId,
-          offerToken: offer.offerToken,
-        }));
+        const subscriptionOffers = subscription.subscriptionOfferDetails.map(
+          (offer) => ({
+            sku: subscriptionId,
+            offerToken: offer.offerToken,
+          }),
+        );
 
         await requestPurchase({
           request: {
@@ -499,14 +519,17 @@ const getProductPrice = (productId: string): string => {
     return Platform.OS === 'ios' ? '$0.99' : '₩1,200'; // Default prices
   }
 
-  const product = products.find(p => p.id === productId);
+  const product = products.find((p) => p.id === productId);
   if (!product) return Platform.OS === 'ios' ? '$0.99' : '₩1,200';
 
   if (Platform.OS === 'ios') {
     return product.displayPrice || '$0.99';
-  } else { // Android
+  } else {
+    // Android
     const androidProduct = product as ProductAndroid;
-    return androidProduct.oneTimePurchaseOfferDetails?.formattedPrice || '₩1,200';
+    return (
+      androidProduct.oneTimePurchaseOfferDetails?.formattedPrice || '₩1,200'
+    );
   }
 };
 
@@ -516,17 +539,21 @@ const getSubscriptionPrice = (subscriptionId: string): string => {
     return Platform.OS === 'ios' ? '$9.99' : '₩11,000'; // Default prices
   }
 
-  const subscription = subscriptions.find(s => s.id === subscriptionId);
+  const subscription = subscriptions.find((s) => s.id === subscriptionId);
   if (!subscription) return Platform.OS === 'ios' ? '$9.99' : '₩11,000';
 
   if (Platform.OS === 'ios') {
     return subscription.displayPrice || '$9.99';
-  } else { // Android
+  } else {
+    // Android
     const androidSubscription = subscription as ProductAndroid;
     if (androidSubscription.subscriptionOfferDetails?.length > 0) {
       const firstOffer = androidSubscription.subscriptionOfferDetails[0];
       if (firstOffer.pricingPhases.pricingPhaseList.length > 0) {
-        return firstOffer.pricingPhases.pricingPhaseList[0].formattedPrice || '₩11,000';
+        return (
+          firstOffer.pricingPhases.pricingPhaseList[0].formattedPrice ||
+          '₩11,000'
+        );
       }
     }
     return '₩11,000'; // Default Android price
@@ -547,7 +574,7 @@ export default function PurchaseScreen() {
 
   if (!isPlatformSupported) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
         <Text>Platform Not Supported</Text>
         <Text>In-app purchases are only available on iOS and Android.</Text>
       </View>
@@ -566,7 +593,7 @@ Consumable products can be purchased multiple times (e.g., coins, gems):
 
 ```tsx
 const buyConsumable = async (productId) => {
-  await requestPurchase({ sku: productId });
+  await requestPurchase({sku: productId});
   // After successful validation and finishing transaction,
   // the product can be purchased again
 };
@@ -578,7 +605,7 @@ Non-consumable products are purchased once and remain available (e.g., premium f
 
 ```tsx
 const buyNonConsumable = async (productId) => {
-  await requestPurchase({ sku: productId });
+  await requestPurchase({sku: productId});
   // After purchase, check availablePurchases to restore
 };
 ```
@@ -608,12 +635,12 @@ const buySubscription = async (product) => {
 For non-consumable products and subscriptions, implement purchase restoration:
 
 ```tsx
-const { getAvailablePurchases } = useIAP();
+const {getAvailablePurchases} = useIAP();
 
 const restorePurchases = async () => {
   try {
     const purchases = await getAvailablePurchases();
-    
+
     for (const purchase of purchases) {
       // Validate and restore each purchase
       const isValid = await validateReceiptOnServer(purchase);
@@ -645,7 +672,7 @@ useEffect(() => {
 Provide users with subscription management options:
 
 ```tsx
-import { deepLinkToSubscriptions } from 'expo-iap';
+import {deepLinkToSubscriptions} from 'expo-iap';
 
 const openSubscriptionManagement = () => {
   // This opens the platform-specific subscription management UI
@@ -663,22 +690,22 @@ const handlePurchaseError = (error) => {
     case 'E_USER_CANCELLED':
       // User cancelled - no action needed
       break;
-    
+
     case 'E_NETWORK_ERROR':
       // Show retry option
       showRetryDialog();
       break;
-    
+
     case 'E_ITEM_UNAVAILABLE':
       // Product not available
       showProductUnavailableMessage();
       break;
-    
+
     case 'E_ALREADY_OWNED':
       // User already owns this product
       showAlreadyOwnedMessage();
       break;
-    
+
     default:
       // Generic error handling
       showGenericErrorMessage(error.message);
@@ -708,6 +735,7 @@ const handlePurchaseError = (error) => {
 For comprehensive information about purchase lifecycle management, best practices, and common pitfalls, see our detailed [Purchase Lifecycle Guide](./lifecycle).
 
 Other helpful resources:
+
 - [Error Handling Guide](./troubleshooting) for debugging purchase issues
 - [API Reference](../api/) for detailed method documentation
 - [Complete Store Example](../examples/complete-store) for production-ready implementation

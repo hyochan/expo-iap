@@ -2,9 +2,14 @@
 sidebar_position: 1
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Expo IAP
 
+<AdFitTopFixed />
+
 **Expo IAP** is a powerful in-app purchase solution for Expo and React Native applications. It provides a unified API for handling in-app purchases across iOS and Android platforms with comprehensive error h### 📚 Guides
+
 - [**Getting Started**](./guides/getting-started): Complete guide to implementing in-app purchases
 - [**Purchase Lifecycle**](./guides/lifecycle): Understanding connection management and best practices
 - [**Purchase Implementation**](./guides/purchases): Detailed purchase flow and event handling
@@ -40,7 +45,7 @@ npm install expo-iap
 First, import and initialize the IAP hook:
 
 ```tsx
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
 function MyStore() {
   const {
@@ -77,15 +82,12 @@ Show available products to users:
 return (
   <View>
     <Text>Store Status: {connected ? 'Connected' : 'Connecting...'}</Text>
-    
+
     {products.map((product) => (
       <View key={product.id} style={styles.productItem}>
         <Text style={styles.productTitle}>{product.title}</Text>
         <Text style={styles.productPrice}>{product.displayPrice}</Text>
-        <Button
-          title="Buy Now"
-          onPress={() => handlePurchase(product.id)}
-        />
+        <Button title="Buy Now" onPress={() => handlePurchase(product.id)} />
       </View>
     ))}
   </View>
@@ -100,7 +102,7 @@ Process purchase requests:
 const handlePurchase = async (productId: string) => {
   try {
     await requestPurchase({
-      request: { sku: productId }
+      request: {sku: productId},
     });
   } catch (error) {
     console.error('Purchase failed:', error);
@@ -119,7 +121,7 @@ useEffect(() => {
       try {
         // Grant the purchase to user here
         console.log('Purchase completed:', currentPurchase.id);
-        
+
         // Finish the transaction
         await finishTransaction({
           purchase: currentPurchase,
@@ -140,9 +142,9 @@ useEffect(() => {
 Here's a complete working example:
 
 ```tsx
-import React, { useEffect } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-import { useIAP } from 'expo-iap';
+import React, {useEffect} from 'react';
+import {View, Text, Button, StyleSheet} from 'react-native';
+import {useIAP} from 'expo-iap';
 
 export default function SimpleStore() {
   const {
@@ -182,7 +184,7 @@ export default function SimpleStore() {
   const handlePurchase = async (productId: string) => {
     try {
       await requestPurchase({
-        request: { sku: productId }
+        request: {sku: productId},
       });
     } catch (error) {
       console.error('Purchase failed:', error);
@@ -194,15 +196,12 @@ export default function SimpleStore() {
       <Text style={styles.status}>
         Store: {connected ? 'Connected ✅' : 'Connecting...'}
       </Text>
-      
+
       {products.map((product) => (
         <View key={product.id} style={styles.product}>
           <Text style={styles.title}>{product.title}</Text>
           <Text style={styles.price}>{product.displayPrice}</Text>
-          <Button
-            title="Buy Now"
-            onPress={() => handlePurchase(product.id)}
-          />
+          <Button title="Buy Now" onPress={() => handlePurchase(product.id)} />
         </View>
       ))}
     </View>
@@ -210,16 +209,16 @@ export default function SimpleStore() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
-  status: { fontSize: 16, marginBottom: 20 },
-  product: { 
-    padding: 15, 
-    marginVertical: 5, 
+  container: {padding: 20},
+  status: {fontSize: 16, marginBottom: 20},
+  product: {
+    padding: 15,
+    marginVertical: 5,
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
   },
-  title: { fontSize: 16, fontWeight: 'bold' },
-  price: { fontSize: 14, color: '#666', marginVertical: 5 },
+  title: {fontSize: 16, fontWeight: 'bold'},
+  price: {fontSize: 14, color: '#666', marginVertical: 5},
 });
 ```
 
@@ -234,27 +233,30 @@ Expo IAP is built with a modern architecture that emphasizes:
 
 ## 📱 Platform Support
 
-| Platform | Support | Notes |
-|----------|---------|-------|
-| iOS | ✅ | StoreKit 1 & 2 |
-| Android | ✅ | Google Play Billing v5+ |
-| Expo Go | ⚠️ | Limited (requires custom development client) |
-| Expo Dev Client | ✅ | Full support |
-| Bare React Native | ✅ | Full support |
+| Platform          | Support | Notes                                        |
+| ----------------- | ------- | -------------------------------------------- |
+| iOS               | ✅      | StoreKit 1 & 2                               |
+| Android           | ✅      | Google Play Billing v5+                      |
+| Expo Go           | ⚠️      | Limited (requires custom development client) |
+| Expo Dev Client   | ✅      | Full support                                 |
+| Bare React Native | ✅      | Full support                                 |
 
 ## 🎯 What's Next?
 
 ### 📦 Setup & Configuration
+
 - [**Installation Guide**](./installation): Install and configure Expo IAP
 - [**iOS Setup**](./getting-started/setup-ios): App Store Connect and Xcode configuration
 - [**Android Setup**](./getting-started/setup-android): Google Play Console setup
 
 ### 🔧 Implementation
+
 - [**API Reference**](./api/use-iap): Complete useIAP hook documentation
 - [**Basic Store Example**](./examples/basic-store): Simple product store implementation
 - [**Complete Store Example**](./examples/complete-store): Production-ready store with validation
 
 ### � Guides
+
 - [**Getting Started**](./guides/getting-started): Complete guide to implementing in-app purchases
 - [**Purchase Lifecycle**](./guides/lifecycle): Understanding connection management and best practices
 - [**Purchase Implementation**](./guides/purchases): Detailed purchase flow and event handling
@@ -263,6 +265,7 @@ Expo IAP is built with a modern architecture that emphasizes:
 - [**Support**](./guides/support): Getting help and community resources
 
 ### �🛠️ Advanced Topics
+
 - [**Receipt Validation**](./guides/purchases): Secure purchase validation
 - [**Error Handling**](./api/error-codes): Comprehensive error management
 - [**Subscription Management**](./examples/subscription-manager): Handle recurring subscriptions

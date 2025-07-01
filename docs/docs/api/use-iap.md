@@ -1,15 +1,21 @@
 ---
+title: useIAP Hook
+sidebar_label: useIAP Hook
 sidebar_position: 1
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # useIAP Hook
+
+<AdFitTopFixed />
 
 The `useIAP` hook is the main interface for interacting with in-app purchases in Expo IAP. It provides a comprehensive API for managing purchases, subscriptions, and error handling.
 
 ## Import
 
 ```tsx
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 ```
 
 ## Basic Usage
@@ -42,9 +48,9 @@ const {
 
 ### useIAP(options)
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `options` | `UseIAPOptions` | No | Configuration object |
+| Parameter | Type            | Required | Description          |
+| --------- | --------------- | -------- | -------------------- |
+| `options` | `UseIAPOptions` | No       | Configuration object |
 
 #### UseIAPOptions
 
@@ -60,6 +66,7 @@ interface UseIAPOptions {
 ### Configuration Properties
 
 #### onPurchaseSuccess
+
 - **Type**: `(purchase: Purchase) => void`
 - **Description**: Called when a purchase completes successfully
 - **Example**:
@@ -67,10 +74,11 @@ interface UseIAPOptions {
   onPurchaseSuccess: (purchase) => {
     // Grant user access to purchased content
     unlockFeature(purchase.productId);
-  }
+  };
   ```
 
 #### onPurchaseError
+
 - **Type**: `(error: PurchaseError) => void`
 - **Description**: Called when a purchase fails
 - **Example**:
@@ -79,20 +87,22 @@ interface UseIAPOptions {
     if (error.code !== ErrorCode.E_USER_CANCELLED) {
       Alert.alert('Purchase Failed', error.message);
     }
-  }
+  };
   ```
 
 #### onSyncError
+
 - **Type**: `(error: Error) => void`
 - **Description**: Called when there's an error syncing with the store
 - **Example**:
   ```tsx
   onSyncError: (error) => {
     console.warn('Store sync error:', error.message);
-  }
+  };
   ```
 
 #### autoFinishTransactions
+
 - **Type**: `boolean`
 - **Default**: `true`
 - **Description**: Whether to automatically finish transactions after successful purchases
@@ -102,6 +112,7 @@ interface UseIAPOptions {
 ### State Properties
 
 #### connected
+
 - **Type**: `boolean`
 - **Description**: Whether the IAP service is connected and ready
 - **Example**:
@@ -113,26 +124,27 @@ interface UseIAPOptions {
   ```
 
 #### products
+
 - **Type**: `Product[]`
 - **Description**: Array of available products
 - **Example**:
   ```tsx
-  products.map(product => (
-    <ProductItem key={product.id} product={product} />
-  ))
+  products.map((product) => <ProductItem key={product.id} product={product} />);
   ```
 
 #### subscriptions
+
 - **Type**: `SubscriptionProduct[]`
 - **Description**: Array of available subscription products
 - **Example**:
   ```tsx
-  subscriptions.map(subscription => (
+  subscriptions.map((subscription) => (
     <SubscriptionItem key={subscription.id} subscription={subscription} />
-  ))
+  ));
   ```
 
 #### currentPurchase
+
 - **Type**: `Purchase | null`
 - **Description**: Currently active purchase (if any)
 - **Example**:
@@ -145,6 +157,7 @@ interface UseIAPOptions {
   ```
 
 #### currentPurchaseError
+
 - **Type**: `PurchaseError | null`
 - **Description**: Current purchase error (if any)
 - **Example**:
@@ -159,6 +172,7 @@ interface UseIAPOptions {
 ### Methods
 
 #### getProducts
+
 - **Type**: `(productIds: string[]) => Promise<Product[]>`
 - **Description**: Fetch products from the store
 - **Parameters**:
@@ -170,7 +184,7 @@ interface UseIAPOptions {
     try {
       const products = await getProducts([
         'com.app.premium',
-        'com.app.coins_100'
+        'com.app.coins_100',
       ]);
       console.log('Fetched products:', products);
     } catch (error) {
@@ -180,6 +194,7 @@ interface UseIAPOptions {
   ```
 
 #### getSubscriptions
+
 - **Type**: `(subscriptionIds: string[]) => Promise<SubscriptionProduct[]>`
 - **Description**: Fetch subscription products from the store
 - **Parameters**:
@@ -191,7 +206,7 @@ interface UseIAPOptions {
     try {
       const subs = await getSubscriptions([
         'com.app.premium_monthly',
-        'com.app.premium_yearly'
+        'com.app.premium_yearly',
       ]);
       console.log('Fetched subscriptions:', subs);
     } catch (error) {
@@ -201,6 +216,7 @@ interface UseIAPOptions {
   ```
 
 #### requestPurchase
+
 - **Type**: `(request: RequestPurchaseProps) => Promise<void>`
 - **Description**: Initiate a purchase request
 - **Parameters**:
@@ -210,7 +226,7 @@ interface UseIAPOptions {
   const buyProduct = async (productId: string) => {
     try {
       await requestPurchase({
-        request: { sku: productId }
+        request: {sku: productId},
       });
     } catch (error) {
       console.error('Purchase request failed:', error);
@@ -219,6 +235,7 @@ interface UseIAPOptions {
   ```
 
 #### validateReceipt
+
 - **Type**: `(productId: string, params?: ValidationParams) => Promise<ValidationResult>`
 - **Description**: Validate a purchase receipt
 - **Parameters**:
@@ -246,20 +263,20 @@ interface UseIAPOptions {
 
 ```tsx
 const IOSPurchaseExample = () => {
-  const { connected, products, requestPurchase, validateReceipt } = useIAP({
+  const {connected, products, requestPurchase, validateReceipt} = useIAP({
     onPurchaseSuccess: async (purchase) => {
       // Validate receipt on iOS
       const validation = await validateReceipt(purchase.productId);
       if (validation.isValid) {
         unlockContent(purchase.productId);
       }
-    }
+    },
   });
 
   const buyProduct = (product: Product) => {
     if (product.platform === 'ios') {
       requestPurchase({
-        request: { sku: product.id }
+        request: {sku: product.id},
       });
     }
   };
@@ -267,8 +284,8 @@ const IOSPurchaseExample = () => {
   return (
     <View>
       {products
-        .filter(p => p.platform === 'ios')
-        .map(product => (
+        .filter((p) => p.platform === 'ios')
+        .map((product) => (
           <Button
             key={product.id}
             title={`${product.title} - ${product.displayPrice}`}
@@ -284,17 +301,17 @@ const IOSPurchaseExample = () => {
 
 ```tsx
 const AndroidPurchaseExample = () => {
-  const { connected, products, requestPurchase } = useIAP({
+  const {connected, products, requestPurchase} = useIAP({
     onPurchaseSuccess: (purchase) => {
       // Android purchases are automatically validated by Google Play
       unlockContent(purchase.productId);
-    }
+    },
   });
 
   const buyProduct = (product: Product) => {
     if (product.platform === 'android') {
       requestPurchase({
-        request: { skus: [product.id] }
+        request: {skus: [product.id]},
       });
     }
   };
@@ -302,8 +319,8 @@ const AndroidPurchaseExample = () => {
   return (
     <View>
       {products
-        .filter(p => p.platform === 'android')
-        .map(product => (
+        .filter((p) => p.platform === 'android')
+        .map((product) => (
           <Button
             key={product.id}
             title={`${product.title} - ${product.oneTimePurchaseOfferDetails?.formattedPrice}`}
@@ -320,7 +337,7 @@ const AndroidPurchaseExample = () => {
 The `useIAP` hook integrates with the centralized error handling system:
 
 ```tsx
-const { requestPurchase } = useIAP({
+const {requestPurchase} = useIAP({
   onPurchaseError: (error) => {
     // Error is automatically typed as PurchaseError
     switch (error.code) {
@@ -331,18 +348,22 @@ const { requestPurchase } = useIAP({
         Alert.alert('Network Error', 'Please check your connection');
         break;
       case ErrorCode.E_ITEM_UNAVAILABLE:
-        Alert.alert('Item Unavailable', 'This item is not available for purchase');
+        Alert.alert(
+          'Item Unavailable',
+          'This item is not available for purchase',
+        );
         break;
       default:
         Alert.alert('Purchase Failed', error.message);
     }
-  }
+  },
 });
 ```
 
 ## Best Practices
 
 1. **Always check `connected` before making IAP calls**:
+
    ```tsx
    useEffect(() => {
      if (connected) {
@@ -352,13 +373,14 @@ const { requestPurchase } = useIAP({
    ```
 
 2. **Handle loading states**:
+
    ```tsx
    const [loading, setLoading] = useState(false);
-   
+
    const buyProduct = async (productId: string) => {
      setLoading(true);
      try {
-       await requestPurchase({ request: { sku: productId } });
+       await requestPurchase({request: {sku: productId}});
      } finally {
        setLoading(false);
      }
@@ -366,11 +388,12 @@ const { requestPurchase } = useIAP({
    ```
 
 3. **Implement proper error handling**:
+
    ```tsx
    const handleError = (error: PurchaseError) => {
      // Log for debugging
      console.error('IAP Error:', error);
-     
+
      // Show user-friendly message
      if (error.code !== ErrorCode.E_USER_CANCELLED) {
        Alert.alert('Purchase Failed', error.message);
@@ -379,9 +402,10 @@ const { requestPurchase } = useIAP({
    ```
 
 4. **Cache products to avoid repeated fetches**:
+
    ```tsx
    const [productsLoaded, setProductsLoaded] = useState(false);
-   
+
    useEffect(() => {
      if (connected && !productsLoaded) {
        getProducts(productIds).then(() => {

@@ -135,8 +135,8 @@ const config: Config = {
               href: 'https://github.com/hyochan/expo-iap/issues',
             },
             {
-              label: 'Discord',
-              href: 'https://discord.gg/expo',
+              label: 'Slack',
+              href: 'https://hyo.dev/joinSlack',
             },
           ],
         },
@@ -175,7 +175,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} hyochan. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} hyochan.`,
     },
     prism: {
       theme: prismThemes.github,

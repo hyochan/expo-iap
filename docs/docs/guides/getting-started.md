@@ -4,13 +4,15 @@ sidebar_label: Getting Started
 sidebar_position: 1
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Getting Started
+
+<AdFitTopFixed />
 
 `expo-iap` is a powerful in-app purchase solution specifically designed for Expo and React Native applications. It provides a unified API for handling in-app purchases across iOS and Android platforms with comprehensive error handling and modern TypeScript support.
 
-:::note
-This library provides the basic features to consume In-App purchases on the client-side, however you'll have to implement the server-side to validate your receipts (which is probably the most time consuming part to do it correctly).
-:::
+:::note This library provides the basic features to consume In-App purchases on the client-side, however you'll have to implement the server-side to validate your receipts (which is probably the most time consuming part to do it correctly). :::
 
 ## Requirements
 
@@ -82,7 +84,7 @@ dependencies {
 ### 1. Initialize the connection
 
 ```tsx
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
 export default function App() {
   const {
@@ -119,7 +121,7 @@ const productIds = [
 
 useEffect(() => {
   if (connected) {
-    getProducts({ skus: productIds });
+    getProducts({skus: productIds});
   }
 }, [connected, getProducts]);
 ```
@@ -129,7 +131,7 @@ useEffect(() => {
 ```tsx
 const handlePurchase = async (productId: string) => {
   try {
-    await requestPurchase({ sku: productId });
+    await requestPurchase({sku: productId});
   } catch (error) {
     console.error('Purchase failed:', error);
   }
@@ -147,7 +149,7 @@ useEffect(() => {
     validateReceiptOnServer(currentPurchase)
       .then(() => {
         // If validation successful, finish the transaction
-        finishTransaction({ purchase: currentPurchase });
+        finishTransaction({purchase: currentPurchase});
       })
       .catch((error) => {
         console.error('Receipt validation failed:', error);

@@ -2,7 +2,11 @@
 sidebar_position: 2
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Error Codes
+
+<AdFitTopFixed />
 
 Expo IAP provides a centralized error handling system with platform-specific error code mapping. This ensures consistent error handling across iOS and Android platforms.
 
@@ -13,7 +17,7 @@ Expo IAP provides a centralized error handling system with platform-specific err
 The `ErrorCode` enum provides standardized error codes that map to platform-specific errors:
 
 ```tsx
-import { ErrorCode } from 'expo-iap';
+import {ErrorCode} from 'expo-iap';
 
 enum ErrorCode {
   E_UNKNOWN = 'E_UNKNOWN',
@@ -48,26 +52,31 @@ enum ErrorCode {
 ### Common Errors
 
 #### E_UNKNOWN
+
 - **Description**: Unknown or unspecified error
 - **When it occurs**: Fallback for unmapped errors
 - **User action**: General error handling, retry or contact support
 
 #### E_USER_CANCELLED
+
 - **Description**: User cancelled the purchase
 - **When it occurs**: User taps "Cancel" in the payment dialog
 - **User action**: No action needed, this is normal user behavior
 
 #### E_NETWORK_ERROR
+
 - **Description**: Network connection failed
 - **When it occurs**: No internet connection or network timeout
 - **User action**: Check internet connection and retry
 
 #### E_SERVICE_ERROR
+
 - **Description**: App Store/Play Store service error
 - **When it occurs**: Store servers are down or experiencing issues
 - **User action**: Try again later
 
 #### E_ITEM_UNAVAILABLE
+
 - **Description**: The requested item is not available for purchase
 - **When it occurs**: Product not found in store or not available in user's region
 - **User action**: Check product availability
@@ -75,16 +84,19 @@ enum ErrorCode {
 ### iOS-Specific Errors
 
 #### E_RECEIPT_FAILED
+
 - **Description**: Receipt validation failed
 - **When it occurs**: Invalid receipt data or validation error
 - **User action**: Retry purchase or contact support
 
 #### E_DEFERRED_PAYMENT
+
 - **Description**: Payment is deferred (requires parental approval)
 - **When it occurs**: Family Sharing with Ask to Buy enabled
 - **User action**: Wait for approval
 
 #### E_TRANSACTION_VALIDATION_FAILED
+
 - **Description**: Transaction validation failed
 - **When it occurs**: StoreKit transaction validation error
 - **User action**: Retry or contact support
@@ -92,11 +104,13 @@ enum ErrorCode {
 ### Android-Specific Errors
 
 #### E_BILLING_RESPONSE_JSON_PARSE_ERROR
+
 - **Description**: Failed to parse billing response
 - **When it occurs**: Invalid response from Google Play Billing
 - **User action**: Retry purchase
 
 #### E_ALREADY_OWNED
+
 - **Description**: User already owns this item
 - **When it occurs**: Attempting to buy a non-consumable product already owned
 - **User action**: Restore purchases or contact support
@@ -133,10 +147,11 @@ static fromPlatformError(
 ```
 
 **Example**:
+
 ```tsx
 const error = PurchaseError.fromPlatformError(
-  { code: 2, message: 'User cancelled' },
-  'ios'
+  {code: 2, message: 'User cancelled'},
+  'ios',
 );
 console.log(error.code); // ErrorCode.E_USER_CANCELLED
 ```
@@ -152,6 +167,7 @@ getPlatformCode(): string | number | undefined
 ```
 
 **Example**:
+
 ```tsx
 const error = new PurchaseError(
   'PurchaseError',
@@ -160,7 +176,7 @@ const error = new PurchaseError(
   undefined,
   ErrorCode.E_USER_CANCELLED,
   'com.app.premium',
-  'ios'
+  'ios',
 );
 
 console.log(error.getPlatformCode()); // 2 (iOS code)
@@ -179,8 +195,11 @@ ErrorCodeUtils.getNativeErrorCode(errorCode: ErrorCode): string
 ```
 
 **Example**:
+
 ```tsx
-const nativeCode = ErrorCodeUtils.getNativeErrorCode(ErrorCode.E_USER_CANCELLED);
+const nativeCode = ErrorCodeUtils.getNativeErrorCode(
+  ErrorCode.E_USER_CANCELLED,
+);
 console.log(nativeCode); // Platform-specific code
 ```
 
@@ -196,13 +215,17 @@ ErrorCodeUtils.fromPlatformCode(
 ```
 
 **Example**:
+
 ```tsx
 // iOS
 const errorCode = ErrorCodeUtils.fromPlatformCode(2, 'ios');
 console.log(errorCode); // ErrorCode.E_USER_CANCELLED
 
 // Android
-const errorCode = ErrorCodeUtils.fromPlatformCode('E_USER_CANCELLED', 'android');
+const errorCode = ErrorCodeUtils.fromPlatformCode(
+  'E_USER_CANCELLED',
+  'android',
+);
 console.log(errorCode); // ErrorCode.E_USER_CANCELLED
 ```
 
@@ -218,13 +241,20 @@ ErrorCodeUtils.toPlatformCode(
 ```
 
 **Example**:
+
 ```tsx
 // iOS
-const iosCode = ErrorCodeUtils.toPlatformCode(ErrorCode.E_USER_CANCELLED, 'ios');
+const iosCode = ErrorCodeUtils.toPlatformCode(
+  ErrorCode.E_USER_CANCELLED,
+  'ios',
+);
 console.log(iosCode); // 2
 
 // Android
-const androidCode = ErrorCodeUtils.toPlatformCode(ErrorCode.E_USER_CANCELLED, 'android');
+const androidCode = ErrorCodeUtils.toPlatformCode(
+  ErrorCode.E_USER_CANCELLED,
+  'android',
+);
 console.log(androidCode); // 'E_USER_CANCELLED'
 ```
 
@@ -240,10 +270,11 @@ ErrorCodeUtils.isValidForPlatform(
 ```
 
 **Example**:
+
 ```tsx
 const isValid = ErrorCodeUtils.isValidForPlatform(
   ErrorCode.E_USER_CANCELLED,
-  'ios'
+  'ios',
 );
 console.log(isValid); // true
 ```
@@ -252,32 +283,32 @@ console.log(isValid); // true
 
 ### iOS Error Codes
 
-| ErrorCode | iOS Code | StoreKit Error |
-|-----------|----------|----------------|
-| E_UNKNOWN | 0 | SKErrorUnknown |
-| E_USER_CANCELLED | 2 | SKErrorPaymentCancelled |
-| E_SERVICE_ERROR | 1 | SKErrorClientInvalid |
-| E_ITEM_UNAVAILABLE | 4 | SKErrorProductNotAvailable |
-| E_NETWORK_ERROR | 6 | SKErrorNetworkError |
+| ErrorCode          | iOS Code | StoreKit Error             |
+| ------------------ | -------- | -------------------------- |
+| E_UNKNOWN          | 0        | SKErrorUnknown             |
+| E_USER_CANCELLED   | 2        | SKErrorPaymentCancelled    |
+| E_SERVICE_ERROR    | 1        | SKErrorClientInvalid       |
+| E_ITEM_UNAVAILABLE | 4        | SKErrorProductNotAvailable |
+| E_NETWORK_ERROR    | 6        | SKErrorNetworkError        |
 
 ### Android Error Codes
 
-| ErrorCode | Android Code | Billing Response |
-|-----------|--------------|------------------|
-| E_UNKNOWN | E_UNKNOWN | BILLING_UNAVAILABLE |
-| E_USER_CANCELLED | E_USER_CANCELLED | USER_CANCELED |
-| E_SERVICE_ERROR | E_SERVICE_ERROR | SERVICE_UNAVAILABLE |
-| E_ITEM_UNAVAILABLE | E_ITEM_UNAVAILABLE | ITEM_UNAVAILABLE |
-| E_DEVELOPER_ERROR | E_DEVELOPER_ERROR | DEVELOPER_ERROR |
+| ErrorCode          | Android Code       | Billing Response    |
+| ------------------ | ------------------ | ------------------- |
+| E_UNKNOWN          | E_UNKNOWN          | BILLING_UNAVAILABLE |
+| E_USER_CANCELLED   | E_USER_CANCELLED   | USER_CANCELED       |
+| E_SERVICE_ERROR    | E_SERVICE_ERROR    | SERVICE_UNAVAILABLE |
+| E_ITEM_UNAVAILABLE | E_ITEM_UNAVAILABLE | ITEM_UNAVAILABLE    |
+| E_DEVELOPER_ERROR  | E_DEVELOPER_ERROR  | DEVELOPER_ERROR     |
 
 ## Usage Examples
 
 ### Basic Error Handling
 
 ```tsx
-import { useIAP, ErrorCode, PurchaseError } from 'expo-iap';
+import {useIAP, ErrorCode, PurchaseError} from 'expo-iap';
 
-const { requestPurchase } = useIAP({
+const {requestPurchase} = useIAP({
   onPurchaseError: (error: PurchaseError) => {
     console.log('Error details:', {
       code: error.code,
@@ -299,7 +330,7 @@ const { requestPurchase } = useIAP({
       default:
         Alert.alert('Purchase Failed', error.message);
     }
-  }
+  },
 });
 ```
 
@@ -308,22 +339,22 @@ const { requestPurchase } = useIAP({
 ```tsx
 const handlePurchaseWithRetry = async (productId: string, retryCount = 0) => {
   const MAX_RETRIES = 2;
-  
+
   try {
-    await requestPurchase({ request: { sku: productId } });
+    await requestPurchase({request: {sku: productId}});
   } catch (error: any) {
     const purchaseError = PurchaseError.fromPlatformError(error, Platform.OS);
-    
+
     // Determine if we should retry
     const retryableErrors = [
       ErrorCode.E_NETWORK_ERROR,
       ErrorCode.E_SERVICE_ERROR,
       ErrorCode.E_INTERRUPTED,
     ];
-    
-    const shouldRetry = retryableErrors.includes(purchaseError.code!) && 
-                       retryCount < MAX_RETRIES;
-    
+
+    const shouldRetry =
+      retryableErrors.includes(purchaseError.code!) && retryCount < MAX_RETRIES;
+
     if (shouldRetry) {
       console.log(`Retrying purchase (${retryCount + 1}/${MAX_RETRIES})`);
       setTimeout(() => {
@@ -348,25 +379,26 @@ const logError = (error: PurchaseError) => {
     product_id: error.productId,
     message: error.message,
   });
-  
+
   // Log to crash reporting
   crashlytics.recordError(error);
 };
 
-const { requestPurchase } = useIAP({
+const {requestPurchase} = useIAP({
   onPurchaseError: (error) => {
     logError(error);
     showUserFriendlyError(error);
-  }
+  },
 });
 ```
 
 ## Best Practices
 
 1. **Always validate receipts server-side**: While Expo IAP provides built-in `validateReceiptIos` and `validateReceiptAndroid` functions for client-side validation, this is not safe for production. Always implement server-side receipt validation for both platforms:
+
    - [iOS Receipt Validation](https://developer.apple.com/documentation/storekit/validating-receipts-with-the-app-store)
    - [Android Receipt Validation](https://developer.android.com/google/play/licensing/server-side-verification)
-   
+
    **Important**: Always call `finishTransaction` after successful receipt validation. Failing to finish transactions may result in automatic purchase cancellation.
 
 2. **Understand the purchase lifecycle**: Familiarize yourself with the complete purchase flow and lifecycle management. See [Purchase Lifecycle Guide](../guides/lifecycle) for detailed information.

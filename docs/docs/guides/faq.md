@@ -4,7 +4,11 @@ sidebar_label: FAQ
 sidebar_position: 5
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Frequently Asked Questions
+
+<AdFitTopFixed />
 
 ## General Questions
 

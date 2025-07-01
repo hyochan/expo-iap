@@ -2,7 +2,11 @@
 sidebar_position: 1
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # iOS Setup
+
+<AdFitTopFixed />
 
 Setting up in-app purchases for iOS requires configuration in both Xcode and App Store Connect.
 
@@ -90,7 +94,7 @@ On your iOS device:
 ### Basic Setup
 
 ```tsx
-import { useIAP, ErrorCode } from 'expo-iap';
+import {useIAP, ErrorCode} from 'expo-iap';
 
 const productIds = [
   'com.yourapp.premium',
@@ -99,23 +103,18 @@ const productIds = [
 ];
 
 function App() {
-  const {
-    connected,
-    products,
-    getProducts,
-    requestPurchase,
-    validateReceipt,
-  } = useIAP({
-    onPurchaseSuccess: (purchase) => {
-      console.log('Purchase successful:', purchase);
-      // Handle successful purchase
-      validatePurchase(purchase);
-    },
-    onPurchaseError: (error) => {
-      console.error('Purchase failed:', error);
-      // Handle purchase error
-    },
-  });
+  const {connected, products, getProducts, requestPurchase, validateReceipt} =
+    useIAP({
+      onPurchaseSuccess: (purchase) => {
+        console.log('Purchase successful:', purchase);
+        // Handle successful purchase
+        validatePurchase(purchase);
+      },
+      onPurchaseError: (error) => {
+        console.error('Purchase failed:', error);
+        // Handle purchase error
+      },
+    });
 
   React.useEffect(() => {
     if (connected) {
@@ -140,9 +139,11 @@ function App() {
       {products.map((product) => (
         <TouchableOpacity
           key={product.id}
-          onPress={() => requestPurchase({ request: { sku: product.id } })}
+          onPress={() => requestPurchase({request: {sku: product.id}})}
         >
-          <Text>{product.title} - {product.displayPrice}</Text>
+          <Text>
+            {product.title} - {product.displayPrice}
+          </Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -158,13 +159,13 @@ function App() {
 const validateReceipt = async (productId: string) => {
   try {
     const result = await validateReceipt(productId);
-    
+
     console.log('Receipt validation result:', {
       isValid: result.isValid,
       receiptData: result.receiptData,
       jwsRepresentation: result.jwsRepresentation, // iOS 15+
     });
-    
+
     return result.isValid;
   } catch (error) {
     console.error('Receipt validation failed:', error);
@@ -197,16 +198,16 @@ const handlePurchaseError = (error: any) => {
 
 ### Product IDs Not Found
 
-**Problem**: Products return empty or undefined
-**Solution**: 
+**Problem**: Products return empty or undefined **Solution**:
+
 - Verify product IDs match exactly between code and App Store Connect
 - Ensure products are in "Ready to Submit" or "Approved" state
 - Check bundle identifier matches
 
 ### Sandbox Testing Issues
 
-**Problem**: "Cannot connect to iTunes Store" error
-**Solution**:
+**Problem**: "Cannot connect to iTunes Store" error **Solution**:
+
 - Use a dedicated sandbox test user
 - Sign out of regular App Store account
 - Verify internet connection
@@ -214,8 +215,8 @@ const handlePurchaseError = (error: any) => {
 
 ### Receipt Validation Failures
 
-**Problem**: Receipt validation returns invalid
-**Solution**:
+**Problem**: Receipt validation returns invalid **Solution**:
+
 - Check if app is properly signed
 - Verify receipt data is not corrupted
 - Ensure proper error handling for network issues

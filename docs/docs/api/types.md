@@ -1,4 +1,8 @@
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Types
+
+<AdFitTopFixed />
 
 This page contains the TypeScript types and interfaces used throughout the expo-iap library.
 

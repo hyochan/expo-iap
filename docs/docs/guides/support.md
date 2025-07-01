@@ -4,18 +4,24 @@ sidebar_label: Support
 sidebar_position: 7
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Support & Contributing
+
+<AdFitTopFixed />
 
 We welcome contributions and are here to help you succeed with expo-iap!
 
 ## Getting Help
 
 ### Documentation
+
 - Check our comprehensive [documentation](/)
 - Review the [FAQ](./faq) for common questions
 - Browse [examples](../examples/basic-store) for implementation patterns
 
 ### Community Support
+
 - **GitHub Issues**: [Report bugs or request features](https://github.com/hyochan/expo-iap/issues)
 - **Discussions**: [Ask questions and share ideas](https://github.com/hyochan/expo-iap/discussions)
 - **Stack Overflow**: Tag your questions with `expo-iap`
@@ -32,6 +38,7 @@ We welcome contributions and are here to help you succeed with expo-iap!
 When reporting a bug, please include:
 
 ### Environment Information
+
 ```
 - expo-iap version: x.x.x
 - Platform: iOS/Android/Both
@@ -41,12 +48,14 @@ When reporting a bug, please include:
 ```
 
 ### Reproduction Steps
+
 1. Clear steps to reproduce the issue
 2. Expected behavior
 3. Actual behavior
 4. Minimal code example (if applicable)
 
 ### Logs and Screenshots
+
 - Relevant error messages
 - Console logs
 - Screenshots (if UI-related)
@@ -67,12 +76,14 @@ We welcome contributions of all kinds! Here's how you can help:
 ### Development Setup
 
 1. **Fork the repository**
+
    ```bash
    git clone https://github.com/your-username/expo-iap.git
    cd expo-iap
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    # or
@@ -91,13 +102,16 @@ We welcome contributions of all kinds! Here's how you can help:
 ### Development Guidelines
 
 #### Code Style
+
 - Use TypeScript for all new code
 - Follow the existing code style
 - Run linters before submitting: `npm run lint`
 - Ensure all tests pass: `npm test`
 
 #### Commit Messages
+
 Use conventional commit format:
+
 ```
 feat: add subscription management feature
 fix: resolve Android billing client crash
@@ -108,16 +122,19 @@ test: add unit tests for purchase flow
 #### Pull Request Process
 
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 2. **Make your changes**
+
    - Write clear, maintainable code
    - Add tests for new features
    - Update documentation as needed
 
 3. **Test your changes**
+
    ```bash
    npm test
    npm run lint
@@ -133,6 +150,7 @@ test: add unit tests for purchase flow
 ### Testing
 
 #### Running Tests
+
 ```bash
 # Unit tests
 npm test
@@ -148,6 +166,7 @@ npm run validate
 ```
 
 #### Test Coverage
+
 - Write unit tests for new features
 - Test on both iOS and Android
 - Include edge cases and error scenarios
@@ -158,6 +177,7 @@ npm run validate
 Documentation improvements are always welcome:
 
 ### Types of Documentation Contributions
+
 - Fix typos and grammar
 - Improve clarity and completeness
 - Add missing examples
@@ -165,6 +185,7 @@ Documentation improvements are always welcome:
 - Translate to other languages
 
 ### Documentation Setup
+
 ```bash
 cd docs
 npm install
@@ -174,6 +195,7 @@ npm start
 This starts the documentation development server at `http://localhost:3000`.
 
 ### Writing Guidelines
+
 - Use clear, concise language
 - Include code examples
 - Test all code snippets
@@ -183,15 +205,18 @@ This starts the documentation development server at `http://localhost:3000`.
 ## Community Guidelines
 
 ### Code of Conduct
+
 We follow the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). Please read it before participating.
 
 ### Be Respectful
+
 - Be patient with newcomers
 - Provide constructive feedback
 - Avoid inflammatory language
 - Help maintain a welcoming environment
 
 ### Best Practices
+
 - Search before posting
 - Use descriptive titles
 - Stay on topic
@@ -201,6 +226,7 @@ We follow the [Contributor Covenant Code of Conduct](https://www.contributor-cov
 ## Recognition
 
 Contributors are recognized in:
+
 - GitHub contributors list
 - Release notes (for significant contributions)
 - Documentation credits
@@ -209,6 +235,7 @@ Contributors are recognized in:
 ## Project Roadmap
 
 ### Current Priorities
+
 1. Enhanced error handling and debugging
 2. Performance optimizations
 3. Better TypeScript definitions
@@ -216,6 +243,7 @@ Contributors are recognized in:
 5. Documentation improvements
 
 ### Future Plans
+
 - Additional platform support
 - Advanced analytics integration
 - Enhanced subscription management
@@ -224,6 +252,7 @@ Contributors are recognized in:
 ## Sponsorship
 
 If expo-iap helps your business, consider sponsoring the project:
+
 - [GitHub Sponsors](https://github.com/sponsors/hyochan)
 - One-time donations
 - Corporate sponsorship
@@ -233,10 +262,12 @@ Your support helps maintain and improve the project for everyone.
 ## Contact
 
 ### Maintainers
+
 - **Primary Maintainer**: [@hyochan](https://github.com/hyochan)
 - **Core Team**: See [contributors](https://github.com/hyochan/expo-iap/graphs/contributors)
 
 ### Channels
+
 - **GitHub**: Primary communication channel
 - **Email**: For security issues or private matters
 - **Social**: Follow updates on social media
@@ -246,6 +277,7 @@ Your support helps maintain and improve the project for everyone.
 expo-iap is licensed under the [MIT License](https://github.com/hyochan/expo-iap/blob/main/LICENSE).
 
 ### Contributing License Agreement
+
 By contributing, you agree that your contributions will be licensed under the same MIT License.
 
 ---

@@ -4,7 +4,11 @@ sidebar_label: Troubleshooting
 sidebar_position: 4
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Troubleshooting
+
+<AdFitTopFixed />
 
 This guide covers common issues you might encounter when implementing in-app purchases with expo-iap and how to resolve them.
 
@@ -35,12 +39,12 @@ This is one of the most common issues. Here are the potential causes and solutio
 #### 1. Connection not established
 
 ```tsx
-const { connected, getProducts } = useIAP();
+const {connected, getProducts} = useIAP();
 
 useEffect(() => {
   if (connected) {
     // ✅ Only call getProducts when connected
-    getProducts({ skus: productIds });
+    getProducts({skus: productIds});
   } else {
     console.log('Not connected to store yet');
   }
@@ -87,12 +91,12 @@ Ensure you're using the hook within the provider context:
 ```tsx
 // ❌ Wrong: Hook used outside provider
 function App() {
-  const { connected } = useIAP(); // This will fail
+  const {connected} = useIAP(); // This will fail
   return <MyApp />;
 }
 
 // ✅ Correct: Hook used within provider
-import { IAPProvider } from 'expo-iap';
+import {IAPProvider} from 'expo-iap';
 
 function AppWithProvider() {
   return (
@@ -103,7 +107,7 @@ function AppWithProvider() {
 }
 
 function App() {
-  const { connected } = useIAP(); // This works
+  const {connected} = useIAP(); // This works
   return <MyApp />;
 }
 ```
@@ -133,7 +137,7 @@ Don't wrap your app with multiple IAP providers:
 Always handle purchase updates and finish transactions:
 
 ```tsx
-const { currentPurchase, finishTransaction } = useIAP();
+const {currentPurchase, finishTransaction} = useIAP();
 
 useEffect(() => {
   if (currentPurchase) {
@@ -145,13 +149,13 @@ const handlePurchase = async (purchase) => {
   try {
     // Validate receipt
     const isValid = await validateOnServer(purchase);
-    
+
     if (isValid) {
       // Grant purchase to user
       await grantPurchase(purchase);
-      
+
       // ✅ Always finish the transaction
-      await finishTransaction({ purchase });
+      await finishTransaction({purchase});
     }
   } catch (error) {
     console.error('Purchase handling failed:', error);
@@ -164,8 +168,8 @@ const handlePurchase = async (purchase) => {
 In-app purchases only work on real devices:
 
 ```tsx
-import { Platform } from 'react-native';
-import { isEmulator } from 'react-native-device-info';
+import {Platform} from 'react-native';
+import {isEmulator} from 'react-native-device-info';
 
 const checkDeviceSupport = async () => {
   if (__DEV__) {
@@ -186,19 +190,19 @@ const checkDeviceSupport = async () => {
 Handle network errors gracefully:
 
 ```tsx
-const { connectionError } = useIAP();
+const {connectionError} = useIAP();
 
 if (connectionError) {
   return (
     <View>
       <Text>Store connection failed</Text>
       <Text>{connectionError.message}</Text>
-      <Button 
-        title="Retry" 
+      <Button
+        title="Retry"
         onPress={() => {
           // Implement retry logic
           retryConnection();
-        }} 
+        }}
       />
     </View>
   );
@@ -215,7 +219,7 @@ const handleStoreUnavailable = () => {
   Alert.alert(
     'Store Unavailable',
     'The App Store is temporarily unavailable. Please try again later.',
-    [{ text: 'OK' }]
+    [{text: 'OK'}],
   );
 };
 ```
@@ -225,6 +229,7 @@ const handleStoreUnavailable = () => {
 #### iOS Issues
 
 1. **Invalid product ID error**:
+
    ```tsx
    // Ensure you're signed in with sandbox account
    // Check product IDs match exactly
@@ -240,6 +245,7 @@ const handleStoreUnavailable = () => {
 #### Android Issues
 
 1. **Billing client setup**:
+
    ```gradle
    // android/app/build.gradle
    dependencies {
@@ -258,7 +264,7 @@ const handleStoreUnavailable = () => {
 ### 1. Enable verbose logging
 
 ```tsx
-import { setDebugMode } from 'expo-iap';
+import {setDebugMode} from 'expo-iap';
 
 // Enable debug mode in development
 if (__DEV__) {
@@ -269,7 +275,7 @@ if (__DEV__) {
 ### 2. Log purchase events
 
 ```tsx
-const { currentPurchase, currentPurchaseError } = useIAP();
+const {currentPurchase, currentPurchaseError} = useIAP();
 
 useEffect(() => {
   if (currentPurchase) {
@@ -279,7 +285,10 @@ useEffect(() => {
 
 useEffect(() => {
   if (currentPurchaseError) {
-    console.error('Purchase error:', JSON.stringify(currentPurchaseError, null, 2));
+    console.error(
+      'Purchase error:',
+      JSON.stringify(currentPurchaseError, null, 2),
+    );
   }
 }, [currentPurchaseError]);
 ```
@@ -287,10 +296,10 @@ useEffect(() => {
 ### 3. Monitor connection state
 
 ```tsx
-const { connected, connectionError } = useIAP();
+const {connected, connectionError} = useIAP();
 
 useEffect(() => {
-  console.log('Connection state changed:', { connected, error: connectionError });
+  console.log('Connection state changed:', {connected, error: connectionError});
 }, [connected, connectionError]);
 ```
 
@@ -330,7 +339,7 @@ Test on various devices and OS versions:
 Common error codes and their meanings:
 
 | Code | Description | Action |
-|------|-------------|---------|
+| --- | --- | --- |
 | `E_USER_CANCELLED` | User cancelled purchase | No action needed |
 | `E_NETWORK_ERROR` | Network connectivity issue | Show retry option |
 | `E_ITEM_UNAVAILABLE` | Product not available | Check product setup |
@@ -351,25 +360,23 @@ If you're still experiencing issues:
 
 ```markdown
 **Environment:**
+
 - expo-iap version: x.x.x
 - Platform: iOS/Android
 - OS version: x.x.x
 - Device: Device model
 
-**Description:**
-Clear description of the issue
+**Description:** Clear description of the issue
 
 **Steps to reproduce:**
+
 1. Step 1
 2. Step 2
 3. Step 3
 
-**Expected behavior:**
-What should happen
+**Expected behavior:** What should happen
 
-**Actual behavior:**
-What actually happens
+**Actual behavior:** What actually happens
 
-**Logs:**
-Relevant logs and error messages
+**Logs:** Relevant logs and error messages
 ```

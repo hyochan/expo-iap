@@ -4,14 +4,18 @@ sidebar_label: Basic Store
 sidebar_position: 1
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Basic Store Implementation
+
+<AdFitTopFixed />
 
 This example shows how to implement a basic in-app purchase store using expo-iap.
 
 ## Complete Store Component
 
 ```tsx
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -21,7 +25,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
 // Define your product IDs
 const PRODUCT_IDS = [
@@ -75,13 +79,13 @@ export default function Store() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      
+
       // Load both products and subscriptions
       await Promise.all([
-        getProducts({ skus: PRODUCT_IDS }),
-        getSubscriptions({ skus: SUBSCRIPTION_IDS }),
+        getProducts({skus: PRODUCT_IDS}),
+        getSubscriptions({skus: SUBSCRIPTION_IDS}),
       ]);
-      
+
       console.log('Products loaded successfully');
     } catch (error) {
       console.error('Failed to load products:', error);
@@ -94,23 +98,23 @@ export default function Store() {
   const handlePurchaseUpdate = async (purchase) => {
     try {
       console.log('Processing purchase:', purchase.productId);
-      
+
       // Here you would typically validate the receipt on your server
       const isValid = await validatePurchase(purchase);
-      
+
       if (isValid) {
         // Grant the purchase to the user
         await grantPurchase(purchase);
-        
+
         // Update local state
-        setPurchasedItems(prev => new Set([...prev, purchase.productId]));
-        
+        setPurchasedItems((prev) => new Set([...prev, purchase.productId]));
+
         // Finish the transaction
-        await finishTransaction({ purchase });
-        
+        await finishTransaction({purchase});
+
         Alert.alert(
           'Purchase Successful',
-          `Thank you for purchasing ${purchase.productId}!`
+          `Thank you for purchasing ${purchase.productId}!`,
         );
       } else {
         Alert.alert('Error', 'Purchase validation failed');
@@ -123,7 +127,7 @@ export default function Store() {
 
   const handlePurchaseError = (error) => {
     console.error('Purchase error:', error);
-    
+
     switch (error.code) {
       case 'E_USER_CANCELLED':
         // User cancelled - no need to show error
@@ -131,17 +135,20 @@ export default function Store() {
       case 'E_NETWORK_ERROR':
         Alert.alert(
           'Network Error',
-          'Please check your internet connection and try again.'
+          'Please check your internet connection and try again.',
         );
         break;
       case 'E_ITEM_UNAVAILABLE':
         Alert.alert(
           'Product Unavailable',
-          'This product is currently unavailable.'
+          'This product is currently unavailable.',
         );
         break;
       default:
-        Alert.alert('Purchase Failed', error.message || 'Unknown error occurred');
+        Alert.alert(
+          'Purchase Failed',
+          error.message || 'Unknown error occurred',
+        );
         break;
     }
   };
@@ -154,7 +161,7 @@ export default function Store() {
 
     try {
       console.log('Requesting purchase for:', productId);
-      await requestPurchase({ sku: productId });
+      await requestPurchase({sku: productId});
     } catch (error) {
       console.error('Purchase request failed:', error);
       Alert.alert('Error', 'Failed to initiate purchase');
@@ -165,7 +172,7 @@ export default function Store() {
     // This is where you would validate the purchase on your server
     // For demo purposes, we'll just return true
     // In a real app, send the receipt to your server for validation
-    
+
     try {
       const response = await fetch('https://your-server.com/validate-receipt', {
         method: 'POST',
@@ -196,9 +203,9 @@ export default function Store() {
     // - Unlocking features
     // - Adding credits/coins
     // - Updating subscription status
-    
+
     console.log('Granting purchase:', purchase.productId);
-    
+
     // Example: Update local storage or send to your backend
     try {
       await fetch('https://your-server.com/grant-purchase', {
@@ -218,9 +225,9 @@ export default function Store() {
     }
   };
 
-  const renderProduct = ({ item }) => {
+  const renderProduct = ({item}) => {
     const isPurchased = purchasedItems.has(item.productId);
-    
+
     return (
       <View style={styles.productCard}>
         <View style={styles.productInfo}>
@@ -228,19 +235,18 @@ export default function Store() {
           <Text style={styles.productDescription}>{item.description}</Text>
           <Text style={styles.productPrice}>{item.localizedPrice}</Text>
         </View>
-        
+
         <TouchableOpacity
-          style={[
-            styles.buyButton,
-            isPurchased && styles.purchasedButton
-          ]}
+          style={[styles.buyButton, isPurchased && styles.purchasedButton]}
           onPress={() => buyProduct(item.productId)}
           disabled={isPurchased || loading}
         >
-          <Text style={[
-            styles.buyButtonText,
-            isPurchased && styles.purchasedButtonText
-          ]}>
+          <Text
+            style={[
+              styles.buyButtonText,
+              isPurchased && styles.purchasedButtonText,
+            ]}
+          >
             {isPurchased ? 'Purchased' : 'Buy'}
           </Text>
         </TouchableOpacity>
@@ -248,7 +254,7 @@ export default function Store() {
     );
   };
 
-  const renderSubscription = ({ item }) => {
+  const renderSubscription = ({item}) => {
     return (
       <View style={styles.subscriptionCard}>
         <View style={styles.productInfo}>
@@ -261,7 +267,7 @@ export default function Store() {
             </Text>
           )}
         </View>
-        
+
         <TouchableOpacity
           style={styles.subscribeButton}
           onPress={() => buyProduct(item.productId)}
@@ -300,7 +306,7 @@ export default function Store() {
         keyExtractor={(item) => item.productId}
         style={styles.productList}
       />
-      
+
       <Text style={styles.sectionTitle}>Subscriptions</Text>
       <FlatList
         data={subscriptions}
@@ -345,7 +351,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -419,23 +425,28 @@ const styles = StyleSheet.create({
 ## Key Features Demonstrated
 
 ### 1. Connection Management
+
 - Automatic connection handling with `useIAP`
 - Loading states for connection and products
 
 ### 2. Product Loading
+
 - Loading both products and subscriptions
 - Error handling for failed product fetches
 
 ### 3. Purchase Flow
+
 - Initiating purchases with `requestPurchase`
 - Handling purchase updates and errors
 - Proper transaction finishing
 
 ### 4. Receipt Validation
+
 - Server-side receipt validation (placeholder implementation)
 - Error handling for validation failures
 
 ### 5. User Experience
+
 - Visual feedback for purchase states
 - Appropriate error messages
 - Loading indicators
@@ -444,7 +455,7 @@ const styles = StyleSheet.create({
 
 ```tsx
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import {NavigationContainer} from '@react-navigation/native';
 import Store from './Store';
 
 export default function App() {

@@ -4,7 +4,11 @@ sidebar_label: Listeners
 sidebar_position: 2
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Purchase Listeners
+
+<AdFitTopFixed />
 
 expo-iap provides event listeners to handle purchase updates and errors. These listeners are essential for handling the asynchronous nature of in-app purchases.
 
@@ -13,7 +17,7 @@ expo-iap provides event listeners to handle purchase updates and errors. These l
 Listens for purchase updates from the store.
 
 ```tsx
-import { purchaseUpdatedListener } from 'expo-iap';
+import {purchaseUpdatedListener} from 'expo-iap';
 
 const setupPurchaseListener = () => {
   const subscription = purchaseUpdatedListener((purchase) => {
@@ -33,14 +37,14 @@ const handlePurchaseUpdate = async (purchase) => {
   try {
     // Validate receipt on your server
     const isValid = await validateReceiptOnServer(purchase);
-    
+
     if (isValid) {
       // Grant purchase to user
       await grantPurchaseToUser(purchase);
-      
+
       // Finish the transaction
-      await finishTransaction({ purchase });
-      
+      await finishTransaction({purchase});
+
       console.log('Purchase completed successfully');
     } else {
       console.error('Receipt validation failed');
@@ -52,6 +56,7 @@ const handlePurchaseUpdate = async (purchase) => {
 ```
 
 **Parameters:**
+
 - `callback` (function): Function to call when a purchase update is received
   - `purchase` (Purchase): The purchase object
 
@@ -62,7 +67,7 @@ const handlePurchaseUpdate = async (purchase) => {
 Listens for purchase errors from the store.
 
 ```tsx
-import { purchaseErrorListener } from 'expo-iap';
+import {purchaseErrorListener} from 'expo-iap';
 
 const setupErrorListener = () => {
   const subscription = purchaseErrorListener((error) => {
@@ -84,22 +89,24 @@ const handlePurchaseError = (error) => {
       // User cancelled the purchase
       console.log('Purchase cancelled by user');
       break;
-      
+
     case 'E_NETWORK_ERROR':
       // Network error occurred
-      showErrorMessage('Network error. Please check your connection and try again.');
+      showErrorMessage(
+        'Network error. Please check your connection and try again.',
+      );
       break;
-      
+
     case 'E_ITEM_UNAVAILABLE':
       // Product is not available
       showErrorMessage('This product is currently unavailable.');
       break;
-      
+
     case 'E_ALREADY_OWNED':
       // User already owns this product
       showErrorMessage('You already own this product.');
       break;
-      
+
     default:
       // Other errors
       showErrorMessage(`Purchase failed: ${error.message}`);
@@ -109,6 +116,7 @@ const handlePurchaseError = (error) => {
 ```
 
 **Parameters:**
+
 - `callback` (function): Function to call when a purchase error occurs
   - `error` (IAPError): The error object
 
@@ -119,7 +127,7 @@ const handlePurchaseError = (error) => {
 Listens for promoted product purchases initiated from the App Store.
 
 ```tsx
-import { promotedProductListener } from 'expo-iap';
+import {promotedProductListener} from 'expo-iap';
 
 const setupPromotedProductListener = () => {
   const subscription = promotedProductListener((productId) => {
@@ -137,15 +145,15 @@ const setupPromotedProductListener = () => {
 const handlePromotedProduct = async (productId) => {
   try {
     // Fetch the product details
-    const products = await getProducts({ skus: [productId] });
+    const products = await getProducts({skus: [productId]});
     const product = products[0];
-    
+
     if (product) {
       // Show product details to user and confirm purchase
       const confirmed = await showProductConfirmation(product);
-      
+
       if (confirmed) {
-        await requestPurchase({ sku: productId });
+        await requestPurchase({sku: productId});
       }
     }
   } catch (error) {
@@ -155,6 +163,7 @@ const handlePromotedProduct = async (productId) => {
 ```
 
 **Parameters:**
+
 - `callback` (function): Function to call when a promoted product is selected
   - `productId` (string): The ID of the promoted product
 
@@ -165,8 +174,8 @@ const handlePromotedProduct = async (productId) => {
 ### Functional Components
 
 ```tsx
-import React, { useEffect } from 'react';
-import { purchaseUpdatedListener, purchaseErrorListener } from 'expo-iap';
+import React, {useEffect} from 'react';
+import {purchaseUpdatedListener, purchaseErrorListener} from 'expo-iap';
 
 export default function PurchaseManager() {
   useEffect(() => {
@@ -194,19 +203,15 @@ export default function PurchaseManager() {
     // Handle error logic
   };
 
-  return (
-    <div>
-      {/* Your component JSX */}
-    </div>
-  );
+  return <div>{/* Your component JSX */}</div>;
 }
 ```
 
 ### Class Components
 
 ```tsx
-import React, { Component } from 'react';
-import { purchaseUpdatedListener, purchaseErrorListener } from 'expo-iap';
+import React, {Component} from 'react';
+import {purchaseUpdatedListener, purchaseErrorListener} from 'expo-iap';
 
 class PurchaseManager extends Component {
   purchaseUpdateSubscription = null;
@@ -228,7 +233,7 @@ class PurchaseManager extends Component {
     if (this.purchaseUpdateSubscription) {
       this.purchaseUpdateSubscription.remove();
     }
-    
+
     if (this.purchaseErrorSubscription) {
       this.purchaseErrorSubscription.remove();
     }
@@ -243,11 +248,7 @@ class PurchaseManager extends Component {
   };
 
   render() {
-    return (
-      <div>
-        {/* Your component JSX */}
-      </div>
-    );
+    return <div>{/* Your component JSX */}</div>;
   }
 }
 ```
@@ -257,22 +258,26 @@ class PurchaseManager extends Component {
 You can create a custom hook to encapsulate purchase listener logic:
 
 ```tsx
-import { useEffect, useCallback } from 'react';
-import { purchaseUpdatedListener, purchaseErrorListener, finishTransaction } from 'expo-iap';
+import {useEffect, useCallback} from 'react';
+import {
+  purchaseUpdatedListener,
+  purchaseErrorListener,
+  finishTransaction,
+} from 'expo-iap';
 
 export const usePurchaseHandler = () => {
   const handlePurchaseUpdate = useCallback(async (purchase) => {
     try {
       // Validate receipt
       const isValid = await validateReceiptOnServer(purchase);
-      
+
       if (isValid) {
         // Grant purchase
         await grantPurchaseToUser(purchase);
-        
+
         // Finish transaction
-        await finishTransaction({ purchase });
-        
+        await finishTransaction({purchase});
+
         // Show success message
         showSuccessMessage('Purchase completed successfully!');
       } else {
@@ -287,7 +292,7 @@ export const usePurchaseHandler = () => {
 
   const handlePurchaseError = useCallback((error) => {
     console.error('Purchase error:', error);
-    
+
     switch (error.code) {
       case 'E_USER_CANCELLED':
         // Don't show error for user cancellation
@@ -300,8 +305,10 @@ export const usePurchaseHandler = () => {
 
   useEffect(() => {
     // Set up listeners
-    const purchaseUpdateSubscription = purchaseUpdatedListener(handlePurchaseUpdate);
-    const purchaseErrorSubscription = purchaseErrorListener(handlePurchaseError);
+    const purchaseUpdateSubscription =
+      purchaseUpdatedListener(handlePurchaseUpdate);
+    const purchaseErrorSubscription =
+      purchaseErrorListener(handlePurchaseError);
 
     // Cleanup
     return () => {
@@ -315,11 +322,7 @@ export const usePurchaseHandler = () => {
 export default function MyStoreComponent() {
   usePurchaseHandler(); // Sets up listeners automatically
 
-  return (
-    <div>
-      {/* Your store UI */}
-    </div>
-  );
+  return <div>{/* Your store UI */}</div>;
 }
 ```
 
@@ -367,10 +370,10 @@ Handle each state appropriately in your purchase listener.
 For simpler usage, consider using the `useIAP` hook which automatically manages listeners:
 
 ```tsx
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
 export default function StoreComponent() {
-  const { currentPurchase, currentPurchaseError } = useIAP();
+  const {currentPurchase, currentPurchaseError} = useIAP();
 
   useEffect(() => {
     if (currentPurchase) {

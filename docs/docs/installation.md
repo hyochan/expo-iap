@@ -2,7 +2,11 @@
 sidebar_position: 2
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Installation
+
+<AdFitTopFixed />
 
 This guide will help you install and configure Expo IAP in your React Native or Expo project.
 
@@ -30,6 +34,7 @@ npm install expo-iap
 If you're using Expo managed workflow, you'll need to create a [custom development client](https://docs.expo.dev/development/create-development-builds/) since in-app purchases require native modules that aren't available in Expo Go.
 
 1. **Install Expo CLI** (if not already installed):
+
    ```bash
    npm install -g @expo/cli
    ```
@@ -47,6 +52,7 @@ If you're using Expo bare workflow or vanilla React Native, you'll need to insta
 #### iOS
 
 1. **Install pods**:
+
    ```bash
    cd ios && pod install
    ```
@@ -86,13 +92,13 @@ For Android, set up your products in Google Play Console:
 To verify that Expo IAP is properly installed, create a simple test:
 
 ```tsx
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
 function TestComponent() {
-  const { connected } = useIAP();
-  
+  const {connected} = useIAP();
+
   console.log('IAP Connection status:', connected);
-  
+
   return null;
 }
 ```
@@ -112,19 +118,22 @@ Now that you have Expo IAP installed, you can:
 If you encounter issues during installation:
 
 1. **Clear node_modules and reinstall**:
+
    ```bash
    rm -rf node_modules
    npm install
    ```
 
 2. **For iOS, clean and rebuild pods**:
+
    ```bash
    cd ios
    rm -rf Pods Podfile.lock
    pod install
    ```
-   
+
    **For Expo projects**, use prebuild instead:
+
    ```bash
    npx expo prebuild --clean
    ```

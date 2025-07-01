@@ -4,14 +4,18 @@ sidebar_label: Subscriptions
 sidebar_position: 2
 ---
 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+
 # Subscription Management Example
+
+<AdFitTopFixed />
 
 This example demonstrates how to implement subscription management with expo-iap, including subscription status checking, renewal handling, and subscription management UI.
 
 ## Complete Subscription Manager
 
 ```tsx
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -21,7 +25,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
 // Subscription product IDs
 const SUBSCRIPTION_SKUS = [
@@ -50,9 +54,10 @@ export default function SubscriptionManager() {
   } = useIAP();
 
   const [loading, setLoading] = useState(false);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>({
-    isActive: false,
-  });
+  const [subscriptionStatus, setSubscriptionStatus] =
+    useState<SubscriptionStatus>({
+      isActive: false,
+    });
 
   // Initialize and load subscriptions
   useEffect(() => {
@@ -79,7 +84,7 @@ export default function SubscriptionManager() {
   const loadSubscriptions = async () => {
     try {
       setLoading(true);
-      await getSubscriptions({ skus: SUBSCRIPTION_SKUS });
+      await getSubscriptions({skus: SUBSCRIPTION_SKUS});
       console.log('Subscriptions loaded');
     } catch (error) {
       console.error('Failed to load subscriptions:', error);
@@ -93,12 +98,12 @@ export default function SubscriptionManager() {
     try {
       const purchases = await getAvailablePurchases();
       const activeSubscription = findActiveSubscription(purchases);
-      
+
       if (activeSubscription) {
         const status = await validateSubscriptionStatus(activeSubscription);
         setSubscriptionStatus(status);
       } else {
-        setSubscriptionStatus({ isActive: false });
+        setSubscriptionStatus({isActive: false});
       }
     } catch (error) {
       console.error('Failed to check subscription status:', error);
@@ -106,30 +111,33 @@ export default function SubscriptionManager() {
   };
 
   const findActiveSubscription = (purchases) => {
-    return purchases.find(purchase => 
-      SUBSCRIPTION_SKUS.includes(purchase.productId)
+    return purchases.find((purchase) =>
+      SUBSCRIPTION_SKUS.includes(purchase.productId),
     );
   };
 
   const validateSubscriptionStatus = async (purchase) => {
     try {
       // Validate subscription on your server
-      const response = await fetch('https://your-server.com/validate-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        'https://your-server.com/validate-subscription',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            receipt: purchase.transactionReceipt,
+            productId: purchase.productId,
+            // Platform-specific fields
+            purchaseToken: purchase.purchaseToken, // Android
+            transactionId: purchase.transactionId, // iOS
+          }),
         },
-        body: JSON.stringify({
-          receipt: purchase.transactionReceipt,
-          productId: purchase.productId,
-          // Platform-specific fields
-          purchaseToken: purchase.purchaseToken, // Android
-          transactionId: purchase.transactionId, // iOS
-        }),
-      });
+      );
 
       const result = await response.json();
-      
+
       return {
         isActive: result.isActive,
         productId: purchase.productId,
@@ -139,30 +147,30 @@ export default function SubscriptionManager() {
       };
     } catch (error) {
       console.error('Subscription validation error:', error);
-      return { isActive: false };
+      return {isActive: false};
     }
   };
 
   const handleSubscriptionPurchase = async (purchase) => {
     try {
       console.log('Processing subscription purchase:', purchase.productId);
-      
+
       // Validate the subscription purchase
       const subscriptionInfo = await validateSubscriptionStatus(purchase);
-      
+
       if (subscriptionInfo.isActive) {
         // Grant subscription benefits
         await grantSubscriptionBenefits(purchase);
-        
+
         // Update local status
         setSubscriptionStatus(subscriptionInfo);
-        
+
         // Finish the transaction
-        await finishTransaction({ purchase });
-        
+        await finishTransaction({purchase});
+
         Alert.alert(
           'Subscription Activated',
-          `Welcome to Premium! Your subscription is now active.`
+          `Welcome to Premium! Your subscription is now active.`,
         );
       } else {
         Alert.alert('Error', 'Subscription validation failed');
@@ -175,7 +183,7 @@ export default function SubscriptionManager() {
 
   const handlePurchaseError = (error) => {
     console.error('Subscription purchase error:', error);
-    
+
     switch (error.code) {
       case 'E_USER_CANCELLED':
         // User cancelled - no action needed
@@ -183,12 +191,15 @@ export default function SubscriptionManager() {
       case 'E_ALREADY_OWNED':
         Alert.alert(
           'Already Subscribed',
-          'You already have an active subscription. Check your subscription status.'
+          'You already have an active subscription. Check your subscription status.',
         );
         checkSubscriptionStatus(); // Refresh status
         break;
       default:
-        Alert.alert('Subscription Failed', error.message || 'Unknown error occurred');
+        Alert.alert(
+          'Subscription Failed',
+          error.message || 'Unknown error occurred',
+        );
         break;
     }
   };
@@ -207,7 +218,7 @@ export default function SubscriptionManager() {
           transactionId: purchase.transactionId,
         }),
       });
-      
+
       console.log('Subscription benefits granted');
     } catch (error) {
       console.error('Failed to grant subscription benefits:', error);
@@ -223,7 +234,7 @@ export default function SubscriptionManager() {
 
     try {
       console.log('Requesting subscription:', productId);
-      await requestPurchase({ sku: productId });
+      await requestPurchase({sku: productId});
     } catch (error) {
       console.error('Subscription request failed:', error);
       Alert.alert('Error', 'Failed to start subscription purchase');
@@ -231,7 +242,7 @@ export default function SubscriptionManager() {
   };
 
   const openSubscriptionManagement = () => {
-    import('expo-iap').then(({ deepLinkToSubscriptions }) => {
+    import('expo-iap').then(({deepLinkToSubscriptions}) => {
       deepLinkToSubscriptions();
     });
   };
@@ -264,20 +275,21 @@ export default function SubscriptionManager() {
           <Text style={styles.statusSubtitle}>
             Your premium subscription is active
           </Text>
-          
+
           {subscriptionStatus.expirationDate && (
             <Text style={styles.statusDetail}>
               {subscriptionStatus.autoRenewing ? 'Renews' : 'Expires'} on{' '}
               {formatDate(subscriptionStatus.expirationDate)}
             </Text>
           )}
-          
+
           {subscriptionStatus.inGracePeriod && (
             <Text style={styles.warningText}>
-              Your subscription is in grace period. Please update your payment method.
+              Your subscription is in grace period. Please update your payment
+              method.
             </Text>
           )}
-          
+
           <TouchableOpacity
             style={styles.manageButton}
             onPress={openSubscriptionManagement}
@@ -316,16 +328,11 @@ export default function SubscriptionManager() {
               per {subscription.subscriptionPeriod}
             </Text>
           )}
-          {savings && (
-            <Text style={styles.savingsText}>{savings}</Text>
-          )}
+          {savings && <Text style={styles.savingsText}>{savings}</Text>}
         </View>
-        
+
         <TouchableOpacity
-          style={[
-            styles.subscribeButton,
-            isYearly && styles.yearlyButton
-          ]}
+          style={[styles.subscribeButton, isYearly && styles.yearlyButton]}
           onPress={() => purchaseSubscription(subscription.productId)}
           disabled={loading || subscriptionStatus.isActive}
         >
@@ -349,22 +356,20 @@ export default function SubscriptionManager() {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Subscription Management</Text>
-      
+
       {renderSubscriptionStatus()}
-      
+
       <Text style={styles.sectionTitle}>Subscription Options</Text>
-      
+
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" />
           <Text style={styles.loadingText}>Loading subscriptions...</Text>
         </View>
       ) : (
-        <View>
-          {subscriptions.map(renderSubscriptionOption)}
-        </View>
+        <View>{subscriptions.map(renderSubscriptionOption)}</View>
       )}
-      
+
       <View style={styles.actionButtons}>
         <TouchableOpacity
           style={styles.restoreButton}
@@ -374,7 +379,7 @@ export default function SubscriptionManager() {
           <Text style={styles.restoreButtonText}>Restore Purchases</Text>
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.footer}>
         <Text style={styles.footerText}>
           Subscriptions auto-renew unless cancelled. You can manage your
@@ -422,7 +427,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
@@ -468,7 +473,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
@@ -547,21 +552,25 @@ const styles = StyleSheet.create({
 ## Key Features
 
 ### 1. Subscription Status Tracking
+
 - Real-time subscription status validation
 - Grace period handling
 - Auto-renewal status
 
 ### 2. Multiple Subscription Tiers
+
 - Monthly and yearly options
 - Pricing display with savings indicators
 - Visual differentiation for different tiers
 
 ### 3. Subscription Management
+
 - Direct links to platform subscription management
 - Purchase restoration
 - Status refresh capabilities
 
 ### 4. Server Integration
+
 - Server-side subscription validation
 - Benefit granting system
 - Status synchronization
@@ -573,22 +582,22 @@ const styles = StyleSheet.create({
 ```javascript
 // Example Node.js/Express endpoint
 app.post('/validate-subscription', async (req, res) => {
-  const { receipt, productId, purchaseToken, transactionId } = req.body;
-  
+  const {receipt, productId, purchaseToken, transactionId} = req.body;
+
   try {
     let validationResult;
-    
+
     if (purchaseToken) {
       // Android - Google Play Billing validation
       validationResult = await validateGooglePlaySubscription(
         productId,
-        purchaseToken
+        purchaseToken,
       );
     } else {
       // iOS - App Store validation
       validationResult = await validateAppStoreReceipt(receipt);
     }
-    
+
     res.json({
       isActive: validationResult.isActive,
       expirationDate: validationResult.expirationDate,
@@ -597,7 +606,7 @@ app.post('/validate-subscription', async (req, res) => {
     });
   } catch (error) {
     console.error('Validation error:', error);
-    res.status(500).json({ error: 'Validation failed' });
+    res.status(500).json({error: 'Validation failed'});
   }
 });
 ```
@@ -606,7 +615,7 @@ app.post('/validate-subscription', async (req, res) => {
 
 ```tsx
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import {NavigationContainer} from '@react-navigation/native';
 import SubscriptionManager from './SubscriptionManager';
 
 export default function App() {
