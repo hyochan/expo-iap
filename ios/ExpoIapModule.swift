@@ -56,7 +56,7 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: Stri
 
         "quantityIos": transaction.purchasedQuantity,
         "originalTransactionDateIos": transaction.originalPurchaseDate.timeIntervalSince1970 * 1000,
-        "originalTransactionIdentifierIos": transaction.originalID,
+        "originalTransactionIdentifierIos": String(transaction.originalID),
         "appAccountToken": transaction.appAccountToken?.uuidString,
 
         "appBundleIdIos": transaction.appBundleID,
