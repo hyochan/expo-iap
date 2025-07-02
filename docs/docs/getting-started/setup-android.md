@@ -172,6 +172,9 @@ const AndroidProductItem = ({ product }: { product: Product }) => {
 };
 ```
 
+> **💡 Cross-Platform Note:** This example shows Android-specific usage with `skus`. For cross-platform compatibility, include both `sku` and `skus` in your request object. See the [Core Methods](/docs/api/methods/core-methods#requestpurchase) documentation for details.
+```
+
 ### Android-Specific Subscription Handling
 
 ```tsx

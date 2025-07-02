@@ -12,6 +12,46 @@ import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
 
 This section covers the core methods available in expo-iap for managing in-app purchases.
 
+## 🚨 Important Platform Differences
+
+> **Critical for Cross-Platform Development:** iOS and Android have different parameter requirements for purchase methods.
+
+| Method | iOS | Android | Cross-Platform Solution |
+| --- | --- | --- | --- |
+| `requestPurchase()` | Uses `sku: string` | Uses `skus: string[]` | Include both `sku` and `skus` |
+| `requestSubscription()` | Uses `sku: string` | Uses `skus: string[]` + `subscriptionOffers` | Include both `sku` and `skus` |
+
+**💡 Best Practice:** Always include both `sku` (for iOS) and `skus` (for Android) in your request objects to ensure cross-platform compatibility.
+
+**🎯 Recommended Approach:** For the best developer experience, use the [`useIAP` hook](/docs/api/hooks/useIAP) which handles platform differences automatically and provides a cleaner callback-based API.
+
+```tsx
+// ✅ Cross-platform compatible
+await requestPurchase({
+  request: {
+    sku: productId, // iOS
+    skus: [productId], // Android
+  },
+  type: 'inapp',
+});
+
+// ❌ iOS only - will fail on Android
+await requestPurchase({
+  request: {
+    sku: productId,
+  },
+  type: 'inapp',
+});
+
+// ❌ Android only - will fail on iOS
+await requestPurchase({
+  request: {
+    skus: [productId],
+  },
+  type: 'inapp',
+});
+```
+
 ## initConnection()
 
 Initializes the connection to the store. This method must be called before any other store operations.
@@ -63,9 +103,10 @@ import {getProducts} from 'expo-iap';
 
 const fetchProducts = async () => {
   try {
-    const products = await getProducts({
-      skus: ['com.example.product1', 'com.example.product2'],
-    });
+    const products = await getProducts([
+      'com.example.product1',
+      'com.example.product2',
+    ]);
 
     console.log('Products:', products);
     return products;
@@ -77,8 +118,7 @@ const fetchProducts = async () => {
 
 **Parameters:**
 
-- `params` (object):
-  - `skus` (string[]): Array of product IDs to fetch
+- `skus` (string[]): Array of product IDs to fetch
 
 **Returns:** `Promise<Product[]>`
 
@@ -110,9 +150,10 @@ import {getSubscriptions} from 'expo-iap';
 
 const fetchSubscriptions = async () => {
   try {
-    const subscriptions = await getSubscriptions({
-      skus: ['com.example.premium_monthly', 'com.example.premium_yearly'],
-    });
+    const subscriptions = await getSubscriptions([
+      'com.example.premium_monthly',
+      'com.example.premium_yearly',
+    ]);
 
     console.log('Subscriptions:', subscriptions);
     return subscriptions;
@@ -124,14 +165,17 @@ const fetchSubscriptions = async () => {
 
 **Parameters:**
 
-- `params` (object):
-  - `skus` (string[]): Array of subscription IDs to fetch
+- `skus` (string[]): Array of subscription IDs to fetch
 
-**Returns:** `Promise<Subscription[]>`
+**Returns:** `Promise<SubscriptionProduct[]>`
 
 ## requestPurchase()
 
 Initiates a purchase request for a product.
+
+> **⚠️ Platform Differences:** iOS uses `sku` (single product), while Android uses `skus` (array). For cross-platform compatibility, provide both properties.
+
+### Cross-Platform Usage (Recommended)
 
 ```tsx
 import {requestPurchase} from 'expo-iap';
@@ -139,7 +183,11 @@ import {requestPurchase} from 'expo-iap';
 const buyProduct = async (productId: string) => {
   try {
     await requestPurchase({
-      sku: productId,
+      request: {
+        sku: productId, // Required for iOS
+        skus: [productId], // Required for Android
+      },
+      type: 'inapp',
     });
     // Purchase result will be delivered via purchase listeners
   } catch (error) {
@@ -148,21 +196,81 @@ const buyProduct = async (productId: string) => {
 };
 ```
 
+### Platform-Specific Usage
+
+#### iOS Only
+
+```tsx
+await requestPurchase({
+  request: {
+    sku: productId,
+    quantity: 1,
+    appAccountToken: 'user-account-token',
+  },
+  type: 'inapp',
+});
+```
+
+#### Android Only
+
+```tsx
+await requestPurchase({
+  request: {
+    skus: [productId],
+    obfuscatedAccountIdAndroid: 'user-account-id',
+    obfuscatedProfileIdAndroid: 'user-profile-id',
+  },
+  type: 'inapp',
+});
+```
+
 **Parameters:**
 
 - `params` (object):
-  - `sku` (string): Product ID to purchase
-  - `subscriptionOffers?` (array): For Android subscriptions
-  - `quantity?` (number): Purchase quantity (iOS only)
-  - `applicationUsername?` (string): User identifier for receipt validation
+  - `request` (object): Purchase request configuration
+    - **iOS**: `sku` (string) - Product ID to purchase
+    - **Android**: `skus` (string[]) - Array of product IDs to purchase
+    - **Cross-platform**: Include both `sku` and `skus` for compatibility
+    - `quantity?` (number, iOS only): Purchase quantity
+    - `appAccountToken?` (string, iOS only): User identifier for receipt validation
+    - `obfuscatedAccountIdAndroid?` (string, Android only): Obfuscated account ID
+    - `obfuscatedProfileIdAndroid?` (string, Android only): Obfuscated profile ID
+    - `isOfferPersonalized?` (boolean, Android only): Whether offer is personalized
+  - `type?` ('inapp' | 'subs'): Purchase type, defaults to 'inapp'
 
-**Returns:** `Promise<void>`
+**Returns:** `Promise<ProductPurchase | ProductPurchase[] | SubscriptionPurchase | SubscriptionPurchase[] | void>`
 
-**Note:** The actual purchase result is delivered through purchase listeners, not as a return value.
+**Note:** The actual purchase result is delivered through purchase listeners or the `useIAP` hook callbacks, not as a return value.
 
 ## requestSubscription()
 
 Initiates a subscription purchase request.
+
+> **⚠️ Platform Differences:** iOS uses `sku` (single subscription), while Android uses `skus` (array) with `subscriptionOffers`. For cross-platform compatibility, provide both properties.
+
+### Cross-Platform Usage (Recommended)
+
+```tsx
+import {requestPurchase} from 'expo-iap';
+
+const buySubscription = async (subscriptionId: string) => {
+  try {
+    await requestPurchase({
+      request: {
+        sku: subscriptionId, // Required for iOS
+        skus: [subscriptionId], // Required for Android
+        subscriptionOffers: [], // Required for Android (can be empty)
+      },
+      type: 'subs',
+    });
+    // Purchase result will be delivered via purchase listeners
+  } catch (error) {
+    console.error('Subscription request failed:', error);
+  }
+};
+```
+
+### Legacy API (Deprecated)
 
 ```tsx
 import {requestSubscription} from 'expo-iap';
@@ -170,13 +278,16 @@ import {requestSubscription} from 'expo-iap';
 const buySubscription = async (subscriptionId: string) => {
   try {
     await requestSubscription({
-      sku: subscriptionId,
-      subscriptionOffers: [
-        {
-          sku: subscriptionId,
-          offerToken: 'offer_token_from_product',
-        },
-      ],
+      request: {
+        sku: subscriptionId,
+        skus: [subscriptionId],
+        subscriptionOffers: [
+          {
+            sku: subscriptionId,
+            offerToken: 'offer_token_from_product',
+          },
+        ],
+      },
     });
   } catch (error) {
     console.error('Subscription request failed:', error);
@@ -187,11 +298,20 @@ const buySubscription = async (subscriptionId: string) => {
 **Parameters:**
 
 - `params` (object):
-  - `sku` (string): Subscription ID to purchase
-  - `subscriptionOffers?` (array): Android subscription offers
-  - `applicationUsername?` (string): User identifier
+  - `request` (object): Subscription request configuration
+    - **iOS**: `sku` (string) - Subscription ID to purchase
+    - **Android**: `skus` (string[]) - Array of subscription IDs to purchase
+    - **Android**: `subscriptionOffers` (array) - Android subscription offers (required, can be empty)
+    - **Cross-platform**: Include both `sku` and `skus` for compatibility
+    - `appAccountToken?` (string, iOS only): User identifier
+    - `obfuscatedAccountIdAndroid?` (string, Android only): Obfuscated account ID
+    - `obfuscatedProfileIdAndroid?` (string, Android only): Obfuscated profile ID
+    - `purchaseTokenAndroid?` (string, Android only): Token for subscription replacement
+    - `replacementModeAndroid?` (number, Android only): Replacement mode for subscription updates
 
-**Returns:** `Promise<void>`
+**Returns:** `Promise<SubscriptionPurchase | SubscriptionPurchase[] | null | void>`
+
+> **💡 Recommendation:** Use `requestPurchase()` with `type: 'subs'` instead of `requestSubscription()` for new code.
 
 ## finishTransaction()
 
@@ -229,7 +349,7 @@ const completePurchase = async (purchase) => {
   - `purchase` (Purchase): The purchase object to finish
   - `isConsumable?` (boolean): Whether the product is consumable (Android)
 
-**Returns:** `Promise<void>`
+**Returns:** `Promise<PurchaseResult | boolean>`
 
 ## getAvailablePurchases()
 

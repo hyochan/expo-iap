@@ -151,6 +151,8 @@ function App() {
 }
 ```
 
+> **💡 Cross-Platform Note:** This example shows iOS-specific usage with `sku`. For cross-platform compatibility, include both `sku` and `skus` in your request object. See the [Core Methods](/docs/api/methods/core-methods#requestpurchase) documentation for details.
+
 ### iOS-Specific Features
 
 #### Receipt Validation
