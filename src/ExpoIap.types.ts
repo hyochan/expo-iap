@@ -18,9 +18,8 @@ export type ChangeEventPayload = {
   value: string;
 };
 
-/**
- * Base product type with common properties shared between iOS and Android
- */
+export type ProductType = 'inapp' | 'subs';
+
 export type ProductBase = {
   id: string;
   title: string;
@@ -32,12 +31,6 @@ export type ProductBase = {
   price?: number;
 };
 
-// Define literal platform types for better type discrimination
-export type IosPlatform = {platform: 'ios'};
-export type AndroidPlatform = {platform: 'android'};
-export type ProductType = 'inapp' | 'subs';
-
-// Common base purchase type
 export type PurchaseBase = {
   id: string;
   transactionId?: string;
@@ -45,35 +38,49 @@ export type PurchaseBase = {
   transactionReceipt: string;
 };
 
-// Union type for platform-specific product types with proper discriminators
+// Define literal platform types for better type discrimination
+export type IosPlatform = {platform: 'ios'};
+export type AndroidPlatform = {platform: 'android'};
+
+// Platform-agnostic unified product types (public API)
 export type Product =
   | (ProductAndroid & AndroidPlatform)
   | (ProductIos & IosPlatform);
 
-// Union type for platform-specific purchase types with proper discriminators
+export type SubscriptionProduct =
+  | (SubscriptionProductAndroid & AndroidPlatform)
+  | (SubscriptionProductIos & IosPlatform);
+
+// Internal platform-specific types (used for native interop only)
+export type RequestPurchaseProps =
+  | RequestPurchaseIosProps
+  | RequestPurchaseAndroidProps;
+
+export type RequestSubscriptionProps =
+  | RequestSubscriptionAndroidProps
+  | RequestSubscriptionIosProps;
+
+// ============================================================================
+// Legacy Types (For backward compatibility with useIap hook)
+// ============================================================================
+
+// Re-export platform-specific purchase types for legacy compatibility
+export type {ProductPurchaseAndroid} from './types/ExpoIapAndroid.types';
+export type {ProductPurchaseIos} from './types/ExpoIapIos.types';
+
+// Union type for platform-specific purchase types (legacy support)
 export type ProductPurchase =
   | (ProductPurchaseAndroid & AndroidPlatform)
   | (ProductPurchaseIos & IosPlatform);
 
-// Union type for platform-specific subscription purchase types with proper discriminators
+// Union type for platform-specific subscription purchase types (legacy support)  
 export type SubscriptionPurchase =
   | (ProductPurchaseAndroid & AndroidPlatform & {autoRenewingAndroid: boolean})
   | (ProductPurchaseIos & IosPlatform);
 
 export type Purchase = ProductPurchase | SubscriptionPurchase;
 
-export type RequestPurchaseProps =
-  | RequestPurchaseIosProps
-  | RequestPurchaseAndroidProps;
-
-export type SubscriptionProduct =
-  | (SubscriptionProductAndroid & AndroidPlatform)
-  | (SubscriptionProductIos & IosPlatform);
-
-export type RequestSubscriptionProps =
-  | RequestSubscriptionAndroidProps
-  | RequestSubscriptionIosProps;
-
+// Legacy result type
 export type PurchaseResult = {
   responseCode?: number;
   debugMessage?: string;
@@ -81,7 +88,6 @@ export type PurchaseResult = {
   message?: string;
   purchaseTokenAndroid?: string;
 };
-
 /**
  * Centralized error codes for expo-iap
  * These are mapped to platform-specific error codes and provide consistent error handling
@@ -291,3 +297,48 @@ export const ErrorCodeUtils = {
     return errorCode in ErrorCodeMapping[platform];
   },
 };
+
+// ============================================================================
+// Enhanced Unified Request Types
+// ============================================================================
+
+/**
+ * Unified request props that work on both iOS and Android platforms
+ * iOS will use 'sku', Android will use 'skus' (or convert sku to skus array)
+ */
+export interface UnifiedRequestPurchaseProps {
+  // Universal properties - works on both platforms
+  readonly sku?: string;     // Single SKU (iOS native, Android fallback)
+  readonly skus?: string[];  // Multiple SKUs (Android native, iOS uses first item)
+  
+  // iOS-specific properties (ignored on Android)
+  readonly andDangerouslyFinishTransactionAutomaticallyIOS?: boolean;
+  readonly appAccountToken?: string;
+  readonly quantity?: number;
+  readonly withOffer?: import('./types/ExpoIapIos.types').PaymentDiscount;
+  
+  // Android-specific properties (ignored on iOS)
+  readonly obfuscatedAccountIdAndroid?: string;
+  readonly obfuscatedProfileIdAndroid?: string;
+  readonly isOfferPersonalized?: boolean;
+}
+
+/**
+ * Unified subscription request props
+ */
+export interface UnifiedRequestSubscriptionProps extends UnifiedRequestPurchaseProps {
+  // Android subscription-specific properties
+  readonly purchaseTokenAndroid?: string;
+  readonly replacementModeAndroid?: number;
+  readonly subscriptionOffers?: {
+    sku: string;
+    offerToken: string;
+  }[];
+}
+
+// ============================================================================
+// ============================================================================
+// Type Guards and Utility Functions
+// ============================================================================
+
+// Note: Type guard functions are exported from index.ts to avoid conflicts

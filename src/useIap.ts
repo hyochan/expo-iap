@@ -9,10 +9,9 @@ import {
   finishTransaction as finishTransactionInternal,
   getSubscriptions,
   requestPurchase as requestPurchaseInternal,
-  sync,
-  validateReceiptIos,
-  validateReceiptAndroid,
 } from './';
+import {sync, validateReceiptIos} from './modules/ios';
+import {validateReceiptAndroid} from './modules/android';
 import {useCallback, useEffect, useState, useRef} from 'react';
 import {
   Product,
@@ -43,12 +42,15 @@ type UseIap = {
   }: {
     purchase: Purchase;
     isConsumable?: boolean;
-  }) => Promise<string | boolean | PurchaseResult | void>;
+  }) => Promise<PurchaseResult | boolean>;
   getAvailablePurchases: (skus: string[]) => Promise<void>;
   getPurchaseHistories: (skus: string[]) => Promise<void>;
   getProducts: (skus: string[]) => Promise<void>;
   getSubscriptions: (skus: string[]) => Promise<void>;
-  requestPurchase: typeof requestPurchaseInternal;
+  requestPurchase: (params: {
+    request: any;
+    type?: 'inapp' | 'subs';
+  }) => Promise<any>;
   validateReceipt: (
     sku: string,
     androidOptions?: {
@@ -136,34 +138,47 @@ export function useIAP(options?: UseIAPOptions): UseIap {
 
   const getProductsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
-      const newProducts = await getProducts(skus);
-      setProducts((prevProducts) =>
-        mergeWithDuplicateCheck(
-          prevProducts,
-          newProducts,
-          (product) => product.id,
-        ),
-      );
+      try {
+        const result = await getProducts(skus);
+        setProducts((prevProducts) =>
+          mergeWithDuplicateCheck(
+            prevProducts,
+            result,
+            (product) => product.id,
+          ),
+        );
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
     },
     [mergeWithDuplicateCheck],
   );
 
   const getSubscriptionsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
-      const newSubscriptions = await getSubscriptions(skus);
-      setSubscriptions((prevSubscriptions) =>
-        mergeWithDuplicateCheck(
-          prevSubscriptions,
-          newSubscriptions,
-          (subscription) => subscription.id,
-        ),
-      );
+      try {
+        const result = await getSubscriptions(skus);
+        setSubscriptions((prevSubscriptions) =>
+          mergeWithDuplicateCheck(
+            prevSubscriptions,
+            result,
+            (subscription) => subscription.id,
+          ),
+        );
+      } catch (error) {
+        console.error('Error fetching subscriptions:', error);
+      }
     },
     [mergeWithDuplicateCheck],
   );
 
   const getAvailablePurchasesInternal = useCallback(async (): Promise<void> => {
-    setAvailablePurchases(await getAvailablePurchases());
+    try {
+      const result = await getAvailablePurchases();
+      setAvailablePurchases(result);
+    } catch (error) {
+      console.error('Error fetching available purchases:', error);
+    }
   }, []);
 
   const getPurchaseHistoriesInternal = useCallback(async (): Promise<void> => {
@@ -177,7 +192,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }: {
       purchase: ProductPurchase;
       isConsumable?: boolean;
-    }): Promise<string | boolean | PurchaseResult | void> => {
+    }): Promise<PurchaseResult | boolean> => {
       try {
         return await finishTransactionInternal({
           purchase,
@@ -203,7 +218,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   );
 
   const requestPurchaseWithReset = useCallback(
-    async (requestObj: Parameters<typeof requestPurchaseInternal>[0]) => {
+    async (requestObj: {
+      request: any;
+      type?: 'inapp' | 'subs';
+    }) => {
       clearCurrentPurchase();
       clearCurrentPurchaseError();
 
