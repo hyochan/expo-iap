@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(gh issue:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm run lint)",
+      "Bash(mv:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
