@@ -92,3 +92,16 @@ export const acknowledgePurchaseAndroid = ({
 }): Promise<PurchaseResult | boolean | void> => {
   return ExpoIapModule.acknowledgePurchase(token, developerPayload);
 };
+
+/**
+ * Open the Google Play Store to redeem offer codes (Android only).
+ * Note: Google Play does not provide a direct API to redeem codes within the app.
+ * This function opens the Play Store where users can manually enter their codes.
+ * 
+ * @returns {Promise<void>}
+ */
+export const openRedeemOfferCodeAndroid = async (): Promise<void> => {
+  return Linking.openURL(
+    `https://play.google.com/redeem?code=`
+  );
+};
