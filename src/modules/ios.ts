@@ -204,3 +204,19 @@ export const validateReceiptIos = async (
   const result = await ExpoIapModule.validateReceiptIos(sku);
   return result;
 };
+
+/**
+ * Present the code redemption sheet for offer codes (iOS only).
+ * This allows users to redeem promotional codes for in-app purchases and subscriptions.
+ * 
+ * Note: This only works on real devices, not simulators.
+ * 
+ * @returns {Promise<boolean>} True if the sheet was presented successfully
+ * @throws {Error} If called on non-iOS platform or tvOS
+ */
+export const presentCodeRedemptionSheet = (): Promise<boolean> => {
+  if (Platform.OS !== 'ios') {
+    throw new Error('This method is only available on iOS');
+  }
+  return ExpoIapModule.presentCodeRedemptionSheet();
+};
