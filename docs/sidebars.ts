@@ -35,6 +35,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'guides/purchases',
         'guides/lifecycle',
+        'guides/offer-code-redemption',
         'guides/troubleshooting',
         'guides/faq',
         'guides/migration',
