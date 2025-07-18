@@ -1,6 +1,7 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {Link} from 'expo-router';
+import {getStorefront} from 'expo-iap';
 
 /**
  * Example App Landing Page
@@ -9,10 +10,21 @@ import {Link} from 'expo-router';
  * This demonstrates TypeScript-first, platform-agnostic approaches to in-app purchases.
  */
 export default function Home() {
+  const [storefront, setStorefront] = useState<string | null>(null);
+
+  useEffect(() => {
+    getStorefront().then((storefront) => {
+      setStorefront(storefront);
+    });
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>expo-iap Examples</Text>
-      <Text style={styles.subtitle}>Best Practice Implementations</Text>
+      <Text style={styles.subtitle}>
+        Best Practice Implementations{' '}
+        {storefront ? `(Store: ${storefront})` : ''}
+      </Text>
 
       <Text style={styles.description}>
         These examples demonstrate TypeScript-first approaches to in-app

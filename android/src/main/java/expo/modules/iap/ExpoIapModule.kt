@@ -5,10 +5,13 @@ import android.util.Log
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingConfig
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingFlowParams.SubscriptionUpdateParams
+import com.android.billingclient.api.BillingConfigResponseListener
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.ConsumeParams
+import com.android.billingclient.api.GetBillingConfigParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchaseHistoryRecord
@@ -486,6 +489,25 @@ class ExpoIapModule :
                         map["purchaseTokenAndroid"] = purchaseToken
                         promise.resolve(map)
                     }
+                }
+            }
+
+
+            AsyncFunction("getStorefront") {
+                    promise: Promise,
+                ->
+                ensureConnection(promise) { billingClient ->
+                    billingClient.getBillingConfigAsync(
+                        GetBillingConfigParams.newBuilder().build(),
+                        BillingConfigResponseListener { result: BillingResult, config: BillingConfig? ->
+                            if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                                promise.safeResolve(config?.countryCode.orEmpty())
+                            } else {
+                                val debugMessage = result.debugMessage.orEmpty()
+                                promise.safeReject(result.responseCode.toString(), debugMessage)
+                            }
+                        },
+                    )
                 }
             }
         }

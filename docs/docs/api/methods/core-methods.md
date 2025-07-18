@@ -4,7 +4,7 @@ sidebar_label: Core Methods
 sidebar_position: 1
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed"; 
 
 # Core Methods
 
@@ -23,7 +23,7 @@ This section covers the core methods available in expo-iap for managing in-app p
 
 **💡 Best Practice:** Always include both `sku` (for iOS) and `skus` (for Android) in your request objects to ensure cross-platform compatibility.
 
-**🎯 Recommended Approach:** For the best developer experience, use the [`useIAP` hook](/docs/api/use-iap) which handles platform differences automatically and provides a cleaner callback-based API.
+**🎯 Recommended Approach:** For the best developer experience, use the [ `useIAP` hook](/docs/api/use-iap) which handles platform differences automatically and provides a cleaner callback-based API.
 
 ```tsx
 // ✅ Cross-platform compatible
@@ -118,7 +118,7 @@ const fetchProducts = async () => {
 
 **Parameters:**
 
-- `skus` (string[]): Array of product IDs to fetch
+* `skus` (string[]): Array of product IDs to fetch
 
 **Returns:** `Promise<Product[]>`
 
@@ -165,7 +165,7 @@ const fetchSubscriptions = async () => {
 
 **Parameters:**
 
-- `skus` (string[]): Array of subscription IDs to fetch
+* `skus` (string[]): Array of subscription IDs to fetch
 
 **Returns:** `Promise<SubscriptionProduct[]>`
 
@@ -226,8 +226,8 @@ await requestPurchase({
 
 **Parameters:**
 
-- `params` (object):
-  - `request` (object): Purchase request configuration
+* `params` (object):
+  + `request` (object): Purchase request configuration
     - **iOS**: `sku` (string) - Product ID to purchase
     - **Android**: `skus` (string[]) - Array of product IDs to purchase
     - **Cross-platform**: Include both `sku` and `skus` for compatibility
@@ -236,7 +236,7 @@ await requestPurchase({
     - `obfuscatedAccountIdAndroid?` (string, Android only): Obfuscated account ID
     - `obfuscatedProfileIdAndroid?` (string, Android only): Obfuscated profile ID
     - `isOfferPersonalized?` (boolean, Android only): Whether offer is personalized
-  - `type?` ('inapp' | 'subs'): Purchase type, defaults to 'inapp'
+  + `type?` ('inapp' | 'subs'): Purchase type, defaults to 'inapp'
 
 **Returns:** `Promise<ProductPurchase | ProductPurchase[] | SubscriptionPurchase | SubscriptionPurchase[] | void>`
 
@@ -246,7 +246,7 @@ await requestPurchase({
 
 Initiates a subscription purchase request.
 
-> **⚠️ Platform Differences:** iOS uses `sku` (single subscription), while Android uses `skus` (array) with `subscriptionOffers`. For cross-platform compatibility, provide both properties.
+> **⚠️ Platform Differences:** iOS uses `sku` (single subscription), while Android uses `skus` (array) with `subscriptionOffers` . For cross-platform compatibility, provide both properties.
 
 ### Cross-Platform Usage (Recommended)
 
@@ -297,8 +297,8 @@ const buySubscription = async (subscriptionId: string) => {
 
 **Parameters:**
 
-- `params` (object):
-  - `request` (object): Subscription request configuration
+* `params` (object):
+  + `request` (object): Subscription request configuration
     - **iOS**: `sku` (string) - Subscription ID to purchase
     - **Android**: `skus` (string[]) - Array of subscription IDs to purchase
     - **Android**: `subscriptionOffers` (array) - Android subscription offers (required, can be empty)
@@ -345,9 +345,9 @@ const completePurchase = async (purchase) => {
 
 **Parameters:**
 
-- `params` (object):
-  - `purchase` (Purchase): The purchase object to finish
-  - `isConsumable?` (boolean): Whether the product is consumable (Android)
+* `params` (object):
+  + `purchase` (Purchase): The purchase object to finish
+  + `isConsumable?` (boolean): Whether the product is consumable (Android)
 
 **Returns:** `Promise<PurchaseResult | boolean>`
 
@@ -416,6 +416,18 @@ const openSubscriptionSettings = () => {
 ```
 
 **Returns:** `Promise<void>`
+
+## getStorefront()
+
+Return the storefront in ISO 3166-1 alpha-2 or ISO 3166-1 alpha-3 format
+
+```tsx
+import {getStorefront} from 'expo-iap';
+
+const storeFront = await getStorefront()
+```
+
+**Returns:** `Promise<string>`
 
 ## Purchase Interface
 

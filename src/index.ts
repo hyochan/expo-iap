@@ -164,8 +164,9 @@ export const getPurchaseHistory = ({
       },
       android: async () => {
         const products = await ExpoIapModule.getPurchaseHistoryByType('inapp');
-        const subscriptions =
-          await ExpoIapModule.getPurchaseHistoryByType('subs');
+        const subscriptions = await ExpoIapModule.getPurchaseHistoryByType(
+          'subs',
+        );
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
@@ -187,8 +188,9 @@ export const getAvailablePurchases = ({
         ),
       android: async () => {
         const products = await ExpoIapModule.getAvailableItemsByType('inapp');
-        const subscriptions =
-          await ExpoIapModule.getAvailableItemsByType('subs');
+        const subscriptions = await ExpoIapModule.getAvailableItemsByType(
+          'subs',
+        );
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
@@ -377,6 +379,10 @@ export const finishTransaction = ({
       },
     }) || (() => Promise.reject(new Error('Unsupported Platform')))
   )();
+};
+
+export const getStorefront = (): Promise<string> => {
+  return ExpoIapModule.getStorefront();
 };
 
 export * from './useIap';

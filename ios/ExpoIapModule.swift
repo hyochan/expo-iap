@@ -206,6 +206,11 @@ public class ExpoIapModule: Module {
             return AppStore.canMakePayments
         }
 
+        AsyncFunction("getStorefront") {
+            let storefront = await Storefront.current
+            return storefront?.countryCode
+        }
+
         AsyncFunction("getItems") { (skus: [String]) -> [[String: Any?]?] in
             guard let productStore = self.productStore else {
                 throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.notPrepared)
