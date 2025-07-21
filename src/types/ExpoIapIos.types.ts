@@ -7,7 +7,10 @@ type SubscriptionOffer = {
   displayPrice: string;
   id: string;
   paymentMode: PaymentMode;
-  period: SubscriptionIosPeriod;
+  period: {
+    unit: SubscriptionIosPeriod;
+    value: number;
+  };
   periodCount: number;
   price: number;
   type: 'introductory' | 'promotional';
@@ -17,14 +20,17 @@ type SubscriptionInfo = {
   introductoryOffer?: SubscriptionOffer;
   promotionalOffers?: SubscriptionOffer[];
   subscriptionGroupID: string;
-  subscriptionPeriod: SubscriptionIosPeriod;
+  subscriptionPeriod: {
+    unit: SubscriptionIosPeriod;
+    value: number;
+  };
 };
 
 export type ProductIos = ProductBase & {
   displayName: string;
   isFamilyShareable: boolean;
   jsonRepresentation: string;
-  subscription: SubscriptionInfo;
+  subscription?: SubscriptionInfo;
   introductoryPriceNumberOfPeriodsIOS?: string;
   introductoryPriceSubscriptionPeriodIOS?: SubscriptionIosPeriod;
 };

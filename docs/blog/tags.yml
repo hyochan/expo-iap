@@ -17,3 +17,18 @@ expo:
   label: Expo
   permalink: /expo
   description: Expo platform development
+
+ios:
+  label: iOS
+  permalink: /ios
+  description: iOS platform specific features
+
+typescript:
+  label: TypeScript
+  permalink: /typescript
+  description: TypeScript type definitions and improvements
+
+breaking-changes:
+  label: Breaking Changes
+  permalink: /breaking-changes
+  description: Updates that require code changes

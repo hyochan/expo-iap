@@ -11,14 +11,60 @@ This page contains the TypeScript types and interfaces used throughout the expo-
 ### Product
 
 ```typescript
+type ProductType = 'inapp' | 'subs';
 interface Product {
-  productId: string;
+  id: string;
   title: string;
   description: string;
-  price: string;
+  type: ProductType;
+  displayName?: string;
+  displayPrice: string;
   currency: string;
-  localizedPrice?: string;
+  price?: number;
 }
+```
+
+### ⚠️ Breaking Change Notice (v2.6+)
+
+**Version 2.6+ Migration**: The `subscription` field in `ProductIos` has changed from a required field to an optional field (`subscription?`). This reflects that not all iOS products have subscription information. Please update your code to handle this field as optional when working with non-subscription products.
+
+iOS product contains additional information:
+
+```typescript
+type SubscriptionIosPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | '';
+type PaymentMode = '' | 'FREETRIAL' | 'PAYASYOUGO' | 'PAYUPFRONT';
+
+type ProductIos = Product & {
+  displayName: string;
+  isFamilyShareable: boolean;
+  jsonRepresentation: string 
+  subscription?: SubscriptionInfo; 
+  introductoryPriceNumberOfPeriodsIOS?: string; 
+  introductoryPriceSubscriptionPeriodIOS?: SubscriptionIosPeriod; 
+}
+
+type SubscriptionInfo = {
+  introductoryOffer?: SubscriptionOffer;
+  promotionalOffers?: SubscriptionOffer[];
+  subscriptionGroupID: string;
+  subscriptionPeriod: {
+    unit: SubscriptionIosPeriod;
+    value: number;
+  };
+};
+
+type SubscriptionOffer = {
+  displayPrice: string;
+  id: string;
+  paymentMode: PaymentMode;
+  period: {
+    unit: SubscriptionIosPeriod;
+    value: number;
+  };
+  periodCount: number;
+  price: number;
+  type: 'introductory' | 'promotional';
+};
 ```
 
 ### Purchase
@@ -67,7 +113,7 @@ interface Subscription {
 
 ### iOS
 
-For iOS-specific types and enums, refer to the [iOS setup guide](../getting-started/setup-ios.md).
+For other iOS-specific types and enums, refer to the [iOS setup guide](../getting-started/setup-ios.md).
 
 ### Android
 

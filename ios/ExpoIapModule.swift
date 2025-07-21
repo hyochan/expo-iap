@@ -113,6 +113,50 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: Stri
     return purchaseMap
 }
 
+private let DEFAULT_SUBSCRIPTION_PERIOD_UNIT = "DAY" // Default fallback unit for subscription periods.
+
+func getPeriodIos(_ unit: Product.SubscriptionPeriod.Unit) -> String {
+    return switch (unit) {
+    case .day: "DAY"
+    case .week: "WEEK"
+    case .month: "MONTH"
+    case .year: "YEAR"
+    @unknown default: 
+        fatalError("Unknown subscription period unit: \(unit)")
+    }
+}
+
+func serializeOffer(_ offer: Product.SubscriptionOffer?) -> [String: Any?]? {
+    guard let offer = offer else { return nil }
+    
+    return [
+        "id": offer.id,
+        "period": [
+            "unit": getPeriodIos(offer.period.unit),
+            "value": offer.period.value
+        ],
+        "periodCount": offer.periodCount,
+        "paymentMode": offer.paymentMode.rawValue,
+        "type": offer.type.rawValue,
+        "price": offer.price,
+        "displayPrice": offer.displayPrice,
+    ]
+}
+
+func serializeSubscription(_ s: Product.SubscriptionInfo?) -> [String: Any?]? {
+    guard let s = s else { return nil }
+    return [
+        "introductoryOffer": serializeOffer(s.introductoryOffer),
+        "promotionalOffers": s.promotionalOffers.map(serializeOffer),
+        "subscriptionGroupID": s.subscriptionGroupID,
+        "subscriptionPeriod": [
+            "unit": getPeriodIos(s.subscriptionPeriod.unit),
+            "value": s.subscriptionPeriod.value
+        ],
+    ]
+
+}
+
 @available(iOS 15.0, *)
 func serializeProduct(_ p: Product) -> [String: Any?] {
     return [
@@ -125,7 +169,7 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
         "isFamilyShareable": p.isFamilyShareable,
         "jsonRepresentation": String(data: p.jsonRepresentation, encoding: .utf8),
         "price": p.price,
-        "subscription": p.subscription,
+        "subscription": serializeSubscription(p.subscription),
         "type": p.type,
         "currency": p.priceFormatStyle.currencyCode,
         "platform": "ios",

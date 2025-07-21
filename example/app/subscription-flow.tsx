@@ -132,7 +132,7 @@ export default function SubscriptionFlow() {
       }
       return 'Unknown';
     } else {
-      return subscription.subscription?.subscriptionPeriod || 'Unknown';
+      return subscription.subscription?.subscriptionPeriod?.unit || 'Unknown';
     }
   };
 

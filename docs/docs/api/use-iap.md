@@ -240,19 +240,44 @@ interface UseIAPOptions {
 - **Description**: Validate a purchase receipt
 - **Parameters**:
   - `productId`: ID of the product to validate
-  - `params`: Optional validation parameters (Android)
+  - `params`: **Required for Android**, optional for iOS:
+    - `packageName` (string, Android): Package name of your app
+    - `productToken` (string, Android): Purchase token from the purchase
+    - `accessToken` (string, Android): Optional access token for server validation
+    - `isSub` (boolean, Android): Whether this is a subscription
 - **Returns**: Promise resolving to validation result
+
+**Important Platform Differences:**
+- **iOS**: Only requires the product ID
+- **Android**: Requires additional parameters (packageName, productToken)
+
 - **Example**:
   ```tsx
-  const validatePurchase = async (productId: string) => {
+  const validatePurchase = async (productId: string, purchase: any) => {
     try {
-      const result = await validateReceipt(productId);
-      if (result.isValid) {
-        console.log('Receipt is valid');
-        // Grant access to content
+      if (Platform.OS === 'ios') {
+        // iOS: Simple validation with just product ID
+        const result = await validateReceipt(productId);
+        return result;
+      } else if (Platform.OS === 'android') {
+        // Android: Requires additional parameters
+        const purchaseToken = purchase.purchaseTokenAndroid;
+        const packageName = purchase.packageNameAndroid;
+        
+        if (!purchaseToken || !packageName) {
+          throw new Error('Android validation requires packageName and productToken');
+        }
+        
+        const result = await validateReceipt(productId, {
+          packageName,
+          productToken: purchaseToken,
+          isSub: false, // Set to true for subscriptions
+        });
+        return result;
       }
     } catch (error) {
       console.error('Validation failed:', error);
+      throw error;
     }
   };
   ```

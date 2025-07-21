@@ -12,6 +12,26 @@ import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
 
 This example demonstrates how to implement subscription management with expo-iap, including subscription status checking, renewal handling, and subscription management UI.
 
+## Important: Platform-Specific Subscription Properties
+
+When checking subscription status, different platforms provide different properties:
+
+### iOS Subscription Properties
+- **`expirationDateIos`**: Unix timestamp (milliseconds) indicating when the subscription expires
+- **`originalTransactionDateIos`**: Original purchase date
+- **`environmentIos`**: Can be 'Production' or 'Sandbox' (useful for testing)
+
+### Android Subscription Properties  
+- **`autoRenewingAndroid`**: Boolean indicating if the subscription will auto-renew
+- **`purchaseStateAndroid`**: Purchase state (0 = purchased, 1 = canceled)
+- **`obfuscatedAccountIdAndroid`**: Account identifier if provided during purchase
+
+### Key Differences
+- **iOS**: You must check `expirationDateIos` against current time to determine if active
+- **Android**: You can check `autoRenewingAndroid` - if false, the user has canceled
+
+⚠️ **Note**: Always validate subscription status on your server for production apps. Client-side checks are useful for UI updates but should not be the sole source of truth.
+
 ## Complete Subscription Manager
 
 ```tsx
@@ -112,9 +132,57 @@ export default function SubscriptionManager() {
   };
 
   const findActiveSubscription = (purchases) => {
-    return purchases.find((purchase) =>
-      SUBSCRIPTION_SKUS.includes(purchase.productId),
-    );
+    // Find subscriptions and check if they're still active
+    return purchases.find((purchase) => {
+      if (!SUBSCRIPTION_SKUS.includes(purchase.productId)) {
+        return false;
+      }
+      // Check if the subscription is still active
+      return isSubscriptionActive(purchase);
+    });
+  };
+
+  /**
+   * Platform-specific subscription status checking
+   * iOS: Uses expirationDateIos to check if subscription is expired
+   * Android: Uses autoRenewingAndroid to check renewal status
+   */
+  const isSubscriptionActive = (purchase) => {
+    const currentTime = Date.now();
+    
+    // Check platform-specific subscription properties
+    if (Platform.OS === 'ios') {
+      // iOS: Check expiration date
+      if (purchase.expirationDateIos) {
+        console.log('iOS Subscription expiration:', new Date(purchase.expirationDateIos).toISOString());
+        return purchase.expirationDateIos > currentTime;
+      }
+      
+      // For sandbox/development environment
+      if (purchase.environmentIos === 'Sandbox') {
+        console.log('iOS Sandbox environment detected');
+        // In sandbox, also check if it's a recent purchase (within 24 hours)
+        const dayInMs = 24 * 60 * 60 * 1000;
+        if (purchase.transactionDate && (currentTime - purchase.transactionDate) < dayInMs) {
+          return true;
+        }
+      }
+    } else if (Platform.OS === 'android') {
+      // Android: Check auto-renewing status
+      if (purchase.autoRenewingAndroid !== undefined) {
+        console.log('Android auto-renewing status:', purchase.autoRenewingAndroid);
+        return purchase.autoRenewingAndroid;
+      }
+      
+      // Fallback: Check if purchase is recent (within 30 days for monthly subscriptions)
+      const monthInMs = 30 * 24 * 60 * 60 * 1000;
+      if (purchase.transactionDate && (currentTime - purchase.transactionDate) < monthInMs) {
+        return true;
+      }
+    }
+    
+    // If we can't determine status, assume inactive
+    return false;
   };
 
   const validateSubscriptionStatus = async (purchase) => {

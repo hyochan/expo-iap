@@ -353,13 +353,15 @@ export default function Store() {
   };
 
   const validatePurchase = async (purchase) => {
-    // This is where you would validate the purchase on your server
-    // For demo purposes, we'll just return true
-    // In a real app, send the receipt to your server for validation
+    // IMPORTANT: Platform-specific validation requirements:
+    // - iOS: Only needs receiptData and productId
+    // - Android: Requires packageName, purchaseToken, and optionally accessToken
+    // Always check required parameters BEFORE attempting validation!
 
     try {
       // Handle both iOS and Android validation
       if (Platform.OS === 'ios') {
+        // iOS: Simple validation with receipt data
         const response = await fetch(
           'https://your-server.com/validate-receipt-ios',
           {
@@ -377,7 +379,7 @@ export default function Store() {
         const result = await response.json();
         return result.isValid;
       } else if (Platform.OS === 'android') {
-        // For Android, we need to extract the purchase token and package name
+        // Android: Extract required validation parameters
         // Note: Type casting is required due to platform-specific purchase properties
         const purchaseToken = (purchase as ProductPurchaseAndroid)
           .purchaseTokenAndroid;
@@ -388,11 +390,17 @@ export default function Store() {
         // Determine if it's a subscription
         const isSub = SUBSCRIPTION_IDS.includes(purchase.productId);
 
-        if (!purchaseToken) {
-          console.error('Purchase token is missing for Android purchase');
-          return false;
+        // CRITICAL: Check required Android parameters before validation
+        if (!purchaseToken || !packageName) {
+          throw new Error(
+            'Android validation requires packageName and purchaseToken'
+          );
         }
 
+        // Note: For server-side validation with Google Play API, you may also need:
+        // - accessToken: OAuth2 token for accessing Google Play Developer API
+        // This is typically handled server-side, not in the client app
+        
         const response = await fetch(
           'https://your-server.com/validate-receipt-android',
           {
@@ -405,6 +413,7 @@ export default function Store() {
               productToken: purchaseToken,
               productId: purchase.productId,
               isSub,
+              // accessToken is typically managed server-side
             }),
           },
         );

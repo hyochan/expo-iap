@@ -128,32 +128,76 @@ useEffect(() => {
 
 ### 3. Request a purchase
 
+**Important**: iOS and Android have different parameter requirements:
+
 ```tsx
+import {Platform} from 'react-native';
+
 const handlePurchase = async (productId: string) => {
   try {
-    await requestPurchase({sku: productId});
+    if (Platform.OS === 'ios') {
+      // iOS: single product purchase
+      await requestPurchase({
+        request: {sku: productId}
+      });
+    } else if (Platform.OS === 'android') {
+      // Android: array of products (even for single purchase)
+      await requestPurchase({
+        request: {skus: [productId]}
+      });
+    }
   } catch (error) {
     console.error('Purchase failed:', error);
   }
 };
 ```
 
+This platform difference exists because iOS can only purchase one product at a time, while Android supports purchasing multiple products in a single transaction.
+
 ### 4. Handle purchase updates
 
-The `useIAP` hook automatically handles purchase updates. When a purchase is successful, you should validate the receipt on your server and then finish the transaction:
+The `useIAP` hook automatically handles purchase updates. When a purchase is successful, you should validate the receipt on your server and then finish the transaction.
+
+**Important**: Receipt validation also has platform-specific requirements:
+- **iOS**: Only needs the receipt data
+- **Android**: Requires `packageName`, `purchaseToken`, and optionally `accessToken`
 
 ```tsx
 useEffect(() => {
   if (currentPurchase) {
-    // Validate receipt on your server
-    validateReceiptOnServer(currentPurchase)
-      .then(() => {
+    // Platform-specific validation
+    const validateAndFinish = async () => {
+      try {
+        if (Platform.OS === 'ios') {
+          // iOS: Simple validation
+          await validateReceiptOnServer({
+            receiptData: currentPurchase.transactionReceipt,
+            productId: currentPurchase.productId,
+          });
+        } else if (Platform.OS === 'android') {
+          // Android: Check required parameters first
+          const purchaseToken = currentPurchase.purchaseTokenAndroid;
+          const packageName = currentPurchase.packageNameAndroid;
+          
+          if (!purchaseToken || !packageName) {
+            throw new Error('Android validation requires packageName and purchaseToken');
+          }
+          
+          await validateReceiptOnServer({
+            packageName,
+            purchaseToken,
+            productId: currentPurchase.productId,
+          });
+        }
+        
         // If validation successful, finish the transaction
-        finishTransaction({purchase: currentPurchase});
-      })
-      .catch((error) => {
+        await finishTransaction({purchase: currentPurchase});
+      } catch (error) {
         console.error('Receipt validation failed:', error);
-      });
+      }
+    };
+    
+    validateAndFinish();
   }
 }, [currentPurchase, finishTransaction]);
 ```
