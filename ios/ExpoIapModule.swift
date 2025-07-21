@@ -22,7 +22,7 @@ struct IapEvent {
 
 @available(iOS 15.0, *)
 func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: String? = nil) -> [String: Any?] {
-    let isSubscription =
+    let _ =
         transaction.productType.rawValue.lowercased().contains("renewable")
         || transaction.expirationDate != nil
 
@@ -94,7 +94,7 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: Stri
     if #available(iOS 17.2, *) {
         if let offer = transaction.offer {
             purchaseMap["offerIos"] = [
-                "id": offer.id,
+                "id": offer.id ?? "",
                 "type": offer.type.rawValue,
                 "paymentMode": offer.paymentMode?.rawValue ?? "",
             ]
@@ -257,13 +257,22 @@ public class ExpoIapModule: Module {
 
         AsyncFunction("getAppTransaction") { () async throws -> [String: Any?]? in
             if #available(iOS 16.0, *) {
-                guard let appTransaction = try await AppTransaction.shared else {
+                guard let verificationResult = try await AppTransaction.shared else {
+                    return nil
+                }
+                
+                let appTransaction: AppTransaction
+                switch verificationResult {
+                case .verified(let verified):
+                    appTransaction = verified
+                case .unverified(_, _):
                     return nil
                 }
                 
                 return [
-                    "appTransactionID": appTransaction.appAppleId,
-                    "originalAppAccountToken": appTransaction.originalAppAccountToken,
+                    "bundleID": appTransaction.bundleID,
+                    "appVersion": appTransaction.appVersion,
+                    "originalAppVersion": appTransaction.originalAppVersion,
                     "originalPurchaseDate": appTransaction.originalPurchaseDate.timeIntervalSince1970 * 1000,
                     "deviceVerification": appTransaction.deviceVerification.base64EncodedString(),
                     "deviceVerificationNonce": appTransaction.deviceVerificationNonce.uuidString
@@ -272,7 +281,7 @@ public class ExpoIapModule: Module {
                 throw Exception(
                     name: "ExpoIapModule",
                     description: "getAppTransaction requires iOS 16.0 or later",
-                    code: IapErrorCode.featureNotSupported
+                    code: IapErrorCode.unknown
                 )
             }
         }

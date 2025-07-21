@@ -83,6 +83,11 @@ Or open the project in Xcode:
 open ios/cpk.xcworkspace
 ```
 
+**Note**: If you encounter build errors, you may need to:
+1. Clean the build: `cd ios && xcodebuild clean`
+2. Update pods: `cd ios && pod install`
+3. Open in Xcode and build from there for better error messages
+
 #### Android
 ```bash
 bun run android
@@ -92,6 +97,8 @@ Or open the project in Android Studio:
 ```bash
 open -a "Android Studio" android
 ```
+
+**Note**: First run may take longer as it downloads Gradle dependencies.
 
 ### Development Server
 
@@ -180,6 +187,11 @@ describe('MyComponent', () => {
   });
 });
 ```
+
+**Known Issues**:
+- React Native modules may need to be mocked in tests
+- Use Jest's module mocking for native dependencies
+- Some tests may fail due to native module dependencies
 
 ## 🎨 Code Style
 
