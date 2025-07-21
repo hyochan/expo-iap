@@ -148,7 +148,26 @@ export async function endConnection(): Promise<boolean> {
   return ExpoIapModule.endConnection();
 }
 
+/**
+ * @deprecated Use `getPurchaseHistories` instead. This function will be removed in version 3.0.0.
+ */
 export const getPurchaseHistory = ({
+  alsoPublishToEventListener = false,
+  onlyIncludeActiveItems = false,
+}: {
+  alsoPublishToEventListener?: boolean;
+  onlyIncludeActiveItems?: boolean;
+} = {}): Promise<ProductPurchase[]> => {
+  console.warn(
+    "`getPurchaseHistory` is deprecated. Use `getPurchaseHistories` instead. This function will be removed in version 3.0.0.",
+  );
+  return getPurchaseHistories({
+    alsoPublishToEventListener,
+    onlyIncludeActiveItems,
+  });
+};
+
+export const getPurchaseHistories = ({
   alsoPublishToEventListener = false,
   onlyIncludeActiveItems = false,
 }: {

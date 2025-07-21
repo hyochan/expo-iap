@@ -454,23 +454,25 @@ const restorePurchases = async () => {
 
 **Returns:** `Promise<Purchase[]>`
 
-## getPurchaseHistory()
+## getPurchaseHistories()
 
 Retrieves purchase history for the user.
 
 ```tsx
-import {getPurchaseHistory} from 'expo-iap';
+import {getPurchaseHistories} from 'expo-iap';
 
 const fetchPurchaseHistory = async () => {
   try {
-    const history = await getPurchaseHistory();
-    console.log('Purchase history:', history);
-    return history;
+    const histories = await getPurchaseHistories();
+    console.log('Purchase histories:', histories);
+    return histories;
   } catch (error) {
-    console.error('Failed to fetch purchase history:', error);
+    console.error('Failed to fetch purchase histories:', error);
   }
 };
 ```
+
+**Note:** The previous `getPurchaseHistory` (singular) function is deprecated and will be removed in version 3.0.0. Please use `getPurchaseHistories` (plural) instead.
 
 **Returns:** `Promise<Purchase[]>`
 

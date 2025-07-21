@@ -170,14 +170,14 @@ const {
   connected,
   products,
   subscriptions,
-  purchaseHistory,        // Note: singular form
+  purchaseHistories,      // Note: plural form in expo-iap
   availablePurchases,
   currentPurchase,
   currentPurchaseError,
   finishTransaction,
   getProducts,
   getSubscriptions,
-  getPurchaseHistory,     // Method: singular form, not getPurchaseHistories
+  getPurchaseHistories,   // Method: plural form in expo-iap v2.6.0+
   getAvailablePurchases,
   // Additional methods and better typing
 } = useIAP();
@@ -224,16 +224,19 @@ useEffect(() => {
 
 ### Method Naming Differences
 
-While expo-iap aims to maintain compatibility with react-native-iap, there are some intentional naming improvements:
+expo-iap maintains API compatibility with react-native-iap, with the following naming conventions:
 
-| react-native-iap | expo-iap | Reason |
+| react-native-iap | expo-iap | Status |
 |-----------------|----------|---------|
-| `getPurchaseHistory()` | `getPurchaseHistory()` | ✅ Same |
-| `purchaseHistory` (in hook) | `purchaseHistory` | ✅ Same |
+| `getPurchaseHistory()` | `getPurchaseHistories()` | ✅ Updated in v2.6.0 |
+| `purchaseHistory` (in hook) | `purchaseHistories` | ✅ Plural form |
 | `getAvailablePurchases()` | `getAvailablePurchases()` | ✅ Same |
 | `availablePurchases` (in hook) | `availablePurchases` | ✅ Same |
 
-**Note:** Despite what some documentation might suggest, expo-iap uses the singular form `getPurchaseHistory` (not `getPurchaseHistories`) to match react-native-iap's API.
+**⚠️ Breaking Change in v2.6.0:** 
+- `getPurchaseHistory()` (singular) is now deprecated
+- Use `getPurchaseHistories()` (plural) instead
+- The hook already uses `purchaseHistories` (plural)
 
 ### Method Signatures
 
@@ -244,7 +247,7 @@ Most method signatures remain the same, but with improved TypeScript definitions
 await getProducts({skus: ['product1', 'product2']});
 await requestPurchase({sku: 'product_id'});
 await finishTransaction({purchase});
-await getPurchaseHistory(); // Note: singular form, not getPurchaseHistories
+await getPurchaseHistories(); // Note: plural form in expo-iap v2.6.0+
 ```
 
 ### New Methods

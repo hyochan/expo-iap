@@ -169,6 +169,28 @@ interface UseIAPOptions {
   }, [currentPurchaseError]);
   ```
 
+#### purchaseHistories
+
+- **Type**: `ProductPurchase[]`
+- **Description**: Array of purchase history items
+- **Example**:
+  ```tsx
+  purchaseHistories.map((purchase) => (
+    <PurchaseHistoryItem key={purchase.transactionId} purchase={purchase} />
+  ));
+  ```
+
+#### availablePurchases
+
+- **Type**: `ProductPurchase[]`
+- **Description**: Array of available purchases (restorable items)
+- **Example**:
+  ```tsx
+  availablePurchases.map((purchase) => (
+    <RestorableItem key={purchase.transactionId} purchase={purchase} />
+  ));
+  ```
+
 ### Methods
 
 #### getProducts
@@ -230,6 +252,38 @@ interface UseIAPOptions {
       });
     } catch (error) {
       console.error('Purchase request failed:', error);
+    }
+  };
+  ```
+
+#### getPurchaseHistories
+
+- **Type**: `() => Promise<void>`
+- **Description**: Fetch purchase history from the store
+- **Example**:
+  ```tsx
+  const fetchPurchaseHistory = async () => {
+    try {
+      await getPurchaseHistories();
+      console.log('Purchase history fetched:', purchaseHistories);
+    } catch (error) {
+      console.error('Failed to fetch purchase history:', error);
+    }
+  };
+  ```
+
+#### getAvailablePurchases
+
+- **Type**: `() => Promise<void>`
+- **Description**: Fetch available purchases (restorable items) from the store
+- **Example**:
+  ```tsx
+  const restorePurchases = async () => {
+    try {
+      await getAvailablePurchases();
+      console.log('Available purchases:', availablePurchases);
+    } catch (error) {
+      console.error('Failed to fetch available purchases:', error);
     }
   };
   ```

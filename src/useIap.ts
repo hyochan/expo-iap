@@ -5,7 +5,7 @@ import {
   purchaseUpdatedListener,
   getProducts,
   getAvailablePurchases,
-  getPurchaseHistory,
+  getPurchaseHistories,
   finishTransaction as finishTransactionInternal,
   getSubscriptions,
   requestPurchase as requestPurchaseInternal,
@@ -182,7 +182,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   }, []);
 
   const getPurchaseHistoriesInternal = useCallback(async (): Promise<void> => {
-    setPurchaseHistories(await getPurchaseHistory());
+    setPurchaseHistories(await getPurchaseHistories());
   }, []);
 
   const finishTransaction = useCallback(
