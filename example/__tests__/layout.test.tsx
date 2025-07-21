@@ -5,9 +5,10 @@ import RootLayout from '../app/_layout';
 // Mock expo-router
 jest.mock('expo-router', () => {
   const React = require('react');
+  const Stack = ({ children }: any) => React.createElement('View', null, children);
+  Stack.Screen = ({ name, options }: any) => React.createElement('View', { testID: name });
   return {
-    Stack: ({ children }: any) => React.createElement('View', null, children),
-    'Stack.Screen': ({ name, options }: any) => React.createElement('View', { testID: name }),
+    Stack,
   };
 });
 

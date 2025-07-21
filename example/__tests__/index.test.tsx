@@ -1,11 +1,17 @@
 import React from 'react';
+import { render, waitFor } from '@testing-library/react-native';
 import { Platform } from 'react-native';
 import Home from '../app/index';
-import * as ExpoIap from 'expo-iap';
 
 // Mock expo-router
 jest.mock('expo-router', () => ({
   Link: ({ children }: any) => children,
+}));
+
+// Mock expo-iap
+const mockGetStorefrontIOS = jest.fn();
+jest.mock('expo-iap', () => ({
+  getStorefrontIOS: mockGetStorefrontIOS,
 }));
 
 describe('Home Component', () => {
@@ -17,39 +23,48 @@ describe('Home Component', () => {
   
   afterEach(() => {
     Object.defineProperty(Platform, 'OS', {
-      get: jest.fn(() => originalPlatform)
+      get: jest.fn(() => originalPlatform),
+      configurable: true,
     });
   });
 
-  it('should be a valid React component', () => {
-    expect(typeof Home).toBe('function');
+  it('should render without crashing', () => {
+    const { getByText } = render(<Home />);
+    expect(getByText('expo-iap Examples')).toBeDefined();
   });
 
-  it('should call getStorefrontIOS on iOS platform', () => {
+  it('should render on iOS platform', async () => {
     // Mock Platform.OS to be iOS
     Object.defineProperty(Platform, 'OS', {
-      get: jest.fn(() => 'ios')
+      get: jest.fn(() => 'ios'),
+      configurable: true,
     });
     
-    const mockGetStorefront = jest.fn().mockResolvedValue('US');
-    (ExpoIap.getStorefrontIOS as jest.Mock) = mockGetStorefront;
+    mockGetStorefrontIOS.mockResolvedValue('US');
     
-    // Just verify the component can be instantiated and calls the function
-    const component = Home();
-    expect(component).toBeDefined();
+    const { getByText } = render(<Home />);
+    expect(getByText('expo-iap Examples')).toBeDefined();
+    
+    // Wait for async operations to complete
+    await waitFor(() => {
+      expect(mockGetStorefrontIOS).toHaveBeenCalled();
+    });
   });
 
-  it('should handle Android platform', () => {
+  it('should render on Android platform', () => {
     // Mock Platform.OS to be Android
     Object.defineProperty(Platform, 'OS', {
-      get: jest.fn(() => 'android')
+      get: jest.fn(() => 'android'),
+      configurable: true,
     });
     
     const consoleWarn = jest.spyOn(console, 'warn').mockImplementation();
     
-    // Component should handle Android gracefully
-    const component = Home();
-    expect(component).toBeDefined();
+    const { getByText } = render(<Home />);
+    expect(getByText('expo-iap Examples')).toBeDefined();
+    
+    // No async operations on Android
+    expect(mockGetStorefrontIOS).not.toHaveBeenCalled();
     
     consoleWarn.mockRestore();
   });
