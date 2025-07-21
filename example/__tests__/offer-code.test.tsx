@@ -1,0 +1,68 @@
+import React from 'react';
+import { render, fireEvent } from '@testing-library/react-native';
+import { Platform } from 'react-native';
+import OfferCode from '../app/offer-code';
+
+// Mock the functions
+const mockPresentCodeRedemptionSheetIOS = jest.fn();
+
+jest.mock('expo-iap', () => ({
+  presentCodeRedemptionSheetIOS: mockPresentCodeRedemptionSheetIOS,
+  useIAP: jest.fn(() => ({
+    connected: true,
+  })),
+}));
+
+describe('OfferCode Component', () => {
+  const originalPlatform = Platform.OS;
+  
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  afterEach(() => {
+    Object.defineProperty(Platform, 'OS', {
+      get: jest.fn(() => originalPlatform),
+      configurable: true,
+    });
+  });
+
+  it('should render without crashing', () => {
+    const { getByText } = render(<OfferCode />);
+    expect(getByText('Offer Code Redemption')).toBeDefined();
+  });
+
+  it('should show iOS instructions on iOS', () => {
+    Object.defineProperty(Platform, 'OS', {
+      get: jest.fn(() => 'ios'),
+      configurable: true,
+    });
+    
+    const { getByText } = render(<OfferCode />);
+    expect(getByText(/iOS-Only Feature/)).toBeDefined();
+  });
+
+  it('should show Android message on Android', () => {
+    Object.defineProperty(Platform, 'OS', {
+      get: jest.fn(() => 'android'),
+      configurable: true,
+    });
+    
+    const { getByText } = render(<OfferCode />);
+    expect(getByText(/Not Available on Android/)).toBeDefined();
+  });
+
+  it('should handle redeem button press on iOS', () => {
+    Object.defineProperty(Platform, 'OS', {
+      get: jest.fn(() => 'ios'),
+      configurable: true,
+    });
+    
+    const { getByText } = render(<OfferCode />);
+    const redeemButton = getByText('Redeem Offer Code');
+    
+    fireEvent.press(redeemButton);
+    
+    expect(mockPresentCodeRedemptionSheetIOS).toHaveBeenCalled();
+  });
+});
