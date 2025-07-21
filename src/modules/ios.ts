@@ -6,7 +6,7 @@ import {
   Purchase,
   SubscriptionPurchase,
 } from '../ExpoIap.types';
-import type {ProductStatusIos, AppTransaction} from '../types/ExpoIapIos.types';
+import type {ProductStatusIos, AppTransactionIOS} from '../types/ExpoIapIos.types';
 import ExpoIapModule from '../ExpoIapModule';
 
 export type TransactionEvent = {
@@ -225,10 +225,10 @@ export const presentCodeRedemptionSheet = (): Promise<boolean> => {
  * Get app transaction information (iOS 16.0+).
  * AppTransaction represents the initial purchase that unlocked the app.
  * 
- * @returns {Promise<AppTransaction | null>} The app transaction information or null if not available
+ * @returns {Promise<AppTransactionIOS | null>} The app transaction information or null if not available
  * @throws {Error} If called on non-iOS platform or iOS version < 16.0
  */
-export const getAppTransaction = (): Promise<AppTransaction | null> => {
+export const getAppTransaction = (): Promise<AppTransactionIOS | null> => {
   if (Platform.OS !== 'ios') {
     throw new Error('This method is only available on iOS');
   }

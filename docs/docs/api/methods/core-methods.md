@@ -138,13 +138,13 @@ const fetchAppTransaction = async () => {
 };
 ```
 
-**Returns:** `Promise<AppTransaction | null>` - Returns the app transaction information or null if not available.
+**Returns:** `Promise<AppTransactionIOS | null>` - Returns the app transaction information or null if not available.
 
 **Platform:** iOS 16.0+ only
 
-**AppTransaction Interface:**
+**AppTransactionIOS Interface:**
 ```typescript
-interface AppTransaction {
+interface AppTransactionIOS {
   appTransactionID: string;
   originalAppAccountToken?: string;
   originalPurchaseDate: number; // milliseconds since epoch

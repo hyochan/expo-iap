@@ -141,7 +141,7 @@ export type ProductPurchaseIos = PurchaseBase & {
   jwsRepresentationIos?: string;
 };
 
-export type AppTransaction = {
+export type AppTransactionIOS = {
   appTransactionID: string;
   originalAppAccountToken?: string;
   originalPurchaseDate: number;
