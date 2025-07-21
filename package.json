@@ -41,13 +41,18 @@
   "homepage": "https://github.com/hyochan#readme",
   "dependencies": {},
   "devDependencies": {
+    "@testing-library/react-hooks": "^8.0.1",
+    "@types/jest": "^29.5.12",
     "@types/react": "~19.1.7",
     "eslint": "8.57.0",
     "eslint-config-expo": "^9.2.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
     "expo-module-scripts": "^4.1.7",
-    "expo-modules-core": "^2.4.0"
+    "expo-modules-core": "^2.4.0",
+    "jest": "^29.7.0",
+    "react-test-renderer": "18.2.0",
+    "ts-jest": "^29.1.2"
   },
   "peerDependencies": {
     "expo": "*",
