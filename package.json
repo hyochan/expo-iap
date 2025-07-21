@@ -11,8 +11,7 @@
     "lint:eslint": "eslint --fix 'src/**/*.{ts,tsx}' 'plugin/src/**/*.{ts,tsx}'",
     "lint:prettier": "prettier --write \"**/*.{md,js,jsx,ts,tsx}\"",
     "lint:tsc": "tsc -p tsconfig.json --noEmit --skipLibCheck",
-    "lint:ci": "yarn lint:tsc && yarn lint:eslint && yarn lint:prettier",
-    "test": "expo-module test",
+    "lint:ci": "bun run lint:tsc && bun run lint:eslint && bun run lint:prettier",
     "prepare": "expo-module prepare",
     "expo-module": "expo-module",
     "open:ios": "xed example/ios",
@@ -24,7 +23,7 @@
     "docs:start": "cd docs && bun run start",
     "docs:build": "cd docs && bun run build",
     "docs:serve": "cd docs && bun run serve",
-    "docs:install": "cd docs && bun install --yarn"
+    "docs:install": "cd docs && bun install"
   },
   "keywords": [
     "react-native",
@@ -41,18 +40,13 @@
   "homepage": "https://github.com/hyochan#readme",
   "dependencies": {},
   "devDependencies": {
-    "@testing-library/react-hooks": "^8.0.1",
-    "@types/jest": "^29.5.12",
     "@types/react": "~19.1.7",
     "eslint": "8.57.0",
     "eslint-config-expo": "^9.2.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
     "expo-module-scripts": "^4.1.7",
-    "expo-modules-core": "^2.4.0",
-    "jest": "^29.7.0",
-    "react-test-renderer": "18.2.0",
-    "ts-jest": "^29.1.2"
+    "expo-modules-core": "^2.4.0"
   },
   "peerDependencies": {
     "expo": "*",

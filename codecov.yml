@@ -1,0 +1,74 @@
+codecov:
+  require_ci_to_pass: true
+  notify:
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "50...100"
+  
+  status:
+    project:
+      default:
+        target: 60%
+        threshold: 5%
+        base: auto
+        flags:
+          - unittests
+        paths:
+          - src
+      
+      example:
+        target: 40%
+        threshold: 10%
+        base: auto
+        flags:
+          - example
+        paths:
+          - example
+    
+    patch:
+      default:
+        target: 60%
+        threshold: 5%
+        base: auto
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+comment:
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+
+flags:
+  unittests:
+    paths:
+      - src/
+    carryforward: false
+  
+  example:
+    paths:
+      - example/
+    carryforward: false
+
+ignore:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/node_modules/**"
+  - "build/**"
+  - "android/**"
+  - "ios/**"
+  - "docs/**"
+  - "plugin/**"
+  - "*.config.js"
+  - "*.setup.js"

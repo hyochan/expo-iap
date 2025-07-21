@@ -61,3 +61,14 @@ yarn-error.log
 
 # Claude settings
 .claude/settings.local.json
+
+# Coverage reports
+coverage/
+*.lcov
+.nyc_output/
+
+# Package manager files (we use Bun)
+package-lock.json
+yarn.lock
+docs/package-lock.json
+example/package-lock.json

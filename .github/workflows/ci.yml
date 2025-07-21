@@ -2,74 +2,65 @@ name: CI
 
 on:
   push:
-    branches: [main, next]
-    paths:
-      - 'docs/**'
-      - 'src/**'
-      - 'scripts/**'
-      - 'test/**'
-      - 'plugin/**'
-      - '*.md'
-      - '*.json'
-      - '*.js'
-      - '*.lock'
-      - 'IapExample/src/**'
-      - 'IapExample/*.json'
-      - 'IapExample/*.js'
-      - 'IapExample/*.lock'
-      - 'IapExample/*.tsx'
-      - .github/**
-
+    branches: [main, develop]
   pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - 'docs/**'
-      - 'src/**'
-      - 'scripts/**'
-      - 'test/**'
-      - '*.md'
-      - '*.json'
-      - '*.js'
-      - '*.lock'
-      - 'IapExample/src/**'
-      - 'IapExample/*.json'
-      - 'IapExample/*.js'
-      - 'IapExample/*.lock'
-      - 'IapExample/*.tsx'
-      - .github/**
+    branches: [main, develop]
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+    
+    - name: Install dependencies
+      run: bun install
+    
+    - name: Run linting
+      run: bun run lint:ci
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-
-      - name: Install reviewdog
-        uses: reviewdog/action-setup@v1
-
-      - uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-
-      - name: Install modules
-        run: bun install --immutable
-
-      # - name: Install node_modules for `IapExample/`
-      #   run: yarn install --immutable
-      #   working-directory: IapExample
-
-      # - name: Run TypeScript
-      #   run: |
-      #     yarn lint:tsc | reviewdog -name="tsc" -efm="%f(%l,%c): error TS%n: %m" -reporter="github-pr-review" -filter-mode="nofilter" -fail-on-error -tee
-      #   env:
-      #     REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: Run lint scripts
-      #   run: yarn lint:ci
-
+  test-example:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+    
+    - name: Install root dependencies
+      run: bun install
+    
+    - name: Install example dependencies
+      working-directory: ./example
+      run: bun install
+    
+    - name: Run example tests
+      working-directory: ./example
+      run: bun run test:coverage --passWithNoTests
+    
+    - name: Upload example coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        directory: ./example/coverage
+        flags: example
+        name: example-coverage
+        fail_ci_if_error: false

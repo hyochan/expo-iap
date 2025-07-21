@@ -38,3 +38,10 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Test artifacts
+__snapshots__/

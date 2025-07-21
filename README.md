@@ -29,6 +29,21 @@ The `expo-iap` module has been migrated from [react-native-iap](https://github.c
 npx expo install expo-iap
 ```
 
+### Package Manager
+
+This project uses **Bun** as the package manager. Please use Bun for all package operations:
+
+```bash
+# Install dependencies
+bun install
+
+# Run tests
+bun test
+
+# Run scripts
+bun run <script-name>
+```
+
 For detailed usage examples and error handling, see the [documentation](https://expo-iap.hyo.dev).
 
 > Sharing your thoughts—any feedback would be greatly appreciated!
