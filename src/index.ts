@@ -29,6 +29,7 @@ import {isProductAndroid} from './modules/android';
 export * from './ExpoIap.types';
 export * from './modules/android';
 export * from './modules/ios';
+export type {AppTransaction} from './types/ExpoIapIos.types';
 
 // Get the native constant value
 export const PI = ExpoIapModule.PI;

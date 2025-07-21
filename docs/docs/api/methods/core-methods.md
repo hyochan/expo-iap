@@ -115,6 +115,46 @@ const fetchStorefront = async () => {
 
 **Note:** This is useful for region-specific pricing, content, or features.
 
+## getAppTransaction()
+
+Gets app transaction information for iOS apps (iOS 16.0+). AppTransaction represents the initial purchase that unlocked the app, useful for premium apps or apps that were previously paid.
+
+```tsx
+import {getAppTransaction} from 'expo-iap';
+
+const fetchAppTransaction = async () => {
+  try {
+    const appTransaction = await getAppTransaction();
+    if (appTransaction) {
+      console.log('App Transaction ID:', appTransaction.appTransactionID);
+      console.log('Original Purchase Date:', new Date(appTransaction.originalPurchaseDate));
+      console.log('Device Verification:', appTransaction.deviceVerification);
+    } else {
+      console.log('No app transaction found (app may be free)');
+    }
+  } catch (error) {
+    console.error('Failed to get app transaction:', error);
+  }
+};
+```
+
+**Returns:** `Promise<AppTransaction | null>` - Returns the app transaction information or null if not available.
+
+**Platform:** iOS 16.0+ only
+
+**AppTransaction Interface:**
+```typescript
+interface AppTransaction {
+  appTransactionID: string;
+  originalAppAccountToken?: string;
+  originalPurchaseDate: number; // milliseconds since epoch
+  deviceVerification: string;
+  deviceVerificationNonce: string;
+}
+```
+
+**Note:** This is useful for verifying that a user legitimately purchased your app. The device verification data can be sent to your server for validation.
+
 ## getProducts()
 
 Fetches product information from the store.

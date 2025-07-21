@@ -255,6 +255,28 @@ public class ExpoIapModule: Module {
             return storefront?.countryCode
         }
 
+        AsyncFunction("getAppTransaction") { () async throws -> [String: Any?]? in
+            if #available(iOS 16.0, *) {
+                guard let appTransaction = try await AppTransaction.shared else {
+                    return nil
+                }
+                
+                return [
+                    "appTransactionID": appTransaction.appAppleId,
+                    "originalAppAccountToken": appTransaction.originalAppAccountToken,
+                    "originalPurchaseDate": appTransaction.originalPurchaseDate.timeIntervalSince1970 * 1000,
+                    "deviceVerification": appTransaction.deviceVerification.base64EncodedString(),
+                    "deviceVerificationNonce": appTransaction.deviceVerificationNonce.uuidString
+                ]
+            } else {
+                throw Exception(
+                    name: "ExpoIapModule",
+                    description: "getAppTransaction requires iOS 16.0 or later",
+                    code: IapErrorCode.featureNotSupported
+                )
+            }
+        }
+
         AsyncFunction("getItems") { (skus: [String]) -> [[String: Any?]?] in
             guard let productStore = self.productStore else {
                 throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.notPrepared)

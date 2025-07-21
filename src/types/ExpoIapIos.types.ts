@@ -140,3 +140,11 @@ export type ProductPurchaseIos = PurchaseBase & {
   currencyIos?: string;
   jwsRepresentationIos?: string;
 };
+
+export type AppTransaction = {
+  appTransactionID: string;
+  originalAppAccountToken?: string;
+  originalPurchaseDate: number;
+  deviceVerification: string;
+  deviceVerificationNonce: string;
+};
