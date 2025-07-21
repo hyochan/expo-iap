@@ -58,3 +58,6 @@ yarn-error.log
 
 # Expo
 .expo/*
+
+# Claude settings
+.claude/settings.local.json
