@@ -268,12 +268,19 @@ public class ExpoIapModule: Module {
                 }
                 
                 return [
+                    "appTransactionID": appTransaction.id,
                     "bundleID": appTransaction.bundleID,
                     "appVersion": appTransaction.appVersion,
                     "originalAppVersion": appTransaction.originalAppVersion,
                     "originalPurchaseDate": appTransaction.originalPurchaseDate.timeIntervalSince1970 * 1000,
                     "deviceVerification": appTransaction.deviceVerification.base64EncodedString(),
-                    "deviceVerificationNonce": appTransaction.deviceVerificationNonce.uuidString
+                    "deviceVerificationNonce": appTransaction.deviceVerificationNonce.uuidString,
+                    "environment": appTransaction.environment.rawValue,
+                    "signedDate": appTransaction.signedDate.timeIntervalSince1970 * 1000,
+                    "appID": appTransaction.appID,
+                    "appVersionID": appTransaction.appVersionID,
+                    "originalPlatform": appTransaction.originalPlatform.rawValue,
+                    "preorderDate": appTransaction.preorderDate?.timeIntervalSince1970.map { $0 * 1000 }
                 ]
             } else {
                 throw Exception(
@@ -708,7 +715,7 @@ public class ExpoIapModule: Module {
             }
         }
 
-        AsyncFunction("validateReceiptIos") { (sku: String) -> [String: Any] in
+        AsyncFunction("validateReceiptIOS") { (sku: String) -> [String: Any] in
             guard let productStore = self.productStore else {
                 throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
             }

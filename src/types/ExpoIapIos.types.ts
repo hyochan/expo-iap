@@ -143,8 +143,16 @@ export type ProductPurchaseIos = PurchaseBase & {
 
 export type AppTransactionIOS = {
   appTransactionID: string;
-  originalAppAccountToken?: string;
+  bundleID: string;
+  appVersion: string;
+  originalAppVersion: string;
   originalPurchaseDate: number;
   deviceVerification: string;
   deviceVerificationNonce: string;
+  environment: string;
+  signedDate: number;
+  appID?: number;
+  appVersionID?: number;
+  originalPlatform: string;
+  preorderDate?: number;
 };
