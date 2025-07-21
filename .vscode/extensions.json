@@ -1,0 +1,32 @@
+{
+  "recommendations": [
+    // React Native & Expo
+    "msjsdiag.vscode-react-native",
+    "byCedric.vscode-expo",
+    
+    // TypeScript & JavaScript
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-tslint-plugin",
+    
+    // Testing
+    "Orta.vscode-jest",
+    "firsttris.vscode-jest-runner",
+    
+    // iOS Development
+    "vadimcn.vscode-lldb",
+    
+    // Git
+    "eamodio.gitlens",
+    "donjayamanne.githistory",
+    
+    // Productivity
+    "streetsidesoftware.code-spell-checker",
+    "wayou.vscode-todo-highlight",
+    "gruntfuggly.todo-tree",
+    
+    // Markdown
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint"
+  ]
+}

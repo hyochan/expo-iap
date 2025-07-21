@@ -20,6 +20,7 @@ Thank you for your interest in contributing to expo-iap! This guide will help yo
 - Bun (latest version)
 - iOS development: macOS with Xcode
 - Android development: Android Studio
+- VSCode (recommended) with React Native extensions
 
 ### Installation
 
@@ -33,6 +34,25 @@ cd expo-iap
 ```bash
 bun install
 ```
+
+### VSCode Setup (Recommended)
+
+This project includes VSCode configurations for easier development:
+
+1. **Install recommended extensions**: When you open the project in VSCode, you'll be prompted to install recommended extensions. Accept to install them.
+
+2. **Use Debug Configurations**: Press `F5` or go to Run → Start Debugging and select:
+   - `Debug iOS (Expo)` - Runs the example app on iOS simulator
+   - `Debug Android (Expo)` - Runs the example app on Android emulator
+   - `iOS + Metro` - Starts Metro bundler and iOS app together
+   - `Android + Metro` - Starts Metro bundler and Android app together
+
+3. **Use Tasks**: Press `Cmd+Shift+P` → `Tasks: Run Task` to access:
+   - `Start iOS Simulator` - Opens iOS Simulator
+   - `Start Android Emulator` - Starts Android emulator
+   - `Install Pods (iOS)` - Installs CocoaPods dependencies
+   - `Clean Build (iOS/Android)` - Cleans build folders
+   - `Run Tests` - Runs Jest tests
 
 ## 📦 Package Manager
 

@@ -1,0 +1,111 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start iOS Simulator",
+      "type": "shell",
+      "command": "open -a Simulator",
+      "problemMatcher": [],
+      "group": "build",
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Start Android Emulator",
+      "type": "shell",
+      "command": "emulator -list-avds | head -1 | xargs -I {} emulator -avd {} &",
+      "problemMatcher": [],
+      "group": "build",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "dependsOn": []
+    },
+    {
+      "label": "Install Pods (iOS)",
+      "type": "shell",
+      "command": "cd ios && pod install",
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Clean Build (iOS)",
+      "type": "shell",
+      "command": "cd ios && xcodebuild clean",
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Clean Build (Android)",
+      "type": "shell",
+      "command": "cd android && ./gradlew clean",
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "bun install",
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Lint Code",
+      "type": "shell",
+      "command": "bun run lint",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$eslint-stylish"],
+      "group": "test"
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "bun test",
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Build iOS (Debug)",
+      "type": "shell",
+      "command": "bun run ios",
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": [],
+      "group": "build",
+      "dependsOn": ["Start iOS Simulator"]
+    },
+    {
+      "label": "Build Android (Debug)",
+      "type": "shell",
+      "command": "bun run android",
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": [],
+      "group": "build",
+      "dependsOn": ["Start Android Emulator"]
+    }
+  ]
+}

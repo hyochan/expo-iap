@@ -1,0 +1,86 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug iOS (Expo)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/example",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "ios"],
+      "console": "integratedTerminal",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Debug Android (Expo)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/example",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "android"],
+      "console": "integratedTerminal",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Start Metro Bundler",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/example",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["start"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Run Tests",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/example",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["test"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Run Tests with Coverage",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/example",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "test:coverage"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Clear Metro Cache",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/example",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--clear"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Install Pods",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/example/ios",
+      "runtimeExecutable": "pod",
+      "runtimeArgs": ["install"],
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "iOS + Metro",
+      "configurations": ["Start Metro Bundler", "Debug iOS (Expo)"],
+      "stopAll": true
+    },
+    {
+      "name": "Android + Metro",
+      "configurations": ["Start Metro Bundler", "Debug Android (Expo)"],
+      "stopAll": true
+    }
+  ]
+}
