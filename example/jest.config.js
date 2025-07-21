@@ -15,7 +15,7 @@ module.exports = {
   collectCoverageFrom: [
     'app/**/*.{ts,tsx}',
     '!app/**/*.d.ts',
-    '!app/**/__tests__/**',
+    '!__tests__/**',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json'],
