@@ -21,7 +21,16 @@
     },
     "plugins": [
       "../app.plugin.js",
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "ignore": [
+            "**/__tests__/**",
+            "**/*.test.{js,jsx,ts,tsx}",
+            "**/*.spec.{js,jsx,ts,tsx}"
+          ]
+        }
+      ],
       [
         "expo-splash-screen",
         {

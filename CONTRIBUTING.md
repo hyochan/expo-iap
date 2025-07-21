@@ -127,6 +127,36 @@ Start the Metro bundler:
 bun start
 ```
 
+### Available Scripts
+
+The example app includes several useful scripts:
+
+```bash
+# Start the development server
+bun start
+
+# Run on iOS simulator
+bun run ios
+
+# Run on Android emulator  
+bun run android
+
+# Run tests
+bun test
+
+# Run tests in watch mode
+bun run test:watch
+
+# Run tests with coverage
+bun run test:coverage
+
+# Build preview APK locally using EAS
+bun run eas:preview:android
+
+# Reset project (useful for troubleshooting)
+bun run reset-project
+```
+
 ## 📖 Development Guidelines
 
 ### Platform-Specific Naming Conventions

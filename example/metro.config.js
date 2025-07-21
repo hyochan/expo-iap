@@ -11,6 +11,10 @@ config.resolver.blockList = [
   ...Array.from(config.resolver.blockList ?? []),
   new RegExp(path.resolve('..', 'node_modules', 'react')),
   new RegExp(path.resolve('..', 'node_modules', 'react-native')),
+  // Exclude test files from bundling
+  /.*\/__tests__\/.*/,
+  /.*\.test\.(js|jsx|ts|tsx)$/,
+  /.*\.spec\.(js|jsx|ts|tsx)$/,
 ];
 
 config.resolver.nodeModulesPaths = [

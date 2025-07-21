@@ -257,9 +257,7 @@ public class ExpoIapModule: Module {
 
         AsyncFunction("getAppTransaction") { () async throws -> [String: Any?]? in
             if #available(iOS 16.0, *) {
-                guard let verificationResult = try await AppTransaction.shared else {
-                    return nil
-                }
+                let verificationResult = try await AppTransaction.shared
                 
                 let appTransaction: AppTransaction
                 switch verificationResult {
