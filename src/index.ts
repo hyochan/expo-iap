@@ -1,7 +1,13 @@
-// Import the native module. On web, it will be resolved to ExpoIap.web.ts
-// and on native platforms to ExpoIap.ts
+// External dependencies
 import {NativeModulesProxy} from 'expo-modules-core';
 import {Platform} from 'react-native';
+
+// Internal modules
+import ExpoIapModule from './ExpoIapModule';
+import {isProductIos} from './modules/ios';
+import {isProductAndroid} from './modules/android';
+
+// Types
 import {
   Product,
   ProductPurchase,
@@ -12,7 +18,6 @@ import {
   SubscriptionProduct,
   SubscriptionPurchase,
 } from './ExpoIap.types';
-import ExpoIapModule from './ExpoIapModule';
 import {
   ProductPurchaseAndroid,
   RequestPurchaseAndroidProps,
@@ -23,8 +28,6 @@ import {
   RequestPurchaseIosProps,
   RequestSubscriptionIosProps,
 } from './types/ExpoIapIos.types';
-import {isProductIos} from './modules/ios';
-import {isProductAndroid} from './modules/android';
 
 export * from './ExpoIap.types';
 export * from './modules/android';
@@ -401,8 +404,35 @@ export const finishTransaction = ({
   )();
 };
 
-export const getStorefront = (): Promise<string> => {
+/**
+ * Retrieves the current storefront information from iOS App Store
+ * 
+ * @returns Promise resolving to the storefront country code
+ * @throws Error if called on non-iOS platform
+ * 
+ * @example
+ * ```typescript
+ * const storefront = await getStorefrontIOS();
+ * console.log(storefront); // 'US'
+ * ```
+ * 
+ * @platform iOS
+ */
+export const getStorefrontIOS = (): Promise<string> => {
+  if (Platform.OS !== 'ios') {
+    throw new Error('getStorefrontIOS: This method is only available on iOS');
+  }
   return ExpoIapModule.getStorefront();
+};
+
+/**
+ * @deprecated Use `getStorefrontIOS` instead. This function will be removed in version 3.0.0.
+ */
+export const getStorefront = (): Promise<string> => {
+  console.warn(
+    '`getStorefront` is deprecated. Use `getStorefrontIOS` instead. This function will be removed in version 3.0.0.',
+  );
+  return getStorefrontIOS();
 };
 
 export * from './useIap';

@@ -1,3 +1,9 @@
+// External dependencies
+import {useCallback, useEffect, useState, useRef} from 'react';
+import {Platform} from 'react-native';
+import {EventSubscription} from 'expo-modules-core';
+
+// Internal modules
 import {
   endConnection,
   initConnection,
@@ -10,9 +16,10 @@ import {
   getSubscriptions,
   requestPurchase as requestPurchaseInternal,
 } from './';
-import {sync, validateReceiptIos} from './modules/ios';
+import {syncIOS, validateReceiptIOS} from './modules/ios';
 import {validateReceiptAndroid} from './modules/android';
-import {useCallback, useEffect, useState, useRef} from 'react';
+
+// Types
 import {
   Product,
   ProductPurchase,
@@ -22,8 +29,6 @@ import {
   SubscriptionProduct,
   SubscriptionPurchase,
 } from './ExpoIap.types';
-import {Platform} from 'react-native';
-import {EventSubscription} from 'expo-modules-core';
 
 type UseIap = {
   connected: boolean;
@@ -248,7 +253,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const restorePurchases = useCallback(async (): Promise<void> => {
     try {
       if (Platform.OS === 'ios') {
-        await sync().catch((error) => {
+        await syncIOS().catch((error) => {
           if (optionsRef.current?.onSyncError) {
             optionsRef.current.onSyncError(error);
           } else {
@@ -273,7 +278,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       },
     ) => {
       if (Platform.OS === 'ios') {
-        return await validateReceiptIos(sku);
+        return await validateReceiptIOS(sku);
       } else if (Platform.OS === 'android') {
         if (
           !androidOptions ||

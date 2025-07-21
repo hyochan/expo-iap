@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {
-  presentCodeRedemptionSheet,
+  presentCodeRedemptionSheetIOS,
   openRedeemOfferCodeAndroid,
   useIAP,
 } from 'expo-iap';
@@ -36,7 +36,7 @@ export default function OfferCodeScreen() {
     try {
       if (Platform.OS === 'ios') {
         // Present native iOS redemption sheet
-        const result = await presentCodeRedemptionSheet();
+        const result = await presentCodeRedemptionSheetIOS();
         if (result) {
           Alert.alert(
             'Success',

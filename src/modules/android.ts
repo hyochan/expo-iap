@@ -1,7 +1,12 @@
+// External dependencies
 import {Linking} from 'react-native';
+
+// Internal modules
+import ExpoIapModule from '../ExpoIapModule';
+
+// Types
 import {PurchaseResult} from '../ExpoIap.types';
 import {ReceiptAndroid} from '../types/ExpoIapAndroid.types';
-import ExpoIapModule from '../ExpoIapModule';
 
 // Type guards
 export function isProductAndroid<T extends {platform?: string}>(
