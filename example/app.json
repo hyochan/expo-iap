@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "cpk",
-    "slug": "cpk",
+    "name": "expo-iap-example",
+    "slug": "expo-iap-example",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "expo-iap-example",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -17,7 +17,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.crossplatformkorea.cpk"
+      "package": "dev.hyo.martie"
     },
     "plugins": [
       "../app.plugin.js",

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {requestPurchase, useIAP} from '../../src';
 import type {SubscriptionProduct, PurchaseError} from '../../src/ExpoIap.types';
+import type {SubscriptionProductAndroid} from '../../src/types/ExpoIapAndroid.types';
 
 /**
  * Subscription Flow Example - Subscription Products
@@ -63,9 +64,7 @@ export default function SubscriptionFlow() {
   useEffect(() => {
     if (connected) {
       const subscriptionIds = [
-        'com.example.premium_monthly',
-        'com.example.premium_yearly',
-        'com.example.pro_subscription',
+        'dev.hyo.martie.premium', // Example subscription ID
       ];
       getSubscriptions(subscriptionIds);
     }
@@ -76,14 +75,34 @@ export default function SubscriptionFlow() {
       setIsProcessing(true);
       setPurchaseResult('Processing subscription...');
 
-      // Use requestPurchase for subscriptions - the result will be handled by callbacks
-      await requestPurchase({
-        request:
-          Platform.OS === 'ios'
-            ? {sku: itemId, appAccountToken: 'user-123'}
-            : {skus: [itemId], subscriptionOffers: []},
-        type: 'subs',
-      });
+      if (Platform.OS === 'android') {
+        // Find the subscription to get its offer token
+        const subscription = subscriptions.find(sub => sub.id === itemId) as SubscriptionProductAndroid;
+        if (!subscription || !subscription.subscriptionOfferDetails?.length) {
+          throw new Error('No subscription offers available');
+        }
+
+        // Use the first available offer token
+        const firstOffer = subscription.subscriptionOfferDetails[0];
+        const offerToken = firstOffer.offerToken;
+
+        await requestPurchase({
+          request: {
+            skus: [itemId],
+            subscriptionOffers: [{
+              sku: itemId,
+              offerToken: offerToken,
+            }],
+          },
+          type: 'subs',
+        });
+      } else {
+        // iOS
+        await requestPurchase({
+          request: {sku: itemId, appAccountToken: 'user-123'},
+          type: 'subs',
+        });
+      }
     } catch (error) {
       setIsProcessing(false);
       const errorMessage =
@@ -94,11 +113,7 @@ export default function SubscriptionFlow() {
   };
 
   const retryLoadSubscriptions = () => {
-    const subscriptionIds = [
-      'com.example.premium_monthly',
-      'com.example.premium_yearly',
-      'com.example.pro_subscription',
-    ];
+    const subscriptionIds = ['dev.hyo.martie.premium'];
     getSubscriptions(subscriptionIds);
   };
 
@@ -121,8 +136,13 @@ export default function SubscriptionFlow() {
     }
   };
 
-  const getIntroductoryOffer = (subscription: SubscriptionProduct): string | null => {
-    if (subscription.platform === 'ios' && subscription.subscription?.introductoryOffer) {
+  const getIntroductoryOffer = (
+    subscription: SubscriptionProduct,
+  ): string | null => {
+    if (
+      subscription.platform === 'ios' &&
+      subscription.subscription?.introductoryOffer
+    ) {
       const offer = subscription.subscription.introductoryOffer;
       switch (offer.paymentMode) {
         case 'FREETRIAL':

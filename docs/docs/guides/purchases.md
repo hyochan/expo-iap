@@ -124,8 +124,8 @@ import {Platform, Alert, InteractionManager} from 'react-native';
 import {useIAP} from 'expo-iap';
 
 // Define your product SKUs
-const bulbPackSkus = ['dev.hyo.luent.10bulbs', 'dev.hyo.luent.30bulbs'];
-const subscriptionSkus = ['dev.hyo.luent.premium'];
+const bulbPackSkus = ['dev.hyo.martie.10bulbs', 'dev.hyo.martie.30bulbs'];
+const subscriptionSkus = ['dev.hyo.martie.premium'];
 
 export default function PurchaseScreen() {
   const {
@@ -391,6 +391,7 @@ export default function PurchaseScreen() {
 ### 3. Request a Purchase
 
 **Important Platform Difference:**
+
 - **iOS**: Can only purchase one product at a time (single SKU)
 - **Android**: Can purchase multiple products at once (array of SKUs)
 
@@ -405,12 +406,12 @@ const handleBuyProduct = async (productId) => {
     if (Platform.OS === 'ios') {
       // iOS: single product purchase
       await requestPurchase({
-        request: {sku: productId}
+        request: {sku: productId},
       });
     } else if (Platform.OS === 'android') {
       // Android: array of products (even for single purchase)
       await requestPurchase({
-        request: {skus: [productId]}
+        request: {skus: [productId]},
       });
     }
   } catch (err) {
@@ -439,35 +440,24 @@ const handleBuySubscription = async (subscriptionId: string) => {
 
       // Check if the subscription has offer details
       if (subscription.subscriptionOfferDetails?.length > 0) {
-        // Create subscription offers with matching offerTokens
-        const subscriptionOffers = subscription.subscriptionOfferDetails.map(
-          (offer) => ({
-            sku: subscriptionId,
-            offerToken: offer.offerToken,
-          }),
-        );
+        // Android requires offerToken for each subscription SKU
+        // Use the first available offer or let user choose
+        const firstOffer = subscription.subscriptionOfferDetails[0];
+        const subscriptionOffers = [{
+          sku: subscriptionId,
+          offerToken: firstOffer.offerToken,
+        }];
 
         await requestPurchase({
           request: {
             skus: [subscriptionId],
-            subscriptionOffers,
+            subscriptionOffers, // Required: Must match number of SKUs
           },
           type: 'subs',
         });
       } else {
-        // Fallback for subscriptions without offer details
-        await requestPurchase({
-          request: {
-            skus: [subscriptionId],
-            subscriptionOffers: [
-              {
-                sku: subscriptionId,
-                offerToken: '',
-              },
-            ],
-          },
-          type: 'subs',
-        });
+        // This should not happen with properly configured subscriptions
+        throw new Error('No subscription offers available');
       }
     }
   } catch (err) {
@@ -609,21 +599,46 @@ const buyNonConsumable = async (productId) => {
 
 ### Subscriptions
 
-Subscriptions provide ongoing access to content or features:
+Subscriptions require special handling on Android due to the offer token requirement:
 
 ```tsx
-const buySubscription = async (product) => {
-  await requestPurchase({
-    sku: product.productId,
-    subscriptionOffers: [
-      {
-        sku: product.productId,
-        offerToken: product.subscriptionOfferDetails?.[0]?.offerToken,
+const buySubscription = async (subscriptionId: string) => {
+  if (Platform.OS === 'ios') {
+    // iOS: Simple SKU-based purchase
+    await requestPurchase({
+      request: { sku: subscriptionId },
+      type: 'subs',
+    });
+  } else {
+    // Android: Requires offerToken for each subscription
+    const subscription = subscriptions.find(s => s.id === subscriptionId);
+    
+    if (!subscription?.subscriptionOfferDetails?.length) {
+      throw new Error('No subscription offers available');
+    }
+    
+    // Use the first available offer (or let user choose)
+    const firstOffer = subscription.subscriptionOfferDetails[0];
+    
+    await requestPurchase({
+      request: {
+        skus: [subscriptionId],
+        subscriptionOffers: [{
+          sku: subscriptionId,
+          offerToken: firstOffer.offerToken, // Required!
+        }],
       },
-    ],
-  });
+      type: 'subs',
+    });
+  }
 };
 ```
+
+**Important Android Notes:**
+- Each subscription SKU must have a corresponding offerToken
+- The number of SKUs must match the number of offerTokens
+- offerToken comes from `subscriptionOfferDetails` in the product details
+- Without offerToken, you'll get: "The number of skus must match the number of offerTokens"
 
 ## Advanced Purchase Handling
 
@@ -673,37 +688,40 @@ Platform-specific properties are available to check if a subscription is active:
 ```tsx
 const isSubscriptionActive = (purchase: Purchase): boolean => {
   const currentTime = Date.now();
-  
+
   if (Platform.OS === 'ios') {
     // iOS: Check expiration date
     if (purchase.expirationDateIos) {
       // expirationDateIos is in milliseconds
       return purchase.expirationDateIos > currentTime;
     }
-    
+
     // For Sandbox environment, consider recent purchases as active
     if (purchase.environmentIos === 'Sandbox') {
       const dayInMs = 24 * 60 * 60 * 1000;
-      return purchase.transactionDate && 
-        (currentTime - purchase.transactionDate) < dayInMs;
+      return (
+        purchase.transactionDate &&
+        currentTime - purchase.transactionDate < dayInMs
+      );
     }
   } else if (Platform.OS === 'android') {
     // Android: Check auto-renewal status
     if (purchase.autoRenewingAndroid !== undefined) {
       return purchase.autoRenewingAndroid;
     }
-    
+
     // Check purchase state (0 = purchased, 1 = canceled)
     if (purchase.purchaseStateAndroid === 0) {
       return true;
     }
   }
-  
+
   return false;
 };
 ```
 
 **Key Properties for Subscription Status:**
+
 - **iOS**: `expirationDateIos` - Unix timestamp when subscription expires
 - **Android**: `autoRenewingAndroid` - Boolean indicating if subscription will renew
 
@@ -723,6 +741,7 @@ const openSubscriptionManagement = () => {
 ### Receipt Validation
 
 **Important Platform Differences for Receipt Validation:**
+
 - **iOS**: Only requires the SKU for validation
 - **Android**: Requires additional parameters including `packageName`, `productToken`, and optionally `accessToken`
 
@@ -744,7 +763,7 @@ const handleValidateReceipt = useCallback(
         // Check required Android parameters before validation
         if (!purchaseToken || !packageName) {
           throw new Error(
-            'Android validation requires packageName and productToken'
+            'Android validation requires packageName and productToken',
           );
         }
 

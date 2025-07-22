@@ -63,11 +63,7 @@ export default function PurchaseFlow() {
   // Load products when component mounts
   useEffect(() => {
     if (connected) {
-      const productIds = [
-        'com.example.premium',
-        'com.example.coins_100',
-        'com.example.remove_ads',
-      ];
+      const productIds = ['dev.hyo.martie.10bulbs', 'dev.hyo.martie.30bulbs'];
       getProducts(productIds);
     }
   }, [connected, getProducts]);
