@@ -69,6 +69,29 @@
       "runtimeExecutable": "pod",
       "runtimeArgs": ["install"],
       "console": "integratedTerminal"
+    },
+    {
+      "name": "Start Documentation",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/docs",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start"],
+      "console": "integratedTerminal",
+      "serverReadyAction": {
+        "pattern": "Local site started at (https?://localhost:[0-9]+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "Build Documentation",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/docs",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "build"],
+      "console": "integratedTerminal"
     }
   ],
   "compounds": [

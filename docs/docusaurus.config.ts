@@ -45,6 +45,17 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl: 'https://github.com/hyochan/expo-iap/tree/main/docs/',
+          lastVersion: 'current',
+          versions: {
+            current: {
+              label: '2.7 (Latest)',
+              path: '',
+            },
+            '2.6': {
+              label: '2.6',
+              path: '2.6',
+            },
+          },
         },
         blog: {
           showReadingTime: true,
@@ -82,6 +93,11 @@ const config: Config = {
           sidebarId: 'tutorialSidebar',
           position: 'left',
           label: 'Docs',
+        },
+        {
+          type: 'docsVersionDropdown',
+          position: 'left',
+          dropdownActiveClassDisabled: true,
         },
         {
           to: '/blog',
