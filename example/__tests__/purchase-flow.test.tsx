@@ -62,7 +62,10 @@ describe('PurchaseFlow Component', () => {
     
     // The actual call includes platform-specific request structure
     expect(requestPurchase).toHaveBeenCalledWith({
-      request: { sku: 'test.product.1', quantity: 1 },
+      request: {
+        ios: { sku: 'test.product.1', quantity: 1 },
+        android: { skus: ['test.product.1'] }
+      },
       type: 'inapp'
     });
   });

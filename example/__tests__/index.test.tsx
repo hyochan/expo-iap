@@ -57,15 +57,15 @@ describe('Home Component', () => {
       configurable: true,
     });
     
-    const consoleWarn = jest.spyOn(console, 'warn').mockImplementation();
+    const consoleLog = jest.spyOn(console, 'log').mockImplementation();
     
     const { getByText } = render(<Home />);
     expect(getByText('expo-iap Examples')).toBeDefined();
     
-    // No async operations on Android
+    // getStorefrontIOS is called but will catch error on Android
     const getStorefrontIOS = require('expo-iap').getStorefrontIOS;
-    expect(getStorefrontIOS).not.toHaveBeenCalled();
+    expect(getStorefrontIOS).toHaveBeenCalled();
     
-    consoleWarn.mockRestore();
+    consoleLog.mockRestore();
   });
 });
