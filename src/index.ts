@@ -20,7 +20,6 @@ import {
   SubscriptionPurchase,
   isPlatformRequestProps,
   isUnifiedRequestProps,
-  isLegacyRequestProps,
 } from './ExpoIap.types';
 import {
   ProductPurchaseAndroid,
