@@ -81,6 +81,9 @@ export function initConnection() {
 }
 
 export const getProducts = async (skus: string[]): Promise<Product[]> => {
+  console.warn(
+    '`getProducts` is deprecated. Use `requestProducts({ skus, type: \'inapp\' })` instead. This function will be removed in version 3.0.0.',
+  );
   if (!skus?.length) {
     return Promise.reject(new Error('"skus" is required'));
   }
@@ -112,6 +115,9 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
 export const getSubscriptions = async (
   skus: string[],
 ): Promise<SubscriptionProduct[]> => {
+  console.warn(
+    '`getSubscriptions` is deprecated. Use `requestProducts({ skus, type: \'subs\' })` instead. This function will be removed in version 3.0.0.',
+  );
   if (!skus?.length) {
     return Promise.reject(new Error('"skus" is required'));
   }
@@ -150,6 +156,78 @@ export const getSubscriptions = async (
 export async function endConnection(): Promise<boolean> {
   return ExpoIapModule.endConnection();
 }
+
+/**
+ * Request products with unified API (v2.7.0+)
+ *
+ * @param params - Product request configuration
+ * @param params.skus - Array of product SKUs to fetch
+ * @param params.type - Type of products: 'inapp' for regular products (default) or 'subs' for subscriptions
+ *
+ * @example
+ * ```typescript
+ * // Regular products
+ * const products = await requestProducts({
+ *   skus: ['product1', 'product2'],
+ *   type: 'inapp'
+ * });
+ *
+ * // Subscriptions
+ * const subscriptions = await requestProducts({
+ *   skus: ['sub1', 'sub2'],
+ *   type: 'subs'
+ * });
+ * ```
+ */
+export const requestProducts = async ({
+  skus,
+  type = 'inapp',
+}: {
+  skus: string[];
+  type?: 'inapp' | 'subs';
+}): Promise<Product[] | SubscriptionProduct[]> => {
+  if (!skus?.length) {
+    throw new Error('No SKUs provided');
+  }
+
+  if (Platform.OS === 'ios') {
+    const rawItems = await ExpoIapModule.getItems(skus);
+    const filteredItems = rawItems.filter((item: unknown) => {
+      if (!isProductIos(item)) return false;
+      return (
+        typeof item === 'object' &&
+        item !== null &&
+        'id' in item &&
+        typeof item.id === 'string' &&
+        skus.includes(item.id)
+      );
+    });
+
+    return type === 'inapp'
+      ? (filteredItems as Product[])
+      : (filteredItems as SubscriptionProduct[]);
+  }
+
+  if (Platform.OS === 'android') {
+    const items = await ExpoIapModule.getItemsByType(type, skus);
+    const filteredItems = items.filter((item: unknown) => {
+      if (!isProductAndroid(item)) return false;
+      return (
+        typeof item === 'object' &&
+        item !== null &&
+        'id' in item &&
+        typeof item.id === 'string' &&
+        skus.includes(item.id)
+      );
+    });
+
+    return type === 'inapp'
+      ? (filteredItems as Product[])
+      : (filteredItems as SubscriptionProduct[]);
+  }
+
+  throw new Error('Unsupported platform');
+};
 
 /**
  * @deprecated Use `getPurchaseHistories` instead. This function will be removed in version 3.0.0.
@@ -529,7 +607,8 @@ export const finishTransaction = ({
  */
 export const getStorefrontIOS = (): Promise<string> => {
   if (Platform.OS !== 'ios') {
-    throw new Error('getStorefrontIOS: This method is only available on iOS');
+    console.warn('getStorefrontIOS: This method is only available on iOS');
+    return Promise.resolve('');
   }
   return ExpoIapModule.getStorefront();
 };

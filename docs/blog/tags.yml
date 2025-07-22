@@ -32,3 +32,33 @@ breaking-changes:
   label: Breaking Changes
   permalink: /breaking-changes
   description: Updates that require code changes
+
+release:
+  label: Release
+  permalink: /release
+  description: New version releases and updates
+
+api:
+  label: API
+  permalink: /api
+  description: API updates and changes
+
+android:
+  label: Android
+  permalink: /android
+  description: Android platform specific features
+
+google-play-billing:
+  label: Google Play Billing
+  permalink: /google-play-billing
+  description: Google Play Billing Library updates
+
+apptransaction:
+  label: App Transaction
+  permalink: /apptransaction
+  description: App transaction related features
+
+migration:
+  label: Migration
+  permalink: /migration
+  description: Migration guides and updates

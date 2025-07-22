@@ -15,6 +15,7 @@ import {
   finishTransaction as finishTransactionInternal,
   getSubscriptions,
   requestPurchase as requestPurchaseInternal,
+  requestProducts,
 } from './';
 import {syncIOS, validateReceiptIOS} from './modules/ios';
 import {validateReceiptAndroid} from './modules/android';
@@ -54,6 +55,10 @@ type UseIap = {
   getPurchaseHistories: (skus: string[]) => Promise<void>;
   getProducts: (skus: string[]) => Promise<void>;
   getSubscriptions: (skus: string[]) => Promise<void>;
+  requestProducts: (params: {
+    skus: string[];
+    type?: 'inapp' | 'subs';
+  }) => Promise<void>;
   requestPurchase: (params: {
     request: RequestPurchaseProps | RequestSubscriptionProps;
     type?: 'inapp' | 'subs';
@@ -174,6 +179,37 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         );
       } catch (error) {
         console.error('Error fetching subscriptions:', error);
+      }
+    },
+    [mergeWithDuplicateCheck],
+  );
+
+  const requestProductsInternal = useCallback(
+    async (params: {
+      skus: string[];
+      type?: 'inapp' | 'subs';
+    }): Promise<void> => {
+      try {
+        const result = await requestProducts(params);
+        if (params.type === 'subs') {
+          setSubscriptions((prevSubscriptions) =>
+            mergeWithDuplicateCheck(
+              prevSubscriptions,
+              result as SubscriptionProduct[],
+              (subscription) => subscription.id,
+            ),
+          );
+        } else {
+          setProducts((prevProducts) =>
+            mergeWithDuplicateCheck(
+              prevProducts,
+              result as Product[],
+              (product) => product.id,
+            ),
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
       }
     },
     [mergeWithDuplicateCheck],
@@ -389,6 +425,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     getPurchaseHistories: getPurchaseHistoriesInternal,
     getProducts: getProductsInternal,
     getSubscriptions: getSubscriptionsInternal,
+    requestProducts: requestProductsInternal,
     requestPurchase: requestPurchaseWithReset,
     validateReceipt,
     restorePurchases,
