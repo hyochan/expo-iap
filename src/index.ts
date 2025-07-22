@@ -15,18 +15,18 @@ import {
   PurchaseError,
   PurchaseResult,
   RequestSubscriptionProps,
+  RequestPurchaseProps,
   SubscriptionProduct,
   SubscriptionPurchase,
+  isPlatformRequestProps,
+  isUnifiedRequestProps,
+  isLegacyRequestProps,
 } from './ExpoIap.types';
 import {
   ProductPurchaseAndroid,
-  RequestPurchaseAndroidProps,
-  RequestSubscriptionAndroidProps,
 } from './types/ExpoIapAndroid.types';
 import {
   PaymentDiscount,
-  RequestPurchaseIosProps,
-  RequestSubscriptionIosProps,
 } from './types/ExpoIapIos.types';
 
 export * from './ExpoIap.types';
@@ -236,20 +236,94 @@ const offerToRecordIos = (
 // Define discriminated union with explicit type parameter
 type PurchaseRequest =
   | {
-      request: RequestPurchaseIosProps | RequestPurchaseAndroidProps;
+      request: RequestPurchaseProps;
       type?: 'inapp';
     }
   | {
-      request: RequestSubscriptionAndroidProps | RequestSubscriptionIosProps;
+      request: RequestSubscriptionProps;
       type: 'subs';
     };
 
-// Type guards for request objects
-const isIosRequest = (
-  request: any,
-): request is RequestPurchaseIosProps | RequestSubscriptionIosProps =>
-  'sku' in request && typeof request.sku === 'string';
+/**
+ * Helper to normalize request props to platform-specific format
+ */
+const normalizeRequestProps = (
+  request: RequestPurchaseProps | RequestSubscriptionProps,
+  platform: 'ios' | 'android',
+): any => {
+  // If it's already platform-specific format
+  if (isPlatformRequestProps(request)) {
+    return platform === 'ios' ? request.ios : request.android;
+  }
 
+  // If it's unified format, convert to platform-specific
+  if (isUnifiedRequestProps(request)) {
+    if (platform === 'ios') {
+      return {
+        sku: request.sku || (request.skus?.[0] ?? ''),
+        andDangerouslyFinishTransactionAutomaticallyIOS: request.andDangerouslyFinishTransactionAutomaticallyIOS,
+        appAccountToken: request.appAccountToken,
+        quantity: request.quantity,
+        withOffer: request.withOffer,
+      };
+    } else {
+      const androidRequest: any = {
+        skus: request.skus || (request.sku ? [request.sku] : []),
+        obfuscatedAccountIdAndroid: request.obfuscatedAccountIdAndroid,
+        obfuscatedProfileIdAndroid: request.obfuscatedProfileIdAndroid,
+        isOfferPersonalized: request.isOfferPersonalized,
+      };
+      
+      // Add subscription-specific fields if present
+      if ('subscriptionOffers' in request && request.subscriptionOffers) {
+        androidRequest.subscriptionOffers = request.subscriptionOffers;
+      }
+      if ('purchaseTokenAndroid' in request) {
+        androidRequest.purchaseTokenAndroid = request.purchaseTokenAndroid;
+      }
+      if ('replacementModeAndroid' in request) {
+        androidRequest.replacementModeAndroid = request.replacementModeAndroid;
+      }
+      
+      return androidRequest;
+    }
+  }
+
+  // Legacy format handling
+  return request;
+};
+
+/**
+ * Request a purchase for products or subscriptions.
+ * 
+ * @param requestObj - Purchase request configuration
+ * @param requestObj.request - Platform-specific purchase parameters
+ * @param requestObj.type - Type of purchase: 'inapp' for products (default) or 'subs' for subscriptions
+ * 
+ * @example
+ * ```typescript
+ * // Product purchase
+ * await requestPurchase({
+ *   request: {
+ *     ios: { sku: productId },
+ *     android: { skus: [productId] }
+ *   },
+ *   type: 'inapp'
+ * });
+ * 
+ * // Subscription purchase
+ * await requestPurchase({
+ *   request: {
+ *     ios: { sku: subscriptionId },
+ *     android: { 
+ *       skus: [subscriptionId],
+ *       subscriptionOffers: [{ sku: subscriptionId, offerToken: 'token' }]
+ *     }
+ *   },
+ *   type: 'subs'
+ * });
+ * ```
+ */
 export const requestPurchase = (
   requestObj: PurchaseRequest,
 ): Promise<
@@ -262,7 +336,9 @@ export const requestPurchase = (
   const {request, type = 'inapp'} = requestObj;
 
   if (Platform.OS === 'ios') {
-    if (!isIosRequest(request)) {
+    const normalizedRequest = normalizeRequestProps(request, 'ios');
+    
+    if (!normalizedRequest?.sku) {
       throw new Error(
         'Invalid request for iOS. The `sku` property is required and must be a string.',
       );
@@ -274,7 +350,7 @@ export const requestPurchase = (
       appAccountToken,
       quantity,
       withOffer,
-    } = request;
+    } = normalizedRequest;
 
     return (async () => {
       const offer = offerToRecordIos(withOffer);
@@ -293,13 +369,21 @@ export const requestPurchase = (
   }
 
   if (Platform.OS === 'android') {
+    const normalizedRequest = normalizeRequestProps(request, 'android');
+    
+    if (!normalizedRequest?.skus?.length) {
+      throw new Error(
+        'Invalid request for Android. The `skus` property is required and must be a non-empty array.',
+      );
+    }
+
     if (type === 'inapp') {
       const {
         skus,
         obfuscatedAccountIdAndroid,
         obfuscatedProfileIdAndroid,
         isOfferPersonalized,
-      } = request as RequestPurchaseAndroidProps;
+      } = normalizedRequest;
 
       return (async () => {
         return ExpoIapModule.buyItemByType({
@@ -324,7 +408,7 @@ export const requestPurchase = (
         subscriptionOffers = [],
         replacementModeAndroid = -1,
         purchaseTokenAndroid,
-      } = request as RequestSubscriptionAndroidProps;
+      } = normalizedRequest;
 
       return (async () => {
         return ExpoIapModule.buyItemByType({
@@ -334,14 +418,14 @@ export const requestPurchase = (
           replacementMode: replacementModeAndroid,
           obfuscatedAccountId: obfuscatedAccountIdAndroid,
           obfuscatedProfileId: obfuscatedProfileIdAndroid,
-          offerTokenArr: subscriptionOffers.map((so) => so.offerToken),
+          offerTokenArr: subscriptionOffers.map((so: any) => so.offerToken),
           isOfferPersonalized: isOfferPersonalized ?? false,
         }) as Promise<SubscriptionPurchase[]>;
       })();
     }
 
     throw new Error(
-      "Invalid request for Android: Expected a 'RequestPurchaseAndroidProps' object with a valid 'skus' array or a 'RequestSubscriptionAndroidProps' object with 'skus' and 'subscriptionOffers'.",
+      "Invalid request for Android: Expected a valid request object with 'skus' array.",
     );
   }
 
@@ -349,13 +433,35 @@ export const requestPurchase = (
 };
 
 /**
- * @deprecated Use `requestPurchase({ request, type: 'subs' })` instead. This method will be removed in version 3.0.0+.
+ * @deprecated Use `requestPurchase({ request, type: 'subs' })` instead. This method will be removed in version 3.0.0.
+ * 
+ * @example
+ * ```typescript
+ * // Old way (deprecated)
+ * await requestSubscription({
+ *   sku: subscriptionId,
+ *   // or for Android
+ *   skus: [subscriptionId],
+ * });
+ * 
+ * // New way (recommended)
+ * await requestPurchase({
+ *   request: {
+ *     ios: { sku: subscriptionId },
+ *     android: { 
+ *       skus: [subscriptionId],
+ *       subscriptionOffers: [{ sku: subscriptionId, offerToken: 'token' }]
+ *     }
+ *   },
+ *   type: 'subs'
+ * });
+ * ```
  */
 export const requestSubscription = async (
   request: RequestSubscriptionProps,
 ): Promise<SubscriptionPurchase | SubscriptionPurchase[] | null | void> => {
   console.warn(
-    "`requestSubscription` is deprecated. Use `requestPurchase({ request, type: 'subs' })` instead. This method will be removed in version 3.0.0+.",
+    "`requestSubscription` is deprecated and will be removed in version 3.0.0. Use `requestPurchase({ request, type: 'subs' })` instead.",
   );
   return (await requestPurchase({request, type: 'subs'})) as
     | SubscriptionPurchase
