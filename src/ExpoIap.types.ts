@@ -392,14 +392,44 @@ export interface PlatformRequestSubscriptionProps {
 }
 
 /**
- * Request purchase parameters supporting both legacy and modern APIs
+ * Modern request purchase parameters (v2.7.0+)
+ * This is the recommended API moving forward
  */
-export type RequestPurchaseProps = UnifiedRequestPurchaseProps | PlatformRequestPurchaseProps | LegacyRequestPurchaseProps;
+export type RequestPurchaseProps = PlatformRequestPurchaseProps;
 
 /**
- * Request subscription parameters supporting both legacy and modern APIs
+ * Modern request subscription parameters (v2.7.0+)
+ * This is the recommended API moving forward
  */
-export type RequestSubscriptionProps = UnifiedRequestSubscriptionProps | PlatformRequestSubscriptionProps | LegacyRequestSubscriptionProps;
+export type RequestSubscriptionProps = PlatformRequestSubscriptionProps;
+
+/**
+ * Legacy request purchase parameters (deprecated)
+ * Includes both unified and old platform-specific formats
+ * @deprecated Use RequestPurchaseProps with platform-specific structure instead
+ */
+export type LegacyRequestPurchasePropsAll = UnifiedRequestPurchaseProps | LegacyRequestPurchaseProps;
+
+/**
+ * Legacy request subscription parameters (deprecated)
+ * Includes both unified and old platform-specific formats
+ * @deprecated Use RequestSubscriptionProps with platform-specific structure instead
+ */
+export type LegacyRequestSubscriptionPropsAll = UnifiedRequestSubscriptionProps | LegacyRequestSubscriptionProps;
+
+/**
+ * All supported request purchase parameters
+ * Used internally for backward compatibility
+ * @internal
+ */
+export type RequestPurchasePropsWithLegacy = RequestPurchaseProps | LegacyRequestPurchasePropsAll;
+
+/**
+ * All supported request subscription parameters
+ * Used internally for backward compatibility
+ * @internal
+ */
+export type RequestSubscriptionPropsWithLegacy = RequestSubscriptionProps | LegacyRequestSubscriptionPropsAll;
 
 // ============================================================================
 // Type Guards and Utility Functions
@@ -407,19 +437,19 @@ export type RequestSubscriptionProps = UnifiedRequestSubscriptionProps | Platfor
 
 // Type guards to check which API style is being used
 export function isPlatformRequestProps(
-  props: RequestPurchaseProps | RequestSubscriptionProps
+  props: RequestPurchasePropsWithLegacy | RequestSubscriptionPropsWithLegacy
 ): props is PlatformRequestPurchaseProps | PlatformRequestSubscriptionProps {
   return 'ios' in props || 'android' in props;
 }
 
 export function isUnifiedRequestProps(
-  props: RequestPurchaseProps | RequestSubscriptionProps
+  props: RequestPurchasePropsWithLegacy | RequestSubscriptionPropsWithLegacy
 ): props is UnifiedRequestPurchaseProps | UnifiedRequestSubscriptionProps {
   return 'sku' in props || 'skus' in props;
 }
 
 export function isLegacyRequestProps(
-  props: RequestPurchaseProps | RequestSubscriptionProps
+  props: RequestPurchasePropsWithLegacy | RequestSubscriptionPropsWithLegacy
 ): props is LegacyRequestPurchaseProps | LegacyRequestSubscriptionProps {
   return 'productId' in props || 'productIds' in props;
 }

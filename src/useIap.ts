@@ -28,6 +28,8 @@ import {
   PurchaseResult,
   SubscriptionProduct,
   SubscriptionPurchase,
+  RequestPurchaseProps,
+  RequestSubscriptionProps,
 } from './ExpoIap.types';
 
 type UseIap = {
@@ -53,7 +55,7 @@ type UseIap = {
   getProducts: (skus: string[]) => Promise<void>;
   getSubscriptions: (skus: string[]) => Promise<void>;
   requestPurchase: (params: {
-    request: any;
+    request: RequestPurchaseProps | RequestSubscriptionProps;
     type?: 'inapp' | 'subs';
   }) => Promise<any>;
   validateReceipt: (

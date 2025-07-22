@@ -14,8 +14,8 @@ import {
   Purchase,
   PurchaseError,
   PurchaseResult,
-  RequestSubscriptionProps,
-  RequestPurchaseProps,
+  RequestSubscriptionPropsWithLegacy,
+  RequestPurchasePropsWithLegacy,
   SubscriptionProduct,
   SubscriptionPurchase,
   isPlatformRequestProps,
@@ -28,6 +28,7 @@ import {
   PaymentDiscount,
 } from './types/ExpoIapIos.types';
 
+// Export all types
 export * from './ExpoIap.types';
 export * from './modules/android';
 export * from './modules/ios';
@@ -232,14 +233,16 @@ const offerToRecordIos = (
   };
 };
 
+
 // Define discriminated union with explicit type parameter
+// Using legacy types internally for backward compatibility
 type PurchaseRequest =
   | {
-      request: RequestPurchaseProps;
+      request: RequestPurchasePropsWithLegacy;
       type?: 'inapp';
     }
   | {
-      request: RequestSubscriptionProps;
+      request: RequestSubscriptionPropsWithLegacy;
       type: 'subs';
     };
 
@@ -247,7 +250,7 @@ type PurchaseRequest =
  * Helper to normalize request props to platform-specific format
  */
 const normalizeRequestProps = (
-  request: RequestPurchaseProps | RequestSubscriptionProps,
+  request: RequestPurchasePropsWithLegacy | RequestSubscriptionPropsWithLegacy,
   platform: 'ios' | 'android',
 ): any => {
   // If it's already platform-specific format
@@ -457,7 +460,7 @@ export const requestPurchase = (
  * ```
  */
 export const requestSubscription = async (
-  request: RequestSubscriptionProps,
+  request: RequestSubscriptionPropsWithLegacy,
 ): Promise<SubscriptionPurchase | SubscriptionPurchase[] | null | void> => {
   console.warn(
     "`requestSubscription` is deprecated and will be removed in version 3.0.0. Use `requestPurchase({ request, type: 'subs' })` instead.",
