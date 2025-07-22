@@ -1,5 +1,4 @@
 // External dependencies
-import {Platform} from 'react-native';
 
 // Internal modules
 import {purchaseUpdatedListener} from '..';
@@ -36,9 +35,6 @@ export type TransactionEvent = {
 export const transactionUpdatedIos = (
   listener: (event: TransactionEvent) => void,
 ) => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('This method is only available on iOS');
-  }
 
   const isProductPurchase = (item: unknown): item is ProductPurchase => {
     return (
@@ -97,9 +93,6 @@ export function isProductIos<T extends {platform?: string}>(
  * @platform iOS
  */
 export const syncIOS = (): Promise<null> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('syncIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.sync();
 };
 
@@ -113,9 +106,6 @@ export const syncIOS = (): Promise<null> => {
  * @platform iOS
  */
 export const isEligibleForIntroOfferIOS = (groupID: string): Promise<boolean> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('isEligibleForIntroOfferIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.isEligibleForIntroOffer(groupID);
 };
 
@@ -129,9 +119,6 @@ export const isEligibleForIntroOfferIOS = (groupID: string): Promise<boolean> =>
  * @platform iOS
  */
 export const subscriptionStatusIOS = (sku: string): Promise<ProductStatusIos[]> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('subscriptionStatusIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.subscriptionStatus(sku);
 };
 
@@ -145,9 +132,6 @@ export const subscriptionStatusIOS = (sku: string): Promise<ProductStatusIos[]> 
  * @platform iOS
  */
 export const currentEntitlementIOS = (sku: string): Promise<ProductPurchase> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('currentEntitlementIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.currentEntitlement(sku);
 };
 
@@ -161,9 +145,6 @@ export const currentEntitlementIOS = (sku: string): Promise<ProductPurchase> => 
  * @platform iOS
  */
 export const latestTransactionIOS = (sku: string): Promise<ProductPurchase> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('latestTransactionIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.latestTransaction(sku);
 };
 
@@ -178,9 +159,6 @@ export const latestTransactionIOS = (sku: string): Promise<ProductPurchase> => {
  */
 type RefundRequestStatus = 'success' | 'userCancelled';
 export const beginRefundRequestIOS = (sku: string): Promise<RefundRequestStatus> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('beginRefundRequestIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.beginRefundRequest(sku);
 };
 
@@ -195,9 +173,6 @@ export const beginRefundRequestIOS = (sku: string): Promise<RefundRequestStatus>
  * @platform iOS
  */
 export const showManageSubscriptionsIOS = (): Promise<null> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('showManageSubscriptionsIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.showManageSubscriptions();
 };
 
@@ -212,9 +187,6 @@ export const showManageSubscriptionsIOS = (): Promise<null> => {
  * @returns {Promise<string>} Base64 encoded receipt data
  */
 export const getReceiptIOS = (): Promise<string> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('This method is only available on iOS');
-  }
   return ExpoIapModule.getReceiptData();
 };
 
@@ -229,9 +201,6 @@ export const getReceiptIOS = (): Promise<string> => {
  * @platform iOS
  */
 export const isTransactionVerifiedIOS = (sku: string): Promise<boolean> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('isTransactionVerifiedIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.isTransactionVerified(sku);
 };
 
@@ -246,9 +215,6 @@ export const isTransactionVerifiedIOS = (sku: string): Promise<boolean> => {
  * @platform iOS
  */
 export const getTransactionJwsIOS = (sku: string): Promise<string> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('getTransactionJwsIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.getTransactionJws(sku);
 };
 
@@ -275,10 +241,6 @@ export const validateReceiptIOS = async (
   jwsRepresentation: string;
   latestTransaction?: ProductPurchase;
 }> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('This method is only available on iOS');
-  }
-
   const result = await ExpoIapModule.validateReceiptIOS(sku);
   return result;
 };
@@ -295,9 +257,6 @@ export const validateReceiptIOS = async (
  * @platform iOS
  */
 export const presentCodeRedemptionSheetIOS = (): Promise<boolean> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('presentCodeRedemptionSheetIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.presentCodeRedemptionSheet();
 };
 
@@ -311,9 +270,6 @@ export const presentCodeRedemptionSheetIOS = (): Promise<boolean> => {
  * @platform iOS
  */
 export const getAppTransactionIOS = (): Promise<AppTransactionIOS | null> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('getAppTransactionIOS: This method is only available on iOS');
-  }
   return ExpoIapModule.getAppTransaction();
 };
 
