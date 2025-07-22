@@ -61,19 +61,18 @@ useEffect(() => {
 ```tsx
 const handlePurchase = async (productId) => {
   try {
-    // Platform-specific purchase requests
-    if (Platform.OS === 'ios') {
-      await requestPurchase({
-        request: {
+    // Platform-specific purchase requests (v2.7.0+)
+    await requestPurchase({
+      request: {
+        ios: {
           sku: productId,
           andDangerouslyFinishTransactionAutomaticallyIOS: false,
         },
-      });
-    } /* Platform.OS === "android" */ else {
-      await requestPurchase({
-        request: {skus: [productId]},
-      });
-    }
+        android: {
+          skus: [productId],
+        },
+      },
+    });
   } catch (error) {
     console.error('Purchase failed:', error);
   }
@@ -126,19 +125,18 @@ This implementation includes:
 ### Platform Differences
 
 ```tsx
-// iOS vs Android purchase requests
-if (Platform.OS === 'ios') {
-  await requestPurchase({
-    request: {
+// Platform-specific purchase requests (v2.7.0+)
+await requestPurchase({
+  request: {
+    ios: {
       sku: productId,
       andDangerouslyFinishTransactionAutomaticallyIOS: false, // Important!
     },
-  });
-} /* Platform.OS === "android" */ else {
-  await requestPurchase({
-    request: {skus: [productId]}, // Android uses array
-  });
-}
+    android: {
+      skus: [productId], // Android uses array
+    },
+  },
+});
 ```
 
 ### Consumable vs Non-Consumable
@@ -330,22 +328,20 @@ export default function Store() {
     try {
       console.log('Requesting purchase for:', productId);
 
-      // Platform-specific purchase requests
-      // iOS and Android have different parameter requirements
-      if (Platform.OS === 'ios') {
-        await requestPurchase({
-          request: {
+      // Platform-specific purchase requests (v2.7.0+)
+      await requestPurchase({
+        request: {
+          ios: {
             sku: productId,
             // Important: Set to false to manually handle transaction finishing
             // This allows proper receipt validation before finishing the transaction
             andDangerouslyFinishTransactionAutomaticallyIOS: false,
           },
-        });
-      } /* Platform.OS === "android" */ else {
-        await requestPurchase({
-          request: {skus: [productId]},
-        });
-      }
+          android: {
+            skus: [productId],
+          },
+        },
+      });
     } catch (error) {
       console.error('Purchase request failed:', error);
       Alert.alert('Error', 'Failed to initiate purchase');
@@ -679,19 +675,18 @@ const SUBSCRIPTION_IDS = [
 ### 2. Platform-Specific Purchase Handling
 
 ```tsx
-// Platform-specific purchase requests
-if (Platform.OS === 'ios') {
-  await requestPurchase({
-    request: {
+// Platform-specific purchase requests (v2.7.0+)
+await requestPurchase({
+  request: {
+    ios: {
       sku: productId,
       andDangerouslyFinishTransactionAutomaticallyIOS: false,
     },
-  });
-} else {
-  await requestPurchase({
-    request: {skus: [productId]},
-  });
-}
+    android: {
+      skus: [productId],
+    },
+  },
+});
 ```
 
 ### 3. Receipt Validation

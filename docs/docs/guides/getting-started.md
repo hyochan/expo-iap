@@ -135,17 +135,13 @@ import {Platform} from 'react-native';
 
 const handlePurchase = async (productId: string) => {
   try {
-    if (Platform.OS === 'ios') {
-      // iOS: single product purchase
-      await requestPurchase({
-        request: {sku: productId}
-      });
-    } else if (Platform.OS === 'android') {
-      // Android: array of products (even for single purchase)
-      await requestPurchase({
-        request: {skus: [productId]}
-      });
-    }
+    // Platform-specific purchase request (v2.7.0+)
+    await requestPurchase({
+      request: {
+        ios: { sku: productId },
+        android: { skus: [productId] }
+      }
+    });
   } catch (error) {
     console.error('Purchase failed:', error);
   }

@@ -305,18 +305,18 @@ export default function SubscriptionManager() {
       console.log('Requesting subscription:', productId);
 
       // Platform-specific subscription purchase requests
-      if (Platform.OS === 'ios') {
-        await requestPurchase({
-          request: {
+      await requestPurchase({
+        request: {
+          ios: {
             sku: productId,
             andDangerouslyFinishTransactionAutomaticallyIOS: false,
           },
-        });
-      } /* Platform.OS === "android" */ else {
-        await requestPurchase({
-          request: {skus: [productId]},
-        });
-      }
+          android: {
+            skus: [productId],
+          },
+        },
+        type: 'subs',
+      });
     } catch (error) {
       console.error('Subscription request failed:', error);
       Alert.alert('Error', 'Failed to start subscription purchase');
@@ -663,40 +663,22 @@ const styles = StyleSheet.create({
 
 **Important**: iOS and Android have different parameter structures for subscription purchases:
 
-**iOS Structure:**
+**Unified Structure (v2.7.0+):**
 
 ```tsx
+// New API - no Platform.OS checks needed!
 await requestPurchase({
   request: {
-    sku: productId,
-    andDangerouslyFinishTransactionAutomaticallyIOS: false,
-  },
-});
-```
-
-**Android Structure:**
-
-```tsx
-await requestPurchase({
-  request: {skus: [productId]},
-});
-```
-
-**Platform-specific Implementation:**
-
-```tsx
-if (Platform.OS === 'ios') {
-  await requestPurchase({
-    request: {
+    ios: {
       sku: productId,
       andDangerouslyFinishTransactionAutomaticallyIOS: false,
     },
-  });
-} else {
-  await requestPurchase({
-    request: {skus: [productId]},
-  });
-}
+    android: {
+      skus: [productId],
+    },
+  },
+  type: 'subs',
+});
 ```
 
 ### Receipt Validation Differences

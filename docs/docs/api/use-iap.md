@@ -248,7 +248,10 @@ interface UseIAPOptions {
   const buyProduct = async (productId: string) => {
     try {
       await requestPurchase({
-        request: {sku: productId},
+        request: {
+          ios: { sku: productId },
+          android: { skus: [productId] }
+        },
       });
     } catch (error) {
       console.error('Purchase request failed:', error);
@@ -353,11 +356,12 @@ const IOSPurchaseExample = () => {
   });
 
   const buyProduct = (product: Product) => {
-    if (product.platform === 'ios') {
-      requestPurchase({
-        request: {sku: product.id},
-      });
-    }
+    requestPurchase({
+      request: {
+        ios: { sku: product.id },
+        android: { skus: [product.id] }
+      },
+    });
   };
 
   return (
@@ -388,11 +392,12 @@ const AndroidPurchaseExample = () => {
   });
 
   const buyProduct = (product: Product) => {
-    if (product.platform === 'android') {
-      requestPurchase({
-        request: {skus: [product.id]},
-      });
-    }
+    requestPurchase({
+      request: {
+        ios: { sku: product.id },
+        android: { skus: [product.id] }
+      },
+    });
   };
 
   return (
@@ -459,7 +464,12 @@ const {requestPurchase} = useIAP({
    const buyProduct = async (productId: string) => {
      setLoading(true);
      try {
-       await requestPurchase({request: {sku: productId}});
+       await requestPurchase({
+         request: {
+           ios: { sku: productId },
+           android: { skus: [productId] }
+         }
+       });
      } finally {
        setLoading(false);
      }
