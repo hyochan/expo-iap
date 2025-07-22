@@ -13,12 +13,12 @@ import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.ConsumeParams
 import com.android.billingclient.api.GetBillingConfigParams
 import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.Purchase
-import com.android.billingclient.api.PurchaseHistoryRecord
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryPurchaseHistoryParams
 import com.android.billingclient.api.QueryPurchasesParams
+import com.android.billingclient.api.PendingPurchasesParams
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import expo.modules.kotlin.Promise
@@ -53,6 +53,21 @@ class ExpoIapModule :
                     "responseCode" to responseCode,
                     "debugMessage" to billingResult.debugMessage,
                 )
+            // Add sub-response code if available (v8.0.0+)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                try {
+                    val subResponseCode = billingResult.javaClass.getMethod("getSubResponseCode").invoke(billingResult) as? Int
+                    if (subResponseCode != null && subResponseCode != 0) {
+                        error["subResponseCode"] = subResponseCode
+                        // Check for specific sub-response codes
+                        if (subResponseCode == 1) { // PAYMENT_DECLINED_DUE_TO_INSUFFICIENT_FUNDS
+                            error["subResponseMessage"] = "Payment declined due to insufficient funds"
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Method doesn't exist in older versions, ignore
+                }
+            }
             val errorData = PlayUtils.getBillingResponseData(responseCode)
             error["code"] = errorData.code
             error["message"] = errorData.message
@@ -158,7 +173,7 @@ class ExpoIapModule :
                             .setProductList(skuList)
                             .build()
 
-                    billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+                    billingClient.queryProductDetailsAsync(params) { billingResult: BillingResult, productDetailsResult: QueryProductDetailsResult ->
                         if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                             promise.reject(
                                 IapErrorCode.E_QUERY_PRODUCT,
@@ -168,6 +183,8 @@ class ExpoIapModule :
                             return@queryProductDetailsAsync
                         }
 
+                        val productDetailsList = productDetailsResult.productDetailsList ?: emptyList()
+                        
                         val items =
                             productDetailsList.map { productDetails ->
                                 skus[productDetails.productId] = productDetails
@@ -269,45 +286,8 @@ class ExpoIapModule :
                 }
             }
 
-            AsyncFunction("getPurchaseHistoryByType") { type: String, promise: Promise ->
-                ensureConnection(promise) { billingClient ->
-                    billingClient.queryPurchaseHistoryAsync(
-                        QueryPurchaseHistoryParams
-                            .newBuilder()
-                            .setProductType(
-                                if (type == "subs") BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP,
-                            ).build(),
-                    ) { billingResult: BillingResult, purchaseHistoryRecordList: List<PurchaseHistoryRecord>? ->
-
-                        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                            PlayUtils.rejectPromiseWithBillingError(
-                                promise,
-                                billingResult.responseCode,
-                            )
-                            return@queryPurchaseHistoryAsync
-                        }
-
-                        Log.d(TAG, purchaseHistoryRecordList.toString())
-                        val items = mutableListOf<Map<String, Any?>>()
-                        purchaseHistoryRecordList?.forEach { purchase ->
-                            val item =
-                                mutableMapOf<String, Any?>(
-                                    "id" to purchase.products.firstOrNull() as Any?,
-                                    "ids" to purchase.products,
-                                    "transactionDate" to purchase.purchaseTime.toDouble(),
-                                    "transactionReceipt" to purchase.originalJson,
-                                    "purchaseTokenAndroid" to purchase.purchaseToken,
-                                    "dataAndroid" to purchase.originalJson,
-                                    "signatureAndroid" to purchase.signature,
-                                    "developerPayload" to purchase.developerPayload,
-                                    "platform" to "android",
-                                )
-                            items.add(item)
-                        }
-                        promise.resolve(items)
-                    }
-                }
-            }
+            // getPurchaseHistoryByType removed in Google Play Billing Library v8
+            // Use getAvailableItemsByType instead to get active purchases
 
             AsyncFunction("buyItemByType") { params: Map<String, Any?>, promise: Promise ->
                 val type = params["type"] as String
@@ -425,7 +405,23 @@ class ExpoIapModule :
 
                     if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                         val errorData = PlayUtils.getBillingResponseData(billingResult.responseCode)
-                        promise.reject(errorData.code, billingResult.debugMessage, null)
+                        var errorMessage = billingResult.debugMessage ?: errorData.message
+                        
+                        // Check for sub-response codes (v8.0.0+)
+                        try {
+                            val subResponseCode = billingResult.javaClass.getMethod("getSubResponseCode").invoke(billingResult) as? Int
+                            if (subResponseCode != null && subResponseCode != 0) {
+                                if (subResponseCode == 1) { // PAYMENT_DECLINED_DUE_TO_INSUFFICIENT_FUNDS
+                                    errorMessage = "$errorMessage (Payment declined due to insufficient funds)"
+                                } else {
+                                    errorMessage = "$errorMessage (Sub-response code: $subResponseCode)"
+                                }
+                            }
+                        } catch (e: Exception) {
+                            // Method doesn't exist in older versions, ignore
+                        }
+                        
+                        promise.reject(errorData.code, errorMessage, null)
                         return@ensureConnection
                     }
                 }
@@ -560,7 +556,12 @@ class ExpoIapModule :
             BillingClient
                 .newBuilder(context)
                 .setListener(this)
-                .enablePendingPurchases()
+                .enablePendingPurchases(
+                    PendingPurchasesParams.newBuilder()
+                        .enableOneTimeProducts()
+                        .build()
+                )
+                .enableAutoServiceReconnection()
                 .build()
 
         billingClientCache?.startConnection(

@@ -41,10 +41,18 @@ android {
   lintOptions {
     abortOnError false
   }
+  kotlinOptions {
+    jvmTarget = "17"
+    freeCompilerArgs += ["-Xskip-metadata-version-check"]
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7"
-    implementation "com.android.billingclient:billing-ktx:7.0.0"
+    implementation "com.android.billingclient:billing-ktx:8.0.0"
     implementation "com.google.android.gms:play-services-base:18.1.0"
 }

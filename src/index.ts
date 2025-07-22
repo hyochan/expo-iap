@@ -186,11 +186,12 @@ export const getPurchaseHistories = ({
         );
       },
       android: async () => {
-        const products = await ExpoIapModule.getPurchaseHistoryByType('inapp');
-        const subscriptions = await ExpoIapModule.getPurchaseHistoryByType(
-          'subs',
+        // getPurchaseHistoryByType was removed in Google Play Billing Library v8
+        // Android doesn't provide purchase history anymore, only active purchases
+        console.warn(
+          'getPurchaseHistories is not supported on Android with Google Play Billing Library v8. Use getAvailablePurchases instead to get active purchases.',
         );
-        return products.concat(subscriptions);
+        return [];
       },
     }) || (() => Promise.resolve([]))
   )();
