@@ -21,6 +21,24 @@ import {
  * This example demonstrates how to implement offer code redemption
  * functionality for both iOS and Android platforms.
  */
+
+// Platform-specific content helpers
+const isIOS = Platform.OS === 'ios';
+
+const platformContent = {
+  buttonText: isIOS ? '🎁 Redeem Offer Code' : '🎁 Open Play Store',
+  buttonSubtext: isIOS ? 'Enter code in-app' : 'Redeem in Play Store',
+  howItWorks: isIOS
+    ? '• Tap the button below to open the redemption sheet\n• Enter your offer code\n• The system will validate and apply the code\n• Your purchase will appear in purchase history'
+    : '• Tap the button to open Google Play Store\n• Enter your promo code in the Play Store\n• Complete the redemption process\n• Return to this app to see your purchase',
+  platformNote: isIOS
+    ? 'iOS supports in-app code redemption via StoreKit'
+    : 'Android requires redemption through Google Play Store',
+  testingInfo: isIOS
+    ? '• Use TestFlight or App Store Connect to generate test codes\n• Test on real devices (not simulators)\n• Sandbox environment supports offer codes'
+    : '• Generate promo codes in Google Play Console\n• Test with your Google account\n• Ensure app is properly configured for IAP',
+};
+
 export default function OfferCodeScreen() {
   const {connected} = useIAP();
   const [isRedeeming, setIsRedeeming] = useState(false);
@@ -34,7 +52,7 @@ export default function OfferCodeScreen() {
     setIsRedeeming(true);
 
     try {
-      if (Platform.OS === 'ios') {
+      if (isIOS) {
         // Present native iOS redemption sheet
         const result = await presentCodeRedemptionSheetIOS();
         if (result) {
@@ -43,7 +61,7 @@ export default function OfferCodeScreen() {
             'Code redemption sheet presented. After successful redemption, the purchase will appear in your purchase history.',
           );
         }
-      } else if (Platform.OS === 'android') {
+      } else {
         // Open Play Store for Android
         await openRedeemOfferCodeAndroid();
         Alert.alert(
@@ -69,11 +87,7 @@ export default function OfferCodeScreen() {
         
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>How it works:</Text>
-          <Text style={styles.infoText}>
-            {Platform.OS === 'ios'
-              ? '• Tap the button below to open the redemption sheet\n• Enter your offer code\n• The system will validate and apply the code\n• Your purchase will appear in purchase history'
-              : '• Tap the button to open Google Play Store\n• Enter your promo code in the Play Store\n• Complete the redemption process\n• Return to this app to see your purchase'}
-          </Text>
+          <Text style={styles.infoText}>{platformContent.howItWorks}</Text>
         </View>
 
         <TouchableOpacity
@@ -88,32 +102,20 @@ export default function OfferCodeScreen() {
             <ActivityIndicator color="white" />
           ) : (
             <>
-              <Text style={styles.buttonText}>
-                {Platform.OS === 'ios' ? '🎁 Redeem Offer Code' : '🎁 Open Play Store'}
-              </Text>
-              <Text style={styles.buttonSubtext}>
-                {Platform.OS === 'ios' ? 'Enter code in-app' : 'Redeem in Play Store'}
-              </Text>
+              <Text style={styles.buttonText}>{platformContent.buttonText}</Text>
+              <Text style={styles.buttonSubtext}>{platformContent.buttonSubtext}</Text>
             </>
           )}
         </TouchableOpacity>
 
         <View style={styles.platformNote}>
-          <Text style={styles.noteTitle}>Platform: {Platform.OS}</Text>
-          <Text style={styles.noteText}>
-            {Platform.OS === 'ios'
-              ? 'iOS supports in-app code redemption via StoreKit'
-              : 'Android requires redemption through Google Play Store'}
-          </Text>
+          <Text style={styles.noteTitle}>Platform: {isIOS ? 'ios' : 'android'}</Text>
+          <Text style={styles.noteText}>{platformContent.platformNote}</Text>
         </View>
 
         <View style={styles.testingSection}>
           <Text style={styles.sectionTitle}>Testing Offer Codes</Text>
-          <Text style={styles.testingText}>
-            {Platform.OS === 'ios'
-              ? '• Use TestFlight or App Store Connect to generate test codes\n• Test on real devices (not simulators)\n• Sandbox environment supports offer codes'
-              : '• Generate promo codes in Google Play Console\n• Test with your Google account\n• Ensure app is properly configured for IAP'}
-          </Text>
+          <Text style={styles.testingText}>{platformContent.testingInfo}</Text>
         </View>
 
         <View style={styles.statusSection}>

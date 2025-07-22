@@ -75,34 +75,28 @@ export default function SubscriptionFlow() {
       setIsProcessing(true);
       setPurchaseResult('Processing subscription...');
 
-      if (Platform.OS === 'android') {
-        // Find the subscription to get its offer token
-        const subscription = subscriptions.find(sub => sub.id === itemId) as SubscriptionProductAndroid;
-        if (!subscription || !subscription.subscriptionOfferDetails?.length) {
-          throw new Error('No subscription offers available');
-        }
-
-        // Use the first available offer token
-        const firstOffer = subscription.subscriptionOfferDetails[0];
-        const offerToken = firstOffer.offerToken;
-
-        await requestPurchase({
-          request: {
-            skus: [itemId],
-            subscriptionOffers: [{
-              sku: itemId,
-              offerToken: offerToken,
-            }],
+      // Find the subscription to get offer details for Android
+      const subscription = subscriptions.find(sub => sub.id === itemId);
+      
+      // New platform-specific API (v2.7.0+) - no Platform.OS branching needed
+      await requestPurchase({
+        request: {
+          ios: {
+            sku: itemId,
+            appAccountToken: 'user-123',
           },
-          type: 'subs',
-        });
-      } else {
-        // iOS
-        await requestPurchase({
-          request: {sku: itemId, appAccountToken: 'user-123'},
-          type: 'subs',
-        });
-      }
+          android: {
+            skus: [itemId],
+            subscriptionOffers: subscription?.platform === 'android' 
+              ? (subscription as SubscriptionProductAndroid).subscriptionOfferDetails?.map(offer => ({
+                  sku: itemId,
+                  offerToken: offer.offerToken,
+                })) || []
+              : [],
+          }
+        },
+        type: 'subs',
+      });
     } catch (error) {
       setIsProcessing(false);
       const errorMessage =

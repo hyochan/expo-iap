@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {Link} from 'expo-router';
 import {getStorefrontIOS} from 'expo-iap';
-import {Platform} from 'react-native';
 
 /**
  * Example App Landing Page
@@ -14,15 +13,15 @@ export default function Home() {
   const [storefront, setStorefront] = useState<string | null>(null);
 
   useEffect(() => {
-    if (Platform.OS === 'ios') {
-      getStorefrontIOS().then((storefront) => {
+    // getStorefrontIOS already handles platform checks internally
+    getStorefrontIOS()
+      .then((storefront) => {
         setStorefront(storefront);
-      }).catch((error) => {
-        console.warn('Failed to get storefront:', error.message);
+      })
+      .catch((error) => {
+        // Silently fail on non-iOS platforms
+        console.log('Storefront not available:', error.message);
       });
-    } else {
-      console.warn('getStorefrontIOS is not supported on this platform');
-    }
   }, []);
 
   return (

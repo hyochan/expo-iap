@@ -73,10 +73,17 @@ export default function PurchaseFlow() {
       setIsProcessing(true);
       setPurchaseResult('Processing purchase...');
 
-      // Use requestPurchase - the result will be handled by onPurchaseSuccess/onPurchaseError callbacks
+      // New platform-specific API (v2.7.0+) - no Platform.OS branching needed
       await requestPurchase({
-        request:
-          Platform.OS === 'ios' ? {sku: itemId, quantity: 1} : {skus: [itemId]},
+        request: {
+          ios: {
+            sku: itemId,
+            quantity: 1,
+          },
+          android: {
+            skus: [itemId],
+          }
+        },
         type: 'inapp',
       });
     } catch (error) {
