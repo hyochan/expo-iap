@@ -27,20 +27,31 @@ This difference exists because:
 | Method | iOS | Android | Cross-Platform Solution |
 | --- | --- | --- | --- |
 | `requestPurchase()` | Uses `sku: string` | Uses `skus: string[]` | Platform-specific handling required |
-| `requestSubscription()` | Uses `sku: string` | Uses `skus: string[]` + `subscriptionOffers` | Platform-specific handling required |
+| ~~`requestSubscription()`~~ | **Deprecated** | **Deprecated** | Use `requestPurchase()` with `type: 'subs'` |
 
-**💡 Best Practice:** Always check the platform before calling purchase methods:
+**💡 Best Practice:** Use the new platform-specific API (v2.7.0+) to avoid platform checks:
+
+```tsx
+// New API - no Platform.OS checks needed!
+await requestPurchase({
+  request: {
+    ios: { sku: productId },
+    android: { skus: [productId] }
+  },
+  type: 'inapp'
+});
+```
+
+Or if you need to use the legacy API:
 
 ```tsx
 import {Platform} from 'react-native';
 
 if (Platform.OS === 'ios') {
-  // iOS: single product
   await requestPurchase({
     request: {sku: productId}
   });
 } else if (Platform.OS === 'android') {
-  // Android: array of products
   await requestPurchase({
     request: {skus: [productId]}
   });
@@ -215,13 +226,63 @@ const fetchSubscriptions = async () => {
 
 ## requestPurchase()
 
-Initiates a purchase request for a product.
+Initiates a purchase request for products or subscriptions.
 
 > **⚠️ Platform Differences:** 
 > - **iOS**: Can only purchase one product at a time (uses `sku: string`)
 > - **Android**: Can purchase multiple products at once (uses `skus: string[]`)
 
-### Platform-Specific Usage (Recommended)
+### New Platform-Specific API (v2.7.0+) - Recommended
+
+```tsx
+import {requestPurchase} from 'expo-iap';
+
+// Product purchase
+const buyProduct = async (productId: string) => {
+  try {
+    await requestPurchase({
+      request: {
+        ios: {
+          sku: productId,
+          quantity: 1,
+        },
+        android: {
+          skus: [productId],
+        }
+      },
+      type: 'inapp',
+    });
+  } catch (error) {
+    console.error('Purchase failed:', error);
+  }
+};
+
+// Subscription purchase
+const buySubscription = async (subscriptionId: string, subscription?: any) => {
+  try {
+    await requestPurchase({
+      request: {
+        ios: {
+          sku: subscriptionId,
+          appAccountToken: 'user-123',
+        },
+        android: {
+          skus: [subscriptionId],
+          subscriptionOffers: subscription?.subscriptionOfferDetails?.map(offer => ({
+            sku: subscriptionId,
+            offerToken: offer.offerToken,
+          })) || [],
+        }
+      },
+      type: 'subs',
+    });
+  } catch (error) {
+    console.error('Subscription failed:', error);
+  }
+};
+```
+
+### Legacy Platform-Specific Usage
 
 ```tsx
 import {requestPurchase, Platform} from 'expo-iap';
@@ -298,15 +359,36 @@ await requestPurchase({
 
 **Note:** The actual purchase result is delivered through purchase listeners or the `useIAP` hook callbacks, not as a return value.
 
-## requestSubscription()
+## requestSubscription() - Deprecated
 
-Initiates a subscription purchase request.
+> **⚠️ DEPRECATED:** This method is deprecated and will be removed in version 3.0.0. Use `requestPurchase()` with `type: 'subs'` instead.
 
-> **⚠️ Platform Differences:** 
-> - **iOS**: Can only purchase one subscription at a time (uses `sku: string`)
-> - **Android**: Can purchase multiple subscriptions at once (uses `skus: string[]` with `subscriptionOffers`)
+### Migration Guide
 
-### Platform-Specific Usage (Recommended)
+**Old way (deprecated):**
+```tsx
+await requestSubscription({
+  sku: subscriptionId,
+  skus: [subscriptionId],
+  subscriptionOffers: [{sku: subscriptionId, offerToken: 'token'}],
+});
+```
+
+**New way (recommended):**
+```tsx
+await requestPurchase({
+  request: {
+    ios: { sku: subscriptionId },
+    android: { 
+      skus: [subscriptionId],
+      subscriptionOffers: [{sku: subscriptionId, offerToken: 'token'}]
+    }
+  },
+  type: 'subs'
+});
+```
+
+### Legacy Usage (Not Recommended)
 
 ```tsx
 import {requestPurchase, Platform} from 'expo-iap';
@@ -386,7 +468,7 @@ const buySubscription = async (subscriptionId: string) => {
 
 **Returns:** `Promise<SubscriptionPurchase | SubscriptionPurchase[] | null | void>`
 
-> **💡 Recommendation:** Use `requestPurchase()` with `type: 'subs'` instead of `requestSubscription()` for new code.
+> **🚨 Important:** `requestSubscription()` is deprecated and will be removed in v3.0.0. Always use `requestPurchase()` with `type: 'subs'` for subscriptions.
 
 ## finishTransaction()
 

@@ -395,7 +395,35 @@ export default function PurchaseScreen() {
 - **iOS**: Can only purchase one product at a time (single SKU)
 - **Android**: Can purchase multiple products at once (array of SKUs)
 
-This fundamental difference requires platform-specific handling:
+This fundamental difference requires platform-specific handling. Starting from v2.7.0, we provide a cleaner API:
+
+### New Platform-Specific API (v2.7.0+)
+
+```tsx
+import {requestPurchase} from 'expo-iap';
+
+// Cleaner approach with platform-specific parameters
+const handleBuyProduct = async (productId: string) => {
+  try {
+    await requestPurchase({
+      request: {
+        ios: {
+          sku: productId,
+          appAccountToken: 'user-123', // Optional: for server-side validation
+        },
+        android: {
+          skus: [productId],
+          obfuscatedAccountIdAndroid: 'user-123', // Optional: user identifier
+        }
+      }
+    });
+  } catch (err) {
+    console.warn(err.code, err.message);
+  }
+};
+```
+
+### Legacy API (Still Supported)
 
 ```tsx
 import {requestPurchase, Platform} from 'expo-iap';
@@ -421,6 +449,39 @@ const handleBuyProduct = async (productId) => {
 ```
 
 **For subscriptions, the platform differences are even more significant:**
+
+### New Subscription API (v2.7.0+)
+
+```tsx
+const handleBuySubscription = async (subscriptionId: string) => {
+  try {
+    // Find the subscription product to get offer details (Android)
+    const subscription = subscriptions.find((s) => s.id === subscriptionId);
+    
+    await requestPurchase({
+      request: {
+        ios: {
+          sku: subscriptionId,
+          appAccountToken: 'user-123', // Optional: for server-side validation
+        },
+        android: {
+          skus: [subscriptionId],
+          subscriptionOffers: subscription?.subscriptionOfferDetails?.map(offer => ({
+            sku: subscriptionId,
+            offerToken: offer.offerToken,
+          })) || [],
+          obfuscatedAccountIdAndroid: 'user-123', // Optional: user identifier
+        }
+      },
+      type: 'subs',
+    });
+  } catch (err) {
+    console.warn(err.code, err.message);
+  }
+};
+```
+
+### Legacy Subscription API
 
 ```tsx
 const handleBuySubscription = async (subscriptionId: string) => {

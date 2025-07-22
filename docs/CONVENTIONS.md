@@ -98,29 +98,24 @@ Functions that handle platform differences internally do NOT need suffixes.
 #### ✅ Correct: Platform-Specific Functions
 
 ```typescript
-// iOS-only functions
+// iOS-only functions (no Platform.OS check needed in iOS module)
 export const validateReceiptIOS = async (sku: string): Promise<boolean> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('This method is only available on iOS');
-  }
   // iOS implementation
+  return ExpoIapModule.validateReceiptIOS(sku);
 };
 
 export const getStorefrontIOS = async (): Promise<string> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('This method is only available on iOS');
-  }
   return ExpoIapModule.getStorefront();
 };
 
-// Android-only functions
+// Android-only functions (no Platform.OS check needed in Android module)
 export const deepLinkToSubscriptionsAndroid = async (sku?: string): Promise<void> => {
-  if (Platform.OS !== 'android') {
-    throw new Error('This method is only available on Android');
-  }
   // Android implementation
+  return ExpoIapModule.deepLinkToSubscriptions(sku);
 };
 ```
+
+**Note**: Platform-specific modules (ios.ts, android.ts) don't need Platform.OS checks. The main API (index.ts) handles platform routing.
 
 #### ✅ Correct: Cross-Platform Functions
 
@@ -133,8 +128,18 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
   })() || [];
 };
 
-export const requestPurchase = async (sku: string): Promise<Purchase> => {
-  // Handles both platforms internally
+// New v2.7.0+ API - No Platform.OS checks needed!
+export const requestPurchase = async (productId: string): Promise<Purchase> => {
+  return requestPurchase({
+    request: {
+      ios: {
+        sku: productId,
+      },
+      android: {
+        skus: [productId],
+      }
+    }
+  });
 };
 ```
 
@@ -192,35 +197,40 @@ const maxretrycount = 3; // Wrong case
 Always use descriptive error messages and proper error types:
 
 ```typescript
-// ✅ Good
-if (Platform.OS !== 'ios') {
-  throw new Error('getStorefrontIOS: This method is only available on iOS');
+// ✅ Good - Clear error message
+try {
+  await requestPurchase({ request: { ios: { sku: 'invalid' } } });
+} catch (error) {
+  if (error.code === 'E_ITEM_UNAVAILABLE') {
+    console.error('Product not found in store');
+  }
 }
 
-// ❌ Bad
-if (Platform.OS !== 'ios') {
-  throw new Error('Not supported');
+// ❌ Bad - Generic error handling
+try {
+  await requestPurchase({ request: { sku: 'invalid' } });
+} catch (error) {
+  console.error('Error');
 }
 ```
 
-When using platform-specific functions, always handle unsupported platforms:
+When using platform-specific functions, handle errors gracefully:
 
 ```typescript
-// ✅ Good - Show warning for unsupported platforms
+// ✅ Good - Let the function handle platform checks internally
+getStorefrontIOS()
+  .then((storefront) => {
+    console.log('Storefront:', storefront);
+  })
+  .catch((error) => {
+    // Will throw on non-iOS platforms
+    console.log('Storefront not available:', error.message);
+  });
+
+// ❌ Bad - Redundant platform check
 if (Platform.OS === 'ios') {
   getStorefrontIOS().then((storefront) => {
     console.log('Storefront:', storefront);
-  }).catch((error) => {
-    console.warn('Failed to get storefront:', error.message);
-  });
-} else {
-  console.warn('getStorefrontIOS is not supported on this platform');
-}
-
-// ❌ Bad - Silently ignore errors
-if (Platform.OS === 'ios') {
-  getStorefrontIOS().catch(() => {
-    // Ignore error on non-iOS platforms
   });
 }
 ```
@@ -388,9 +398,6 @@ Example:
 ```typescript
 // Step 1: Add new function with correct naming
 export const getStorefrontIOS = async (): Promise<string> => {
-  if (Platform.OS !== 'ios') {
-    throw new Error('This method is only available on iOS');
-  }
   return ExpoIapModule.getStorefront();
 };
 
@@ -404,6 +411,69 @@ export const getStorefront = async (): Promise<string> => {
 };
 ```
 
+## New v2.7.0 API Guidelines
+
+### Platform-Specific Request Structure
+
+Use the new platform-specific API to avoid Platform.OS checks:
+
+```typescript
+// ✅ Good - New v2.7.0 API
+await requestPurchase({
+  request: {
+    ios: {
+      sku: productId,
+      quantity: 1,
+      appAccountToken: 'user-123',
+    },
+    android: {
+      skus: [productId],
+      obfuscatedAccountIdAndroid: 'user-123',
+    }
+  },
+  type: 'inapp'
+});
+
+// ❌ Bad - Old API with Platform.OS checks
+if (Platform.OS === 'ios') {
+  await requestPurchase({
+    request: { sku: productId },
+  });
+} else {
+  await requestPurchase({
+    request: { skus: [productId] },
+  });
+}
+```
+
+### Subscription Purchases
+
+```typescript
+// ✅ Good - Unified subscription API
+await requestPurchase({
+  request: {
+    ios: {
+      sku: subscriptionId,
+      appAccountToken: 'user-123',
+    },
+    android: {
+      skus: [subscriptionId],
+      subscriptionOffers: [{
+        sku: subscriptionId,
+        offerToken: offer.offerToken,
+      }],
+    }
+  },
+  type: 'subs'
+});
+
+// ❌ Bad - Using deprecated requestSubscription
+await requestSubscription({
+  sku: subscriptionId,
+  skus: [subscriptionId],
+});
+```
+
 ## Benefits
 
 Following these conventions provides:
@@ -414,3 +484,4 @@ Following these conventions provides:
 4. **Documentation**: Self-documenting code
 5. **Platform Safety**: Prevents platform-specific bugs
 6. **Developer Experience**: Easier onboarding and collaboration
+7. **No Platform Checks**: New API eliminates Platform.OS branching
