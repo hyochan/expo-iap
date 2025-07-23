@@ -41,6 +41,98 @@ describe('iOS Functions Tests', () => {
     });
   });
 
+  describe('getAppTransactionIOS Tests', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call getAppTransactionIOS successfully', async () => {
+      const mockAppTransaction: ExpoIap.AppTransactionIOS = {
+        appTransactionID: 'test-transaction-id',
+        bundleID: 'com.example.testapp',
+        appVersion: '2.0.0',
+        originalAppVersion: '1.0.0',
+        originalPurchaseDate: 1234567890000,
+        deviceVerification: 'device-verification-data',
+        deviceVerificationNonce: 'nonce-value',
+        environment: 'Production',
+        signedDate: 1234567900000,
+        appID: 123456789,
+        appVersionID: 987654321,
+        originalPlatform: 'iOS',
+        preorderDate: undefined,
+      };
+
+      (ExpoIap.getAppTransactionIOS as jest.Mock).mockResolvedValue(
+        mockAppTransaction,
+      );
+
+      const result = await ExpoIap.getAppTransactionIOS();
+
+      expect(ExpoIap.getAppTransactionIOS).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockAppTransaction);
+      expect(result?.appTransactionID).toBe('test-transaction-id');
+      expect(result?.environment).toBe('Production');
+    });
+
+    it('should handle null response from getAppTransactionIOS', async () => {
+      (ExpoIap.getAppTransactionIOS as jest.Mock).mockResolvedValue(null);
+
+      const result = await ExpoIap.getAppTransactionIOS();
+
+      expect(ExpoIap.getAppTransactionIOS).toHaveBeenCalledTimes(1);
+      expect(result).toBeNull();
+    });
+
+    it('should handle errors from getAppTransactionIOS', async () => {
+      const mockError = new Error('iOS 16.0+ required');
+      (ExpoIap.getAppTransactionIOS as jest.Mock).mockRejectedValue(mockError);
+
+      await expect(ExpoIap.getAppTransactionIOS()).rejects.toThrow(
+        'iOS 16.0+ required',
+      );
+      expect(ExpoIap.getAppTransactionIOS).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle SDK version error', async () => {
+      const sdkError = new Error(
+        'getAppTransaction requires Xcode 15.0+ with iOS 16.0 SDK for compilation',
+      );
+      (ExpoIap.getAppTransactionIOS as jest.Mock).mockRejectedValue(sdkError);
+
+      await expect(ExpoIap.getAppTransactionIOS()).rejects.toThrow(
+        'getAppTransaction requires Xcode 15.0+ with iOS 16.0 SDK for compilation',
+      );
+    });
+
+    it('should handle deprecated getAppTransaction function', async () => {
+      const mockTransaction: ExpoIap.AppTransactionIOS = {
+        appTransactionID: 'deprecated-test',
+        bundleID: 'com.example.app',
+        appVersion: '1.0.0',
+        originalAppVersion: '1.0.0',
+        originalPurchaseDate: Date.now(),
+        deviceVerification: 'verification',
+        deviceVerificationNonce: 'nonce',
+        environment: 'Sandbox',
+        signedDate: Date.now(),
+        appID: 123456,
+        appVersionID: 789012,
+        originalPlatform: 'iOS',
+      };
+
+      (ExpoIap.getAppTransaction as jest.Mock).mockResolvedValue(
+        mockTransaction,
+      );
+
+      const result = await ExpoIap.getAppTransaction();
+
+      expect(ExpoIap.getAppTransaction).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockTransaction);
+      expect(result?.environment).toBe('Sandbox');
+    });
+  });
+
   describe('Type Exports', () => {
     it('should have proper type structure for AppTransactionIOS', () => {
       // Type checking through object creation
