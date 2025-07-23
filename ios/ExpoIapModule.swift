@@ -269,7 +269,6 @@ public class ExpoIapModule: Module {
                 }
                 
                 var result: [String: Any?] = [
-                    "appTransactionID": appTransaction.appTransactionID,
                     "bundleID": appTransaction.bundleID,
                     "appVersion": appTransaction.appVersion,
                     "originalAppVersion": appTransaction.originalAppVersion,
@@ -284,6 +283,7 @@ public class ExpoIapModule: Module {
                 ]
                 
                 if #available(iOS 18.4, *) {
+                    result["appTransactionID"] = appTransaction.appTransactionID
                     result["originalPlatform"] = appTransaction.originalPlatform.rawValue
                 }
                 

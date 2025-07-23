@@ -142,7 +142,8 @@ export type ProductPurchaseIos = PurchaseBase & {
 };
 
 export type AppTransactionIOS = {
-  appTransactionID: string;
+  appTransactionID?: string; // Only available in iOS 18.4+
+  originalPlatform?: string; // Only available in iOS 18.4+
   bundleID: string;
   appVersion: string;
   originalAppVersion: string;
@@ -153,6 +154,5 @@ export type AppTransactionIOS = {
   signedDate: number;
   appID?: number;
   appVersionID?: number;
-  originalPlatform?: string; // Only available in iOS 18.4+
   preorderDate?: number;
 };
