@@ -8,7 +8,7 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
-import {requestPurchase, useIAP} from '../../src';
+import {requestPurchase, useIAP, getAppTransactionIOS} from '../../src';
 import type {
   Product,
   ProductPurchase,
@@ -196,6 +196,25 @@ export default function PurchaseFlow() {
           {'\n'}• CPK React Native compliance
         </Text>
       </View>
+      
+      {Platform.OS === 'ios' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Test iOS 16.0 Feature</Text>
+          <TouchableOpacity
+            style={styles.testButton}
+            onPress={async () => {
+              try {
+                const appTransaction = await getAppTransactionIOS();
+                Alert.alert('Success', `App Transaction: ${JSON.stringify(appTransaction)}`);
+              } catch (error: any) {
+                Alert.alert('Error', error.message || 'Failed to get app transaction');
+              }
+            }}
+          >
+            <Text style={styles.testButtonText}>Test getAppTransaction</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -338,5 +357,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0066cc',
     lineHeight: 20,
+  },
+  testButton: {
+    backgroundColor: '#FF6B6B',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  testButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

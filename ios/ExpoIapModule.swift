@@ -257,6 +257,7 @@ public class ExpoIapModule: Module {
 
         AsyncFunction("getAppTransaction") { () async throws -> [String: Any?]? in
             if #available(iOS 16.0, *) {
+                #if compiler(>=5.7)
                 let verificationResult = try await AppTransaction.shared
                 
                 let appTransaction: AppTransaction
@@ -287,6 +288,13 @@ public class ExpoIapModule: Module {
                 }
                 
                 return result
+                #else
+                throw Exception(
+                    name: "ExpoIapModule",
+                    description: "getAppTransaction requires Xcode 15.0+ with iOS 16.0 SDK for compilation",
+                    code: IapErrorCode.unknown
+                )
+                #endif
             } else {
                 throw Exception(
                     name: "ExpoIapModule",

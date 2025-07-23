@@ -130,6 +130,11 @@ const fetchStorefront = async () => {
 
 Gets app transaction information for iOS apps (iOS 16.0+). AppTransaction represents the initial purchase that unlocked the app, useful for premium apps or apps that were previously paid.
 
+> **⚠️ Important Requirements:**
+> - **Runtime:** iOS 16.0 or later
+> - **Build Environment:** Xcode 15.0+ with iOS 16.0 SDK
+> - If built with older SDK versions, the method will throw an error
+
 ```tsx
 import {getAppTransaction} from 'expo-iap';
 

@@ -264,10 +264,15 @@ export const presentCodeRedemptionSheetIOS = (): Promise<boolean> => {
  * Get app transaction information (iOS 16.0+).
  * AppTransaction represents the initial purchase that unlocked the app.
  * 
+ * NOTE: This function requires:
+ * - iOS 16.0 or later at runtime
+ * - Xcode 15.0+ with iOS 16.0 SDK for compilation
+ * 
  * @returns Promise resolving to the app transaction information or null if not available
- * @throws Error if called on non-iOS platform or iOS version < 16.0
+ * @throws Error if called on non-iOS platform, iOS version < 16.0, or compiled with older SDK
  * 
  * @platform iOS
+ * @since iOS 16.0
  */
 export const getAppTransactionIOS = (): Promise<AppTransactionIOS | null> => {
   return ExpoIapModule.getAppTransaction();
