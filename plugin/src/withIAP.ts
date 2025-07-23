@@ -34,7 +34,7 @@ const modifyAppBuildGradle = (gradle: string): string => {
   let modified = gradle;
 
   // Add billing library dependencies to app-level build.gradle
-  const billingDep = `    implementation "com.android.billingclient:billing-ktx:7.0.0"`;
+  const billingDep = `    implementation "com.android.billingclient:billing-ktx:8.0.0"`;
   const gmsDep = `    implementation "com.google.android.gms:play-services-base:18.1.0"`;
 
   let hasAddedDependency = false;
