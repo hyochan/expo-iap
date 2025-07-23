@@ -29,6 +29,27 @@ The `expo-iap` module has been migrated from [react-native-iap](https://github.c
 npx expo install expo-iap
 ```
 
+### Android Configuration
+
+**Important:** For Android, `expo-iap` uses Google Play Billing Library v8.0.0 which requires Kotlin 2.0+. Since `expo-modules-core` doesn't support Kotlin v2 yet, you need to configure your project with `expo-build-properties`:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.0.21"
+          }
+        }
+      ]
+    ]
+  }
+}
+```
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details on:
