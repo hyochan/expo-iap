@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.7.5] - 2025-07-24
+
+### Added
+- iOS promoted product support for App Store promoted purchases
+- `promotedProductListenerIOS()` listener for handling promoted product events  
+- `getPromotedProductIOS()` method to get promoted product details
+- `buyPromotedProductIOS()` method to complete promoted product purchases
+- `promotedProductIOS` state in useIAP hook for promoted product data
+- `onPromotedProductIOS` callback option in useIAP hook
+
+### Changed
+- Promoted product listener now passes full Product object instead of just productId string
+- Updated all promoted product documentation and examples
+- Removed Manual Connection Management section from lifecycle documentation
+
+### Fixed
+- iOS build error in promoted product event handler
+- Type safety improvements for promoted product functionality
+
 ## [2.7.4] - 2025-07-24
 
 ### Fixed
