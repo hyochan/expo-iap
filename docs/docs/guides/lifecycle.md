@@ -82,49 +82,6 @@ if (!connected) {
 return <StoreView />;
 ```
 
-## Manual Connection Management
-
-If you need more control over the connection lifecycle, you can use the low-level methods:
-
-```tsx
-import {initConnection, endConnection} from 'expo-iap';
-
-class StoreManager {
-  async initialize() {
-    try {
-      await initConnection();
-      console.log('Store connection initialized');
-
-      // Set up purchase listeners
-      this.setupPurchaseListeners();
-    } catch (error) {
-      console.error('Failed to initialize store connection:', error);
-    }
-  }
-
-  async cleanup() {
-    try {
-      // Remove listeners
-      this.removePurchaseListeners();
-
-      // End connection
-      await endConnection();
-      console.log('Store connection ended');
-    } catch (error) {
-      console.error('Failed to end store connection:', error);
-    }
-  }
-
-  setupPurchaseListeners() {
-    // Set up purchase update and error listeners
-  }
-
-  removePurchaseListeners() {
-    // Remove listeners to prevent memory leaks
-  }
-}
-```
-
 ## Component Lifecycle Integration
 
 ### Class Components
