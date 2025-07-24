@@ -32,7 +32,7 @@ Before diving into troubleshooting, ensure you have completed these essential st
 
 ## Common Issues
 
-### `getProducts()` returns an empty array
+### `requestProducts()` returns an empty array
 
 This is one of the most common issues. Here are the potential causes and solutions:
 
@@ -43,8 +43,8 @@ const {connected, getProducts} = useIAP();
 
 useEffect(() => {
   if (connected) {
-    // ✅ Only call getProducts when connected
-    getProducts({skus: productIds});
+    // ✅ Only call requestProducts when connected
+    requestProducts({ skus: productIds, type: 'inapp' });
   } else {
     console.log('Not connected to store yet');
   }

@@ -193,48 +193,76 @@ interface UseIAPOptions {
 
 ### Methods
 
-#### getProducts
+#### requestProducts
 
-- **Type**: `(productIds: string[]) => Promise<Product[]>`
-- **Description**: Fetch products from the store
+- **Type**: `(params: RequestProductsParams) => Promise<Product[]>`
+- **Description**: Fetch products or subscriptions from the store
 - **Parameters**:
-  - `productIds`: Array of product IDs to fetch
+  - `params`: Object containing:
+    - `skus`: Array of product/subscription IDs to fetch
+    - `type`: Product type - either `'inapp'` for products or `'subs'` for subscriptions
 - **Returns**: Promise resolving to array of products
 - **Example**:
   ```tsx
+  // Fetch in-app products
   const fetchProducts = async () => {
     try {
-      const products = await getProducts([
-        'com.app.premium',
-        'com.app.coins_100',
-      ]);
+      const products = await requestProducts({
+        skus: ['com.app.premium', 'com.app.coins_100'],
+        type: 'inapp'
+      });
       console.log('Fetched products:', products);
     } catch (error) {
       console.error('Failed to fetch products:', error);
     }
   };
-  ```
 
-#### getSubscriptions
-
-- **Type**: `(subscriptionIds: string[]) => Promise<SubscriptionProduct[]>`
-- **Description**: Fetch subscription products from the store
-- **Parameters**:
-  - `subscriptionIds`: Array of subscription IDs to fetch
-- **Returns**: Promise resolving to array of subscription products
-- **Example**:
-  ```tsx
+  // Fetch subscriptions
   const fetchSubscriptions = async () => {
     try {
-      const subs = await getSubscriptions([
-        'com.app.premium_monthly',
-        'com.app.premium_yearly',
-      ]);
+      const subs = await requestProducts({
+        skus: ['com.app.premium_monthly', 'com.app.premium_yearly'],
+        type: 'subs'
+      });
       console.log('Fetched subscriptions:', subs);
     } catch (error) {
       console.error('Failed to fetch subscriptions:', error);
     }
   };
+  ```
+
+#### getProducts (Deprecated)
+
+> **⚠️ DEPRECATED:** This method is deprecated. Use `requestProducts({ skus, type: 'inapp' })` instead.
+
+- **Type**: `(productIds: string[]) => Promise<Product[]>`
+- **Migration**:
+  ```tsx
+  // Old way (deprecated)
+  const products = await getProducts(['product1', 'product2']);
+  
+  // New way
+  const products = await requestProducts({
+    skus: ['product1', 'product2'],
+    type: 'inapp'
+  });
+  ```
+
+#### getSubscriptions (Deprecated)
+
+> **⚠️ DEPRECATED:** This method is deprecated. Use `requestProducts({ skus, type: 'subs' })` instead.
+
+- **Type**: `(subscriptionIds: string[]) => Promise<SubscriptionProduct[]>`
+- **Migration**:
+  ```tsx
+  // Old way (deprecated)
+  const subs = await getSubscriptions(['sub1', 'sub2']);
+  
+  // New way
+  const subs = await requestProducts({
+    skus: ['sub1', 'sub2'],
+    type: 'subs'
+  });
   ```
 
 #### requestPurchase

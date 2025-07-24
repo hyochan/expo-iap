@@ -68,7 +68,7 @@ export default function SubscriptionManager() {
     subscriptions,
     currentPurchase,
     currentPurchaseError,
-    getSubscriptions,
+    requestProducts,
     getAvailablePurchases,
     requestPurchase,
     finishTransaction,
@@ -105,7 +105,7 @@ export default function SubscriptionManager() {
   const loadSubscriptions = async () => {
     try {
       setLoading(true);
-      await getSubscriptions({skus: SUBSCRIPTION_SKUS});
+      await requestProducts({ skus: SUBSCRIPTION_SKUS, type: 'subs' });
       console.log('Subscriptions loaded');
     } catch (error) {
       console.error('Failed to load subscriptions:', error);

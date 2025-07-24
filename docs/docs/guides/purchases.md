@@ -25,7 +25,7 @@ For a comprehensive understanding of the purchase lifecycle, see our [Purchase L
 
 ## Purchase Flow Overview
 
-Once you have called `getProducts()`, and have a valid response, you can call `requestPurchase()`. Subscribable products can be purchased just like consumable products and users can cancel subscriptions by using the iOS System Settings.
+Once you have called `requestProducts()`, and have a valid response, you can call `requestPurchase()`. Subscribable products can be purchased just like consumable products and users can cancel subscriptions by using the iOS System Settings.
 
 Before you request any purchase, you should set `purchaseUpdatedListener` from `expo-iap`. It is recommended that you start listening to updates as soon as your application launches. And don't forget that even at launch you may receive successful purchases that either completed while your app was closed or that failed to be finished, consumed or acknowledged due to network errors or bugs.
 
@@ -134,8 +134,7 @@ export default function PurchaseScreen() {
     subscriptions,
     currentPurchase,
     currentPurchaseError,
-    getProducts,
-    getSubscriptions,
+    requestProducts,
     requestPurchase,
     finishTransaction,
     validateReceipt,
@@ -151,8 +150,8 @@ export default function PurchaseScreen() {
     const initializeIAP = async () => {
       try {
         // Get both products and subscriptions
-        await getProducts(bulbPackSkus);
-        await getSubscriptions(subscriptionSkus);
+        await requestProducts({ skus: bulbPackSkus, type: 'inapp' });
+        await requestProducts({ skus: subscriptionSkus, type: 'subs' });
         setIsReady(true);
       } catch (error) {
         console.error('Error initializing IAP:', error);
@@ -160,7 +159,7 @@ export default function PurchaseScreen() {
     };
 
     initializeIAP();
-  }, [connected, getProducts, getSubscriptions]);
+  }, [connected, requestProducts]);
 
   // Validate receipt helper
   const handleValidateReceipt = useCallback(

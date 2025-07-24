@@ -24,8 +24,7 @@ export default function MyStore() {
     subscriptions,
     currentPurchase,
     currentPurchaseError,
-    getProducts,
-    getSubscriptions,
+    requestProducts,
     requestPurchase,
     finishTransaction,
     validateReceipt,
@@ -45,8 +44,8 @@ useEffect(() => {
 
   const initializeStore = async () => {
     try {
-      await getProducts(productSkus);
-      await getSubscriptions(subscriptionSkus);
+      await requestProducts({ skus: productSkus, type: 'inapp' });
+      await requestProducts({ skus: subscriptionSkus, type: 'subs' });
     } catch (error) {
       console.error('Failed to initialize store:', error);
     }
@@ -212,8 +211,7 @@ export default function Store() {
     subscriptions,
     currentPurchase,
     currentPurchaseError,
-    getProducts,
-    getSubscriptions,
+    requestProducts,
     requestPurchase,
     finishTransaction,
   } = useIAP();
@@ -248,8 +246,8 @@ export default function Store() {
 
       // Load both products and subscriptions
       await Promise.all([
-        getProducts({skus: PRODUCT_IDS}),
-        getSubscriptions({skus: SUBSCRIPTION_IDS}),
+        requestProducts({ skus: PRODUCT_IDS, type: 'inapp' }),
+        requestProducts({ skus: SUBSCRIPTION_IDS, type: 'subs' }),
       ]);
 
       console.log('Products loaded successfully');

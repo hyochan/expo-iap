@@ -27,7 +27,7 @@ export default function SubscriptionFlow() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Use the useIAP hook for managing subscriptions
-  const {connected, subscriptions, getSubscriptions} = useIAP({
+  const {connected, subscriptions, requestProducts} = useIAP({
     onPurchaseSuccess: (purchase) => {
       console.log('Subscription successful:', purchase);
       setIsProcessing(false);
@@ -66,9 +66,9 @@ export default function SubscriptionFlow() {
       const subscriptionIds = [
         'dev.hyo.martie.premium', // Example subscription ID
       ];
-      getSubscriptions(subscriptionIds);
+      requestProducts({ skus: subscriptionIds, type: 'subs' });
     }
-  }, [connected, getSubscriptions]);
+  }, [connected, requestProducts]);
 
   const handleSubscription = async (itemId: string) => {
     try {
@@ -108,7 +108,7 @@ export default function SubscriptionFlow() {
 
   const retryLoadSubscriptions = () => {
     const subscriptionIds = ['dev.hyo.martie.premium'];
-    getSubscriptions(subscriptionIds);
+    requestProducts({ skus: subscriptionIds, type: 'subs' });
   };
 
   const getSubscriptionDisplayPrice = (

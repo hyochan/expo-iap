@@ -250,6 +250,38 @@ await finishTransaction({purchase});
 await getPurchaseHistories(); // Note: plural form in expo-iap v2.6.0+
 ```
 
+### Deprecated Methods in expo-iap
+
+> **⚠️ Important:** The following methods are deprecated and will be removed in a future version:
+
+| Deprecated Method | Replacement |
+|------------------|-------------|
+| `getProducts(skus)` | `requestProducts({ skus, type: 'inapp' })` |
+| `getSubscriptions(skus)` | `requestProducts({ skus, type: 'subs' })` |
+
+**Migration Examples:**
+
+```tsx
+// Old way (deprecated)
+import {getProducts, getSubscriptions} from 'expo-iap';
+
+const products = await getProducts(['product1', 'product2']);
+const subs = await getSubscriptions(['sub1', 'sub2']);
+
+// New way (recommended)
+import {requestProducts} from 'expo-iap';
+
+const products = await requestProducts({
+  skus: ['product1', 'product2'],
+  type: 'inapp'
+});
+
+const subs = await requestProducts({
+  skus: ['sub1', 'sub2'], 
+  type: 'subs'
+});
+```
+
 ### New Methods
 
 expo-iap includes some additional utility methods:
@@ -287,7 +319,7 @@ export default function MigrationTest() {
     if (connected) {
       console.log('✅ Connection successful');
 
-      getProducts({skus: ['test_product']})
+      requestProducts({ skus: ['test_product'], type: 'inapp' })
         .then((products) => {
           console.log('✅ Products fetched:', products.length);
         })
@@ -314,7 +346,7 @@ Test the complete purchase flow:
 const testPurchaseFlow = async () => {
   try {
     // 1. Fetch products
-    const products = await getProducts({skus: ['test_product']});
+    const products = await requestProducts({ skus: ['test_product'], type: 'inapp' });
     console.log('✅ Products fetched');
 
     // 2. Request purchase
@@ -335,7 +367,7 @@ Ensure error handling transitions properly:
 ```tsx
 const testErrorHandling = () => {
   // Test with invalid product ID
-  getProducts({skus: ['invalid_product']})
+  requestProducts({ skus: ['invalid_product'], type: 'inapp' })
     .then((products) => {
       if (products.length === 0) {
         console.log('✅ Empty products handled correctly');

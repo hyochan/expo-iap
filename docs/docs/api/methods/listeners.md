@@ -145,7 +145,7 @@ const setupPromotedProductListener = () => {
 const handlePromotedProduct = async (productId) => {
   try {
     // Fetch the product details
-    const products = await getProducts({skus: [productId]});
+    const products = await requestProducts({ skus: [productId], type: 'inapp' });
     const product = products[0];
 
     if (product) {

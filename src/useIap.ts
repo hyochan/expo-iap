@@ -9,11 +9,9 @@ import {
   initConnection,
   purchaseErrorListener,
   purchaseUpdatedListener,
-  getProducts,
   getAvailablePurchases,
   getPurchaseHistories,
   finishTransaction as finishTransactionInternal,
-  getSubscriptions,
   requestPurchase as requestPurchaseInternal,
   requestProducts,
 } from './';
@@ -53,12 +51,14 @@ type UseIap = {
   }) => Promise<PurchaseResult | boolean>;
   getAvailablePurchases: (skus: string[]) => Promise<void>;
   getPurchaseHistories: (skus: string[]) => Promise<void>;
-  getProducts: (skus: string[]) => Promise<void>;
-  getSubscriptions: (skus: string[]) => Promise<void>;
   requestProducts: (params: {
     skus: string[];
     type?: 'inapp' | 'subs';
   }) => Promise<void>;
+  /** @deprecated Use requestProducts({ skus, type: 'inapp' }) instead. This method will be removed in version 3.0.0. */
+  getProducts: (skus: string[]) => Promise<void>;
+  /** @deprecated Use requestProducts({ skus, type: 'subs' }) instead. This method will be removed in version 3.0.0. */
+  getSubscriptions: (skus: string[]) => Promise<void>;
   requestPurchase: (params: {
     request: RequestPurchaseProps | RequestSubscriptionProps;
     type?: 'inapp' | 'subs';
@@ -151,11 +151,11 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const getProductsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
       try {
-        const result = await getProducts(skus);
+        const result = await requestProducts({ skus, type: 'inapp' });
         setProducts((prevProducts) =>
           mergeWithDuplicateCheck(
             prevProducts,
-            result,
+            result as Product[],
             (product) => product.id,
           ),
         );
@@ -169,11 +169,11 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const getSubscriptionsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
       try {
-        const result = await getSubscriptions(skus);
+        const result = await requestProducts({ skus, type: 'subs' });
         setSubscriptions((prevSubscriptions) =>
           mergeWithDuplicateCheck(
             prevSubscriptions,
-            result,
+            result as SubscriptionProduct[],
             (subscription) => subscription.id,
           ),
         );
@@ -423,11 +423,11 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     clearCurrentPurchaseError,
     getAvailablePurchases: getAvailablePurchasesInternal,
     getPurchaseHistories: getPurchaseHistoriesInternal,
-    getProducts: getProductsInternal,
-    getSubscriptions: getSubscriptionsInternal,
     requestProducts: requestProductsInternal,
     requestPurchase: requestPurchaseWithReset,
     validateReceipt,
     restorePurchases,
+    getProducts: getProductsInternal,
+    getSubscriptions: getSubscriptionsInternal,
   };
 }

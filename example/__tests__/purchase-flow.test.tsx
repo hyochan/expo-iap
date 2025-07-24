@@ -3,7 +3,7 @@ import { render, fireEvent, act } from '@testing-library/react-native';
 import PurchaseFlow from '../app/purchase-flow';
 
 // Mock the useIAP hook
-const mockGetProducts = jest.fn();
+const mockRequestProducts = jest.fn();
 const mockUseIAP = {
   connected: true,
   products: [
@@ -17,7 +17,7 @@ const mockUseIAP = {
       platform: 'ios'
     }
   ],
-  getProducts: mockGetProducts,
+  requestProducts: mockRequestProducts,
 };
 
 jest.mock('../../src', () => ({
@@ -43,7 +43,7 @@ describe('PurchaseFlow Component', () => {
 
   it('should load products on mount', () => {
     render(<PurchaseFlow />);
-    expect(mockGetProducts).toHaveBeenCalled();
+    expect(mockRequestProducts).toHaveBeenCalled();
   });
 
   it('should display products', () => {

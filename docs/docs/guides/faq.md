@@ -75,7 +75,7 @@ Yes, you need to:
 
 ## Products and Purchases
 
-### Why does `getProducts()` return an empty array?
+### Why does `requestProducts()` return an empty array?
 
 Common causes:
 
@@ -90,14 +90,14 @@ const {connected, getProducts} = useIAP();
 
 useEffect(() => {
   if (connected) {
-    getProducts({skus: ['com.yourapp.product1']});
+    requestProducts({ skus: ['com.yourapp.product1'], type: 'inapp' });
   }
 }, [connected]);
 ```
 
-### Can I purchase products without calling `getProducts()` first?
+### Can I purchase products without calling `requestProducts()` first?
 
-No, you should always call `getProducts()` first. This ensures:
+No, you should always call `requestProducts()` first. This ensures:
 
 - Products are available and properly configured
 - You have the latest pricing and product information
@@ -287,7 +287,7 @@ const getProductsWithCache = async (skus) => {
   const uncachedSkus = skus.filter((sku) => !cachedProducts[sku]);
 
   if (uncachedSkus.length > 0) {
-    const products = await getProducts({skus: uncachedSkus});
+    const products = await requestProducts({ skus: uncachedSkus, type: 'inapp' });
     // Cache the products
     setCachedProducts((prev) => ({
       ...prev,
@@ -348,7 +348,7 @@ const {
   connected,
   products,
   purchases,
-  getProducts,
+  requestProducts, // Updated method name
   requestPurchase,
   finishTransaction,
   // ... other methods

@@ -51,7 +51,7 @@ function MyStore() {
   const {
     connected,
     products,
-    getProducts,
+    requestProducts,
     requestPurchase,
     currentPurchase,
     finishTransaction,
@@ -69,7 +69,7 @@ Load your products when the store connects:
 useEffect(() => {
   if (connected) {
     // Fetch your products
-    getProducts(productIds);
+    requestProducts({ skus: productIds, type: 'inapp' });
   }
 }, [connected]);
 ```
@@ -159,7 +159,7 @@ export default function SimpleStore() {
   const {
     connected,
     products,
-    getProducts,
+    requestProducts,
     requestPurchase,
     currentPurchase,
     finishTransaction,
@@ -169,7 +169,7 @@ export default function SimpleStore() {
 
   useEffect(() => {
     if (connected) {
-      getProducts(productIds);
+      requestProducts({ skus: productIds, type: 'inapp' });
     }
   }, [connected]);
 

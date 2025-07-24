@@ -105,7 +105,7 @@ const productIds = [
 ];
 
 function App() {
-  const {connected, products, getProducts, requestPurchase, validateReceipt} =
+  const {connected, products, requestProducts, requestPurchase, validateReceipt} =
     useIAP({
       onPurchaseSuccess: (purchase) => {
         console.log('Purchase successful:', purchase);
@@ -120,7 +120,7 @@ function App() {
 
   React.useEffect(() => {
     if (connected) {
-      getProducts(productIds);
+      requestProducts({ skus: productIds, type: 'inapp' });
     }
   }, [connected]);
 

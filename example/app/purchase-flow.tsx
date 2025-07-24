@@ -15,6 +15,8 @@ import type {
   PurchaseError,
 } from '../../src/ExpoIap.types';
 
+const PRODUCT_IDS = ['dev.hyo.martie.10bulbs', 'dev.hyo.martie.30bulbs'];
+
 /**
  * Purchase Flow Example - In-App Products
  *
@@ -30,7 +32,7 @@ export default function PurchaseFlow() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Use the useIAP hook for managing purchases
-  const {connected, products, getProducts} = useIAP({
+  const {connected, products, requestProducts} = useIAP({
     onPurchaseSuccess: (purchase: ProductPurchase) => {
       console.log('Purchase successful:', purchase);
       setIsProcessing(false);
@@ -63,10 +65,9 @@ export default function PurchaseFlow() {
   // Load products when component mounts
   useEffect(() => {
     if (connected) {
-      const productIds = ['dev.hyo.martie.10bulbs', 'dev.hyo.martie.30bulbs'];
-      getProducts(productIds);
+      requestProducts({skus: PRODUCT_IDS, type: 'inapp'});
     }
-  }, [connected, getProducts]);
+  }, [connected, requestProducts]);
 
   const handlePurchase = async (itemId: string) => {
     try {
@@ -82,7 +83,7 @@ export default function PurchaseFlow() {
           },
           android: {
             skus: [itemId],
-          }
+          },
         },
         type: 'inapp',
       });
@@ -96,12 +97,7 @@ export default function PurchaseFlow() {
   };
 
   const retryLoadProducts = () => {
-    const productIds = [
-      'com.example.premium',
-      'com.example.coins_100',
-      'com.example.remove_ads',
-    ];
-    getProducts(productIds);
+    requestProducts({skus: PRODUCT_IDS, type: 'inapp'});
   };
 
   const getProductDisplayPrice = (product: Product): string => {
@@ -196,7 +192,7 @@ export default function PurchaseFlow() {
           {'\n'}• CPK React Native compliance
         </Text>
       </View>
-      
+
       {Platform.OS === 'ios' && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Test iOS 16.0 Feature</Text>
@@ -205,9 +201,15 @@ export default function PurchaseFlow() {
             onPress={async () => {
               try {
                 const appTransaction = await getAppTransactionIOS();
-                Alert.alert('Success', `App Transaction: ${JSON.stringify(appTransaction)}`);
+                Alert.alert(
+                  'Success',
+                  `App Transaction: ${JSON.stringify(appTransaction)}`,
+                );
               } catch (error: any) {
-                Alert.alert('Error', error.message || 'Failed to get app transaction');
+                Alert.alert(
+                  'Error',
+                  error.message || 'Failed to get app transaction',
+                );
               }
             }}
           >

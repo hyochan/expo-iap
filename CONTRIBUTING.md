@@ -177,7 +177,7 @@ export const getStorefrontIos = async (): Promise<string> => { ... }
 export const getAppTransactionIos = async (): Promise<AppTransactionIOS | null> => { ... }
 
 // ✅ Good - Cross-platform function without suffix
-export const getProducts = async (skus: string[]) => {
+export const requestProducts = async (params: { skus: string[], type?: 'inapp' | 'subs' }) => {
   return Platform.select({
     ios: async () => { /* iOS implementation */ },
     android: async () => { /* Android implementation */ },

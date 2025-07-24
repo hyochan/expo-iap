@@ -73,12 +73,12 @@ export interface Platform { // Should be type
 ### Function Types
 ```typescript
 // ✅ Good - Clear parameter and return types
-export const getProducts = async (skus: string[]): Promise<Product[]> => {
+export const requestProducts = async (params: { skus: string[], type?: 'inapp' | 'subs' }): Promise<Product[]> => {
   // implementation
 };
 
 // ❌ Bad - Missing types
-export const getProducts = async (skus) => {
+export const requestProducts = async (params) => {
   // implementation
 };
 ```
@@ -121,7 +121,7 @@ export const deepLinkToSubscriptionsAndroid = async (sku?: string): Promise<void
 
 ```typescript
 // These functions handle platform differences internally
-export const getProducts = async (skus: string[]): Promise<Product[]> => {
+export const requestProducts = async (params: { skus: string[], type?: 'inapp' | 'subs' }): Promise<Product[]> => {
   return Platform.select({
     ios: async () => { /* iOS implementation */ },
     android: async () => { /* Android implementation */ },
@@ -241,9 +241,9 @@ Always use async/await over promises:
 
 ```typescript
 // ✅ Good
-export const getProducts = async (skus: string[]): Promise<Product[]> => {
+export const requestProducts = async (params: { skus: string[], type?: 'inapp' | 'subs' }): Promise<Product[]> => {
   try {
-    const products = await ExpoIapModule.getProducts(skus);
+    const products = await ExpoIapModule.requestProducts(params);
     return products;
   } catch (error) {
     console.error('Failed to get products:', error);
@@ -252,8 +252,8 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
 };
 
 // ❌ Bad
-export const getProducts = (skus: string[]): Promise<Product[]> => {
-  return ExpoIapModule.getProducts(skus)
+export const requestProducts = (params): Promise<Product[]> => {
+  return ExpoIapModule.requestProducts(params)
     .then(products => products)
     .catch(error => {
       console.error('Failed to get products:', error);
@@ -278,12 +278,12 @@ All public APIs must have JSDoc comments:
  * 
  * @example
  * ```typescript
- * const products = await getProductsIOS(['com.example.premium']);
+ * const products = await requestProducts({ skus: ['com.example.premium'], type: 'inapp' });
  * ```
  * 
  * @platform iOS
  */
-export const getProductsIOS = async (skus: string[]): Promise<ProductIOS[]> => {
+export const requestProductsIOS = async (params: { skus: string[], type?: 'inapp' | 'subs' }): Promise<ProductIOS[]> => {
   // implementation
 };
 ```
@@ -307,7 +307,7 @@ describe('PurchaseManager', () => {
     });
 
     it('should get products on iOS', async () => {
-      const products = await getProductsIOS(['com.example.product']);
+      const products = await requestProductsIOS({ skus: ['com.example.product'], type: 'inapp' });
       expect(products).toHaveLength(1);
     });
   });
@@ -318,7 +318,7 @@ describe('PurchaseManager', () => {
     });
 
     it('should throw error on Android', async () => {
-      await expect(getProductsIOS(['com.example.product']))
+      await expect(requestProductsIOS({ skus: ['com.example.product'], type: 'inapp' }))
         .rejects
         .toThrow('This method is only available on iOS');
     });

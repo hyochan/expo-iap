@@ -109,8 +109,7 @@ function App() {
     connected,
     products,
     subscriptions,
-    getProducts,
-    getSubscriptions,
+    requestProducts,
     requestPurchase,
   } = useIAP({
     onPurchaseSuccess: (purchase) => {
@@ -126,12 +125,14 @@ function App() {
   React.useEffect(() => {
     if (connected) {
       // Fetch products and subscriptions
-      getProducts(
-        androidProductIds.filter((id) => !id.includes('subscription')),
-      );
-      getSubscriptions(
-        androidProductIds.filter((id) => id.includes('subscription')),
-      );
+      requestProducts({
+        skus: androidProductIds.filter((id) => !id.includes('subscription')),
+        type: 'inapp'
+      });
+      requestProducts({
+        skus: androidProductIds.filter((id) => id.includes('subscription')),
+        type: 'subs'
+      });
     }
   }, [connected]);
 

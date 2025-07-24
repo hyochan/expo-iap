@@ -12,12 +12,17 @@ describe('Core Functions Tests', () => {
       expect(typeof ExpoIap.endConnection).toBe('function');
     });
 
-    it('should export getProducts function', () => {
+    it('should export requestProducts function', () => {
+      expect(ExpoIap.requestProducts).toBeDefined();
+      expect(typeof ExpoIap.requestProducts).toBe('function');
+    });
+
+    it('should export deprecated getProducts function', () => {
       expect(ExpoIap.getProducts).toBeDefined();
       expect(typeof ExpoIap.getProducts).toBe('function');
     });
 
-    it('should export getSubscriptions function', () => {
+    it('should export deprecated getSubscriptions function', () => {
       expect(ExpoIap.getSubscriptions).toBeDefined();
       expect(typeof ExpoIap.getSubscriptions).toBe('function');
     });
