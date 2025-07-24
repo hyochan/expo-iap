@@ -191,18 +191,18 @@ interface UseIAPOptions {
   ));
   ```
 
-#### promotedProductIdIOS
+#### promotedProductIOS
 
-- **Type**: `string | undefined`
-- **Description**: The product ID of the promoted product (iOS only)
+- **Type**: `Product | undefined`
+- **Description**: The promoted product details (iOS only)
 - **Example**:
   ```tsx
   useEffect(() => {
-    if (promotedProductIdIOS) {
+    if (promotedProductIOS) {
       // Handle promoted product
-      handlePromotedProduct(promotedProductIdIOS);
+      handlePromotedProduct(promotedProductIOS);
     }
-  }, [promotedProductIdIOS]);
+  }, [promotedProductIOS]);
   ```
 
 ### Methods
@@ -584,31 +584,24 @@ Handle App Store promoted products when users tap on them in the App Store:
 ```tsx
 const PromotedProductExample = () => {
   const {
-    promotedProductIdIOS,
-    getPromotedProductIOS,
+    promotedProductIOS,
     buyPromotedProductIOS,
-    getProducts,
   } = useIAP({
-    onPromotedProductIOS: (productId) => {
-      console.log('Promoted product detected:', productId);
+    onPromotedProductIOS: (product) => {
+      console.log('Promoted product detected:', product);
     },
   });
 
   useEffect(() => {
-    if (promotedProductIdIOS) {
+    if (promotedProductIOS) {
       handlePromotedProduct();
     }
-  }, [promotedProductIdIOS]);
+  }, [promotedProductIOS]);
 
   const handlePromotedProduct = async () => {
     try {
-      // Get promoted product details
-      const promotedProduct = await getPromotedProductIOS();
-      
-      if (!promotedProduct) return;
-
       // Show your custom purchase UI
-      const confirmed = await showPurchaseConfirmation(promotedProduct);
+      const confirmed = await showPurchaseConfirmation(promotedProductIOS);
       
       if (confirmed) {
         // Complete the promoted purchase

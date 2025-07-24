@@ -81,13 +81,13 @@ export const purchaseErrorListener = (
  * iOS-only listener for App Store promoted product events.
  * This fires when a user taps on a promoted product in the App Store.
  * 
- * @param listener - Callback function that receives the promoted product ID
+ * @param listener - Callback function that receives the promoted product details
  * @returns EventSubscription that can be used to unsubscribe
  * 
  * @example
  * ```typescript
- * const subscription = promotedProductListenerIOS((productId) => {
- *   console.log('Promoted product:', productId);
+ * const subscription = promotedProductListenerIOS((product) => {
+ *   console.log('Promoted product:', product);
  *   // Handle the promoted product
  * });
  * 
@@ -98,7 +98,7 @@ export const purchaseErrorListener = (
  * @platform iOS
  */
 export const promotedProductListenerIOS = (
-  listener: (productId: string) => void,
+  listener: (product: Product) => void,
 ) => {
   if (Platform.OS !== 'ios') {
     console.warn('promotedProductListenerIOS: This listener is only available on iOS');

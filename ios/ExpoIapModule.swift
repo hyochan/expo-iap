@@ -982,7 +982,18 @@ public class ExpoIapModule: Module {
         self.promotedProduct = product
         
         if hasListeners {
-            sendEvent(IapEvent.PromotedProductIOS, ["productId": product.productIdentifier])
+            let productData: [String: Any] = [
+                "productIdentifier": product.productIdentifier,
+                "localizedTitle": product.localizedTitle,
+                "localizedDescription": product.localizedDescription,
+                "price": product.price.doubleValue,
+                "priceLocale": [
+                    "currencyCode": product.priceLocale.currencyCode ?? "",
+                    "currencySymbol": product.priceLocale.currencySymbol ?? "",
+                    "countryCode": product.priceLocale.regionCode ?? ""
+                ]
+            ]
+            sendEvent(IapEvent.PromotedProductIOS, productData)
         }
     }
 }

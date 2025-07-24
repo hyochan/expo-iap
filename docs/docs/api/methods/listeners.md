@@ -130,9 +130,9 @@ Listens for promoted product purchases initiated from the App Store. This fires 
 import {promotedProductListenerIOS, getPromotedProductIOS, buyPromotedProductIOS} from 'expo-iap';
 
 const setupPromotedProductListener = () => {
-  const subscription = promotedProductListenerIOS((productId) => {
-    console.log('Promoted product purchase initiated:', productId);
-    handlePromotedProduct(productId);
+  const subscription = promotedProductListenerIOS((product) => {
+    console.log('Promoted product purchase initiated:', product);
+    handlePromotedProduct(product);
   });
 
   return () => {
@@ -142,26 +142,14 @@ const setupPromotedProductListener = () => {
   };
 };
 
-const handlePromotedProduct = async (productId) => {
+const handlePromotedProduct = async (product) => {
   try {
-    // Fetch the product details
-    const products = await requestProducts({ skus: [productId], type: 'inapp' });
-    const product = products[0];
+    // Show your custom purchase UI with the product details
+    const confirmed = await showProductConfirmation(product);
 
-    if (product) {
-      // Show product details to user and confirm purchase
-      const confirmed = await showProductConfirmation(product);
-    // Get the promoted product details
-    const promotedProduct = await getPromotedProductIOS();
-
-    if (promotedProduct) {
-      // Show your custom purchase UI
-      const confirmed = await showProductConfirmation(promotedProduct);
-
-      if (confirmed) {
-        // Complete the promoted purchase
-        await buyPromotedProductIOS();
-      }
+    if (confirmed) {
+      // Complete the promoted purchase
+      await buyPromotedProductIOS();
     }
   } catch (error) {
     console.error('Error handling promoted product:', error);
@@ -172,7 +160,7 @@ const handlePromotedProduct = async (productId) => {
 **Parameters:**
 
 - `callback` (function): Function to call when a promoted product is selected
-  - `productId` (string): The ID of the promoted product
+  - `product` (Product): The promoted product object
 
 **Returns:** Subscription object with `remove()` method
 
