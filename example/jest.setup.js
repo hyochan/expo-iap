@@ -34,6 +34,7 @@ jest.mock('expo-iap', () => ({
   endConnection: jest.fn(),
   getProducts: jest.fn(),
   getSubscriptions: jest.fn(),
+  requestProducts: jest.fn(),
   requestPurchase: jest.fn(),
   finishTransaction: jest.fn(),
   getPurchaseHistories: jest.fn(),
@@ -74,8 +75,7 @@ jest.mock('expo-iap', () => ({
   // Android functions
   deepLinkToSubscriptionsAndroid: jest.fn(),
   validateReceiptAndroid: jest.fn(),
-  acknowledgeProductAndroid: jest.fn(),
-  consumeProductAndroid: jest.fn(),
+  acknowledgePurchaseAndroid: jest.fn(),
   
   // Event listeners
   purchaseUpdatedListener: jest.fn(),

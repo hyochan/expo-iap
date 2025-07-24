@@ -88,14 +88,9 @@ describe('Core Functions Tests', () => {
       expect(typeof ExpoIap.validateReceiptAndroid).toBe('function');
     });
 
-    it('should export acknowledgeProductAndroid', () => {
-      expect(ExpoIap.acknowledgeProductAndroid).toBeDefined();
-      expect(typeof ExpoIap.acknowledgeProductAndroid).toBe('function');
-    });
-
-    it('should export consumeProductAndroid', () => {
-      expect(ExpoIap.consumeProductAndroid).toBeDefined();
-      expect(typeof ExpoIap.consumeProductAndroid).toBe('function');
+    it('should export acknowledgePurchaseAndroid', () => {
+      expect(ExpoIap.acknowledgePurchaseAndroid).toBeDefined();
+      expect(typeof ExpoIap.acknowledgePurchaseAndroid).toBe('function');
     });
   });
 

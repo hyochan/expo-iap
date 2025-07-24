@@ -4,7 +4,7 @@ import SubscriptionFlow from '../app/subscription-flow';
 
 // Mock the functions
 const mockInitConnection = jest.fn().mockResolvedValue(true);
-const mockGetSubscriptions = jest.fn().mockResolvedValue([
+const mockRequestProducts = jest.fn().mockResolvedValue([
   {
     id: 'test.subscription.1',
     title: 'Test Subscription',
@@ -20,7 +20,7 @@ const mockPurchaseErrorListener = jest.fn();
 
 jest.mock('../../src', () => ({
   initConnection: mockInitConnection,
-  getSubscriptions: mockGetSubscriptions,
+  requestProducts: mockRequestProducts,
   requestPurchase: mockRequestPurchase,
   purchaseUpdatedListener: mockPurchaseUpdatedListener,
   purchaseErrorListener: mockPurchaseErrorListener,
@@ -37,7 +37,7 @@ jest.mock('../../src', () => ({
         platform: 'ios'
       }
     ],
-    getSubscriptions: mockGetSubscriptions,
+    requestProducts: mockRequestProducts,
   })),
 }));
 
@@ -71,12 +71,12 @@ describe('SubscriptionFlow Component', () => {
     fireEvent.press(subscribeButton);
     
     // The actual implementation uses the useIAP hook's internal function
-    // so we check if getSubscriptions was called on mount instead
-    expect(mockGetSubscriptions).toHaveBeenCalled();
+    // so we check if requestProducts was called on mount instead
+    expect(mockRequestProducts).toHaveBeenCalled();
   });
 
-  it('should call getSubscriptions on mount', () => {
+  it('should call requestProducts on mount', () => {
     render(<SubscriptionFlow />);
-    expect(mockGetSubscriptions).toHaveBeenCalled();
+    expect(mockRequestProducts).toHaveBeenCalled();
   });
 });
