@@ -18,6 +18,7 @@ func logDebug(_ message: String) {
 struct IapEvent {
     static let PurchaseUpdated = "purchase-updated"
     static let PurchaseError = "purchase-error"
+    static let PromotedProductIOS = "promoted-product-ios"
 }
 
 @available(iOS 15.0, *)
@@ -225,6 +226,9 @@ public class ExpoIapModule: Module {
     private var updateListenerTask: Task<Void, Error>?
     private var subscriptionPollingTask: Task<Void, Error>?
     private var pollingSkus: Set<String> = []
+    private var paymentObserver: PaymentObserver?
+    private var promotedPayment: SKPayment?
+    private var promotedProduct: SKProduct?
 
     public func definition() -> ModuleDefinition {
         Name("ExpoIap")
@@ -247,6 +251,13 @@ public class ExpoIapModule: Module {
 
         Function("initConnection") { () -> Bool in
             self.productStore = ProductStore()
+            
+            // Set up PaymentObserver for promoted products
+            if self.paymentObserver == nil {
+                self.paymentObserver = PaymentObserver(module: self)
+                SKPaymentQueue.default().add(self.paymentObserver!)
+            }
+            
             return AppStore.canMakePayments
         }
 
@@ -303,6 +314,42 @@ public class ExpoIapModule: Module {
                 )
             }
         }
+        
+        AsyncFunction("getPromotedProduct") { () -> [String: Any?]? in
+            guard let product = self.promotedProduct else {
+                return nil
+            }
+            
+            // Convert SKProduct to dictionary
+            return [
+                "productIdentifier": product.productIdentifier,
+                "localizedTitle": product.localizedTitle,
+                "localizedDescription": product.localizedDescription,
+                "price": product.price.doubleValue,
+                "priceLocale": [
+                    "currencyCode": product.priceLocale.currencyCode ?? "",
+                    "currencySymbol": product.priceLocale.currencySymbol ?? "",
+                    "countryCode": product.priceLocale.regionCode ?? ""
+                ]
+            ]
+        }
+        
+        AsyncFunction("buyPromotedProduct") { () -> Void in
+            guard let payment = self.promotedPayment else {
+                throw Exception(
+                    name: "ExpoIapModule",
+                    description: "No promoted product available",
+                    code: IapErrorCode.itemUnavailable
+                )
+            }
+            
+            // Add the deferred payment to the queue
+            SKPaymentQueue.default().add(payment)
+            
+            // Clear the promoted product data
+            self.promotedPayment = nil
+            self.promotedProduct = nil
+        }
 
         AsyncFunction("getItems") { (skus: [String]) -> [[String: Any?]?] in
             guard let productStore = self.productStore else {
@@ -335,6 +382,13 @@ public class ExpoIapModule: Module {
             self.transactions.removeAll()
             self.productStore = nil
             self.removeTransactionObserver()
+            
+            // Remove PaymentObserver
+            if let observer = self.paymentObserver {
+                SKPaymentQueue.default().remove(observer)
+                self.paymentObserver = nil
+            }
+            
             return true
         }
 
@@ -920,5 +974,37 @@ public class ExpoIapModule: Module {
         } else {
             throw Exception(name: "ExpoIapModule", description: "App Store receipt not found", code: IapErrorCode.receiptFailed)
         }
+    }
+    
+    // Called by PaymentObserver when a promoted product is received
+    func handlePromotedProduct(payment: SKPayment, product: SKProduct) {
+        self.promotedPayment = payment
+        self.promotedProduct = product
+        
+        if hasListeners {
+            sendEvent(IapEvent.PromotedProductIOS, ["productId": product.productIdentifier])
+        }
+    }
+}
+
+// PaymentObserver for handling promoted products
+@available(iOS 15.0, *)
+class PaymentObserver: NSObject, SKPaymentTransactionObserver {
+    weak var module: ExpoIapModule?
+    
+    init(module: ExpoIapModule) {
+        self.module = module
+    }
+    
+    // Required by SKPaymentTransactionObserver protocol but not used
+    func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+        // We don't handle transactions here as StoreKit 2 handles them in ExpoIapModule
+    }
+    
+    // Handle promoted products from App Store
+    func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {
+        module?.handlePromotedProduct(payment: payment, product: product)
+        // Return false to defer the payment
+        return false
     }
 }
