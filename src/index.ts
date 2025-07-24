@@ -42,6 +42,7 @@ export enum IapEvent {
   PurchaseError = 'purchase-error',
   /** @deprecated Use PurchaseUpdated instead. This will be removed in a future version. */
   TransactionIapUpdated = 'iap-transaction-updated',
+  PromotedProductIOS = 'promoted-product-ios',
 }
 
 export function setValueAsync(value: string) {
@@ -74,6 +75,36 @@ export const purchaseErrorListener = (
   listener: (error: PurchaseError) => void,
 ) => {
   return emitter.addListener(IapEvent.PurchaseError, listener);
+};
+
+/**
+ * iOS-only listener for App Store promoted product events.
+ * This fires when a user taps on a promoted product in the App Store.
+ * 
+ * @param listener - Callback function that receives the promoted product ID
+ * @returns EventSubscription that can be used to unsubscribe
+ * 
+ * @example
+ * ```typescript
+ * const subscription = promotedProductListenerIOS((productId) => {
+ *   console.log('Promoted product:', productId);
+ *   // Handle the promoted product
+ * });
+ * 
+ * // Later, clean up
+ * subscription.remove();
+ * ```
+ * 
+ * @platform iOS
+ */
+export const promotedProductListenerIOS = (
+  listener: (productId: string) => void,
+) => {
+  if (Platform.OS !== 'ios') {
+    console.warn('promotedProductListenerIOS: This listener is only available on iOS');
+    return { remove: () => {} };
+  }
+  return emitter.addListener(IapEvent.PromotedProductIOS, listener);
 };
 
 export function initConnection() {

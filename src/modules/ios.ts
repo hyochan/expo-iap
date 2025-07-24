@@ -278,6 +278,32 @@ export const getAppTransactionIOS = (): Promise<AppTransactionIOS | null> => {
   return ExpoIapModule.getAppTransaction();
 };
 
+/**
+ * Get the promoted product details (iOS only).
+ * This is called after a promoted product event is received from the App Store.
+ * 
+ * @returns Promise resolving to the promoted product details or null if none available
+ * @throws Error if called on non-iOS platform
+ * 
+ * @platform iOS
+ */
+export const getPromotedProductIOS = (): Promise<any | null> => {
+  return ExpoIapModule.getPromotedProduct();
+};
+
+/**
+ * Complete the purchase of a promoted product (iOS only).
+ * This should be called after showing your purchase UI for a promoted product.
+ * 
+ * @returns Promise resolving when the purchase is initiated
+ * @throws Error if called on non-iOS platform or no promoted product is available
+ * 
+ * @platform iOS
+ */
+export const buyPromotedProductIOS = (): Promise<void> => {
+  return ExpoIapModule.buyPromotedProduct();
+};
+
 // ============= DEPRECATED FUNCTIONS =============
 // These will be removed in version 3.0.0
 
