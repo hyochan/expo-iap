@@ -191,6 +191,20 @@ interface UseIAPOptions {
   ));
   ```
 
+#### promotedProductIdIOS
+
+- **Type**: `string | undefined`
+- **Description**: The product ID of the promoted product (iOS only)
+- **Example**:
+  ```tsx
+  useEffect(() => {
+    if (promotedProductIdIOS) {
+      // Handle promoted product
+      handlePromotedProduct(promotedProductIdIOS);
+    }
+  }, [promotedProductIdIOS]);
+  ```
+
 ### Methods
 
 #### requestProducts
@@ -367,6 +381,37 @@ interface UseIAPOptions {
   };
   ```
 
+#### getPromotedProductIOS
+
+- **Type**: `() => Promise<any | null>` 
+- **Description**: Get the promoted product details (iOS only)
+- **Example**:
+  ```tsx
+  const handlePromotedProduct = async () => {
+    const promotedProduct = await getPromotedProductIOS();
+    if (promotedProduct) {
+      console.log('Promoted product:', promotedProduct);
+      // Show custom purchase UI
+    }
+  };
+  ```
+
+#### buyPromotedProductIOS
+
+- **Type**: `() => Promise<void>`
+- **Description**: Complete the purchase of a promoted product (iOS only)
+- **Example**:
+  ```tsx
+  const completePurchase = async () => {
+    try {
+      await buyPromotedProductIOS();
+      console.log('Promoted product purchase completed');
+    } catch (error) {
+      console.error('Failed to purchase promoted product:', error);
+    }
+  };
+  ```
+
 ## Platform-Specific Usage
 
 ### iOS Example
@@ -531,6 +576,69 @@ const {requestPurchase} = useIAP({
      }
    }, [connected, productsLoaded]);
    ```
+
+## Promoted Products (iOS Only)
+
+Handle App Store promoted products when users tap on them in the App Store:
+
+```tsx
+const PromotedProductExample = () => {
+  const {
+    promotedProductIdIOS,
+    getPromotedProductIOS,
+    buyPromotedProductIOS,
+    getProducts,
+  } = useIAP({
+    onPromotedProductIOS: (productId) => {
+      console.log('Promoted product detected:', productId);
+    },
+  });
+
+  useEffect(() => {
+    if (promotedProductIdIOS) {
+      handlePromotedProduct();
+    }
+  }, [promotedProductIdIOS]);
+
+  const handlePromotedProduct = async () => {
+    try {
+      // Get promoted product details
+      const promotedProduct = await getPromotedProductIOS();
+      
+      if (!promotedProduct) return;
+
+      // Show your custom purchase UI
+      const confirmed = await showPurchaseConfirmation(promotedProduct);
+      
+      if (confirmed) {
+        // Complete the promoted purchase
+        await buyPromotedProductIOS();
+      }
+    } catch (error) {
+      console.error('Error handling promoted product:', error);
+    }
+  };
+
+  const showPurchaseConfirmation = async (product: any) => {
+    return new Promise((resolve) => {
+      Alert.alert(
+        'Purchase Product',
+        `Would you like to purchase ${product.localizedTitle} for ${product.price}?`,
+        [
+          { text: 'Cancel', onPress: () => resolve(false), style: 'cancel' },
+          { text: 'Buy', onPress: () => resolve(true) },
+        ],
+      );
+    });
+  };
+
+  return (
+    <View>
+      {/* Your regular store UI */}
+    </View>
+  );
+};
+```
 
 ## See Also
 

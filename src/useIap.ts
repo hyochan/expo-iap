@@ -9,13 +9,14 @@ import {
   initConnection,
   purchaseErrorListener,
   purchaseUpdatedListener,
+  promotedProductListenerIOS,
   getAvailablePurchases,
   getPurchaseHistories,
   finishTransaction as finishTransactionInternal,
   requestPurchase as requestPurchaseInternal,
   requestProducts,
 } from './';
-import {syncIOS, validateReceiptIOS} from './modules/ios';
+import {syncIOS, validateReceiptIOS, getPromotedProductIOS, buyPromotedProductIOS} from './modules/ios';
 import {validateReceiptAndroid} from './modules/android';
 
 // Types
@@ -35,6 +36,7 @@ type UseIap = {
   connected: boolean;
   products: Product[];
   promotedProductsIOS: ProductPurchase[];
+  promotedProductIdIOS?: string;
   subscriptions: SubscriptionProduct[];
   purchaseHistories: ProductPurchase[];
   availablePurchases: ProductPurchase[];
@@ -73,6 +75,8 @@ type UseIap = {
     },
   ) => Promise<any>;
   restorePurchases: () => Promise<void>; // 구매 복원 함수 추가
+  getPromotedProductIOS: () => Promise<any | null>;
+  buyPromotedProductIOS: () => Promise<void>;
 };
 
 export interface UseIAPOptions {
@@ -81,6 +85,7 @@ export interface UseIAPOptions {
   ) => void;
   onPurchaseError?: (error: PurchaseError) => void;
   onSyncError?: (error: Error) => void;
+  onPromotedProductIOS?: (productId: string) => void;
   shouldAutoSyncPurchases?: boolean; // New option to control auto-syncing
 }
 
@@ -100,6 +105,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const [currentPurchase, setCurrentPurchase] = useState<ProductPurchase>();
   const [currentPurchaseError, setCurrentPurchaseError] =
     useState<PurchaseError>();
+  const [promotedProductIdIOS, setPromotedProductIdIOS] = useState<string>();
 
   const optionsRef = useRef<UseIAPOptions | undefined>(options);
 
@@ -132,6 +138,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     purchaseUpdate?: EventSubscription;
     purchaseError?: EventSubscription;
     promotedProductsIos?: EventSubscription;
+    promotedProductIOS?: EventSubscription;
   }>({});
 
   const subscriptionsRefState = useRef<SubscriptionProduct[]>([]);
@@ -151,7 +158,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const getProductsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
       try {
-        const result = await requestProducts({ skus, type: 'inapp' });
+        const result = await requestProducts({skus, type: 'inapp'});
         setProducts((prevProducts) =>
           mergeWithDuplicateCheck(
             prevProducts,
@@ -169,7 +176,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const getSubscriptionsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
       try {
-        const result = await requestProducts({ skus, type: 'subs' });
+        const result = await requestProducts({skus, type: 'subs'});
         setSubscriptions((prevSubscriptions) =>
           mergeWithDuplicateCheck(
             prevSubscriptions,
@@ -392,6 +399,16 @@ export function useIAP(options?: UseIAPOptions): UseIap {
             }
           },
         );
+        
+        // Listen for promoted product events
+        subscriptionsRef.current.promotedProductIOS = promotedProductListenerIOS(
+          (productId: string) => {
+            setPromotedProductIdIOS(productId);
+            if (optionsRef.current?.onPromotedProductIOS) {
+              optionsRef.current.onPromotedProductIOS(productId);
+            }
+          },
+        );
       }
     }
   }, [refreshSubscriptionStatus, mergeWithDuplicateCheck]);
@@ -404,6 +421,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       currentSubscriptions.purchaseUpdate?.remove();
       currentSubscriptions.purchaseError?.remove();
       currentSubscriptions.promotedProductsIos?.remove();
+      currentSubscriptions.promotedProductIOS?.remove();
       endConnection();
       setConnected(false);
     };
@@ -413,6 +431,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     connected,
     products,
     promotedProductsIOS,
+    promotedProductIdIOS,
     subscriptions,
     purchaseHistories,
     finishTransaction,
@@ -429,5 +448,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     restorePurchases,
     getProducts: getProductsInternal,
     getSubscriptions: getSubscriptionsInternal,
+    getPromotedProductIOS,
+    buyPromotedProductIOS,
   };
 }

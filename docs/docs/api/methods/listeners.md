@@ -14,7 +14,7 @@ expo-iap provides event listeners to handle purchase updates and errors. These l
 
 ## purchaseUpdatedListener()
 
-Listens for purchase updates from the store.
+Listens for purchase updates from **the** store.
 
 ```tsx
 import {purchaseUpdatedListener} from 'expo-iap';
@@ -122,15 +122,15 @@ const handlePurchaseError = (error) => {
 
 **Returns:** Subscription object with `remove()` method
 
-## promotedProductListener() (iOS only)
+## promotedProductListenerIOS() (iOS only)
 
-Listens for promoted product purchases initiated from the App Store.
+Listens for promoted product purchases initiated from the App Store. This fires when a user taps on a promoted product in the App Store.
 
 ```tsx
-import {promotedProductListener} from 'expo-iap';
+import {promotedProductListenerIOS, getPromotedProductIOS, buyPromotedProductIOS} from 'expo-iap';
 
 const setupPromotedProductListener = () => {
-  const subscription = promotedProductListener((productId) => {
+  const subscription = promotedProductListenerIOS((productId) => {
     console.log('Promoted product purchase initiated:', productId);
     handlePromotedProduct(productId);
   });
@@ -151,9 +151,16 @@ const handlePromotedProduct = async (productId) => {
     if (product) {
       // Show product details to user and confirm purchase
       const confirmed = await showProductConfirmation(product);
+    // Get the promoted product details
+    const promotedProduct = await getPromotedProductIOS();
+
+    if (promotedProduct) {
+      // Show your custom purchase UI
+      const confirmed = await showProductConfirmation(promotedProduct);
 
       if (confirmed) {
-        await requestPurchase({sku: productId});
+        // Complete the promoted purchase
+        await buyPromotedProductIOS();
       }
     }
   } catch (error) {
@@ -168,6 +175,13 @@ const handlePromotedProduct = async (productId) => {
   - `productId` (string): The ID of the promoted product
 
 **Returns:** Subscription object with `remove()` method
+
+**Related Methods:**
+
+- `getPromotedProductIOS()`: Get the promoted product details
+- `buyPromotedProductIOS()`: Complete the promoted product purchase
+
+**Note:** This listener only works on iOS devices and is used for handling App Store promoted products.
 
 ## Using Listeners with React Hooks
 
