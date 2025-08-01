@@ -58,9 +58,15 @@ type UseIap = {
     skus: string[];
     type?: 'inapp' | 'subs';
   }) => Promise<void>;
-  /** @deprecated Use requestProducts({ skus, type: 'inapp' }) instead. This method will be removed in version 3.0.0. */
+  /** 
+   * @deprecated Use requestProducts({ skus, type: 'inapp' }) instead. This method will be removed in version 3.0.0.
+   * Note: This method internally uses requestProducts, so no deprecation warning is shown.
+   */
   getProducts: (skus: string[]) => Promise<void>;
-  /** @deprecated Use requestProducts({ skus, type: 'subs' }) instead. This method will be removed in version 3.0.0. */
+  /** 
+   * @deprecated Use requestProducts({ skus, type: 'subs' }) instead. This method will be removed in version 3.0.0.
+   * Note: This method internally uses requestProducts, so no deprecation warning is shown.
+   */
   getSubscriptions: (skus: string[]) => Promise<void>;
   requestPurchase: (params: {
     request: RequestPurchaseProps | RequestSubscriptionProps;

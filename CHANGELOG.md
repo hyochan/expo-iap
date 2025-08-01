@@ -7,6 +7,7 @@
 - iOS: Fixed hot reload issues with concurrent StoreKit operations
 - iOS: Resolved race conditions in `Promise.all` usage
 - iOS: Improved state cleanup on `initConnection()`
+- Fixed `useIAP` hook's internal methods to use `requestProducts` instead of deprecated `getSubscriptions`
 
 ### Changed
 
