@@ -229,6 +229,9 @@ public class ExpoIapModule: Module {
     private var paymentObserver: PaymentObserver?
     private var promotedPayment: SKPayment?
     private var promotedProduct: SKProduct?
+    
+    // Add a flag to track initialization state
+    private var isInitialized = false
 
     public func definition() -> ModuleDefinition {
         Name("ExpoIap")
@@ -250,6 +253,10 @@ public class ExpoIapModule: Module {
         }
 
         Function("initConnection") { () -> Bool in
+            // Clean up any existing state first (important for hot reload)
+            self.cleanupExistingState()
+            
+            // Initialize fresh state
             self.productStore = ProductStore()
             
             // Set up PaymentObserver for promoted products
@@ -258,6 +265,7 @@ public class ExpoIapModule: Module {
                 SKPaymentQueue.default().add(self.paymentObserver!)
             }
             
+            self.isInitialized = true
             return AppStore.canMakePayments
         }
 
@@ -352,10 +360,10 @@ public class ExpoIapModule: Module {
         }
 
         AsyncFunction("getItems") { (skus: [String]) -> [[String: Any?]?] in
-            guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.notPrepared)
-            }
-
+            try self.ensureConnection()
+            
+            let productStore = self.productStore!
+            
             do {
                 let fetchedProducts = try await Product.products(for: skus)
                 await productStore.performOnActor { isolatedStore in
@@ -367,47 +375,25 @@ public class ExpoIapModule: Module {
                 return products.map { serializeProduct($0) }.compactMap { $0 }
             } catch {
                 print("Error fetching items: \(error)")
-                if error is Exception {
-                    throw error
-                }
                 throw error
             }
         }
 
         AsyncFunction("endConnection") { () -> Bool in
-            guard let productStore = self.productStore else {
-                return false
-            }
-            await productStore.removeAll()
-            self.transactions.removeAll()
-            self.productStore = nil
-            self.removeTransactionObserver()
-            
-            // Remove PaymentObserver
-            if let observer = self.paymentObserver {
-                SKPaymentQueue.default().remove(observer)
-                self.paymentObserver = nil
-            }
-            
+            self.cleanupExistingState()
             return true
         }
 
         AsyncFunction("getAvailableItems") {
             (alsoPublishToEventListener: Bool, onlyIncludeActiveItems: Bool) -> [[String: Any?]?] in
+            
+            try self.ensureConnection()
+            
             var purchasedItemsSerialized: [[String: Any?]] = []
 
             func addTransaction(transaction: Transaction, jwsRepresentationIos: String? = nil) {
-                // Debug: Log JWS representation
-                logDebug("getAvailableItems JWS: \(jwsRepresentationIos != nil ? "exists" : "nil")")
-                if let jws = jwsRepresentationIos {
-                    logDebug("getAvailableItems JWS length: \(jws.count)")
-                }
-                
                 let serialized = serializeTransaction(transaction, jwsRepresentationIos: jwsRepresentationIos)
                 purchasedItemsSerialized.append(serialized)
-                
-                // Debug: Check if jwsRepresentationIos is included in serialized result
-                logDebug("getAvailableItems serialized includes JWS: \(serialized["jwsRepresentationIos"] != nil)")
                 
                 if alsoPublishToEventListener {
                     self.sendEvent(IapEvent.PurchaseUpdated, serialized)
@@ -476,9 +462,9 @@ public class ExpoIapModule: Module {
                 sku: String, andDangerouslyFinishTransactionAutomatically: Bool,
                 appAccountToken: String?, quantity: Int, discountOffer: [String: String]?
             ) -> [String: Any?]? in
-            guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
-            }
+            
+            try self.ensureConnection()
+            let productStore = self.productStore!
 
             let product: Product? = await productStore.getProduct(productID: sku)
             if let product = product {
@@ -572,9 +558,8 @@ public class ExpoIapModule: Module {
         }
 
         AsyncFunction("subscriptionStatus") { (sku: String) -> [[String: Any?]?]? in
-            guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
-            }
+            try self.ensureConnection()
+            let productStore = self.productStore!
 
             do {
                 let product = await productStore.getProduct(productID: sku)
@@ -593,9 +578,8 @@ public class ExpoIapModule: Module {
         }
 
         AsyncFunction("currentEntitlement") { (sku: String) -> [String: Any?]? in
-            guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
-            }
+            try self.ensureConnection()
+            let productStore = self.productStore!
 
             if let product = await productStore.getProduct(productID: sku) {
                 if let result = await product.currentEntitlement {
@@ -619,9 +603,8 @@ public class ExpoIapModule: Module {
         }
 
         AsyncFunction("latestTransaction") { (sku: String) -> [String: Any?]? in
-            guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
-            }
+            try self.ensureConnection()
+            let productStore = self.productStore!
 
             if let product = await productStore.getProduct(productID: sku) {
                 if let result = await product.latestTransaction {
@@ -716,7 +699,10 @@ public class ExpoIapModule: Module {
 
         AsyncFunction("beginRefundRequest") { (sku: String) -> String? in
             #if !os(tvOS)
-                guard let product = await self.productStore?.getProduct(productID: sku),
+                try self.ensureConnection()
+                let productStore = self.productStore!
+                
+                guard let product = await productStore.getProduct(productID: sku),
                     let result = await product.latestTransaction
                 else {
                     throw Exception(name: "ExpoIapModule", description: "Can't find product or transaction for sku \(sku)", code: IapErrorCode.itemUnavailable)
@@ -752,9 +738,8 @@ public class ExpoIapModule: Module {
         }
 
         AsyncFunction("isTransactionVerified") { (sku: String) -> Bool in
-            guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
-            }
+            try self.ensureConnection()
+            let productStore = self.productStore!
             
             if let product = await productStore.getProduct(productID: sku),
                let result = await product.latestTransaction {
@@ -770,9 +755,8 @@ public class ExpoIapModule: Module {
         }
 
         AsyncFunction("getTransactionJws") { (sku: String) -> String? in
-            guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
-            }
+            try self.ensureConnection()
+            let productStore = self.productStore!
             
             if let product = await productStore.getProduct(productID: sku),
                let result = await product.latestTransaction {
@@ -783,9 +767,8 @@ public class ExpoIapModule: Module {
         }
 
         AsyncFunction("validateReceiptIOS") { (sku: String) -> [String: Any] in
-            guard let productStore = self.productStore else {
-                throw Exception(name: "ExpoIapModule", description: "Connection not initialized", code: IapErrorCode.serviceError)
-            }
+            try self.ensureConnection()
+            let productStore = self.productStore!
             
             // Get receipt data
             var receiptData: String = ""
@@ -824,6 +807,58 @@ public class ExpoIapModule: Module {
         }
     }
 
+    // Similar to Android's ensureConnection pattern
+    private func ensureConnection() throws {
+        guard isInitialized else {
+            throw Exception(
+                name: "ExpoIapModule", 
+                description: "Connection not initialized. Call initConnection() first.", 
+                code: IapErrorCode.notPrepared
+            )
+        }
+        
+        guard productStore != nil else {
+            throw Exception(
+                name: "ExpoIapModule", 
+                description: "Product store not available", 
+                code: IapErrorCode.notPrepared
+            )
+        }
+    }
+    
+    private func cleanupExistingState() {
+        // Cancel any existing tasks
+        updateListenerTask?.cancel()
+        updateListenerTask = nil
+        
+        subscriptionPollingTask?.cancel()
+        subscriptionPollingTask = nil
+        
+        // Clear collections
+        transactions.removeAll()
+        pollingSkus.removeAll()
+        
+        // Reset promoted products
+        promotedPayment = nil
+        promotedProduct = nil
+        
+        // Remove existing payment observer if any
+        if let observer = paymentObserver {
+            SKPaymentQueue.default().remove(observer)
+            paymentObserver = nil
+        }
+        
+        // Clear product store
+        if let store = productStore {
+            Task {
+                await store.removeAll()
+            }
+        }
+        productStore = nil
+        
+        isInitialized = false
+    }
+    
     private func addTransactionObserver() {
         if updateListenerTask == nil {
             updateListenerTask = listenForTransactions()
@@ -995,6 +1030,11 @@ public class ExpoIapModule: Module {
             ]
             sendEvent(IapEvent.PromotedProductIOS, productData)
         }
+    }
+    
+    // Ensure cleanup when module is deallocated
+    deinit {
+        cleanupExistingState()
     }
 }
 

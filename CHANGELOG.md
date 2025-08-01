@@ -1,71 +1,105 @@
 # Changelog
 
+## [2.7.7] - TBD
+
+### Fixed
+
+- iOS: Fixed hot reload issues with concurrent StoreKit operations
+- iOS: Resolved race conditions in `Promise.all` usage
+- iOS: Improved state cleanup on `initConnection()`
+
+### Changed
+
+- iOS: Added `ensureConnection()` pattern matching Android
+- iOS: Simplified module architecture
+
+## [2.7.6] - 2025-08-01
+
+### Fixed
+
+- Fixed `initConnection()` return type
+
+### Documentation
+
+- Added available-purchases example
+- Improved build error FAQs
+- Enhanced setup documentation
+
 ## [2.7.5] - 2025-07-24
 
 ### Added
-- iOS promoted product support for App Store promoted purchases
-- `promotedProductListenerIOS()` listener for handling promoted product events  
-- `getPromotedProductIOS()` method to get promoted product details
-- `buyPromotedProductIOS()` method to complete promoted product purchases
-- `promotedProductIOS` state in useIAP hook for promoted product data
-- `onPromotedProductIOS` callback option in useIAP hook
+
+- iOS promoted product support
+- `promotedProductListenerIOS()`, `getPromotedProductIOS()`, `buyPromotedProductIOS()` methods
+- Promoted product support in useIAP hook
 
 ### Changed
-- Promoted product listener now passes full Product object instead of just productId string
-- Updated all promoted product documentation and examples
-- Removed Manual Connection Management section from lifecycle documentation
+
+- Promoted product listener now returns full Product object
+- Updated documentation and examples
 
 ### Fixed
-- iOS build error in promoted product event handler
-- Type safety improvements for promoted product functionality
+
+- iOS build error in promoted product handler
+- Type safety improvements
 
 ## [2.7.4] - 2025-07-24
 
 ### Fixed
-- Add iOS 18.4+ availability check for `appTransactionID` property
-- Update TypeScript type to make `appTransactionID` optional for iOS versions below 18.4
-- Ensure compatibility with devices running iOS versions below 18.4
+
+- iOS 18.4+ availability check for `appTransactionID`
+- TypeScript compatibility for older iOS versions
 
 ## [2.7.3] - 2025-07-23
 
 ### Fixed
-- Upgraded Android Google Play Billing Library to v8.0.0
-- Fixed Kotlin version compatibility issues with expo-modules-core
+
+- Android Google Play Billing Library v8.0.0 upgrade
+- Kotlin version compatibility
 
 ### Changed
-- Android now requires Kotlin 2.0+ for Google Play Billing Library v8.0.0 support
-- Added requirement for `expo-build-properties` configuration to override Kotlin version
+
+- Android requires Kotlin 2.0+
+- Added expo-build-properties requirement
 
 ### Documentation
-- Added Android configuration section in README explaining the need for expo-build-properties
-- Documented Kotlin version requirement for Android builds
+
+- Android configuration guide
+- Kotlin version requirements
 
 ## [2.7.2] - 2025-07-22
 
 ### Added
-- iOS 16.0+ app transaction support with SDK version check (#113)
+
+- iOS 16.0+ app transaction support
 
 ## [2.7.1] - 2025-07-22
 
 ### Fixed
-- Add missing `requestProducts()` API that was discussed in PR #109 but not included in the merge
-- Add deprecation warnings to `getProducts()` and `getSubscriptions()` 
-- Fix `getStorefrontIOS()` to show warning instead of throwing error on non-iOS platforms
-- Add `requestProducts` to useIap hook for consistency with other APIs
-- Fix documentation CI build failures (broken anchors, missing tags, truncation marker)
+
+- Added missing `requestProducts()` API
+- Fixed `getStorefrontIOS()` platform handling
+- Documentation build fixes
+
+### Changed
+
+- Added deprecation warnings to `getProducts()` and `getSubscriptions()`
 
 ## [2.7.0] - 2025-07-22
 
 ### Added
-- New platform-specific API structure for `requestPurchase` with explicit `ios` and `android` parameters
-- Support for Google Play Billing Library v8.0.0
-- Automatic service reconnection on Android for improved reliability
-- Detailed sub-response error codes for better error handling
+
+- Platform-specific API for `requestPurchase`
+- Google Play Billing Library v8.0.0 support
+- Android automatic reconnection
+- Detailed error codes
 
 ### Changed
-- Deprecated `requestSubscription` in favor of `requestPurchase` with `type: 'subs'`
-- `getPurchaseHistory` is no longer available on Android (removed in Google Play Billing v8)
+
+- Deprecated `requestSubscription`
+- Removed Android `getPurchaseHistory()`
 
 ### Breaking Changes
-- Android: `getPurchaseHistory()` removed - use `getAvailablePurchases()` instead
-- Android: Requires Google Play Billing Library v8.0.0
+
+- Android: `getPurchaseHistory()` removed
+- Android: Requires Google Play Billing v8.0.0
