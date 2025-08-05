@@ -19,6 +19,11 @@ Setting up in-app purchases for iOS requires configuration in both Xcode and App
 3. Create a new app or select your existing app
 4. Fill in the required app information
 
+### 📢 Ensure Paid Applications Agreement is Signed (Required)
+Before setting up your in-app purchase products, make sure the latest Paid Applications Agreement is signed and its status is shown as "Active" under the Business section in App Store Connect. Without this, you won’t be able to test in-app purchases.
+
+Additionally, check the Tax and Banking tabs to complete any required forms. You must link a valid bank account and ensure its status is "Active" in order to enable in-app purchase testing.
+
 ### 2. Create In-App Purchase Products
 
 1. In your app's page, go to **Features** > **In-App Purchases**
