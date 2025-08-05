@@ -52,6 +52,17 @@ Yes! `expo-iap` works in both Expo managed and bare React Native projects. Howev
 
 In-app purchases require native modules that aren't available in Expo Go. You need to create a [custom development client](https://docs.expo.dev/development/create-development-builds/) or use a bare workflow.
 
+### Can I test in-app purchases with the development client?
+
+Yes! You can test in-app purchases using the Expo development client. Simply run:
+
+```bash
+npx expo run:ios --device  # For iOS
+npx expo run:android       # For Android
+```
+
+This will build and install the development client on your physical device where you can test in-app purchases. You don't need to upload to TestFlight or Google Play for basic testing, though those platforms are useful for more comprehensive testing scenarios.
+
 ### Do I need to configure anything in my app stores?
 
 Yes, you need to:
@@ -109,7 +120,7 @@ useEffect(() => {
 - Your App is in "Ready for Submission" or "TestFlight" status (not just created in App Store Connect)
 - The in-app purchase product is in "Approved" status
 - You are logged into the App Store on your test device with a real or sandbox Apple ID (not just simulator)
-- The app was installed via TestFlight, not `expo run:ios`
+- The app was installed via `expo run:ios --device` on a real device OR via TestFlight
 - Your bundle ID matches exactly (including case sensitivity) between your app and App Store Connect
 - Product IDs are correct and match exactly in code
 - You called `initConnection()` before `requestProducts()`
