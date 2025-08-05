@@ -10,6 +10,27 @@ import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
 
 Setting up in-app purchases for iOS requires configuration in both Xcode and App Store Connect.
 
+## Prerequisites
+
+Before you can successfully implement and test in-app purchases, you must complete these essential steps in App Store Connect:
+
+### 1. Sign All Agreements
+
+1. Sign in to [App Store Connect](https://appstoreconnect.apple.com/)
+2. Navigate to **Business** section
+3. **Sign ALL pending agreements** - This is crucial!
+4. If agreements are not signed, products won't appear in your app
+
+### 2. Complete Banking, Legal, and Tax Information
+
+1. Go to **Business** > **Banking**
+2. Fill out **ALL** required banking information
+3. Complete **ALL** legal and tax forms
+4. **Wait for Apple's approval** - This can take several days
+5. Products will not be available until Apple approves all information
+
+> ⚠️ **Important**: These prerequisites are often overlooked but are absolutely essential. Without completing these steps, your products will not be found, even if everything else is configured correctly.
+
 ## App Store Connect Configuration
 
 ### 1. Create Your App Record
@@ -85,11 +106,15 @@ Make sure you have proper code signing set up:
 
 On your iOS device:
 
-1. Sign out of the App Store
-2. Go to **Settings** > **App Store**
-3. Sign out of your Apple ID
-4. Install your app via Xcode or TestFlight
-5. When prompted for App Store credentials, use your sandbox test user
+1. **Important**: You don't need to sign into the App Store app with your sandbox account
+2. Instead, use the dedicated sandbox login:
+   - Go to **Settings** > **Developer** (Developer mode must be enabled)
+   - Tap **Sandbox Apple Account**
+   - Sign in with your sandbox test user credentials
+3. Install your app via Xcode or TestFlight
+4. When making a purchase, it will automatically use the sandbox account
+
+> 💡 **Note**: This is the recommended approach starting from iOS 15+. The old method of signing into the App Store app with sandbox credentials is no longer necessary and can cause confusion.
 
 ## Code Integration
 
@@ -202,11 +227,23 @@ const handlePurchaseError = (error: any) => {
 
 ### Product IDs Not Found
 
-**Problem**: Products return empty or undefined **Solution**:
+**Problem**: Products return empty or undefined
 
-- Verify product IDs match exactly between code and App Store Connect
-- Ensure products are in "Ready to Submit" or "Approved" state
-- Check bundle identifier matches
+**Solutions**:
+
+1. **Check Prerequisites** (Most common cause):
+   - Verify ALL agreements are signed in App Store Connect > Business
+   - Ensure ALL banking, legal, and tax information is completed AND approved by Apple
+   - These are the most commonly overlooked requirements
+
+2. **Verify Product Configuration**:
+   - Product IDs match exactly between code and App Store Connect
+   - Products are in "Ready to Submit" or "Approved" state
+   - Bundle identifier matches
+
+3. **Use Proper Sandbox Testing**:
+   - Sign in via Settings > Developer > Sandbox Apple Account
+   - NOT through the App Store app
 
 ### Sandbox Testing Issues
 
