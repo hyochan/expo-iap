@@ -97,9 +97,39 @@ class App extends Component {
             // in doing the below. It will also be impossible for the user to purchase consumables
             // again until you do this.
 
+            // IMPORTANT: Always validate receipts on your server for both platforms
+            if (Platform.OS === 'ios') {
+              const receiptData = await validateReceipt();
+              // Send to your server for validation with Apple
+              const isValid = await validateReceiptOnServer(receiptData);
+              if (!isValid) {
+                console.error('Invalid receipt');
+                return;
+              }
+            } else if (Platform.OS === 'android') {
+              // Android also requires server-side validation
+              const purchaseToken = purchase.purchaseTokenAndroid;
+              const packageName = purchase.packageNameAndroid;
+
+              // Your server should:
+              // 1. Get Google Play service account credentials
+              // 2. Use Google Play Developer API to verify the purchase
+              const isValid = await validateAndroidPurchaseOnServer({
+                purchaseToken,
+                packageName,
+                productId: purchase.id,
+              });
+
+              if (!isValid) {
+                console.error('Invalid Android purchase');
+                return;
+              }
+            }
+
+            // IMPORTANT: Always finish the transaction to prevent it from replaying
             // If consumable (can be purchased again)
             await finishTransaction({purchase, isConsumable: true});
-            // If not consumable
+            // If not consumable (default: isConsumable = false)
             await finishTransaction({purchase, isConsumable: false});
           } else {
             // Retry / conclude the purchase is fraudulent, etc.
@@ -150,8 +180,8 @@ export default function PurchaseScreen() {
     const initializeIAP = async () => {
       try {
         // Get both products and subscriptions
-        await requestProducts({ skus: bulbPackSkus, type: 'inapp' });
-        await requestProducts({ skus: subscriptionSkus, type: 'subs' });
+        await requestProducts({skus: bulbPackSkus, type: 'inapp'});
+        await requestProducts({skus: subscriptionSkus, type: 'subs'});
         setIsReady(true);
       } catch (error) {
         console.error('Error initializing IAP:', error);
@@ -398,8 +428,8 @@ const handleBuyProduct = async (productId: string) => {
         android: {
           skus: [productId],
           obfuscatedAccountIdAndroid: 'user-123', // Optional: user identifier
-        }
-      }
+        },
+      },
     });
   } catch (err) {
     console.warn(err.code, err.message);
@@ -441,7 +471,7 @@ const handleBuySubscription = async (subscriptionId: string) => {
   try {
     // Find the subscription product to get offer details (Android)
     const subscription = subscriptions.find((s) => s.id === subscriptionId);
-    
+
     await requestPurchase({
       request: {
         ios: {
@@ -450,12 +480,13 @@ const handleBuySubscription = async (subscriptionId: string) => {
         },
         android: {
           skus: [subscriptionId],
-          subscriptionOffers: subscription?.subscriptionOfferDetails?.map(offer => ({
-            sku: subscriptionId,
-            offerToken: offer.offerToken,
-          })) || [],
+          subscriptionOffers:
+            subscription?.subscriptionOfferDetails?.map((offer) => ({
+              sku: subscriptionId,
+              offerToken: offer.offerToken,
+            })) || [],
           obfuscatedAccountIdAndroid: 'user-123', // Optional: user identifier
-        }
+        },
       },
       type: 'subs',
     });
@@ -488,10 +519,12 @@ const handleBuySubscription = async (subscriptionId: string) => {
         // Android requires offerToken for each subscription SKU
         // Use the first available offer or let user choose
         const firstOffer = subscription.subscriptionOfferDetails[0];
-        const subscriptionOffers = [{
-          sku: subscriptionId,
-          offerToken: firstOffer.offerToken,
-        }];
+        const subscriptionOffers = [
+          {
+            sku: subscriptionId,
+            offerToken: firstOffer.offerToken,
+          },
+        ];
 
         await requestPurchase({
           request: {
@@ -525,14 +558,85 @@ const handleBuySubscription = async (subscriptionId: string) => {
 
 5. **Finish transactions**: Always call `finishTransaction` after successful validation to complete the purchase.
 
-### Pending Purchases
+6. **Handle unfinished transactions on iOS**: iOS will replay unfinished transactions on app startup. Always call `finishTransaction` to prevent `onPurchaseSuccess` from triggering automatically on every app launch.
+
+### Pending and Unfinished Purchases
+
+#### iOS Unfinished Transactions
+
+On iOS, if you don't call `finishTransaction` after a successful purchase, the transaction remains in an "unfinished" state. This causes:
+
+- `onPurchaseSuccess` to trigger automatically on every app startup
+- The same purchase to appear repeatedly until finished
+- Users unable to make new purchases of consumable items
+
+**Solution**: Always finish transactions after processing:
+
+```tsx
+const {finishTransaction, validateReceipt} = useIAP({
+  onPurchaseSuccess: async (purchase) => {
+    try {
+      // 1. Validate the receipt (IMPORTANT: Server-side validation required for both platforms)
+      if (Platform.OS === 'ios') {
+        const receiptData = await validateReceipt();
+        // Send to your server for validation with Apple
+        const isValid = await validateReceiptOnServer(receiptData);
+        if (!isValid) {
+          console.error('Invalid receipt');
+          return;
+        }
+      } else if (Platform.OS === 'android') {
+        // Android also requires server-side validation
+        const purchaseToken = purchase.purchaseTokenAndroid;
+        const packageName = purchase.packageNameAndroid;
+
+        // Your server should:
+        // 1. Get Google Play service account credentials
+        // 2. Use Google Play Developer API to verify the purchase
+        const isValid = await validateAndroidPurchaseOnServer({
+          purchaseToken,
+          packageName,
+          productId: purchase.id,
+        });
+
+        if (!isValid) {
+          console.error('Invalid Android purchase');
+          return;
+        }
+      }
+
+      // 2. Process the purchase
+      await processPurchase(purchase);
+
+      // 3. IMPORTANT: Finish the transaction
+      await finishTransaction({
+        purchase,
+        isConsumable: false, // defaults to false
+      });
+    } catch (error) {
+      console.error('Purchase processing failed:', error);
+    }
+  },
+});
+```
+
+**Handle unfinished transactions on startup**:
 
 ```tsx
 // On app initialization
 componentDidMount() {
-  initConnection().then(() => {
+  initConnection().then(async () => {
+    // Check for unfinished transactions
+    const purchases = await getAvailablePurchases();
+
+    for (const purchase of purchases) {
+      // If already processed, just finish the transaction
+      if (await isAlreadyProcessed(purchase)) {
+        await finishTransaction({ purchase });
+      }
+    }
+
     // Set up purchase listeners
-    // Note: expo-iap handles pending purchases automatically
     this.setupPurchaseListeners();
   });
 }
@@ -651,27 +755,29 @@ const buySubscription = async (subscriptionId: string) => {
   if (Platform.OS === 'ios') {
     // iOS: Simple SKU-based purchase
     await requestPurchase({
-      request: { sku: subscriptionId },
+      request: {sku: subscriptionId},
       type: 'subs',
     });
   } else {
     // Android: Requires offerToken for each subscription
-    const subscription = subscriptions.find(s => s.id === subscriptionId);
-    
+    const subscription = subscriptions.find((s) => s.id === subscriptionId);
+
     if (!subscription?.subscriptionOfferDetails?.length) {
       throw new Error('No subscription offers available');
     }
-    
+
     // Use the first available offer (or let user choose)
     const firstOffer = subscription.subscriptionOfferDetails[0];
-    
+
     await requestPurchase({
       request: {
         skus: [subscriptionId],
-        subscriptionOffers: [{
-          sku: subscriptionId,
-          offerToken: firstOffer.offerToken, // Required!
-        }],
+        subscriptionOffers: [
+          {
+            sku: subscriptionId,
+            offerToken: firstOffer.offerToken, // Required!
+          },
+        ],
       },
       type: 'subs',
     });
@@ -680,10 +786,68 @@ const buySubscription = async (subscriptionId: string) => {
 ```
 
 **Important Android Notes:**
+
 - Each subscription SKU must have a corresponding offerToken
 - The number of SKUs must match the number of offerTokens
 - offerToken comes from `subscriptionOfferDetails` in the product details
 - Without offerToken, you'll get: "The number of skus must match the number of offerTokens"
+
+## Receipt Validation
+
+### Server-Side Validation (Required)
+
+**Important**: Always validate receipts on your server, never trust client-side validation alone.
+
+#### iOS Receipt Validation
+
+```typescript
+// Client-side: Get receipt data
+const receiptData = await validateReceipt();
+
+// Send to your server
+const response = await fetch('https://your-server.com/validate-ios-receipt', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({receiptData}),
+});
+```
+
+Your server should:
+
+1. Send the receipt to Apple's verification endpoint
+2. Verify the receipt's authenticity
+3. Check the bundle ID and product ID
+4. Ensure the receipt hasn't been used before
+
+#### Android Purchase Validation
+
+```typescript
+// Client-side: Get purchase details
+const purchaseDetails = {
+  purchaseToken: purchase.purchaseTokenAndroid,
+  packageName: purchase.packageNameAndroid,
+  productId: purchase.id,
+};
+
+// Send to your server
+const response = await fetch(
+  'https://your-server.com/validate-android-purchase',
+  {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(purchaseDetails),
+  },
+);
+```
+
+Your server should:
+
+1. Use Google Play Developer API with service account credentials
+2. Call `purchases.products.get()` or `purchases.subscriptions.get()`
+3. Verify the purchase state and consumption state
+4. Check that the purchase hasn't been refunded
+
+**Never expose your Google Play service account credentials in client code!**
 
 ## Advanced Purchase Handling
 

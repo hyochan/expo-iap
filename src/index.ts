@@ -21,12 +21,8 @@ import {
   isPlatformRequestProps,
   isUnifiedRequestProps,
 } from './ExpoIap.types';
-import {
-  ProductPurchaseAndroid,
-} from './types/ExpoIapAndroid.types';
-import {
-  PaymentDiscount,
-} from './types/ExpoIapIos.types';
+import {ProductPurchaseAndroid} from './types/ExpoIapAndroid.types';
+import {PaymentDiscount} from './types/ExpoIapIos.types';
 
 // Export all types
 export * from './ExpoIap.types';
@@ -80,29 +76,31 @@ export const purchaseErrorListener = (
 /**
  * iOS-only listener for App Store promoted product events.
  * This fires when a user taps on a promoted product in the App Store.
- * 
+ *
  * @param listener - Callback function that receives the promoted product details
  * @returns EventSubscription that can be used to unsubscribe
- * 
+ *
  * @example
  * ```typescript
  * const subscription = promotedProductListenerIOS((product) => {
  *   console.log('Promoted product:', product);
  *   // Handle the promoted product
  * });
- * 
+ *
  * // Later, clean up
  * subscription.remove();
  * ```
- * 
+ *
  * @platform iOS
  */
 export const promotedProductListenerIOS = (
   listener: (product: Product) => void,
 ) => {
   if (Platform.OS !== 'ios') {
-    console.warn('promotedProductListenerIOS: This listener is only available on iOS');
-    return { remove: () => {} };
+    console.warn(
+      'promotedProductListenerIOS: This listener is only available on iOS',
+    );
+    return {remove: () => {}};
   }
   return emitter.addListener(IapEvent.PromotedProductIOS, listener);
 };
@@ -114,7 +112,7 @@ export function initConnection(): Promise<boolean> {
 
 export const getProducts = async (skus: string[]): Promise<Product[]> => {
   console.warn(
-    '`getProducts` is deprecated. Use `requestProducts({ skus, type: \'inapp\' })` instead. This function will be removed in version 3.0.0.',
+    "`getProducts` is deprecated. Use `requestProducts({ skus, type: 'inapp' })` instead. This function will be removed in version 3.0.0.",
   );
   if (!skus?.length) {
     return Promise.reject(new Error('"skus" is required'));
@@ -148,7 +146,7 @@ export const getSubscriptions = async (
   skus: string[],
 ): Promise<SubscriptionProduct[]> => {
   console.warn(
-    '`getSubscriptions` is deprecated. Use `requestProducts({ skus, type: \'subs\' })` instead. This function will be removed in version 3.0.0.',
+    "`getSubscriptions` is deprecated. Use `requestProducts({ skus, type: 'subs' })` instead. This function will be removed in version 3.0.0.",
   );
   if (!skus?.length) {
     return Promise.reject(new Error('"skus" is required'));
@@ -272,7 +270,7 @@ export const getPurchaseHistory = ({
   onlyIncludeActiveItems?: boolean;
 } = {}): Promise<ProductPurchase[]> => {
   console.warn(
-    "`getPurchaseHistory` is deprecated. Use `getPurchaseHistories` instead. This function will be removed in version 3.0.0.",
+    '`getPurchaseHistory` is deprecated. Use `getPurchaseHistories` instead. This function will be removed in version 3.0.0.',
   );
   return getPurchaseHistories({
     alsoPublishToEventListener,
@@ -322,9 +320,8 @@ export const getAvailablePurchases = ({
         ),
       android: async () => {
         const products = await ExpoIapModule.getAvailableItemsByType('inapp');
-        const subscriptions = await ExpoIapModule.getAvailableItemsByType(
-          'subs',
-        );
+        const subscriptions =
+          await ExpoIapModule.getAvailableItemsByType('subs');
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
@@ -342,7 +339,6 @@ const offerToRecordIos = (
     timestamp: offer.timestamp.toString(),
   };
 };
-
 
 // Define discriminated union with explicit type parameter
 // Using legacy types internally for backward compatibility
@@ -373,7 +369,8 @@ const normalizeRequestProps = (
     if (platform === 'ios') {
       return {
         sku: request.sku || (request.skus?.[0] ?? ''),
-        andDangerouslyFinishTransactionAutomaticallyIOS: request.andDangerouslyFinishTransactionAutomaticallyIOS,
+        andDangerouslyFinishTransactionAutomaticallyIOS:
+          request.andDangerouslyFinishTransactionAutomaticallyIOS,
         appAccountToken: request.appAccountToken,
         quantity: request.quantity,
         withOffer: request.withOffer,
@@ -385,7 +382,7 @@ const normalizeRequestProps = (
         obfuscatedProfileIdAndroid: request.obfuscatedProfileIdAndroid,
         isOfferPersonalized: request.isOfferPersonalized,
       };
-      
+
       // Add subscription-specific fields if present
       if ('subscriptionOffers' in request && request.subscriptionOffers) {
         androidRequest.subscriptionOffers = request.subscriptionOffers;
@@ -396,7 +393,7 @@ const normalizeRequestProps = (
       if ('replacementModeAndroid' in request) {
         androidRequest.replacementModeAndroid = request.replacementModeAndroid;
       }
-      
+
       return androidRequest;
     }
   }
@@ -407,11 +404,11 @@ const normalizeRequestProps = (
 
 /**
  * Request a purchase for products or subscriptions.
- * 
+ *
  * @param requestObj - Purchase request configuration
  * @param requestObj.request - Platform-specific purchase parameters
  * @param requestObj.type - Type of purchase: 'inapp' for products (default) or 'subs' for subscriptions
- * 
+ *
  * @example
  * ```typescript
  * // Product purchase
@@ -422,12 +419,12 @@ const normalizeRequestProps = (
  *   },
  *   type: 'inapp'
  * });
- * 
+ *
  * // Subscription purchase
  * await requestPurchase({
  *   request: {
  *     ios: { sku: subscriptionId },
- *     android: { 
+ *     android: {
  *       skus: [subscriptionId],
  *       subscriptionOffers: [{ sku: subscriptionId, offerToken: 'token' }]
  *     }
@@ -449,7 +446,7 @@ export const requestPurchase = (
 
   if (Platform.OS === 'ios') {
     const normalizedRequest = normalizeRequestProps(request, 'ios');
-    
+
     if (!normalizedRequest?.sku) {
       throw new Error(
         'Invalid request for iOS. The `sku` property is required and must be a string.',
@@ -482,7 +479,7 @@ export const requestPurchase = (
 
   if (Platform.OS === 'android') {
     const normalizedRequest = normalizeRequestProps(request, 'android');
-    
+
     if (!normalizedRequest?.skus?.length) {
       throw new Error(
         'Invalid request for Android. The `skus` property is required and must be a non-empty array.',
@@ -546,7 +543,7 @@ export const requestPurchase = (
 
 /**
  * @deprecated Use `requestPurchase({ request, type: 'subs' })` instead. This method will be removed in version 3.0.0.
- * 
+ *
  * @example
  * ```typescript
  * // Old way (deprecated)
@@ -555,12 +552,12 @@ export const requestPurchase = (
  *   // or for Android
  *   skus: [subscriptionId],
  * });
- * 
+ *
  * // New way (recommended)
  * await requestPurchase({
  *   request: {
  *     ios: { sku: subscriptionId },
- *     android: { 
+ *     android: {
  *       skus: [subscriptionId],
  *       subscriptionOffers: [{ sku: subscriptionId, offerToken: 'token' }]
  *     }
@@ -584,7 +581,7 @@ export const requestSubscription = async (
 
 export const finishTransaction = ({
   purchase,
-  isConsumable,
+  isConsumable = false,
 }: {
   purchase: Purchase;
   isConsumable?: boolean;
@@ -625,16 +622,16 @@ export const finishTransaction = ({
 
 /**
  * Retrieves the current storefront information from iOS App Store
- * 
+ *
  * @returns Promise resolving to the storefront country code
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @example
  * ```typescript
  * const storefront = await getStorefrontIOS();
  * console.log(storefront); // 'US'
  * ```
- * 
+ *
  * @platform iOS
  */
 export const getStorefrontIOS = (): Promise<string> => {

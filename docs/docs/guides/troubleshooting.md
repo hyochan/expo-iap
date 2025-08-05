@@ -44,7 +44,7 @@ const {connected, getProducts} = useIAP();
 useEffect(() => {
   if (connected) {
     // ✅ Only call requestProducts when connected
-    requestProducts({ skus: productIds, type: 'inapp' });
+    requestProducts({skus: productIds, type: 'inapp'});
   } else {
     console.log('Not connected to store yet');
   }
@@ -155,13 +155,117 @@ const handlePurchase = async (purchase) => {
       await grantPurchase(purchase);
 
       // ✅ Always finish the transaction
-      await finishTransaction({purchase});
+      await finishTransaction({
+        purchase,
+        isConsumable: false, // default is false
+      });
     }
   } catch (error) {
     console.error('Purchase handling failed:', error);
   }
 };
 ```
+
+**Important - Transaction Acknowledgment Requirements**:
+
+- **iOS**: Unfinished transactions remain in the queue indefinitely until `finishTransaction` is called
+- **Android**: Purchases must be acknowledged within **3 days (72 hours)** or they will be **automatically refunded**
+  - For consumable products: Use `finishTransaction({purchase, isConsumable: true})`
+  - For non-consumables/subscriptions: Use `finishTransaction({purchase})` or `finishTransaction({purchase, isConsumable: false})`
+
+#### 2. `onPurchaseSuccess` triggering automatically on app restart (iOS)
+
+This happens when transactions are not properly finished. iOS stores unfinished transactions and replays them on app startup:
+
+**Problem**: Your `onPurchaseSuccess` callback fires automatically every time the app starts with a previous purchase.
+
+**Cause**: You didn't call `finishTransaction` after processing the purchase, so iOS keeps the transaction in an "unfinished" state.
+
+**Solution**: Always call `finishTransaction` after successfully processing a purchase:
+
+```tsx
+const {finishTransaction, validateReceipt} = useIAP({
+  onPurchaseSuccess: async (purchase) => {
+    console.log('Purchase successful:', purchase);
+
+    try {
+      // 1. Validate the receipt (IMPORTANT: Server-side validation required for both platforms)
+      if (Platform.OS === 'ios') {
+        const receiptData = await validateReceipt();
+        // Send to your server for validation
+        const isValid = await validateReceiptOnServer(receiptData);
+        if (!isValid) {
+          console.error('Invalid receipt');
+          return;
+        }
+      } else if (Platform.OS === 'android') {
+        // Android also requires server-side validation
+        const purchaseToken = purchase.purchaseTokenAndroid;
+        const packageName = purchase.packageNameAndroid;
+        
+        // Get Google Play access token on your server (not in client)
+        // Then validate the purchase with Google Play API
+        const isValid = await validateAndroidPurchaseOnServer({
+          purchaseToken,
+          packageName,
+          productId: purchase.id,
+        });
+        
+        if (!isValid) {
+          console.error('Invalid Android purchase');
+          return;
+        }
+      }
+
+      // 2. Process the purchase (unlock content, update backend, etc.)
+      await processSubscription(purchase);
+
+      // 3. IMPORTANT: Finish the transaction to prevent replay
+      await finishTransaction({
+        purchase,
+        // isConsumable defaults to false, which is correct for subscriptions and non-consumables
+      });
+    } catch (error) {
+      console.error('Purchase processing failed:', error);
+    }
+  },
+});
+```
+
+**Prevention**: Handle pending transactions on app startup:
+
+```tsx
+const {getAvailablePurchases, finishTransaction} = useIAP();
+
+useEffect(() => {
+  const checkPendingPurchases = async () => {
+    // Get all unfinished transactions
+    const purchases = await getAvailablePurchases();
+
+    for (const purchase of purchases) {
+      // Process and finish any pending transactions
+      if (await isAlreadyProcessed(purchase)) {
+        // If already processed, just finish the transaction
+        await finishTransaction({purchase}); // isConsumable: false by default
+      } else {
+        // Process the purchase first, then finish
+        await processPurchase(purchase);
+        await finishTransaction({purchase});
+      }
+    }
+  };
+
+  checkPendingPurchases();
+}, []);
+```
+
+**Important Notes**:
+
+- This issue primarily affects iOS because of how StoreKit handles transactions
+- Android requires acknowledgment within 3 days to prevent automatic refunds
+- The `isConsumable` parameter defaults to `false`, which is appropriate for subscriptions and non-consumable products
+- Never set `andDangerouslyFinishTransactionAutomaticallyIOS: true` unless you understand the implications
+- Always implement proper transaction finishing in your purchase flow
 
 #### 2. Testing on simulators/emulators
 
@@ -237,15 +341,16 @@ const handleStoreUnavailable = () => {
    ```
 
 2. **StoreKit configuration**:
+
    ```tsx
    // Add StoreKit capability in Xcode
    // For iOS 12.x, add SwiftUI.framework as optional
    ```
 
 3. **Xcode version issues**:
-   
+
    If you're experiencing issues like duplicate purchase events or other unexpected behavior:
-   
+
    - **Solution**: Upgrade to Xcode 16.4 or later
    - **Known issues resolved**: [#114](https://github.com/hyochan/expo-iap/issues/114), [react-native-iap #2970](https://github.com/hyochan/react-native-iap/issues/2970)
    - **Symptoms of old Xcode versions**:
