@@ -184,16 +184,25 @@ This happens when transactions are not properly finished. iOS stores unfinished 
 **Solution**: Always call `finishTransaction` after successfully processing a purchase:
 
 ```tsx
-const {finishTransaction, validateReceipt} = useIAP({
+const {finishTransaction} = useIAP({
   onPurchaseSuccess: async (purchase) => {
     console.log('Purchase successful:', purchase);
 
     try {
       // 1. Validate the receipt (IMPORTANT: Server-side validation required for both platforms)
       if (Platform.OS === 'ios') {
-        const receiptData = await validateReceipt();
-        // Send to your server for validation
-        const isValid = await validateReceiptOnServer(receiptData);
+        // WARNING: validateReceipt() from useIAP is for development only!
+        // For production, ALWAYS validate on your secure server
+
+        // Option 1 (Development only - NOT SECURE):
+        // const { validateReceipt } = useIAP();
+        // const receiptData = await validateReceipt(purchase.id);
+
+        // Option 2 (RECOMMENDED - Secure):
+        const isValid = await validateReceiptOnServer({
+          transactionId: purchase.transactionId,
+          productId: purchase.id,
+        });
         if (!isValid) {
           console.error('Invalid receipt');
           return;
@@ -202,7 +211,7 @@ const {finishTransaction, validateReceipt} = useIAP({
         // Android also requires server-side validation
         const purchaseToken = purchase.purchaseTokenAndroid;
         const packageName = purchase.packageNameAndroid;
-        
+
         // Get Google Play access token on your server (not in client)
         // Then validate the purchase with Google Play API
         const isValid = await validateAndroidPurchaseOnServer({
@@ -210,7 +219,7 @@ const {finishTransaction, validateReceipt} = useIAP({
           packageName,
           productId: purchase.id,
         });
-        
+
         if (!isValid) {
           console.error('Invalid Android purchase');
           return;

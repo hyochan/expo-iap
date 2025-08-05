@@ -794,21 +794,29 @@ const buySubscription = async (subscriptionId: string) => {
 
 ## Receipt Validation
 
-### Server-Side Validation (Required)
+### Server-Side Validation (Required for Production)
 
-**Important**: Always validate receipts on your server, never trust client-side validation alone.
+**Important**: Always validate receipts on your server in production. Client-side validation is NOT secure and should only be used for development/testing.
+
+**Note**: The `validateReceipt()` function from the `useIAP` hook performs client-side validation which is vulnerable to tampering. For production apps, ALWAYS implement server-side validation.
 
 #### iOS Receipt Validation
 
 ```typescript
-// Client-side: Get receipt data
-const receiptData = await validateReceipt();
+// Development only (NOT SECURE):
+// const { validateReceipt } = useIAP();
+// const receiptData = await validateReceipt(productId);
 
-// Send to your server
+// Production (RECOMMENDED):
+// Send purchase info directly to your server
 const response = await fetch('https://your-server.com/validate-ios-receipt', {
   method: 'POST',
   headers: {'Content-Type': 'application/json'},
-  body: JSON.stringify({receiptData}),
+  body: JSON.stringify({
+    transactionId: purchase.transactionId,
+    productId: purchase.id,
+    // Your server will fetch the receipt from Apple
+  }),
 });
 ```
 

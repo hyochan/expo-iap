@@ -15,18 +15,21 @@ This document outlines the coding conventions and best practices for the expo-ia
 ## General Guidelines
 
 ### Language & Syntax
+
 - Use TypeScript for all new code
 - Use ES6+ syntax (arrow functions, destructuring, template literals)
 - Prefer functional programming patterns
 - Avoid `any` type - use proper TypeScript types
 
 ### File Naming
+
 - Use PascalCase for TypeScript module files: `ExpoIapModule.ts`
 - Test files: `*.test.ts` or `*.test.tsx`
 - Type definition files: `*.types.ts`
 - Hook files: use camelCase: `useIap.ts`
 
 ### Import Order
+
 1. External dependencies
 2. Internal modules
 3. Types
@@ -35,19 +38,20 @@ This document outlines the coding conventions and best practices for the expo-ia
 ```typescript
 // External
 import React from 'react';
-import { Platform } from 'react-native';
+import {Platform} from 'react-native';
 
 // Internal modules
-import { ExpoIapModule } from '../ExpoIapModule';
-import { validateReceipt } from '../utils';
+import {ExpoIapModule} from '../ExpoIapModule';
+import {validateReceipt} from '../utils';
 
 // Types
-import type { Product, Purchase } from '../types';
+import type {Product, Purchase} from '../types';
 ```
 
 ## TypeScript Conventions
 
 ### Type Definitions
+
 - Use `interface` for object types that can be extended
 - Use `type` for unions, primitives, and functional types
 - Export types that are used across modules
@@ -65,15 +69,20 @@ export type Platform = 'ios' | 'android';
 export type PurchaseResult = Success | Failure;
 
 // ❌ Bad
-export interface Platform { // Should be type
+export interface Platform {
+  // Should be type
   name: 'ios' | 'android';
 }
 ```
 
 ### Function Types
+
 ```typescript
 // ✅ Good - Clear parameter and return types
-export const requestProducts = async (params: { skus: string[], type?: 'inapp' | 'subs' }): Promise<Product[]> => {
+export const requestProducts = async (params: {
+  skus: string[];
+  type?: 'inapp' | 'subs';
+}): Promise<Product[]> => {
   // implementation
 };
 
@@ -88,6 +97,7 @@ export const requestProducts = async (params) => {
 ### Naming Rules
 
 Functions that only work on one platform MUST have platform suffixes:
+
 - iOS-specific: `functionNameIOS()` (uppercase IOS)
 - Android-specific: `functionNameAndroid()`
 
@@ -109,7 +119,9 @@ export const getStorefrontIOS = async (): Promise<string> => {
 };
 
 // Android-only functions (no Platform.OS check needed in Android module)
-export const deepLinkToSubscriptionsAndroid = async (sku?: string): Promise<void> => {
+export const deepLinkToSubscriptionsAndroid = async (
+  sku?: string,
+): Promise<void> => {
   // Android implementation
   return ExpoIapModule.deepLinkToSubscriptions(sku);
 };
@@ -121,11 +133,20 @@ export const deepLinkToSubscriptionsAndroid = async (sku?: string): Promise<void
 
 ```typescript
 // These functions handle platform differences internally
-export const requestProducts = async (params: { skus: string[], type?: 'inapp' | 'subs' }): Promise<Product[]> => {
-  return Platform.select({
-    ios: async () => { /* iOS implementation */ },
-    android: async () => { /* Android implementation */ },
-  })() || [];
+export const requestProducts = async (params: {
+  skus: string[];
+  type?: 'inapp' | 'subs';
+}): Promise<Product[]> => {
+  return (
+    Platform.select({
+      ios: async () => {
+        /* iOS implementation */
+      },
+      android: async () => {
+        /* Android implementation */
+      },
+    })() || []
+  );
 };
 
 // New v2.7.0+ API - No Platform.OS checks needed!
@@ -137,8 +158,8 @@ export const requestPurchase = async (productId: string): Promise<Purchase> => {
       },
       android: {
         skus: [productId],
-      }
-    }
+      },
+    },
   });
 };
 ```
@@ -160,16 +181,19 @@ export const getStorefrontIOS = (): Promise<string> => {
 ### Type Naming Convention
 
 Platform-specific types:
+
 - `ProductIOS`, `ProductAndroid`
 - `PurchaseErrorIOS`, `PurchaseErrorAndroid`
 - `AppTransactionIOS`, `SubscriptionOfferAndroid`
 
 Cross-platform types:
+
 - `Product`, `Purchase`, `PurchaseError`
 
 ## Code Style
 
 ### Formatting
+
 - Use 2 spaces for indentation
 - Use single quotes for strings (except JSX)
 - No semicolons (configure Prettier)
@@ -177,6 +201,7 @@ Cross-platform types:
 - Add trailing commas in multi-line objects/arrays
 
 ### Variable Naming
+
 - Use camelCase for variables and functions
 - Use PascalCase for types, interfaces, and classes
 - Use SCREAMING_SNAKE_CASE for constants
@@ -199,7 +224,7 @@ Always use descriptive error messages and proper error types:
 ```typescript
 // ✅ Good - Clear error message
 try {
-  await requestPurchase({ request: { ios: { sku: 'invalid' } } });
+  await requestPurchase({request: {ios: {sku: 'invalid'}}});
 } catch (error) {
   if (error.code === 'E_ITEM_UNAVAILABLE') {
     console.error('Product not found in store');
@@ -208,7 +233,7 @@ try {
 
 // ❌ Bad - Generic error handling
 try {
-  await requestPurchase({ request: { sku: 'invalid' } });
+  await requestPurchase({request: {sku: 'invalid'}});
 } catch (error) {
   console.error('Error');
 }
@@ -241,7 +266,10 @@ Always use async/await over promises:
 
 ```typescript
 // ✅ Good
-export const requestProducts = async (params: { skus: string[], type?: 'inapp' | 'subs' }): Promise<Product[]> => {
+export const requestProducts = async (params: {
+  skus: string[];
+  type?: 'inapp' | 'subs';
+}): Promise<Product[]> => {
   try {
     const products = await ExpoIapModule.requestProducts(params);
     return products;
@@ -254,8 +282,8 @@ export const requestProducts = async (params: { skus: string[], type?: 'inapp' |
 // ❌ Bad
 export const requestProducts = (params): Promise<Product[]> => {
   return ExpoIapModule.requestProducts(params)
-    .then(products => products)
-    .catch(error => {
+    .then((products) => products)
+    .catch((error) => {
       console.error('Failed to get products:', error);
       throw error;
     });
@@ -268,25 +296,28 @@ export const requestProducts = (params): Promise<Product[]> => {
 
 All public APIs must have JSDoc comments:
 
-```typescript
+````typescript
 /**
  * Retrieves products from the iOS App Store
- * 
+ *
  * @param skus - Array of product SKUs to fetch
  * @returns Promise resolving to array of products
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @example
  * ```typescript
  * const products = await requestProducts({ skus: ['com.example.premium'], type: 'inapp' });
  * ```
- * 
+ *
  * @platform iOS
  */
-export const requestProductsIOS = async (params: { skus: string[], type?: 'inapp' | 'subs' }): Promise<ProductIOS[]> => {
+export const requestProductsIOS = async (params: {
+  skus: string[];
+  type?: 'inapp' | 'subs';
+}): Promise<ProductIOS[]> => {
   // implementation
 };
-```
+````
 
 ### README Files
 
@@ -307,7 +338,10 @@ describe('PurchaseManager', () => {
     });
 
     it('should get products on iOS', async () => {
-      const products = await requestProductsIOS({ skus: ['com.example.product'], type: 'inapp' });
+      const products = await requestProductsIOS({
+        skus: ['com.example.product'],
+        type: 'inapp',
+      });
       expect(products).toHaveLength(1);
     });
   });
@@ -318,15 +352,16 @@ describe('PurchaseManager', () => {
     });
 
     it('should throw error on Android', async () => {
-      await expect(requestProductsIOS({ skus: ['com.example.product'], type: 'inapp' }))
-        .rejects
-        .toThrow('This method is only available on iOS');
+      await expect(
+        requestProductsIOS({skus: ['com.example.product'], type: 'inapp'}),
+      ).rejects.toThrow('This method is only available on iOS');
     });
   });
 });
 ```
 
 ### Test Naming
+
 - Use descriptive test names
 - Start with "should" for behavior tests
 - Group related tests with `describe` blocks
@@ -344,6 +379,7 @@ footer
 ```
 
 ### Types
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -379,6 +415,7 @@ chore: update dependencies and fix vulnerabilities
 ```
 
 ### Rules
+
 - Use present tense ("add" not "added")
 - Use imperative mood ("fix" not "fixes")
 - Keep subject line under 72 characters
@@ -395,6 +432,7 @@ When updating existing code to follow conventions:
 5. Update documentation
 
 Example:
+
 ```typescript
 // Step 1: Add new function with correct naming
 export const getStorefrontIOS = async (): Promise<string> => {
@@ -429,19 +467,19 @@ await requestPurchase({
     android: {
       skus: [productId],
       obfuscatedAccountIdAndroid: 'user-123',
-    }
+    },
   },
-  type: 'inapp'
+  type: 'inapp',
 });
 
 // ❌ Bad - Old API with Platform.OS checks
 if (Platform.OS === 'ios') {
   await requestPurchase({
-    request: { sku: productId },
+    request: {sku: productId},
   });
 } else {
   await requestPurchase({
-    request: { skus: [productId] },
+    request: {skus: [productId]},
   });
 }
 ```
@@ -458,13 +496,15 @@ await requestPurchase({
     },
     android: {
       skus: [subscriptionId],
-      subscriptionOffers: [{
-        sku: subscriptionId,
-        offerToken: offer.offerToken,
-      }],
-    }
+      subscriptionOffers: [
+        {
+          sku: subscriptionId,
+          offerToken: offer.offerToken,
+        },
+      ],
+    },
   },
-  type: 'subs'
+  type: 'subs',
 });
 
 // ❌ Bad - Using deprecated requestSubscription

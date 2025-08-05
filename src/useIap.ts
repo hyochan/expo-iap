@@ -15,9 +15,13 @@ import {
   finishTransaction as finishTransactionInternal,
   requestPurchase as requestPurchaseInternal,
   requestProducts,
+  validateReceipt as validateReceiptInternal,
 } from './';
-import {syncIOS, validateReceiptIOS, getPromotedProductIOS, buyPromotedProductIOS} from './modules/ios';
-import {validateReceiptAndroid} from './modules/android';
+import {
+  syncIOS,
+  getPromotedProductIOS,
+  buyPromotedProductIOS,
+} from './modules/ios';
 
 // Types
 import {
@@ -58,12 +62,12 @@ type UseIap = {
     skus: string[];
     type?: 'inapp' | 'subs';
   }) => Promise<void>;
-  /** 
+  /**
    * @deprecated Use requestProducts({ skus, type: 'inapp' }) instead. This method will be removed in version 3.0.0.
    * Note: This method internally uses requestProducts, so no deprecation warning is shown.
    */
   getProducts: (skus: string[]) => Promise<void>;
-  /** 
+  /**
    * @deprecated Use requestProducts({ skus, type: 'subs' }) instead. This method will be removed in version 3.0.0.
    * Note: This method internally uses requestProducts, so no deprecation warning is shown.
    */
@@ -99,9 +103,7 @@ export interface UseIAPOptions {
 export function useIAP(options?: UseIAPOptions): UseIap {
   const [connected, setConnected] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [promotedProductsIOS] = useState<
-    ProductPurchase[]
-  >([]);
+  const [promotedProductsIOS] = useState<ProductPurchase[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionProduct[]>([]);
   const [purchaseHistories, setPurchaseHistories] = useState<ProductPurchase[]>(
     [],
@@ -330,29 +332,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         isSub?: boolean;
       },
     ) => {
-      if (Platform.OS === 'ios') {
-        return await validateReceiptIOS(sku);
-      } else if (Platform.OS === 'android') {
-        if (
-          !androidOptions ||
-          !androidOptions.packageName ||
-          !androidOptions.productToken ||
-          !androidOptions.accessToken
-        ) {
-          throw new Error(
-            'Android validation requires packageName, productToken, and accessToken',
-          );
-        }
-        return await validateReceiptAndroid({
-          packageName: androidOptions.packageName,
-          productId: sku,
-          productToken: androidOptions.productToken,
-          accessToken: androidOptions.accessToken,
-          isSub: androidOptions.isSub,
-        });
-      } else {
-        throw new Error('Platform not supported');
-      }
+      return validateReceiptInternal(sku, androidOptions);
     },
     [],
   );
@@ -393,14 +373,14 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         subscriptionsRef.current.promotedProductsIos =
           promotedProductListenerIOS((product: Product) => {
             setPromotedProductIOS(product);
-            
+
             if (optionsRef.current?.onPromotedProductIOS) {
               optionsRef.current.onPromotedProductIOS(product);
             }
           });
       }
     }
-  }, [refreshSubscriptionStatus, mergeWithDuplicateCheck]);
+  }, [refreshSubscriptionStatus]);
 
   useEffect(() => {
     initIapWithSubscriptions();

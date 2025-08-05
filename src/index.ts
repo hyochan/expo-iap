@@ -4,8 +4,8 @@ import {Platform} from 'react-native';
 
 // Internal modules
 import ExpoIapModule from './ExpoIapModule';
-import {isProductIos} from './modules/ios';
-import {isProductAndroid} from './modules/android';
+import {isProductIos, validateReceiptIOS} from './modules/ios';
+import {isProductAndroid, validateReceiptAndroid} from './modules/android';
 
 // Types
 import {
@@ -650,6 +650,48 @@ export const getStorefront = (): Promise<string> => {
     '`getStorefront` is deprecated. Use `getStorefrontIOS` instead. This function will be removed in version 3.0.0.',
   );
   return getStorefrontIOS();
+};
+
+/**
+ * Internal receipt validation function (NOT RECOMMENDED for production use)
+ *
+ * WARNING: This function performs client-side validation which is NOT secure.
+ * For production apps, always validate receipts on your secure server:
+ * - iOS: Send receipt data to Apple's verification endpoint from your server
+ * - Android: Use Google Play Developer API with service account credentials
+ */
+export const validateReceipt = async (
+  sku: string,
+  androidOptions?: {
+    packageName: string;
+    productToken: string;
+    accessToken: string;
+    isSub?: boolean;
+  },
+): Promise<any> => {
+  if (Platform.OS === 'ios') {
+    return await validateReceiptIOS(sku);
+  } else if (Platform.OS === 'android') {
+    if (
+      !androidOptions ||
+      !androidOptions.packageName ||
+      !androidOptions.productToken ||
+      !androidOptions.accessToken
+    ) {
+      throw new Error(
+        'Android validation requires packageName, productToken, and accessToken',
+      );
+    }
+    return await validateReceiptAndroid({
+      packageName: androidOptions.packageName,
+      productId: sku,
+      productToken: androidOptions.productToken,
+      accessToken: androidOptions.accessToken,
+      isSub: androidOptions.isSub,
+    });
+  } else {
+    throw new Error('Platform not supported');
+  }
 };
 
 export * from './useIap';
