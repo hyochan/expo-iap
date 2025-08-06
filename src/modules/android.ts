@@ -90,12 +90,10 @@ export const validateReceiptAndroid = async ({
  */
 export const acknowledgePurchaseAndroid = ({
   token,
-  developerPayload,
 }: {
   token: string;
-  developerPayload?: string;
 }): Promise<PurchaseResult | boolean | void> => {
-  return ExpoIapModule.acknowledgePurchase(token, developerPayload);
+  return ExpoIapModule.acknowledgePurchase(token);
 };
 
 /**
