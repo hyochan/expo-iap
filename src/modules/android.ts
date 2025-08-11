@@ -22,16 +22,32 @@ export function isProductAndroid<T extends {platform?: string}>(
 
 /**
  * Deep link to subscriptions screen on Android.
- * @param {string} sku The product's SKU (on Android)
+ * @param {Object} params - The parameters object
+ * @param {string} params.sku - The product's SKU (on Android)
+ * @param {string} params.packageName - The package name of your Android app (e.g., 'com.example.app')
  * @returns {Promise<void>}
+ * 
+ * @example
+ * ```typescript
+ * await deepLinkToSubscriptionsAndroid({
+ *   sku: 'subscription_id',
+ *   packageName: 'com.example.app'
+ * });
+ * ```
  */
 export const deepLinkToSubscriptionsAndroid = async ({
   sku,
+  packageName,
 }: {
   sku: string;
+  packageName: string;
 }): Promise<void> => {
+  if (!packageName) {
+    throw new Error('packageName is required for deepLinkToSubscriptionsAndroid');
+  }
+  
   return Linking.openURL(
-    `https://play.google.com/store/account/subscriptions?package=${await ExpoIapModule.getPackageName()}&sku=${sku}`,
+    `https://play.google.com/store/account/subscriptions?package=${packageName}&sku=${sku}`,
   );
 };
 
@@ -39,11 +55,12 @@ export const deepLinkToSubscriptionsAndroid = async ({
  * Validate receipt for Android. NOTE: This method is here for debugging purposes only. Including
  * your access token in the binary you ship to users is potentially dangerous.
  * Use server side validation instead for your production builds
- * @param {string} packageName package name of your app.
- * @param {string} productId product id for your in app product.
- * @param {string} productToken token for your purchase (called 'token' in the API documentation).
- * @param {string} accessToken OAuth access token with androidpublisher scope. Required for authentication.
- * @param {boolean} isSub whether this is subscription or inapp. `true` for subscription.
+ * @param {Object} params - The parameters object
+ * @param {string} params.packageName - package name of your app.
+ * @param {string} params.productId - product id for your in app product.
+ * @param {string} params.productToken - token for your purchase (called 'token' in the API documentation).
+ * @param {string} params.accessToken - OAuth access token with androidpublisher scope. Required for authentication.
+ * @param {boolean} params.isSub - whether this is subscription or inapp. `true` for subscription.
  * @returns {Promise<ReceiptAndroid>}
  */
 export const validateReceiptAndroid = async ({
@@ -85,7 +102,8 @@ export const validateReceiptAndroid = async ({
 
 /**
  * Acknowledge a product (on Android.) No-op on iOS.
- * @param {string} token The product's token (on Android)
+ * @param {Object} params - The parameters object
+ * @param {string} params.token - The product's token (on Android)
  * @returns {Promise<PurchaseResult | void>}
  */
 export const acknowledgePurchaseAndroid = ({

@@ -705,18 +705,25 @@ export const validateReceipt = async (
 /**
  * Deeplinks to native interface that allows users to manage their subscriptions
  * @param options.skuAndroid - Required for Android to locate specific subscription (ignored on iOS)
+ * @param options.packageNameAndroid - Required for Android to identify your app (ignored on iOS)
  * 
  * @returns Promise that resolves when the deep link is successfully opened
  * 
- * @throws {Error} When called on unsupported platform or when `skuAndroid` is missing on Android
+ * @throws {Error} When called on unsupported platform or when required Android parameters are missing
  * 
  * @example
  * import { deepLinkToSubscriptions } from 'expo-iap';
  * 
  * // Works on both iOS and Android
- * await deepLinkToSubscriptions({ skuAndroid: 'your_subscription_sku' });
+ * await deepLinkToSubscriptions({ 
+ *   skuAndroid: 'your_subscription_sku',
+ *   packageNameAndroid: 'com.example.app'
+ * });
  */
-export const deepLinkToSubscriptions = (options: {skuAndroid: string}): Promise<void> => {
+export const deepLinkToSubscriptions = (options: {
+  skuAndroid?: string;
+  packageNameAndroid?: string;
+}): Promise<void> => {
   if (Platform.OS === 'ios') {
     return deepLinkToSubscriptionsIos();
   }
@@ -724,10 +731,18 @@ export const deepLinkToSubscriptions = (options: {skuAndroid: string}): Promise<
   if (Platform.OS === 'android') {
     if (!options.skuAndroid) {
       return Promise.reject(
-        new Error('SKU is required to locate subscription in Android Store'),
+        new Error('skuAndroid is required to locate subscription in Android Store'),
       );
     }
-    return deepLinkToSubscriptionsAndroid({sku: options.skuAndroid});
+    if (!options.packageNameAndroid) {
+      return Promise.reject(
+        new Error('packageNameAndroid is required to identify your app in Android Store'),
+      );
+    }
+    return deepLinkToSubscriptionsAndroid({
+      sku: options.skuAndroid,
+      packageName: options.packageNameAndroid,
+    });
   }
 
   return Promise.reject(new Error(`Unsupported platform: ${Platform.OS}`));
