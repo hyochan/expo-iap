@@ -119,11 +119,17 @@ export const getStorefrontIOS = async (): Promise<string> => {
 };
 
 // Android-only functions (no Platform.OS check needed in Android module)
-export const deepLinkToSubscriptionsAndroid = async (
-  sku?: string,
-): Promise<void> => {
+export const deepLinkToSubscriptionsAndroid = async ({
+  sku,
+  packageName,
+}: {
+  sku: string;
+  packageName: string;
+}): Promise<void> => {
   // Android implementation
-  return ExpoIapModule.deepLinkToSubscriptions(sku);
+  return Linking.openURL(
+    `https://play.google.com/store/account/subscriptions?package=${packageName}&sku=${sku}`,
+  );
 };
 ```
 
