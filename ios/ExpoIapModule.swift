@@ -241,7 +241,7 @@ public class ExpoIapModule: Module {
             "ERROR_CODES": IapErrorCode.toDictionary()
         ])
 
-        Events(IapEvent.PurchaseUpdated, IapEvent.PurchaseError)
+        Events(IapEvent.PurchaseUpdated, IapEvent.PurchaseError, IapEvent.PromotedProductIOS)
 
         OnStartObserving {
             self.hasListeners = true
@@ -494,6 +494,14 @@ public class ExpoIapModule: Module {
                         options.insert(.appAccountToken(appAccountUUID))
                     }
                     guard let windowScene = await self.currentWindowScene() else {
+                        let errorData = [
+                            "responseCode": IapErrorCode.serviceError,
+                            "debugMessage": "Could not find window scene",
+                            "code": IapErrorCode.serviceError,
+                            "message": "Could not find window scene",
+                            "productId": sku,
+                        ]
+                        self.sendEvent(IapEvent.PurchaseError, errorData)
                         throw Exception(name: "ExpoIapModule", description: "Could not find window scene", code: IapErrorCode.serviceError)
                     }
                     let result: Product.PurchaseResult
@@ -537,19 +545,105 @@ public class ExpoIapModule: Module {
                             return serialized
                         }
                     case .userCancelled:
+                        let errorData = [
+                            "responseCode": IapErrorCode.userCancelled,
+                            "debugMessage": "User cancelled the purchase",
+                            "code": IapErrorCode.userCancelled,
+                            "message": "User cancelled the purchase",
+                            "productId": sku,
+                        ]
+                        self.sendEvent(IapEvent.PurchaseError, errorData)
                         throw Exception(name: "ExpoIapModule", description: "User cancelled the purchase", code: IapErrorCode.userCancelled)
                     case .pending:
+                        let errorData = [
+                            "responseCode": IapErrorCode.deferredPayment,
+                            "debugMessage": "The payment was deferred",
+                            "code": IapErrorCode.deferredPayment,
+                            "message": "The payment was deferred",
+                            "productId": sku,
+                        ]
+                        self.sendEvent(IapEvent.PurchaseError, errorData)
                         throw Exception(name: "ExpoIapModule", description: "The payment was deferred", code: IapErrorCode.deferredPayment)
                     @unknown default:
+                        let errorData = [
+                            "responseCode": IapErrorCode.unknown,
+                            "debugMessage": "Unknown purchase result",
+                            "code": IapErrorCode.unknown,
+                            "message": "Unknown purchase result",
+                            "productId": sku,
+                        ]
+                        self.sendEvent(IapEvent.PurchaseError, errorData)
                         throw Exception(name: "ExpoIapModule", description: "Unknown purchase result", code: IapErrorCode.unknown)
                     }
                 } catch {
                     if error is Exception {
                         throw error
                     }
-                    throw Exception(name: "ExpoIapModule", description: "Purchase failed: \(error.localizedDescription)", code: IapErrorCode.purchaseError)
+                    
+                    // Map StoreKit errors to proper error codes
+                    var errorCode = IapErrorCode.purchaseError
+                    var errorMessage = error.localizedDescription
+                    
+                    // Check for specific StoreKit error types
+                    if let nsError = error as NSError? {
+                        switch nsError.domain {
+                        case "SKErrorDomain":
+                            // Handle SKError codes
+                            switch nsError.code {
+                            case 0: // SKError.unknown
+                                errorCode = IapErrorCode.unknown
+                            case 1: // SKError.clientInvalid
+                                errorCode = IapErrorCode.serviceError
+                            case 2: // SKError.paymentCancelled
+                                errorCode = IapErrorCode.userCancelled
+                                errorMessage = "User cancelled the purchase"
+                            case 3: // SKError.paymentInvalid
+                                errorCode = IapErrorCode.userError
+                            case 4: // SKError.paymentNotAllowed
+                                errorCode = IapErrorCode.userError
+                                errorMessage = "Payment not allowed"
+                            case 5: // SKError.storeProductNotAvailable
+                                errorCode = IapErrorCode.itemUnavailable
+                            case 6: // SKError.cloudServicePermissionDenied
+                                errorCode = IapErrorCode.serviceError
+                            case 7: // SKError.cloudServiceNetworkConnectionFailed
+                                errorCode = IapErrorCode.networkError
+                            case 8: // SKError.cloudServiceRevoked
+                                errorCode = IapErrorCode.serviceError
+                            default:
+                                errorCode = IapErrorCode.purchaseError
+                            }
+                        case "NSURLErrorDomain":
+                            errorCode = IapErrorCode.networkError
+                            errorMessage = "Network error: \(error.localizedDescription)"
+                        default:
+                            errorCode = IapErrorCode.purchaseError
+                        }
+                    } else if error.localizedDescription.lowercased().contains("network") {
+                        errorCode = IapErrorCode.networkError
+                    } else if error.localizedDescription.lowercased().contains("cancelled") {
+                        errorCode = IapErrorCode.userCancelled
+                    }
+                    
+                    let errorData = [
+                        "responseCode": errorCode,
+                        "debugMessage": "Purchase failed: \(error.localizedDescription)",
+                        "code": errorCode,
+                        "message": errorMessage,
+                        "productId": sku,
+                    ]
+                    self.sendEvent(IapEvent.PurchaseError, errorData)
+                    throw Exception(name: "ExpoIapModule", description: errorMessage, code: errorCode)
                 }
             } else {
+                let errorData = [
+                    "responseCode": IapErrorCode.itemUnavailable,
+                    "debugMessage": "Invalid product ID",
+                    "code": IapErrorCode.itemUnavailable,
+                    "message": "Invalid product ID",
+                    "productId": sku,
+                ]
+                self.sendEvent(IapEvent.PurchaseError, errorData)
                 throw Exception(name: "ExpoIapModule", description: "Invalid product ID", code: IapErrorCode.itemUnavailable)
             }
         }
