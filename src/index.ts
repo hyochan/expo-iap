@@ -562,10 +562,10 @@ export const finishTransaction = ({
   return (
     Platform.select({
       ios: async () => {
-        const transactionId = purchase.transactionId;
+        const transactionId = purchase.id;
         if (!transactionId) {
           return Promise.reject(
-            new Error('transactionId required to finish iOS transaction'),
+            new Error('purchase.id required to finish iOS transaction'),
           );
         }
         await ExpoIapModule.finishTransaction(transactionId);

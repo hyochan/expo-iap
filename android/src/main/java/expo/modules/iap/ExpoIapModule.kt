@@ -86,9 +86,10 @@ class ExpoIapModule :
             purchases.forEach { purchase ->
                 val item =
                     mutableMapOf<String, Any?>(
-                        "id" to purchase.products.firstOrNull() as Any?,
+                        "id" to purchase.orderId,
+                        "productId" to purchase.products.firstOrNull() as Any?,
                         "ids" to purchase.products,
-                        "transactionId" to purchase.orderId,
+                        "transactionId" to purchase.orderId, // @deprecated - use id instead
                         "transactionDate" to purchase.purchaseTime.toDouble(),
                         "transactionReceipt" to purchase.originalJson,
                         "purchaseTokenAndroid" to purchase.purchaseToken,
@@ -260,10 +261,10 @@ class ExpoIapModule :
                         purchases?.forEach { purchase ->
                             val item =
                                 mutableMapOf<String, Any?>(
-                                    // kept for convenience/backward-compatibility. productIds has the complete list
-                                    "id" to purchase.products.firstOrNull() as Any?,
+                                    "id" to purchase.orderId,
+                                    "productId" to purchase.products.firstOrNull() as Any?,
                                     "ids" to purchase.products,
-                                    "transactionId" to purchase.orderId,
+                                    "transactionId" to purchase.orderId, // @deprecated - use id instead
                                     "transactionDate" to purchase.purchaseTime.toDouble(),
                                     "transactionReceipt" to purchase.originalJson,
                                     "orderId" to purchase.orderId,

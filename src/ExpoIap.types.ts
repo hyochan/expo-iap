@@ -28,8 +28,9 @@ export type ProductBase = {
 };
 
 export type PurchaseBase = {
-  id: string;
-  transactionId?: string;
+  id: string; // Transaction identifier - used by finishTransaction
+  productId: string; // Product identifier - which product was purchased
+  transactionId?: string; // @deprecated - use id instead
   transactionDate: number;
   transactionReceipt: string;
 };

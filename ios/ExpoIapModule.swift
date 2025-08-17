@@ -48,9 +48,10 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: Stri
     }
 
     var purchaseMap: [String: Any?] = [
-        "id": transaction.productID,
+        "id": String(transaction.id),
+        "productId": transaction.productID,
         "ids": [transaction.productID],
-        "transactionId": String(transaction.id),
+        "transactionId": String(transaction.id), // @deprecated - use id instead
         "transactionDate": transaction.purchaseDate.timeIntervalSince1970 * 1000,
         "transactionReceipt": jwsReceipt,
         "platform": "ios",
