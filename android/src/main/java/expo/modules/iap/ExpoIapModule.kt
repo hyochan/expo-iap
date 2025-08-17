@@ -408,10 +408,11 @@ class ExpoIapModule :
                     if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                         val errorData = PlayUtils.getBillingResponseData(billingResult.responseCode)
                         var errorMessage = billingResult.debugMessage ?: errorData.message
+                        var subResponseCode: Int? = null
                         
                         // Check for sub-response codes (v8.0.0+)
                         try {
-                            val subResponseCode = billingResult.javaClass.getMethod("getSubResponseCode").invoke(billingResult) as? Int
+                            subResponseCode = billingResult.javaClass.getMethod("getSubResponseCode").invoke(billingResult) as? Int
                             if (subResponseCode != null && subResponseCode != 0) {
                                 if (subResponseCode == 1) { // PAYMENT_DECLINED_DUE_TO_INSUFFICIENT_FUNDS
                                     errorMessage = "$errorMessage (Payment declined due to insufficient funds)"
@@ -421,6 +422,32 @@ class ExpoIapModule :
                             }
                         } catch (e: Exception) {
                             // Method doesn't exist in older versions, ignore
+                        }
+                        
+                        // Send error event to match iOS behavior
+                        val errorMap = mutableMapOf<String, Any?>(
+                            "responseCode" to billingResult.responseCode,
+                            "debugMessage" to billingResult.debugMessage,
+                            "code" to errorData.code,
+                            "message" to errorMessage
+                        )
+                        
+                        // Add product ID if available
+                        if (skuArr.isNotEmpty()) {
+                            errorMap["productId"] = skuArr.first()
+                        }
+                        
+                        // Add sub-response code if available
+                        subResponseCode?.let {
+                            if (it != 0) {
+                                errorMap["subResponseCode"] = it
+                            }
+                        }
+                        
+                        try {
+                            sendEvent(IapEvent.PURCHASE_ERROR, errorMap.toMap())
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
                         }
                         
                         promise.reject(errorData.code, errorMessage, null)
