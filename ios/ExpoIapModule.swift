@@ -80,6 +80,7 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: Stri
     if (jwsRepresentationIos != nil) {
         logDebug("serializeTransaction adding jwsRepresentationIos with length: \(jwsRepresentationIos!.count)")
         purchaseMap["jwsRepresentationIos"] = jwsRepresentationIos
+        purchaseMap["purchaseToken"] = jwsRepresentationIos
     } else {
         logDebug("serializeTransaction jwsRepresentationIos is nil")
     }
