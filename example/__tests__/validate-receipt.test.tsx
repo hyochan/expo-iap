@@ -1,31 +1,30 @@
-describe('validateReceiptIOS Type Tests', () => {
-  it('should validate receipt result structure', () => {
+describe('Purchase Token Unified API Tests', () => {
+  it('should validate receipt result with unified purchaseToken', () => {
     const mockValidationResult = {
       isValid: true,
       receiptData: 'mock-base64-receipt-data',
-      jwsRepresentation: 'mock-jws-token',
       latestTransaction: {
         id: 'transaction-123',
         platform: 'ios',
+        productId: 'test.product.1',
         transactionId: 'transaction-123',
         transactionDate: Date.now(),
-        originalTransactionId: 'original-123',
-        originalTransactionDate: Date.now(),
+        transactionReceipt: 'receipt-data',
+        purchaseToken: 'mock-jws-token',
       },
     };
 
     // Test structure
     expect(mockValidationResult).toHaveProperty('isValid');
     expect(mockValidationResult).toHaveProperty('receiptData');
-    expect(mockValidationResult).toHaveProperty('jwsRepresentation');
-    expect(mockValidationResult).toHaveProperty('latestTransaction');
+    expect(mockValidationResult.latestTransaction).toHaveProperty('purchaseToken');
+    expect(mockValidationResult.latestTransaction?.purchaseToken).toBe('mock-jws-token');
   });
 
   it('should handle invalid receipt result', () => {
     const invalidResult = {
       isValid: false,
       receiptData: '',
-      jwsRepresentation: '',
       latestTransaction: undefined,
     };
 
@@ -33,38 +32,52 @@ describe('validateReceiptIOS Type Tests', () => {
     expect(invalidResult.latestTransaction).toBeUndefined();
   });
 
-  it('should validate receipt data format', () => {
-    const result = {
-      isValid: true,
-      receiptData: 'bW9jay1iYXNlNjQtcmVjZWlwdC1kYXRh', // Valid base64
-      jwsRepresentation: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', // Valid JWT start
-      latestTransaction: undefined,
+  it('should validate unified purchaseToken across platforms', () => {
+    const iosPurchase = {
+      id: 'ios-transaction-123',
+      platform: 'ios',
+      productId: 'test.product.1',
+      transactionDate: Date.now(),
+      transactionReceipt: 'ios-receipt',
+      purchaseToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', // JWS token for iOS
     };
 
-    // Base64 validation pattern
-    const base64Pattern = /^[A-Za-z0-9+/]+=*$/;
-    expect(result.receiptData).toMatch(base64Pattern);
+    const androidPurchase = {
+      id: 'android-order-123',
+      platform: 'android',
+      productId: 'test.product.1',
+      transactionDate: Date.now(),
+      transactionReceipt: 'android-receipt',
+      purchaseToken: 'mock-android-purchase-token', // Android purchase token
+    };
 
-    // JWT typically starts with base64 encoded header
-    expect(result.jwsRepresentation.startsWith('eyJ')).toBe(true);
+    // Both platforms should have purchaseToken
+    expect(iosPurchase).toHaveProperty('purchaseToken');
+    expect(androidPurchase).toHaveProperty('purchaseToken');
+    
+    // iOS purchaseToken should look like JWT
+    expect(iosPurchase.purchaseToken.startsWith('eyJ')).toBe(true);
+    
+    // Android purchaseToken should be a string
+    expect(typeof androidPurchase.purchaseToken).toBe('string');
+    expect(androidPurchase.purchaseToken.length).toBeGreaterThan(0);
   });
 
-  it('should have correct property types', () => {
-    const result = {
-      isValid: true,
-      receiptData: 'receipt-data',
-      jwsRepresentation: 'jws-token',
-      latestTransaction: {
-        id: 'test-id',
-        platform: 'ios',
-        transactionId: 'test-id',
-        transactionDate: Date.now(),
-      },
+  it('should have correct property types with unified API', () => {
+    const purchase = {
+      id: 'test-id',
+      platform: 'ios',
+      productId: 'test.product',
+      transactionDate: Date.now(),
+      transactionReceipt: 'receipt-data',
+      purchaseToken: 'unified-purchase-token',
     };
 
-    expect(typeof result.isValid).toBe('boolean');
-    expect(typeof result.receiptData).toBe('string');
-    expect(typeof result.jwsRepresentation).toBe('string');
-    expect(typeof result.latestTransaction).toBe('object');
+    expect(typeof purchase.id).toBe('string');
+    expect(typeof purchase.platform).toBe('string');
+    expect(typeof purchase.productId).toBe('string');
+    expect(typeof purchase.transactionDate).toBe('number');
+    expect(typeof purchase.transactionReceipt).toBe('string');
+    expect(typeof purchase.purchaseToken).toBe('string');
   });
 });
