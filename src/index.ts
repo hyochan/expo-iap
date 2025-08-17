@@ -36,6 +36,13 @@ export * from './modules/android';
 export * from './modules/ios';
 export type {AppTransactionIOS} from './types/ExpoIapIos.types';
 
+// Export subscription helpers
+export {
+  getActiveSubscriptions,
+  hasActiveSubscriptions,
+  type ActiveSubscription,
+} from './helpers/subscription';
+
 // Get the native constant value
 export const PI = ExpoIapModule.PI;
 

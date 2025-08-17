@@ -16,6 +16,9 @@ import {
   requestPurchase as requestPurchaseInternal,
   requestProducts,
   validateReceipt as validateReceiptInternal,
+  getActiveSubscriptions,
+  hasActiveSubscriptions,
+  type ActiveSubscription,
 } from './';
 import {
   syncIOS,
@@ -47,6 +50,7 @@ type UseIap = {
   currentPurchase?: ProductPurchase;
   currentPurchaseError?: PurchaseError;
   promotedProductIOS?: Product;
+  activeSubscriptions: ActiveSubscription[];
   clearCurrentPurchase: () => void;
   clearCurrentPurchaseError: () => void;
   finishTransaction: ({
@@ -88,6 +92,8 @@ type UseIap = {
   restorePurchases: () => Promise<void>; // 구매 복원 함수 추가
   getPromotedProductIOS: () => Promise<any | null>;
   buyPromotedProductIOS: () => Promise<void>;
+  getActiveSubscriptions: (subscriptionIds?: string[]) => Promise<ActiveSubscription[]>;
+  hasActiveSubscriptions: (subscriptionIds?: string[]) => Promise<boolean>;
 };
 
 export interface UseIAPOptions {
@@ -116,6 +122,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const [currentPurchaseError, setCurrentPurchaseError] =
     useState<PurchaseError>();
   const [promotedProductIdIOS] = useState<string>();
+  const [activeSubscriptions, setActiveSubscriptions] = useState<ActiveSubscription[]>([]);
 
   const optionsRef = useRef<UseIAPOptions | undefined>(options);
 
@@ -240,6 +247,33 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       console.error('Error fetching available purchases:', error);
     }
   }, []);
+
+  const getActiveSubscriptionsInternal = useCallback(
+    async (subscriptionIds?: string[]): Promise<ActiveSubscription[]> => {
+      try {
+        const result = await getActiveSubscriptions(subscriptionIds);
+        setActiveSubscriptions(result);
+        return result;
+      } catch (error) {
+        console.error('Error getting active subscriptions:', error);
+        setActiveSubscriptions([]);
+        return [];
+      }
+    },
+    [],
+  );
+
+  const hasActiveSubscriptionsInternal = useCallback(
+    async (subscriptionIds?: string[]): Promise<boolean> => {
+      try {
+        return await hasActiveSubscriptions(subscriptionIds);
+      } catch (error) {
+        console.error('Error checking active subscriptions:', error);
+        return false;
+      }
+    },
+    [],
+  );
 
   const getPurchaseHistoriesInternal = useCallback(async (): Promise<void> => {
     setPurchaseHistories(await getPurchaseHistories());
@@ -408,6 +442,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     currentPurchase,
     currentPurchaseError,
     promotedProductIOS,
+    activeSubscriptions,
     clearCurrentPurchase,
     clearCurrentPurchaseError,
     getAvailablePurchases: getAvailablePurchasesInternal,
@@ -420,5 +455,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     getSubscriptions: getSubscriptionsInternal,
     getPromotedProductIOS,
     buyPromotedProductIOS,
+    getActiveSubscriptions: getActiveSubscriptionsInternal,
+    hasActiveSubscriptions: hasActiveSubscriptionsInternal,
   };
 }

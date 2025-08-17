@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Alert,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import {requestPurchase, useIAP} from '../../src';
 import type {SubscriptionProduct, PurchaseError} from '../../src/ExpoIap.types';
@@ -21,13 +22,27 @@ import type {SubscriptionProductAndroid} from '../../src/types/ExpoIapAndroid.ty
  * - No manual promise handling required
  * - Clean success/error pattern through hooks
  * - Focused on recurring subscriptions
+ * 
+ * New subscription status checking API:
+ * - getActiveSubscriptions() - gets all active subscriptions automatically
+ * - getActiveSubscriptions(['id1', 'id2']) - gets specific subscriptions
+ * - activeSubscriptions state - automatically updated subscription list
  */
+
 export default function SubscriptionFlow() {
   const [purchaseResult, setPurchaseResult] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
-  // Use the useIAP hook for managing subscriptions
-  const {connected, subscriptions, requestProducts, finishTransaction} = useIAP({
+  // Use the useIAP hook for managing subscriptions with built-in subscription status
+  const {
+    connected,
+    subscriptions,
+    requestProducts,
+    finishTransaction,
+    getActiveSubscriptions,
+    activeSubscriptions,
+  } = useIAP({
     onPurchaseSuccess: async (purchase) => {
       console.log('Subscription successful:', purchase);
       setIsProcessing(false);
@@ -76,15 +91,33 @@ export default function SubscriptionFlow() {
     },
   });
 
-  // Load subscriptions when component mounts
+  // Check subscription status using the new library API
+  const checkSubscriptionStatus = useCallback(async () => {
+    if (!connected) return;
+    
+    setIsCheckingStatus(true);
+    try {
+      // No need to pass subscriptionIds - it will check all active subscriptions
+      const subs = await getActiveSubscriptions();
+      console.log('Active subscriptions:', subs);
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+      Alert.alert('Error', 'Failed to check subscription status');
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  }, [connected, getActiveSubscriptions]);
+
+  // Load subscriptions and check status when component mounts
   useEffect(() => {
     if (connected) {
       const subscriptionIds = [
         'dev.hyo.martie.premium', // Example subscription ID
       ];
       requestProducts({ skus: subscriptionIds, type: 'subs' });
+      checkSubscriptionStatus();
     }
-  }, [connected, requestProducts]);
+  }, [connected, requestProducts, checkSubscriptionStatus]);
 
   const handleSubscription = async (itemId: string) => {
     try {
@@ -200,8 +233,94 @@ export default function SubscriptionFlow() {
         </View>
       </View>
 
+      {/* Subscription Status Section - Using library's activeSubscriptions */}
+      {activeSubscriptions.length > 0 && (
+        <View style={[styles.section, styles.statusSection]}>
+          <Text style={styles.sectionTitle}>Current Subscription Status</Text>
+          <View style={styles.statusCard}>
+            <View style={styles.statusRow}>
+              <Text style={styles.statusLabel}>Status:</Text>
+              <Text style={[styles.statusValue, styles.activeStatus]}>
+                ✅ Active
+              </Text>
+            </View>
+            
+            {activeSubscriptions.map((sub, index) => (
+              <View key={sub.productId + index} style={styles.subscriptionStatusItem}>
+                <View style={styles.statusRow}>
+                  <Text style={styles.statusLabel}>Product:</Text>
+                  <Text style={styles.statusValue}>{sub.productId}</Text>
+                </View>
+                
+                {Platform.OS === 'ios' && sub.expirationDate && (
+                  <View style={styles.statusRow}>
+                    <Text style={styles.statusLabel}>Expires:</Text>
+                    <Text style={styles.statusValue}>
+                      {sub.expirationDate.toLocaleDateString()}
+                    </Text>
+                  </View>
+                )}
+                
+                {Platform.OS === 'android' && sub.autoRenewing !== undefined && (
+                  <View style={styles.statusRow}>
+                    <Text style={styles.statusLabel}>Auto-Renew:</Text>
+                    <Text style={[
+                      styles.statusValue,
+                      sub.autoRenewing ? styles.activeStatus : styles.cancelledStatus
+                    ]}>
+                      {sub.autoRenewing ? '✅ Enabled' : '⚠️ Cancelled'}
+                    </Text>
+                  </View>
+                )}
+                
+                {sub.environment && (
+                  <View style={styles.statusRow}>
+                    <Text style={styles.statusLabel}>Environment:</Text>
+                    <Text style={styles.statusValue}>
+                      {sub.environment}
+                    </Text>
+                  </View>
+                )}
+                
+                {sub.willExpireSoon && (
+                  <Text style={styles.warningText}>
+                    ⚠️ Your subscription will expire soon. {sub.daysUntilExpiration && 
+                      `(${sub.daysUntilExpiration} days remaining)`}
+                  </Text>
+                )}
+              </View>
+            ))}
+            
+            {Platform.OS === 'android' && activeSubscriptions.some(s => !s.autoRenewing) && (
+              <Text style={styles.warningText}>
+                ⚠️ Your subscription will not auto-renew. You'll lose access when the current period ends.
+              </Text>
+            )}
+          </View>
+          
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={checkSubscriptionStatus}
+            disabled={isCheckingStatus}
+          >
+            {isCheckingStatus ? (
+              <ActivityIndicator color="#007AFF" />
+            ) : (
+              <Text style={styles.refreshButtonText}>🔄 Refresh Status</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Available Subscriptions</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Available Subscriptions</Text>
+          {activeSubscriptions.length === 0 && connected && (
+            <TouchableOpacity onPress={checkSubscriptionStatus}>
+              <Text style={styles.checkStatusLink}>Check Status</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         {!connected ? (
           <Text style={styles.loadingText}>Connecting to store...</Text>
         ) : subscriptions.length > 0 ? (
@@ -447,5 +566,80 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#0066cc',
     fontWeight: '600',
+  },
+  statusSection: {
+    backgroundColor: '#e8f4f8',
+    borderColor: '#0066cc',
+    borderWidth: 1,
+  },
+  statusCard: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  statusLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  statusValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  activeStatus: {
+    color: '#28a745',
+  },
+  cancelledStatus: {
+    color: '#ffc107',
+  },
+  warningText: {
+    fontSize: 12,
+    color: '#ff9800',
+    fontStyle: 'italic',
+    marginTop: 12,
+    lineHeight: 18,
+  },
+  refreshButton: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  refreshButtonText: {
+    color: '#007AFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  checkStatusLink: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  subscriptionStatusItem: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    paddingBottom: 12,
+    marginBottom: 12,
   },
 });
