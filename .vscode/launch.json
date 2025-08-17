@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug iOS (Expo)",
+      "name": "Debug iOS Simulator (Expo)",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceFolder}/example",
@@ -12,6 +12,39 @@
       "env": {
         "NODE_ENV": "development"
       }
+    },
+    {
+      "name": "Debug iOS Device (Expo)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/example",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "ios", "--device"],
+      "console": "integratedTerminal",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Debug iOS Device with Clean Build",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/example",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "run:ios", "--device", "--clear-cache"],
+      "console": "integratedTerminal",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Prebuild for iOS Device",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/example",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "prebuild", "--platform", "ios", "--clean"],
+      "console": "integratedTerminal"
     },
     {
       "name": "Debug Android (Expo)",
@@ -96,8 +129,13 @@
   ],
   "compounds": [
     {
-      "name": "iOS + Metro",
-      "configurations": ["Start Metro Bundler", "Debug iOS (Expo)"],
+      "name": "iOS Simulator + Metro",
+      "configurations": ["Start Metro Bundler", "Debug iOS Simulator (Expo)"],
+      "stopAll": true
+    },
+    {
+      "name": "iOS Device + Metro",
+      "configurations": ["Start Metro Bundler", "Debug iOS Device (Expo)"],
       "stopAll": true
     },
     {
