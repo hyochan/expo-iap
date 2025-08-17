@@ -68,6 +68,9 @@ type SubscriptionOffer = {
 };
 
 export type RequestSubscriptionAndroidProps = RequestPurchaseAndroidProps & {
+  /**
+   * @deprecated Use `purchaseToken` instead. This field will be removed in a future version.
+   */
   purchaseTokenAndroid?: string;
   replacementModeAndroid?: ReplacementModesAndroid;
   subscriptionOffers: SubscriptionOffer[];
@@ -115,6 +118,9 @@ export enum PurchaseStateAndroid {
 
 export type ProductPurchaseAndroid = PurchaseBase & {
   ids?: string[];
+  /**
+   * @deprecated Use `purchaseToken` instead. This field will be removed in a future version.
+   */
   purchaseTokenAndroid?: string;
   dataAndroid?: string;
   signatureAndroid?: string;

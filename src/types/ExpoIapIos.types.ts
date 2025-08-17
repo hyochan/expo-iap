@@ -138,6 +138,10 @@ export type ProductPurchaseIos = PurchaseBase & {
   };
   priceIos?: number;
   currencyIos?: string;
+  /**
+   * @deprecated Use `purchaseToken` instead. This field will be removed in a future version.
+   * iOS 15+ JWS representation is now available through the `purchaseToken` field.
+   */
   jwsRepresentationIos?: string;
 };
 

@@ -33,6 +33,7 @@ export type PurchaseBase = {
   transactionId?: string; // @deprecated - use id instead
   transactionDate: number;
   transactionReceipt: string;
+  purchaseToken?: string; // Unified purchase token (jwsRepresentation for iOS, purchaseToken for Android)
 };
 
 // Define literal platform types for better type discrimination
@@ -74,7 +75,11 @@ export type PurchaseResult = {
   debugMessage?: string;
   code?: string;
   message?: string;
+  /**
+   * @deprecated Use `purchaseToken` instead. This field will be removed in a future version.
+   */
   purchaseTokenAndroid?: string;
+  purchaseToken?: string;
 };
 /**
  * Centralized error codes for expo-iap
