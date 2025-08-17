@@ -115,9 +115,16 @@ export default function SubscriptionFlow() {
         'dev.hyo.martie.premium', // Example subscription ID
       ];
       requestProducts({ skus: subscriptionIds, type: 'subs' });
+    }
+  }, [connected, requestProducts]);
+  
+  // Check subscription status separately to avoid infinite loop
+  useEffect(() => {
+    if (connected) {
       checkSubscriptionStatus();
     }
-  }, [connected, requestProducts, checkSubscriptionStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected]);
 
   const handleSubscription = async (itemId: string) => {
     try {
@@ -234,7 +241,7 @@ export default function SubscriptionFlow() {
       </View>
 
       {/* Subscription Status Section - Using library's activeSubscriptions */}
-      {activeSubscriptions.length > 0 && (
+      {activeSubscriptions.length > 0 ? (
         <View style={[styles.section, styles.statusSection]}>
           <Text style={styles.sectionTitle}>Current Subscription Status</Text>
           <View style={styles.statusCard}>
@@ -252,50 +259,50 @@ export default function SubscriptionFlow() {
                   <Text style={styles.statusValue}>{sub.productId}</Text>
                 </View>
                 
-                {Platform.OS === 'ios' && sub.expirationDate && (
+                {Platform.OS === 'ios' && sub.expirationDateIOS ? (
                   <View style={styles.statusRow}>
                     <Text style={styles.statusLabel}>Expires:</Text>
                     <Text style={styles.statusValue}>
-                      {sub.expirationDate.toLocaleDateString()}
+                      {sub.expirationDateIOS.toLocaleDateString()}
                     </Text>
                   </View>
-                )}
+                ) : null}
                 
-                {Platform.OS === 'android' && sub.autoRenewing !== undefined && (
+                {Platform.OS === 'android' && sub.autoRenewingAndroid !== undefined ? (
                   <View style={styles.statusRow}>
                     <Text style={styles.statusLabel}>Auto-Renew:</Text>
                     <Text style={[
                       styles.statusValue,
-                      sub.autoRenewing ? styles.activeStatus : styles.cancelledStatus
+                      sub.autoRenewingAndroid ? styles.activeStatus : styles.cancelledStatus
                     ]}>
-                      {sub.autoRenewing ? '✅ Enabled' : '⚠️ Cancelled'}
+                      {sub.autoRenewingAndroid ? '✅ Enabled' : '⚠️ Cancelled'}
                     </Text>
                   </View>
-                )}
+                ) : null}
                 
-                {sub.environment && (
+                {sub.environmentIOS ? (
                   <View style={styles.statusRow}>
                     <Text style={styles.statusLabel}>Environment:</Text>
                     <Text style={styles.statusValue}>
-                      {sub.environment}
+                      {sub.environmentIOS}
                     </Text>
                   </View>
-                )}
+                ) : null}
                 
-                {sub.willExpireSoon && (
+                {sub.willExpireSoon ? (
                   <Text style={styles.warningText}>
-                    ⚠️ Your subscription will expire soon. {sub.daysUntilExpiration && 
-                      `(${sub.daysUntilExpiration} days remaining)`}
+                    ⚠️ Your subscription will expire soon. {sub.daysUntilExpirationIOS && 
+                      `(${sub.daysUntilExpirationIOS} days remaining)`}
                   </Text>
-                )}
+                ) : null}
               </View>
             ))}
             
-            {Platform.OS === 'android' && activeSubscriptions.some(s => !s.autoRenewing) && (
+            {Platform.OS === 'android' && activeSubscriptions.some(s => !s.autoRenewingAndroid) ? (
               <Text style={styles.warningText}>
                 ⚠️ Your subscription will not auto-renew. You'll lose access when the current period ends.
               </Text>
-            )}
+            ) : null}
           </View>
           
           <TouchableOpacity
@@ -310,16 +317,16 @@ export default function SubscriptionFlow() {
             )}
           </TouchableOpacity>
         </View>
-      )}
+      ) : null}
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Available Subscriptions</Text>
-          {activeSubscriptions.length === 0 && connected && (
+          {activeSubscriptions.length === 0 && connected ? (
             <TouchableOpacity onPress={checkSubscriptionStatus}>
               <Text style={styles.checkStatusLink}>Check Status</Text>
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
         {!connected ? (
           <Text style={styles.loadingText}>Connecting to store...</Text>
@@ -341,13 +348,13 @@ export default function SubscriptionFlow() {
                     per {getSubscriptionPeriod(subscription)}
                   </Text>
                 </View>
-                {getIntroductoryOffer(subscription) && (
+                {getIntroductoryOffer(subscription) ? (
                   <View style={styles.offerBadge}>
                     <Text style={styles.offerText}>
                       {getIntroductoryOffer(subscription)}
                     </Text>
                   </View>
-                )}
+                ) : null}
               </View>
               <TouchableOpacity
                 style={[

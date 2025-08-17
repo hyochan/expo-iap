@@ -3,12 +3,12 @@ import { getAvailablePurchases } from '../index';
 
 export interface ActiveSubscription {
   productId: string;
-  expirationDate?: Date;
-  autoRenewing?: boolean;
-  environment?: string;
-  willExpireSoon?: boolean;
-  daysUntilExpiration?: number;
   isActive: boolean;
+  expirationDateIOS?: Date;
+  autoRenewingAndroid?: boolean;
+  environmentIOS?: string;
+  willExpireSoon?: boolean;
+  daysUntilExpirationIOS?: number;
 }
 
 /**
@@ -72,22 +72,22 @@ export const getActiveSubscriptions = async (
       if (Platform.OS === 'ios') {
         if ('expirationDateIos' in purchase && purchase.expirationDateIos) {
           const expirationDate = new Date(purchase.expirationDateIos);
-          subscription.expirationDate = expirationDate;
+          subscription.expirationDateIOS = expirationDate;
           
           // Calculate days until expiration
           const daysUntilExpiration = Math.floor(
             (purchase.expirationDateIos - currentTime) / (1000 * 60 * 60 * 24)
           );
-          subscription.daysUntilExpiration = daysUntilExpiration;
+          subscription.daysUntilExpirationIOS = daysUntilExpiration;
           subscription.willExpireSoon = daysUntilExpiration <= 7;
         }
         
         if ('environmentIos' in purchase) {
-          subscription.environment = purchase.environmentIos;
+          subscription.environmentIOS = purchase.environmentIos;
         }
       } else if (Platform.OS === 'android') {
         if ('autoRenewingAndroid' in purchase) {
-          subscription.autoRenewing = purchase.autoRenewingAndroid;
+          subscription.autoRenewingAndroid = purchase.autoRenewingAndroid;
           // If auto-renewing is false, subscription will expire soon
           subscription.willExpireSoon = !purchase.autoRenewingAndroid;
         }

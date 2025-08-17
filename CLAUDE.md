@@ -8,8 +8,12 @@ Before committing any changes:
 
 1. Run `bun run lint` to ensure code quality
 2. Run `bun run typecheck` to verify TypeScript types
-3. Run `bun test` to verify all tests pass
-4. Only commit if all checks succeed
+3. Run `bun run test` to verify all tests pass (Note: Use `bun run test`, not `bun test`)
+4. **IMPORTANT**: Run tests in the example directory as well:
+   - `cd example && bun run test`
+   - Ensure all tests pass with 100% success rate
+   - Fix any failing tests before committing
+5. Only commit if all checks succeed
 
 ### Platform-Specific Naming Conventions
 
@@ -17,6 +21,12 @@ Before committing any changes:
 - **Android-related code**: Use `Android` in naming (e.g., `PurchaseAndroid`, `SubscriptionOfferAndroid`)
 - **IAP-related code**: Use `Iap` in naming (e.g., `IapPurchase`, not `IAPPurchase`)
 - This applies to both functions, types, and file names
+
+### React/JSX Conventions
+
+- **Conditional Rendering**: Use ternary operator with null instead of logical AND
+  - ✅ Good: `{condition ? <Component /> : null}`
+  - ❌ Avoid: `{condition && <Component />}`
 
 ### API Method Naming
 
