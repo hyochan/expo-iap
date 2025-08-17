@@ -374,9 +374,7 @@ export default function Store() {
         return result.isValid;
       } else if (Platform.OS === 'android') {
         // Android: Extract required validation parameters
-        // Note: Type casting is required due to platform-specific purchase properties
-        const purchaseToken = (purchase as ProductPurchaseAndroid)
-          .purchaseTokenAndroid;
+        const purchaseToken = purchase.purchaseToken; // Unified API (no type casting needed)
         const packageName =
           (purchase as ProductPurchaseAndroid).packageNameAndroid ||
           'com.yourapp.package';

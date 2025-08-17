@@ -71,16 +71,40 @@ type SubscriptionOffer = {
 
 ```typescript
 interface Purchase {
-  purchaseId: string;
+  id: string; // Transaction identifier
   productId: string;
-  transactionId: string;
+  transactionId?: string; // @deprecated - use id instead
   transactionDate: number;
-  purchaseState: PurchaseState;
-  isAcknowledged: boolean;
-  originalJson?: string;
-  signature?: string;
+  transactionReceipt: string;
+  purchaseToken?: string; // Unified purchase token (jwsRepresentation for iOS, purchaseToken for Android)
+  // Platform-specific fields
+  purchaseTokenAndroid?: string; // @deprecated - use purchaseToken instead
+  jwsRepresentationIos?: string; // @deprecated - use purchaseToken instead
 }
 ```
+
+### ⚠️ Breaking Change Notice (Unified Purchase Token)
+
+**Unified API**: Starting from v2.7+, we've introduced a unified `purchaseToken` field that works across both iOS and Android platforms:
+
+- **iOS**: `purchaseToken` contains the JWS representation (previously `jwsRepresentationIos`)
+- **Android**: `purchaseToken` contains the purchase token (previously `purchaseTokenAndroid`)
+
+**Migration Guide:**
+
+```typescript
+// ❌ Old way (platform-specific)
+if (Platform.OS === 'ios') {
+  const token = purchase.jwsRepresentationIos;
+} else {
+  const token = purchase.purchaseTokenAndroid;
+}
+
+// ✅ New way (unified)
+const token = purchase.purchaseToken;
+```
+
+The platform-specific fields (`purchaseTokenAndroid`, `jwsRepresentationIos`) are now deprecated but still available for backward compatibility.
 
 ### PurchaseState
 

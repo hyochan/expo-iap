@@ -70,6 +70,7 @@ interface UseIAPOptions {
 - **Type**: `(purchase: Purchase) => void`
 - **Description**: Called when a purchase completes successfully
 - **Example**:
+
   ```tsx
   onPurchaseSuccess: (purchase) => {
     // Grant user access to purchased content
@@ -82,6 +83,7 @@ interface UseIAPOptions {
 - **Type**: `(error: PurchaseError) => void`
 - **Description**: Called when a purchase fails
 - **Example**:
+
   ```tsx
   onPurchaseError: (error) => {
     if (error.code !== ErrorCode.E_USER_CANCELLED) {
@@ -95,6 +97,7 @@ interface UseIAPOptions {
 - **Type**: `(error: Error) => void`
 - **Description**: Called when there's an error syncing with the store
 - **Example**:
+
   ```tsx
   onSyncError: (error) => {
     console.warn('Store sync error:', error.message);
@@ -116,6 +119,7 @@ interface UseIAPOptions {
 - **Type**: `boolean`
 - **Description**: Whether the IAP service is connected and ready
 - **Example**:
+
   ```tsx
   if (connected) {
     // Safe to make IAP calls
@@ -128,6 +132,7 @@ interface UseIAPOptions {
 - **Type**: `Product[]`
 - **Description**: Array of available products
 - **Example**:
+
   ```tsx
   products.map((product) => <ProductItem key={product.id} product={product} />);
   ```
@@ -137,6 +142,7 @@ interface UseIAPOptions {
 - **Type**: `SubscriptionProduct[]`
 - **Description**: Array of available subscription products
 - **Example**:
+
   ```tsx
   subscriptions.map((subscription) => (
     <SubscriptionItem key={subscription.id} subscription={subscription} />
@@ -148,6 +154,7 @@ interface UseIAPOptions {
 - **Type**: `Purchase | null`
 - **Description**: Currently active purchase (if any)
 - **Example**:
+
   ```tsx
   useEffect(() => {
     if (currentPurchase) {
@@ -161,6 +168,7 @@ interface UseIAPOptions {
 - **Type**: `PurchaseError | null`
 - **Description**: Current purchase error (if any)
 - **Example**:
+
   ```tsx
   useEffect(() => {
     if (currentPurchaseError) {
@@ -174,6 +182,7 @@ interface UseIAPOptions {
 - **Type**: `ProductPurchase[]`
 - **Description**: Array of purchase history items
 - **Example**:
+
   ```tsx
   purchaseHistories.map((purchase) => (
     <PurchaseHistoryItem key={purchase.transactionId} purchase={purchase} />
@@ -185,6 +194,7 @@ interface UseIAPOptions {
 - **Type**: `ProductPurchase[]`
 - **Description**: Array of available purchases (restorable items)
 - **Example**:
+
   ```tsx
   availablePurchases.map((purchase) => (
     <RestorableItem key={purchase.transactionId} purchase={purchase} />
@@ -196,6 +206,7 @@ interface UseIAPOptions {
 - **Type**: `Product | undefined`
 - **Description**: The promoted product details (iOS only)
 - **Example**:
+
   ```tsx
   useEffect(() => {
     if (promotedProductIOS) {
@@ -217,13 +228,14 @@ interface UseIAPOptions {
     - `type`: Product type - either `'inapp'` for products or `'subs'` for subscriptions
 - **Returns**: Promise resolving to array of products
 - **Example**:
+
   ```tsx
   // Fetch in-app products
   const fetchProducts = async () => {
     try {
       const products = await requestProducts({
         skus: ['com.app.premium', 'com.app.coins_100'],
-        type: 'inapp'
+        type: 'inapp',
       });
       console.log('Fetched products:', products);
     } catch (error) {
@@ -236,7 +248,7 @@ interface UseIAPOptions {
     try {
       const subs = await requestProducts({
         skus: ['com.app.premium_monthly', 'com.app.premium_yearly'],
-        type: 'subs'
+        type: 'subs',
       });
       console.log('Fetched subscriptions:', subs);
     } catch (error) {
@@ -251,14 +263,15 @@ interface UseIAPOptions {
 
 - **Type**: `(productIds: string[]) => Promise<Product[]>`
 - **Migration**:
+
   ```tsx
   // Old way (deprecated)
   const products = await getProducts(['product1', 'product2']);
-  
+
   // New way
   const products = await requestProducts({
     skus: ['product1', 'product2'],
-    type: 'inapp'
+    type: 'inapp',
   });
   ```
 
@@ -268,14 +281,15 @@ interface UseIAPOptions {
 
 - **Type**: `(subscriptionIds: string[]) => Promise<SubscriptionProduct[]>`
 - **Migration**:
+
   ```tsx
   // Old way (deprecated)
   const subs = await getSubscriptions(['sub1', 'sub2']);
-  
+
   // New way
   const subs = await requestProducts({
     skus: ['sub1', 'sub2'],
-    type: 'subs'
+    type: 'subs',
   });
   ```
 
@@ -286,13 +300,14 @@ interface UseIAPOptions {
 - **Parameters**:
   - `request`: Purchase request configuration
 - **Example**:
+
   ```tsx
   const buyProduct = async (productId: string) => {
     try {
       await requestPurchase({
         request: {
-          ios: { sku: productId },
-          android: { skus: [productId] }
+          ios: {sku: productId},
+          android: {skus: [productId]},
         },
       });
     } catch (error) {
@@ -306,6 +321,7 @@ interface UseIAPOptions {
 - **Type**: `() => Promise<void>`
 - **Description**: Fetch purchase history from the store
 - **Example**:
+
   ```tsx
   const fetchPurchaseHistory = async () => {
     try {
@@ -322,6 +338,7 @@ interface UseIAPOptions {
 - **Type**: `() => Promise<void>`
 - **Description**: Fetch available purchases (restorable items) from the store
 - **Example**:
+
   ```tsx
   const restorePurchases = async () => {
     try {
@@ -347,10 +364,12 @@ interface UseIAPOptions {
 - **Returns**: Promise resolving to validation result
 
 **Important Platform Differences:**
+
 - **iOS**: Only requires the product ID
 - **Android**: Requires additional parameters (packageName, productToken)
 
 - **Example**:
+
   ```tsx
   const validatePurchase = async (productId: string, purchase: any) => {
     try {
@@ -360,13 +379,15 @@ interface UseIAPOptions {
         return result;
       } else if (Platform.OS === 'android') {
         // Android: Requires additional parameters
-        const purchaseToken = purchase.purchaseTokenAndroid;
+        const purchaseToken = purchase.purchaseToken;
         const packageName = purchase.packageNameAndroid;
-        
+
         if (!purchaseToken || !packageName) {
-          throw new Error('Android validation requires packageName and productToken');
+          throw new Error(
+            'Android validation requires packageName and productToken',
+          );
         }
-        
+
         const result = await validateReceipt(productId, {
           packageName,
           productToken: purchaseToken,
@@ -383,9 +404,10 @@ interface UseIAPOptions {
 
 #### getPromotedProductIOS
 
-- **Type**: `() => Promise<any | null>` 
+- **Type**: `() => Promise<any | null>`
 - **Description**: Get the promoted product details (iOS only)
 - **Example**:
+
   ```tsx
   const handlePromotedProduct = async () => {
     const promotedProduct = await getPromotedProductIOS();
@@ -401,6 +423,7 @@ interface UseIAPOptions {
 - **Type**: `() => Promise<void>`
 - **Description**: Complete the purchase of a promoted product (iOS only)
 - **Example**:
+
   ```tsx
   const completePurchase = async () => {
     try {
@@ -431,8 +454,8 @@ const IOSPurchaseExample = () => {
   const buyProduct = (product: Product) => {
     requestPurchase({
       request: {
-        ios: { sku: product.id },
-        android: { skus: [product.id] }
+        ios: {sku: product.id},
+        android: {skus: [product.id]},
       },
     });
   };
@@ -467,8 +490,8 @@ const AndroidPurchaseExample = () => {
   const buyProduct = (product: Product) => {
     requestPurchase({
       request: {
-        ios: { sku: product.id },
-        android: { skus: [product.id] }
+        ios: {sku: product.id},
+        android: {skus: [product.id]},
       },
     });
   };
@@ -539,9 +562,9 @@ const {requestPurchase} = useIAP({
      try {
        await requestPurchase({
          request: {
-           ios: { sku: productId },
-           android: { skus: [productId] }
-         }
+           ios: {sku: productId},
+           android: {skus: [productId]},
+         },
        });
      } finally {
        setLoading(false);
@@ -583,10 +606,7 @@ Handle App Store promoted products when users tap on them in the App Store:
 
 ```tsx
 const PromotedProductExample = () => {
-  const {
-    promotedProductIOS,
-    buyPromotedProductIOS,
-  } = useIAP({
+  const {promotedProductIOS, buyPromotedProductIOS} = useIAP({
     onPromotedProductIOS: (product) => {
       console.log('Promoted product detected:', product);
     },
@@ -602,7 +622,7 @@ const PromotedProductExample = () => {
     try {
       // Show your custom purchase UI
       const confirmed = await showPurchaseConfirmation(promotedProductIOS);
-      
+
       if (confirmed) {
         // Complete the promoted purchase
         await buyPromotedProductIOS();
@@ -618,18 +638,14 @@ const PromotedProductExample = () => {
         'Purchase Product',
         `Would you like to purchase ${product.localizedTitle} for ${product.price}?`,
         [
-          { text: 'Cancel', onPress: () => resolve(false), style: 'cancel' },
-          { text: 'Buy', onPress: () => resolve(true) },
+          {text: 'Cancel', onPress: () => resolve(false), style: 'cancel'},
+          {text: 'Buy', onPress: () => resolve(true)},
         ],
       );
     });
   };
 
-  return (
-    <View>
-      {/* Your regular store UI */}
-    </View>
-  );
+  return <View>{/* Your regular store UI */}</View>;
 };
 ```
 

@@ -199,7 +199,7 @@ useEffect(() => {
           });
         } else if (Platform.OS === 'android') {
           // Android: Check required parameters first
-          const purchaseToken = currentPurchase.purchaseTokenAndroid;
+          const purchaseToken = currentPurchase.purchaseToken;
           const packageName = currentPurchase.packageNameAndroid;
 
           if (!purchaseToken || !packageName) {

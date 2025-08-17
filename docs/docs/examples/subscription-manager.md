@@ -17,16 +17,19 @@ This example demonstrates how to implement subscription management with expo-iap
 When checking subscription status, different platforms provide different properties:
 
 ### iOS Subscription Properties
+
 - **`expirationDateIos`**: Unix timestamp (milliseconds) indicating when the subscription expires
 - **`originalTransactionDateIos`**: Original purchase date
 - **`environmentIos`**: Can be 'Production' or 'Sandbox' (useful for testing)
 
-### Android Subscription Properties  
+### Android Subscription Properties
+
 - **`autoRenewingAndroid`**: Boolean indicating if the subscription will auto-renew
 - **`purchaseStateAndroid`**: Purchase state (0 = purchased, 1 = canceled)
 - **`obfuscatedAccountIdAndroid`**: Account identifier if provided during purchase
 
 ### Key Differences
+
 - **iOS**: You must check `expirationDateIos` against current time to determine if active
 - **Android**: You can check `autoRenewingAndroid` - if false, the user has canceled
 
@@ -105,7 +108,7 @@ export default function SubscriptionManager() {
   const loadSubscriptions = async () => {
     try {
       setLoading(true);
-      await requestProducts({ skus: SUBSCRIPTION_SKUS, type: 'subs' });
+      await requestProducts({skus: SUBSCRIPTION_SKUS, type: 'subs'});
       console.log('Subscriptions loaded');
     } catch (error) {
       console.error('Failed to load subscriptions:', error);
@@ -149,38 +152,50 @@ export default function SubscriptionManager() {
    */
   const isSubscriptionActive = (purchase) => {
     const currentTime = Date.now();
-    
+
     // Check platform-specific subscription properties
     if (Platform.OS === 'ios') {
       // iOS: Check expiration date
       if (purchase.expirationDateIos) {
-        console.log('iOS Subscription expiration:', new Date(purchase.expirationDateIos).toISOString());
+        console.log(
+          'iOS Subscription expiration:',
+          new Date(purchase.expirationDateIos).toISOString(),
+        );
         return purchase.expirationDateIos > currentTime;
       }
-      
+
       // For sandbox/development environment
       if (purchase.environmentIos === 'Sandbox') {
         console.log('iOS Sandbox environment detected');
         // In sandbox, also check if it's a recent purchase (within 24 hours)
         const dayInMs = 24 * 60 * 60 * 1000;
-        if (purchase.transactionDate && (currentTime - purchase.transactionDate) < dayInMs) {
+        if (
+          purchase.transactionDate &&
+          currentTime - purchase.transactionDate < dayInMs
+        ) {
           return true;
         }
       }
     } else if (Platform.OS === 'android') {
       // Android: Check auto-renewing status
       if (purchase.autoRenewingAndroid !== undefined) {
-        console.log('Android auto-renewing status:', purchase.autoRenewingAndroid);
+        console.log(
+          'Android auto-renewing status:',
+          purchase.autoRenewingAndroid,
+        );
         return purchase.autoRenewingAndroid;
       }
-      
+
       // Fallback: Check if purchase is recent (within 30 days for monthly subscriptions)
       const monthInMs = 30 * 24 * 60 * 60 * 1000;
-      if (purchase.transactionDate && (currentTime - purchase.transactionDate) < monthInMs) {
+      if (
+        purchase.transactionDate &&
+        currentTime - purchase.transactionDate < monthInMs
+      ) {
         return true;
       }
     }
-    
+
     // If we can't determine status, assume inactive
     return false;
   };
@@ -199,7 +214,7 @@ export default function SubscriptionManager() {
             receipt: purchase.transactionReceipt,
             productId: purchase.productId,
             // Platform-specific fields
-            purchaseToken: purchase.purchaseToken, // Android
+            purchaseToken: purchase.purchaseToken, // Unified field (iOS: JWS, Android: purchaseToken)
             transactionId: purchase.transactionId, // iOS
           }),
         },
@@ -325,7 +340,7 @@ export default function SubscriptionManager() {
 
   const openSubscriptionManagement = () => {
     import('expo-iap').then(({deepLinkToSubscriptions}) => {
-      deepLinkToSubscriptions({ skuAndroid: 'your_subscription_sku' });
+      deepLinkToSubscriptions({skuAndroid: 'your_subscription_sku'});
     });
   };
 

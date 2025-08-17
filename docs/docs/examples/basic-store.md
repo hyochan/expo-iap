@@ -93,11 +93,15 @@ await requestPurchase({
 Purchase objects have different properties on iOS and Android. When accessing platform-specific properties, TypeScript type casting is required:
 
 ```tsx
-// For Android-specific properties
-const purchaseToken = (purchase as ProductPurchaseAndroid).purchaseTokenAndroid;
-const packageName = (purchase as ProductPurchaseAndroid).packageNameAndroid;
+// ✅ New unified approach (recommended)
+const purchaseToken = purchase.purchaseToken; // Works on both iOS and Android
 
-// For iOS-specific properties
+// ❌ Old platform-specific approach (deprecated)
+// const purchaseToken = (purchase as ProductPurchaseAndroid).purchaseTokenAndroid;
+// const jwsToken = (purchase as ProductPurchaseIos).jwsRepresentationIos;
+
+// Platform-specific fields that are still needed
+const packageName = (purchase as ProductPurchaseAndroid).packageNameAndroid;
 const transactionReceipt = purchase.transactionReceipt; // Available on both platforms
 ```
 
@@ -106,7 +110,7 @@ const transactionReceipt = purchase.transactionReceipt; // Available on both pla
 Receipt validation requires different approaches:
 
 - **iOS**: Send `transactionReceipt` to Apple's validation servers
-- **Android**: Send `purchaseToken` and `packageName` to Google Play validation
+- **Android**: Send `purchaseToken` (unified field) and `packageName` to Google Play validation
 
 This is handled in the `validatePurchase` function with platform-specific logic.
 
