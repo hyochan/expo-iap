@@ -333,8 +333,9 @@ export const getAvailablePurchases = ({
         ),
       android: async () => {
         const products = await ExpoIapModule.getAvailableItemsByType('inapp');
-        const subscriptions =
-          await ExpoIapModule.getAvailableItemsByType('subs');
+        const subscriptions = await ExpoIapModule.getAvailableItemsByType(
+          'subs',
+        );
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
@@ -490,13 +491,14 @@ export const requestPurchase = (
         subscriptionOffers = [],
         replacementModeAndroid = -1,
         purchaseTokenAndroid,
+        purchaseToken,
       } = normalizedRequest;
 
       return (async () => {
         return ExpoIapModule.buyItemByType({
           type: 'subs',
           skuArr: skus,
-          purchaseToken: purchaseTokenAndroid,
+          purchaseToken: purchaseTokenAndroid || purchaseToken,
           replacementMode: replacementModeAndroid,
           obfuscatedAccountId: obfuscatedAccountIdAndroid,
           obfuscatedProfileId: obfuscatedProfileIdAndroid,
@@ -574,20 +576,11 @@ export const finishTransaction = ({
       android: async () => {
         const androidPurchase = purchase as ProductPurchaseAndroid;
 
-        if (!('purchaseTokenAndroid' in androidPurchase)) {
-          return Promise.reject(
-            new Error('purchaseToken is required to finish transaction'),
-          );
-        }
         if (isConsumable) {
-          return ExpoIapModule.consumeProduct(
-            androidPurchase.purchaseTokenAndroid,
-          );
-        } else {
-          return ExpoIapModule.acknowledgePurchase(
-            androidPurchase.purchaseTokenAndroid,
-          );
+          return ExpoIapModule.consumeProduct(androidPurchase.purchaseToken);
         }
+
+        return ExpoIapModule.acknowledgePurchase(androidPurchase.purchaseToken);
       },
     }) || (() => Promise.reject(new Error('Unsupported Platform')))
   )();
@@ -671,16 +664,16 @@ export const validateReceipt = async (
  * Deeplinks to native interface that allows users to manage their subscriptions
  * @param options.skuAndroid - Required for Android to locate specific subscription (ignored on iOS)
  * @param options.packageNameAndroid - Required for Android to identify your app (ignored on iOS)
- * 
+ *
  * @returns Promise that resolves when the deep link is successfully opened
- * 
+ *
  * @throws {Error} When called on unsupported platform or when required Android parameters are missing
- * 
+ *
  * @example
  * import { deepLinkToSubscriptions } from 'expo-iap';
- * 
+ *
  * // Works on both iOS and Android
- * await deepLinkToSubscriptions({ 
+ * await deepLinkToSubscriptions({
  *   skuAndroid: 'your_subscription_sku',
  *   packageNameAndroid: 'com.example.app'
  * });
@@ -696,12 +689,16 @@ export const deepLinkToSubscriptions = (options: {
   if (Platform.OS === 'android') {
     if (!options.skuAndroid) {
       return Promise.reject(
-        new Error('skuAndroid is required to locate subscription in Android Store'),
+        new Error(
+          'skuAndroid is required to locate subscription in Android Store',
+        ),
       );
     }
     if (!options.packageNameAndroid) {
       return Promise.reject(
-        new Error('packageNameAndroid is required to identify your app in Android Store'),
+        new Error(
+          'packageNameAndroid is required to identify your app in Android Store',
+        ),
       );
     }
     return deepLinkToSubscriptionsAndroid({
