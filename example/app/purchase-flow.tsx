@@ -40,7 +40,7 @@ export default function PurchaseFlow() {
       // Handle successful purchase
       setPurchaseResult(
         `✅ Purchase successful (${purchase.platform})\n` +
-          `Product: ${purchase.id}\n` +
+          `Product: ${purchase.productId}\n` +
           `Transaction ID: ${purchase.transactionId || 'N/A'}\n` +
           `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}\n` +
           `Receipt: ${purchase.transactionReceipt?.substring(0, 50)}...`,

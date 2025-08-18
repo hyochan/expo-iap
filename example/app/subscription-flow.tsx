@@ -50,13 +50,13 @@ export default function SubscriptionFlow() {
       setIsProcessing(false);
 
       // Check if this is a duplicate subscription (already active)
-      const isAlreadySubscribed = activeSubscriptions.some(sub => sub.productId === purchase.id);
+      const isAlreadySubscribed = activeSubscriptions.some(sub => sub.productId === purchase.productId);
       
       if (isAlreadySubscribed) {
         // This is likely a duplicate transaction or restoration
         setPurchaseResult(
           `ℹ️ Subscription restored/verified (${purchase.platform})\n` +
-            `Product: ${purchase.id}\n` +
+            `Product: ${purchase.productId}\n` +
             `No additional charge - existing subscription confirmed`,
         );
         
@@ -75,7 +75,7 @@ export default function SubscriptionFlow() {
       // Handle new subscription
       setPurchaseResult(
         `✅ Subscription successful (${purchase.platform})\n` +
-          `Product: ${purchase.id}\n` +
+          `Product: ${purchase.productId}\n` +
           `Transaction ID: ${purchase.transactionId || 'N/A'}\n` +
           `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}\n` +
           `Receipt: ${purchase.transactionReceipt?.substring(0, 50)}...`,
@@ -477,9 +477,9 @@ export default function SubscriptionFlow() {
             Past purchases and subscription transactions
           </Text>
           {availablePurchases.map((purchase, index) => (
-            <View key={`${purchase.id}-${index}`} style={styles.purchaseCard}>
+            <View key={`${purchase.productId}-${index}`} style={styles.purchaseCard}>
               <View style={styles.purchaseInfo}>
-                <Text style={styles.purchaseTitle}>{purchase.id}</Text>
+                <Text style={styles.purchaseTitle}>{purchase.productId}</Text>
                 <Text style={styles.purchaseDate}>
                   {new Date(purchase.transactionDate).toLocaleDateString()}
                 </Text>

@@ -199,10 +199,10 @@ export default function AvailablePurchases() {
           <Text style={styles.emptyText}>No historical purchases found (active subscriptions shown above)</Text>
         ) : (
           availablePurchases.map((purchase, index) => (
-            <View key={purchase.id + index} style={styles.purchaseItem}>
+            <View key={purchase.productId + index} style={styles.purchaseItem}>
               <View style={styles.purchaseRow}>
                 <Text style={styles.label}>Product ID:</Text>
-                <Text style={styles.value}>{purchase.id}</Text>
+                <Text style={styles.value}>{purchase.productId}</Text>
               </View>
               <View style={styles.purchaseRow}>
                 <Text style={styles.label}>Platform:</Text>
