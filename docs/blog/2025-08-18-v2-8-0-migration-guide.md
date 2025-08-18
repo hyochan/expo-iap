@@ -17,34 +17,31 @@ Version 2.8.0 introduces a naming convention change for iOS-related field names.
 
 ## What Changed
 
-### iOS Field Name Updates
+## iOS Changes
 
-All iOS-related field names ending with "Ios" have been renamed to end with "IOS":
+### Product Types
+**ProductIOS & SubscriptionProductIOS:**
+- `displayName` - Product display name
+- `isFamilyShareable` - Family sharing availability
+- `jsonRepresentation` - JSON representation of product
+- `introductoryPriceNumberOfPeriodsIOS` - Introductory price period count
+- `introductoryPriceSubscriptionPeriodIOS` - Introductory price period
+- `introductoryPriceAsAmountIOS` - Introductory price amount
+- `introductoryPricePaymentModeIOS` - Introductory price payment mode
+- `subscriptionPeriodNumberIOS` - Subscription period number
+- `subscriptionPeriodUnitIOS` - Subscription period unit
 
-### Android Fields (No Breaking Changes)
+### Purchase Types
+**ProductPurchaseIOS** includes these StoreKit 2 fields:
+- `quantityIOS`, `originalTransactionDateIOS`, `originalTransactionIdentifierIOS`
+- `expirationDateIOS`, `webOrderLineItemIdIOS`, `environmentIOS`
+- `storefrontCountryCodeIOS`, `appBundleIdIOS`, `productTypeIOS`
+- `subscriptionGroupIdIOS`, `isUpgradedIOS`, `ownershipTypeIOS`
+- `reasonIOS`, `reasonStringRepresentationIOS`, `transactionReasonIOS`
+- `revocationDateIOS`, `revocationReasonIOS`, `offerIOS`
+- `priceIOS`, `currencyIOS`, `jwsRepresentationIOS` (deprecated)
 
-Android field names remain unchanged and already follow the correct convention. However, some new Android-specific fields have been added:
-
-**Product Fields:**
-- `name` - Product display name
-- `oneTimePurchaseOfferDetails` - One-time purchase offer details
-- `subscriptionOfferDetails` - Subscription offer details array
-
-**Purchase Fields:**
-- `ids` - Array of product IDs  
-- `purchaseTokenAndroid` - Android purchase token (deprecated, use `purchaseToken`)
-- `dataAndroid` - Purchase data
-- `signatureAndroid` - Purchase signature
-- `autoRenewingAndroid` - Auto-renewal status
-- `purchaseStateAndroid` - Purchase state enum
-- `isAcknowledgedAndroid` - Acknowledgment status
-- `packageNameAndroid` - App package name
-- `developerPayloadAndroid` - Developer payload
-- `obfuscatedAccountIdAndroid` - Obfuscated account ID
-- `obfuscatedProfileIdAndroid` - Obfuscated profile ID
-
-**Request Props:**
-- `isOfferPersonalized` - For Android Billing V5 personalized pricing
+**Breaking Changes - Field Renaming:**
 
 | Old Field Name                     | New Field Name                     |
 | ---------------------------------- | ---------------------------------- |
@@ -69,6 +66,34 @@ Android field names remain unchanged and already follow the correct convention. 
 | `currencyIos`                      | `currencyIOS`                      |
 | `jwsRepresentationIos`             | `jwsRepresentationIOS`             |
 | `reasonStringRepresentationIos`    | `reasonStringRepresentationIOS`    |
+
+## Android Changes
+
+### Product Types
+**ProductAndroid & SubscriptionProductAndroid:**
+- `name` - Product display name
+- `oneTimePurchaseOfferDetails` - One-time purchase offer details
+- `subscriptionOfferDetails` - Subscription offer details array
+
+### Purchase Types
+**ProductPurchaseAndroid** includes these Android Billing Library fields:
+- `ids` - Array of product IDs  
+- `purchaseTokenAndroid` - Android purchase token (deprecated, use `purchaseToken`)
+- `dataAndroid` - Purchase data
+- `signatureAndroid` - Purchase signature
+- `autoRenewingAndroid` - Auto-renewal status
+- `purchaseStateAndroid` - Purchase state enum
+- `isAcknowledgedAndroid` - Acknowledgment status
+- `packageNameAndroid` - App package name
+- `developerPayloadAndroid` - Developer payload
+- `obfuscatedAccountIdAndroid` - Obfuscated account ID
+- `obfuscatedProfileIdAndroid` - Obfuscated profile ID
+
+### Request Props
+**RequestPurchaseAndroidProps:**
+- `isOfferPersonalized` - For Android Billing V5 personalized pricing
+
+**No Breaking Changes** - All Android fields maintain existing naming convention.
 
 ## How to Migrate
 
