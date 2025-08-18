@@ -113,13 +113,20 @@ Search your codebase for any references to the old field names and update them:
 
 ```typescript
 // Before (v2.7.x)
-const purchase = await requestPurchase({sku: 'product-id'});
+const purchase = await requestPurchase({ sku: 'product-id' });
 if (purchase.expirationDateIos) {
   console.log('Expires:', purchase.expirationDateIos);
 }
 
 // After (v2.8.0)
-const purchase = await requestPurchase({sku: 'product-id'});
+// Note: requestPurchase API signature has also changed in v2.8.0
+const purchase = await requestPurchase({
+  request: {
+    ios: { sku: 'product-id' },
+    android: { skus: ['product-id'] },
+  },
+  type: 'inapp',
+});
 if (purchase.expirationDateIOS) {
   console.log('Expires:', purchase.expirationDateIOS);
 }
@@ -210,5 +217,5 @@ This change aligns with standard naming conventions where acronyms at the end of
 If you encounter any issues during migration:
 
 - Check our [GitHub Issues](https://github.com/hyochan/expo-iap/issues)
-- Join our [Discord community](https://discord.gg/example)
+- Join our [Slack community](https://hyo.dev/joinSlack)
 - Review the [full documentation](https://expo-iap.pages.dev)
