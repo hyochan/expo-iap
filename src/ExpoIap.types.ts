@@ -7,7 +7,7 @@ import {
   ProductIOS,
   ProductPurchaseIOS,
   SubscriptionProductIOS,
-} from './types/ExpoIapIos.types';
+} from './types/ExpoIapIOS.types';
 import {NATIVE_ERROR_CODES} from './ExpoIapModule';
 
 export type ChangeEventPayload = {
@@ -55,7 +55,12 @@ export type SubscriptionProduct =
 
 // Re-export platform-specific purchase types for legacy compatibility
 export type {ProductPurchaseAndroid} from './types/ExpoIapAndroid.types';
-export type {ProductPurchaseIOS as ProductPurchaseIos} from './types/ExpoIapIos.types';
+export type {ProductPurchaseIOS} from './types/ExpoIapIOS.types';
+
+/**
+ * @deprecated Use ProductPurchaseIOS instead. This alias will be removed in v3.0.0.
+ */
+export type ProductPurchaseIos = ProductPurchaseIOS;
 
 // Union type for platform-specific purchase types (legacy support)
 export type ProductPurchase =
@@ -308,7 +313,7 @@ export interface UnifiedRequestPurchaseProps {
   readonly andDangerouslyFinishTransactionAutomaticallyIOS?: boolean;
   readonly appAccountToken?: string;
   readonly quantity?: number;
-  readonly withOffer?: import('./types/ExpoIapIos.types').PaymentDiscount;
+  readonly withOffer?: import('./types/ExpoIapIOS.types').PaymentDiscount;
 
   // Android-specific properties (ignored on iOS)
   readonly obfuscatedAccountIdAndroid?: string;
@@ -323,12 +328,12 @@ export interface UnifiedRequestPurchaseProps {
 /**
  * iOS-specific purchase request parameters
  */
-export interface RequestPurchaseIosProps {
+export interface RequestPurchaseIOSProps {
   readonly sku: string;
   readonly andDangerouslyFinishTransactionAutomaticallyIOS?: boolean;
   readonly appAccountToken?: string;
   readonly quantity?: number;
-  readonly withOffer?: import('./types/ExpoIapIos.types').PaymentDiscount;
+  readonly withOffer?: import('./types/ExpoIapIOS.types').PaymentDiscount;
 }
 
 /**
@@ -359,7 +364,7 @@ export interface RequestSubscriptionAndroidProps
  * Allows clear separation of iOS and Android parameters
  */
 export interface RequestPurchasePropsByPlatforms {
-  readonly ios?: RequestPurchaseIosProps;
+  readonly ios?: RequestPurchaseIOSProps;
   readonly android?: RequestPurchaseAndroidProps;
 }
 
@@ -367,7 +372,7 @@ export interface RequestPurchasePropsByPlatforms {
  * Modern platform-specific subscription request structure (v2.7.0+)
  */
 export interface RequestSubscriptionPropsByPlatforms {
-  readonly ios?: RequestPurchaseIosProps;
+  readonly ios?: RequestPurchaseIOSProps;
   readonly android?: RequestSubscriptionAndroidProps;
 }
 
@@ -382,5 +387,14 @@ export type RequestPurchaseProps = RequestPurchasePropsByPlatforms;
  * This is the recommended API moving forward
  */
 export type RequestSubscriptionProps = RequestSubscriptionPropsByPlatforms;
+
+// ============================================================================
+// Deprecated Aliases for Backward Compatibility
+// ============================================================================
+
+/**
+ * @deprecated Use RequestPurchaseIOSProps instead. This alias will be removed in v3.0.0.
+ */
+export type RequestPurchaseIosProps = RequestPurchaseIOSProps;
 
 // Note: Type guard functions are exported from index.ts to avoid conflicts

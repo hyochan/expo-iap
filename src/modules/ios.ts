@@ -14,7 +14,7 @@ import {
 import type {
   ProductStatusIOS,
   AppTransactionIOS,
-} from '../types/ExpoIapIos.types';
+} from '../types/ExpoIapIOS.types';
 import {Linking} from 'react-native';
 
 export type TransactionEvent = {
@@ -176,7 +176,7 @@ export const beginRefundRequestIOS = (
 /**
  * Shows the system UI for managing subscriptions.
  * When the user changes subscription renewal status, the system will emit events to
- * purchaseUpdatedListener and transactionUpdatedIos listeners.
+ * purchaseUpdatedListener and transactionUpdatedIOS listeners.
  *
  * @returns Promise resolving to null on success
  * @throws Error if called on non-iOS platform

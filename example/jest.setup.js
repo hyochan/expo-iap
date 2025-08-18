@@ -60,12 +60,12 @@ jest.mock('expo-iap', () => ({
   latestTransaction: jest.fn(),
   beginRefundRequest: jest.fn(),
   showManageSubscriptions: jest.fn(),
-  getReceiptIos: jest.fn(),
+  getReceiptIOS: jest.fn(),
   isTransactionVerified: jest.fn(),
   getTransactionJws: jest.fn(),
   presentCodeRedemptionSheet: jest.fn(),
   getAppTransaction: jest.fn(),
-  validateReceiptIos: jest.fn(),
+  validateReceiptIOS: jest.fn(),
 
   // Android functions
   deepLinkToSubscriptionsAndroid: jest.fn(),

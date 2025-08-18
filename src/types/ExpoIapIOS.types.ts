@@ -79,7 +79,7 @@ export type PaymentDiscount = {
   timestamp: number;
 };
 
-export type RequestPurchaseIosProps = {
+export type RequestPurchaseIOSProps = {
   sku: string;
   andDangerouslyFinishTransactionAutomaticallyIOS?: boolean;
   /**
@@ -90,7 +90,17 @@ export type RequestPurchaseIosProps = {
   withOffer?: PaymentDiscount;
 };
 
-export type RequestSubscriptionIosProps = RequestPurchaseIosProps;
+export type RequestSubscriptionIOSProps = RequestPurchaseIOSProps;
+
+/**
+ * @deprecated Use RequestPurchaseIOSProps instead. This alias will be removed in v3.0.0.
+ */
+export type RequestPurchaseIosProps = RequestPurchaseIOSProps;
+
+/**
+ * @deprecated Use RequestSubscriptionIOSProps instead. This alias will be removed in v3.0.0.
+ */
+export type RequestSubscriptionIosProps = RequestSubscriptionIOSProps;
 
 type SubscriptionStatus =
   | 'expired'

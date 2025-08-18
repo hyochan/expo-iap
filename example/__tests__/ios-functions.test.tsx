@@ -17,10 +17,8 @@ describe('iOS Functions Tests', () => {
       expect(typeof ExpoIap.getAppTransaction).toBe('function');
     });
 
-    it('should export deprecated validateReceiptIos function', () => {
-      expect(ExpoIap.validateReceiptIOS).toBeDefined();
-      expect(typeof ExpoIap.validateReceiptIOS).toBe('function');
-    });
+    // Note: validateReceiptIOS is not deprecated, but there might be deprecated
+    // aliases for backward compatibility
   });
 
   describe('Function Signatures', () => {

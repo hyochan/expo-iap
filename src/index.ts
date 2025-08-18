@@ -28,13 +28,13 @@ import {
   SubscriptionPurchase,
 } from './ExpoIap.types';
 import {ProductPurchaseAndroid} from './types/ExpoIapAndroid.types';
-import {PaymentDiscount} from './types/ExpoIapIos.types';
+import {PaymentDiscount} from './types/ExpoIapIOS.types';
 
 // Export all types
 export * from './ExpoIap.types';
 export * from './modules/android';
 export * from './modules/ios';
-export type {AppTransactionIOS} from './types/ExpoIapIos.types';
+export type {AppTransactionIOS} from './types/ExpoIapIOS.types';
 
 // Export subscription helpers
 export {
