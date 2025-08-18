@@ -9,7 +9,10 @@ tags: [release, breaking-change, migration]
 
 ## Breaking Changes
 
-Version 2.8.0 introduces a naming convention change for iOS-related field names. Fields with iOS suffixes now use uppercase `IOS` instead of `Ios` to follow the convention that acronyms at the end of field names should be uppercase.
+Version 2.8.0 introduces naming convention changes:
+
+1. **iOS suffix convention**: Fields with iOS suffixes now use uppercase `IOS` instead of `Ios`
+2. **ID suffix convention**: All fields ending with `ID` now use `Id` instead for consistency (e.g., `subscriptionGroupID` → `subscriptionGroupId`, `bundleID` → `bundleId`)
 
 **Note:** Android field names remain unchanged as they already follow the correct convention (e.g., `autoRenewingAndroid`, `purchaseTokenAndroid`).
 
@@ -33,6 +36,10 @@ Version 2.8.0 introduces a naming convention change for iOS-related field names.
 - `subscriptionPeriodNumberIOS` - Subscription period number
 - `subscriptionPeriodUnitIOS` - Subscription period unit
 
+**SubscriptionInfo:**
+
+- `subscriptionGroupId` - Subscription group identifier (changed from `subscriptionGroupID`)
+
 ### Purchase Types
 
 **ProductPurchaseIOS** includes these StoreKit 2 fields:
@@ -45,7 +52,16 @@ Version 2.8.0 introduces a naming convention change for iOS-related field names.
 - `revocationDateIOS`, `revocationReasonIOS`, `offerIOS`
 - `priceIOS`, `currencyIOS`, `jwsRepresentationIOS` (deprecated)
 
+**AppTransactionIOS** (iOS 16.0+):
+
+- `appTransactionId` - App transaction identifier (changed from `appTransactionID`)
+- `bundleId` - Bundle identifier (changed from `bundleID`)
+- `appId` - App identifier (changed from `appID`)
+- `appVersionId` - App version identifier (changed from `appVersionID`)
+
 **Breaking Changes - Field Renaming:**
+
+### iOS Suffix Changes (Ios → IOS)
 
 | Old Field Name                     | New Field Name                     |
 | ---------------------------------- | ---------------------------------- |
@@ -70,6 +86,22 @@ Version 2.8.0 introduces a naming convention change for iOS-related field names.
 | `currencyIos`                      | `currencyIOS`                      |
 | `jwsRepresentationIos`             | `jwsRepresentationIOS`             |
 | `reasonStringRepresentationIos`    | `reasonStringRepresentationIOS`    |
+
+### ID Suffix Changes (ID → Id)
+
+| Old Field Name         | New Field Name        | Type/Context           |
+| --------------------- | -------------------- | ---------------------- |
+| `subscriptionGroupID` | `subscriptionGroupId` | SubscriptionInfo       |
+| `appTransactionID`    | `appTransactionId`    | AppTransactionIOS      |
+| `bundleID`            | `bundleId`            | AppTransactionIOS      |
+| `appID`               | `appId`               | AppTransactionIOS      |
+| `appVersionID`        | `appVersionId`        | AppTransactionIOS      |
+
+### Function Parameter Changes
+
+| Function                     | Old Parameter | New Parameter |
+| --------------------------- | ------------- | ------------- |
+| `isEligibleForIntroOfferIOS` | `groupID`     | `groupId`     |
 
 ## Android Changes
 
@@ -172,7 +204,23 @@ if ('expirationDateIOS' in purchase) {
 }
 ```
 
-### Step 4: Update Subscription Helpers
+### Step 4: Update ID Field References
+
+Update all ID field references to use `Id` instead:
+
+```typescript
+// Before (v2.7.x)
+const appTransaction = await getAppTransactionIOS();
+console.log(appTransaction.bundleID);
+console.log(appTransaction.appID);
+
+// After (v2.8.0)
+const appTransaction = await getAppTransactionIOS();
+console.log(appTransaction.bundleId);
+console.log(appTransaction.appId);
+```
+
+### Step 5: Update Subscription Helpers
 
 If you're using the subscription helper functions:
 
@@ -210,7 +258,12 @@ $1IOS
 
 ## Why This Change?
 
-This change aligns with standard naming conventions where acronyms at the end of identifiers are written in uppercase (e.g., `userID`, `appURL`, `configJSON`). This makes the codebase more consistent and follows widely-adopted conventions in the TypeScript/JavaScript ecosystem.
+These changes align with widely-adopted naming conventions:
+
+1. **iOS suffix**: Acronyms at the end of identifiers are written in uppercase (e.g., `dataIOS`, `configIOS`)
+2. **ID suffix**: The `Id` convention is more common in modern JavaScript/TypeScript codebases (e.g., `userId`, `productId`, `transactionId`)
+
+This makes the codebase more consistent and follows best practices in the TypeScript/JavaScript ecosystem.
 
 ## Need Help?
 
