@@ -764,7 +764,7 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
     }
 
     // For Sandbox environment, consider recent purchases as active
-    if (purchase.environmentIOS === 'Sandbox') {
+    if (purchase.environmentIos === 'Sandbox') {
       const dayInMs = 24 * 60 * 60 * 1000;
       return (
         purchase.transactionDate &&
