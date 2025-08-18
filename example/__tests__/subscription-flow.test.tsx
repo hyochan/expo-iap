@@ -12,6 +12,7 @@ const mockRequestProducts = jest.fn();
 const mockRequestPurchase = jest.fn();
 const mockFinishTransaction = jest.fn();
 const mockGetActiveSubscriptions = jest.fn();
+const mockGetAvailablePurchases = jest.fn().mockResolvedValue([]);
 
 const createMockSubscription = (overrides = {}) => ({
   id: 'test.subscription.1',
@@ -68,8 +69,7 @@ describe('SubscriptionFlow Component', () => {
     mockRequestProducts.mockResolvedValue([createMockSubscription()]);
     mockGetActiveSubscriptions.mockResolvedValue([]);
     mockFinishTransaction.mockResolvedValue(undefined);
-    
-    const mockGetAvailablePurchases = jest.fn().mockResolvedValue([]);
+    mockGetAvailablePurchases.mockResolvedValue([]);
     
     // Default mock implementation
     mockUseIAP.mockReturnValue({

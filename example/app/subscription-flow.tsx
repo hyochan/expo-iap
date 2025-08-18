@@ -146,10 +146,14 @@ export default function SubscriptionFlow() {
       const subscriptionIds = [
         'dev.hyo.martie.premium', // Example subscription ID
       ];
+      console.log('Connected to store, loading subscription products...');
+      // requestProducts is event-based, not promise-based
+      // Results will be available through the useIAP hook's subscriptions state
       requestProducts({ skus: subscriptionIds, type: 'subs' });
+      console.log('Product loading request sent - waiting for results...');
       
-      // Load available purchases to check subscription history
-      console.log('Connected to store, loading products and purchases...');
+      // Load available purchases to check subscription history  
+      console.log('Loading available purchases...');
       getAvailablePurchases([]).catch(error => {
         console.warn('Failed to load available purchases:', error);
       });
@@ -174,6 +178,11 @@ export default function SubscriptionFlow() {
     console.log('[STATE CHANGE] activeSubscriptions:', activeSubscriptions.length, activeSubscriptions);
   }, [activeSubscriptions]);
 
+  // Track subscriptions (products) state changes
+  useEffect(() => {
+    console.log('[STATE CHANGE] subscriptions (products):', subscriptions.length, subscriptions.map(s => ({ id: s.id, title: s.title })));
+  }, [subscriptions]);
+
   const handleSubscription = async (itemId: string) => {
     try {
       setIsProcessing(true);
@@ -183,6 +192,7 @@ export default function SubscriptionFlow() {
       const subscription = subscriptions.find(sub => sub.id === itemId);
       
       // New platform-specific API (v2.7.0+) - no Platform.OS branching needed
+      // requestPurchase is event-based - results come through onPurchaseSuccess/onPurchaseError
       await requestPurchase({
         request: {
           ios: {
