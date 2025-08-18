@@ -709,5 +709,5 @@ export const deepLinkToSubscriptions = (options: {
   return Promise.reject(new Error(`Unsupported platform: ${Platform.OS}`));
 };
 
-export * from './useIaps';
+export * from './useIAP';
 export * from './utils/errorMapping';

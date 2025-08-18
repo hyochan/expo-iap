@@ -145,7 +145,7 @@ src/
 ├── index.ts                    # Main exports
 ├── ExpoIap.types.ts           # Core type definitions
 ├── ExpoIapModule.ts           # Native module interface
-├── useIap.ts                  # React hook (legacy support)
+├── useIAP.ts                  # React hook (legacy support)
 ├── modules/
 │   ├── android.ts             # Android-specific utilities
 │   └── ios.ts                 # iOS-specific utilities

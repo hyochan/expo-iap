@@ -4,26 +4,10 @@ This directory contains comprehensive tests for the expo-iap library, covering p
 
 ## Test Files
 
-### purchaseHistory.test.ts
-Tests for the purchase history API methods:
-- `getPurchaseHistory()` - Deprecated method that should show a warning
-- `getPurchaseHistories()` - New plural method that replaces the deprecated one
+### purchase-flow.test.ts
 
-Key test cases:
-- Deprecation warning is shown when using the old method
-- The deprecated method still works by calling the new method internally
-- Platform-specific implementations (iOS and Android)
-- Default parameter handling
-
-### useIap.test.ts
-Tests for the useIAP React hook:
-- Ensures the hook uses `purchaseHistories` (plural) in its state
-- Ensures the hook exposes `getPurchaseHistories()` method (plural)
-- Verifies the deprecated singular forms are not exposed
-- Tests initialization and cleanup behavior
-
-### purchaseFlow.test.ts
 Comprehensive tests for the purchase flow functionality:
+
 - Purchase listener setup and cleanup
 - iOS single product purchase handling
 - Android multiple product purchase handling
@@ -34,6 +18,7 @@ Comprehensive tests for the purchase flow functionality:
 - Transaction completion and state management
 
 Key scenarios covered:
+
 - User cancellation handling
 - Network error recovery
 - Product unavailability
@@ -42,7 +27,9 @@ Key scenarios covered:
 - Consumable vs non-consumable products
 
 ### advancedPurchaseScenarios.test.ts
+
 Tests for advanced and edge-case scenarios:
+
 - Pending and deferred purchases
 - Subscription status checking (active, expired, cancelled)
 - Multiple simultaneous purchases on Android
@@ -54,8 +41,10 @@ Tests for advanced and edge-case scenarios:
 
 ## Example App Tests
 
-### example/app/__tests__/purchase-flow.test.tsx
+### example/app/**tests**/purchase-flow.test.tsx
+
 Integration tests for the purchase-flow.tsx component:
+
 - Component rendering and state management
 - Product display and pricing
 - Purchase button interactions
@@ -87,12 +76,14 @@ npm test -- --testNamePattern="subscription"
 The tests cover important platform differences:
 
 ### iOS
+
 - Single product purchases (`sku` parameter)
 - Receipt validation requires only SKU
 - Subscription expiration dates
 - Promoted products support
 
 ### Android
+
 - Multiple product purchases (`skus` array)
 - Receipt validation requires packageName, productToken, and accessToken
 - Auto-renewal status
@@ -131,6 +122,7 @@ The tests cover important platform differences:
 ## Naming Convention
 
 As of v2.6.0, the library uses plural forms for consistency:
+
 - State: `purchaseHistories` (not `purchaseHistory`)
 - Method: `getPurchaseHistories()` (not `getPurchaseHistory()`)
 - Hook return: `{ purchaseHistories, getPurchaseHistories }`
