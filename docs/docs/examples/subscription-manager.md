@@ -165,7 +165,7 @@ export default function SubscriptionManager() {
       }
 
       // For sandbox/development environment
-      if (purchase.environmentIos === 'Sandbox') {
+      if (purchase.environmentIOS === 'Sandbox') {
         console.log('iOS Sandbox environment detected');
         // In sandbox, also check if it's a recent purchase (within 24 hours)
         const dayInMs = 24 * 60 * 60 * 1000;

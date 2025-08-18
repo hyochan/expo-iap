@@ -22,12 +22,12 @@ struct IapEvent {
 }
 
 @available(iOS 15.0, *)
-func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: String? = nil) -> [String: Any?] {
+func serializeTransaction(_ transaction: Transaction, jwsRepresentationIOS: String? = nil) -> [String: Any?] {
     let _ =
         transaction.productType.rawValue.lowercased().contains("renewable")
         || transaction.expirationDate != nil
 
-    var transactionReasonIos: String? = nil
+    var transactionReasonIOS: String? = nil
     var webOrderLineItemId: Int? = nil
     var jsonData: [String: Any]? = nil
     var jwsReceipt: String = ""
@@ -38,7 +38,7 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: Stri
     do {
         if let jsonObj = try JSONSerialization.jsonObject(with: jsonRep) as? [String: Any] {
             jsonData = jsonObj
-            transactionReasonIos = jsonObj["transactionReason"] as? String
+            transactionReasonIOS = jsonObj["transactionReason"] as? String
             if let webOrderId = jsonObj["webOrderLineItemID"] as? NSNumber {
                 webOrderLineItemId = webOrderId.intValue
             }
@@ -56,47 +56,47 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: Stri
         "transactionReceipt": jwsReceipt,
         "platform": "ios",
 
-        "quantityIos": transaction.purchasedQuantity,
-        "originalTransactionDateIos": transaction.originalPurchaseDate.timeIntervalSince1970 * 1000,
-        "originalTransactionIdentifierIos": String(transaction.originalID),
+        "quantityIOS": transaction.purchasedQuantity,
+        "originalTransactionDateIOS": transaction.originalPurchaseDate.timeIntervalSince1970 * 1000,
+        "originalTransactionIdentifierIOS": String(transaction.originalID),
         "appAccountToken": transaction.appAccountToken?.uuidString,
 
-        "appBundleIdIos": transaction.appBundleID,
-        "productTypeIos": transaction.productType.rawValue,
-        "subscriptionGroupIdIos": transaction.subscriptionGroupID,
+        "appBundleIdIOS": transaction.appBundleID,
+        "productTypeIOS": transaction.productType.rawValue,
+        "subscriptionGroupIdIOS": transaction.subscriptionGroupID,
 
-        "webOrderLineItemIdIos": webOrderLineItemId,
+        "webOrderLineItemIdIOS": webOrderLineItemId,
 
-        "expirationDateIos": transaction.expirationDate.map { $0.timeIntervalSince1970 * 1000 },
+        "expirationDateIOS": transaction.expirationDate.map { $0.timeIntervalSince1970 * 1000 },
 
-        "isUpgradedIos": transaction.isUpgraded,
-        "ownershipTypeIos": transaction.ownershipType.rawValue,
+        "isUpgradedIOS": transaction.isUpgraded,
+        "ownershipTypeIOS": transaction.ownershipType.rawValue,
 
-        "revocationDateIos": transaction.revocationDate.map { $0.timeIntervalSince1970 * 1000 },
-        "revocationReasonIos": transaction.revocationReason?.rawValue,
-        "transactionReasonIos": transactionReasonIos,
+        "revocationDateIOS": transaction.revocationDate.map { $0.timeIntervalSince1970 * 1000 },
+        "revocationReasonIOS": transaction.revocationReason?.rawValue,
+        "transactionReasonIOS": transactionReasonIOS,
     ]
 
-    if (jwsRepresentationIos != nil) {
-        logDebug("serializeTransaction adding jwsRepresentationIos with length: \(jwsRepresentationIos!.count)")
-        purchaseMap["jwsRepresentationIos"] = jwsRepresentationIos
-        purchaseMap["purchaseToken"] = jwsRepresentationIos
+    if (jwsRepresentationIOS != nil) {
+        logDebug("serializeTransaction adding jwsRepresentationIOS with length: \(jwsRepresentationIOS!.count)")
+        purchaseMap["jwsRepresentationIOS"] = jwsRepresentationIOS
+        purchaseMap["purchaseToken"] = jwsRepresentationIOS
     } else {
-        logDebug("serializeTransaction jwsRepresentationIos is nil")
+        logDebug("serializeTransaction jwsRepresentationIOS is nil")
     }
     
     if #available(iOS 16.0, *) {
-        purchaseMap["environmentIos"] = transaction.environment.rawValue
+        purchaseMap["environmentIOS"] = transaction.environment.rawValue
     }
 
     if #available(iOS 17.0, *) {
-        purchaseMap["storefrontCountryCodeIos"] = transaction.storefront.countryCode
-        purchaseMap["reasonIos"] = transaction.reason.rawValue
+        purchaseMap["storefrontCountryCodeIOS"] = transaction.storefront.countryCode
+        purchaseMap["reasonIOS"] = transaction.reason.rawValue
     }
 
     if #available(iOS 17.2, *) {
         if let offer = transaction.offer {
-            purchaseMap["offerIos"] = [
+            purchaseMap["offerIOS"] = [
                 "id": offer.id ?? "",
                 "type": offer.type.rawValue,
                 "paymentMode": offer.paymentMode?.rawValue ?? "",
@@ -106,10 +106,10 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: Stri
 
     if #available(iOS 15.4, *), let jsonData = jsonData {
         if let price = jsonData["price"] as? NSNumber {
-            purchaseMap["priceIos"] = price.doubleValue
+            purchaseMap["priceIOS"] = price.doubleValue
         }
         if let currency = jsonData["currency"] as? String {
-            purchaseMap["currencyIos"] = currency
+            purchaseMap["currencyIOS"] = currency
         }
     }
 
@@ -118,7 +118,7 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIos: Stri
 
 private let DEFAULT_SUBSCRIPTION_PERIOD_UNIT = "DAY" // Default fallback unit for subscription periods.
 
-func getPeriodIos(_ unit: Product.SubscriptionPeriod.Unit) -> String {
+func getPeriodIOS(_ unit: Product.SubscriptionPeriod.Unit) -> String {
     return switch (unit) {
     case .day: "DAY"
     case .week: "WEEK"
@@ -135,7 +135,7 @@ func serializeOffer(_ offer: Product.SubscriptionOffer?) -> [String: Any?]? {
     return [
         "id": offer.id,
         "period": [
-            "unit": getPeriodIos(offer.period.unit),
+            "unit": getPeriodIOS(offer.period.unit),
             "value": offer.period.value
         ],
         "periodCount": offer.periodCount,
@@ -151,9 +151,9 @@ func serializeSubscription(_ s: Product.SubscriptionInfo?) -> [String: Any?]? {
     return [
         "introductoryOffer": serializeOffer(s.introductoryOffer),
         "promotionalOffers": s.promotionalOffers.map(serializeOffer),
-        "subscriptionGroupID": s.subscriptionGroupID,
+        "subscriptionGroupId": s.subscriptionGroupID,
         "subscriptionPeriod": [
-            "unit": getPeriodIos(s.subscriptionPeriod.unit),
+            "unit": getPeriodIOS(s.subscriptionPeriod.unit),
             "value": s.subscriptionPeriod.value
         ],
     ]
@@ -290,7 +290,7 @@ public class ExpoIapModule: Module {
                 }
                 
                 var result: [String: Any?] = [
-                    "bundleID": appTransaction.bundleID,
+                    "bundleId": appTransaction.bundleID,
                     "appVersion": appTransaction.appVersion,
                     "originalAppVersion": appTransaction.originalAppVersion,
                     "originalPurchaseDate": appTransaction.originalPurchaseDate.timeIntervalSince1970 * 1000,
@@ -298,13 +298,13 @@ public class ExpoIapModule: Module {
                     "deviceVerificationNonce": appTransaction.deviceVerificationNonce.uuidString,
                     "environment": appTransaction.environment.rawValue,
                     "signedDate": appTransaction.signedDate.timeIntervalSince1970 * 1000,
-                    "appID": appTransaction.appID,
-                    "appVersionID": appTransaction.appVersionID,
+                    "appId": appTransaction.appID,
+                    "appVersionId": appTransaction.appVersionID,
                     "preorderDate": appTransaction.preorderDate.map { $0.timeIntervalSince1970 * 1000 }
                 ]
                 
                 if #available(iOS 18.4, *) {
-                    result["appTransactionID"] = appTransaction.appTransactionID
+                    result["appTransactionId"] = appTransaction.appTransactionID
                     result["originalPlatform"] = appTransaction.originalPlatform.rawValue
                 }
                 
@@ -393,8 +393,8 @@ public class ExpoIapModule: Module {
             
             var purchasedItemsSerialized: [[String: Any?]] = []
 
-            func addTransaction(transaction: Transaction, jwsRepresentationIos: String? = nil) {
-                let serialized = serializeTransaction(transaction, jwsRepresentationIos: jwsRepresentationIos)
+            func addTransaction(transaction: Transaction, jwsRepresentationIOS: String? = nil) {
+                let serialized = serializeTransaction(transaction, jwsRepresentationIOS: jwsRepresentationIOS)
                 purchasedItemsSerialized.append(serialized)
                 
                 if alsoPublishToEventListener {
@@ -408,7 +408,7 @@ public class ExpoIapModule: Module {
                 do {
                     let transaction = try self.checkVerified(verification)
                     if !onlyIncludeActiveItems {
-                        addTransaction(transaction: transaction, jwsRepresentationIos: verification.jwsRepresentation)
+                        addTransaction(transaction: transaction, jwsRepresentationIOS: verification.jwsRepresentation)
                         continue
                     }
                     switch transaction.productType {
@@ -416,7 +416,7 @@ public class ExpoIapModule: Module {
                         if await self.productStore?.getProduct(productID: transaction.productID)
                             != nil
                         {
-                            addTransaction(transaction: transaction, jwsRepresentationIos: verification.jwsRepresentation)
+                            addTransaction(transaction: transaction, jwsRepresentationIOS: verification.jwsRepresentation)
                         }
                     case .nonRenewable:
                         if await self.productStore?.getProduct(productID: transaction.productID)
@@ -426,7 +426,7 @@ public class ExpoIapModule: Module {
                             let expirationDate = Calendar(identifier: .gregorian).date(
                                 byAdding: DateComponents(year: 1), to: transaction.purchaseDate)!
                             if currentDate < expirationDate {
-                                addTransaction(transaction: transaction, jwsRepresentationIos: verification.jwsRepresentation)
+                                addTransaction(transaction: transaction, jwsRepresentationIOS: verification.jwsRepresentation)
                             }
                         }
                     default:
@@ -537,10 +537,10 @@ public class ExpoIapModule: Module {
                             return nil
                         } else {
                             self.transactions[String(transaction.id)] = transaction
-                            let serialized = serializeTransaction(transaction, jwsRepresentationIos: verification.jwsRepresentation)
+                            let serialized = serializeTransaction(transaction, jwsRepresentationIOS: verification.jwsRepresentation)
                             
-                            // Debug: Check if jwsRepresentationIos is included in serialized result
-                            logDebug("buyProduct serialized includes JWS: \(serialized["jwsRepresentationIos"] != nil)")
+                            // Debug: Check if jwsRepresentationIOS is included in serialized result
+                            logDebug("buyProduct serialized includes JWS: \(serialized["jwsRepresentationIOS"] != nil)")
                             
                             self.sendEvent(IapEvent.PurchaseUpdated, serialized)
                             return serialized
@@ -888,7 +888,7 @@ public class ExpoIapModule: Module {
                     // If this doesn't throw, the transaction is verified
                     let transaction = try self.checkVerified(result)
                     isValid = true
-                    latestTransaction = serializeTransaction(transaction, jwsRepresentationIos: result.jwsRepresentation)
+                    latestTransaction = serializeTransaction(transaction, jwsRepresentationIOS: result.jwsRepresentation)
                 } catch {
                     isValid = false
                 }
@@ -974,7 +974,7 @@ public class ExpoIapModule: Module {
                     let transaction = try self.checkVerified(result)
                     self.transactions[String(transaction.id)] = transaction
                     if self.hasListeners {
-                        let serialized = serializeTransaction(transaction, jwsRepresentationIos: result.jwsRepresentation)
+                        let serialized = serializeTransaction(transaction, jwsRepresentationIOS: result.jwsRepresentation)
                         self.sendEvent(IapEvent.PurchaseUpdated, serialized)
                     }
                 } catch {
@@ -1076,7 +1076,7 @@ public class ExpoIapModule: Module {
                        previousWillAutoRenew != currentWillAutoRenew {
                         
                         // Use the jwsRepresentation when serializing the transaction
-                        var purchaseMap = serializeTransaction(transaction, jwsRepresentationIos: result.jwsRepresentation)
+                        var purchaseMap = serializeTransaction(transaction, jwsRepresentationIOS: result.jwsRepresentation)
                         
                         if case .verified(let renewalInfo) = status.renewalInfo {
                             if let renewalInfoDict = serializeRenewalInfo(.verified(renewalInfo)) {

@@ -22,9 +22,9 @@ Functions that only work on one platform MUST have platform suffixes:
 
 ```typescript
 // Correct examples:
-export const getStorefrontIos = async (): Promise<string> => { ... }
+export const getStorefrontIOS = async (): Promise<string> => { ... }
 export const consumeProductAndroid = async (token: string): Promise<void> => { ... }
-export const getAppTransactionIos = async (): Promise<AppTransactionIOS | null> => { ... }
+export const getAppTransactionIOS = async (): Promise<AppTransactionIOS | null> => { ... }
 ```
 
 ### Cross-Platform Functions

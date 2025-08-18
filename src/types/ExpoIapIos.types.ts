@@ -19,14 +19,14 @@ type SubscriptionOffer = {
 type SubscriptionInfo = {
   introductoryOffer?: SubscriptionOffer;
   promotionalOffers?: SubscriptionOffer[];
-  subscriptionGroupID: string;
+  subscriptionGroupId: string;
   subscriptionPeriod: {
     unit: SubscriptionIosPeriod;
     value: number;
   };
 };
 
-export type ProductIos = ProductBase & {
+export type ProductIOS = ProductBase & {
   displayName: string;
   isFamilyShareable: boolean;
   jsonRepresentation: string;
@@ -45,7 +45,7 @@ export type Discount = {
   subscriptionPeriod: string;
 };
 
-export type SubscriptionProductIos = ProductIos & {
+export type SubscriptionProductIOS = ProductIOS & {
   discounts?: Discount[];
   introductoryPrice?: string;
   introductoryPriceAsAmountIOS?: string;
@@ -105,50 +105,50 @@ type RenewalInfo = {
   autoRenewPreference?: string;
 };
 
-export type ProductStatusIos = {
+export type ProductStatusIOS = {
   state: SubscriptionStatus;
   renewalInfo?: RenewalInfo;
 };
 
-export type ProductPurchaseIos = PurchaseBase & {
+export type ProductPurchaseIOS = PurchaseBase & {
   // iOS basic fields
-  quantityIos?: number;
-  originalTransactionDateIos?: number;
-  originalTransactionIdentifierIos?: string;
+  quantityIOS?: number;
+  originalTransactionDateIOS?: number;
+  originalTransactionIdentifierIOS?: string;
   appAccountToken?: string;
   // iOS additional fields from StoreKit 2
-  expirationDateIos?: number;
-  webOrderLineItemIdIos?: number;
-  environmentIos?: string;
-  storefrontCountryCodeIos?: string;
-  appBundleIdIos?: string;
-  productTypeIos?: string;
-  subscriptionGroupIdIos?: string;
-  isUpgradedIos?: boolean;
-  ownershipTypeIos?: string;
-  reasonIos?: string;
-  reasonStringRepresentationIos?: string;
-  transactionReasonIos?: 'PURCHASE' | 'RENEWAL' | string;
-  revocationDateIos?: number;
-  revocationReasonIos?: string;
-  offerIos?: {
+  expirationDateIOS?: number;
+  webOrderLineItemIdIOS?: number;
+  environmentIOS?: string;
+  storefrontCountryCodeIOS?: string;
+  appBundleIdIOS?: string;
+  productTypeIOS?: string;
+  subscriptionGroupIdIOS?: string;
+  isUpgradedIOS?: boolean;
+  ownershipTypeIOS?: string;
+  reasonIOS?: string;
+  reasonStringRepresentationIOS?: string;
+  transactionReasonIOS?: 'PURCHASE' | 'RENEWAL' | string;
+  revocationDateIOS?: number;
+  revocationReasonIOS?: string;
+  offerIOS?: {
     id: string;
     type: string;
     paymentMode: string;
   };
-  priceIos?: number;
-  currencyIos?: string;
+  priceIOS?: number;
+  currencyIOS?: string;
   /**
    * @deprecated Use `purchaseToken` instead. This field will be removed in a future version.
    * iOS 15+ JWS representation is now available through the `purchaseToken` field.
    */
-  jwsRepresentationIos?: string;
+  jwsRepresentationIOS?: string;
 };
 
 export type AppTransactionIOS = {
-  appTransactionID?: string; // Only available in iOS 18.4+
+  appTransactionId?: string; // Only available in iOS 18.4+
   originalPlatform?: string; // Only available in iOS 18.4+
-  bundleID: string;
+  bundleId: string;
   appVersion: string;
   originalAppVersion: string;
   originalPurchaseDate: number;
@@ -156,7 +156,7 @@ export type AppTransactionIOS = {
   deviceVerificationNonce: string;
   environment: string;
   signedDate: number;
-  appID?: number;
-  appVersionID?: number;
+  appId?: number;
+  appVersionId?: number;
   preorderDate?: number;
 };

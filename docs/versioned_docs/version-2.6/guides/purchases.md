@@ -414,8 +414,8 @@ const handleBuyProduct = async (productId: string) => {
         android: {
           skus: [productId],
           obfuscatedAccountIdAndroid: 'user-123', // Optional: user identifier
-        }
-      }
+        },
+      },
     });
   } catch (err) {
     console.warn(err.code, err.message);
@@ -457,7 +457,7 @@ const handleBuySubscription = async (subscriptionId: string) => {
   try {
     // Find the subscription product to get offer details (Android)
     const subscription = subscriptions.find((s) => s.id === subscriptionId);
-    
+
     await requestPurchase({
       request: {
         ios: {
@@ -466,12 +466,13 @@ const handleBuySubscription = async (subscriptionId: string) => {
         },
         android: {
           skus: [subscriptionId],
-          subscriptionOffers: subscription?.subscriptionOfferDetails?.map(offer => ({
-            sku: subscriptionId,
-            offerToken: offer.offerToken,
-          })) || [],
+          subscriptionOffers:
+            subscription?.subscriptionOfferDetails?.map((offer) => ({
+              sku: subscriptionId,
+              offerToken: offer.offerToken,
+            })) || [],
           obfuscatedAccountIdAndroid: 'user-123', // Optional: user identifier
-        }
+        },
       },
       type: 'subs',
     });
@@ -504,10 +505,12 @@ const handleBuySubscription = async (subscriptionId: string) => {
         // Android requires offerToken for each subscription SKU
         // Use the first available offer or let user choose
         const firstOffer = subscription.subscriptionOfferDetails[0];
-        const subscriptionOffers = [{
-          sku: subscriptionId,
-          offerToken: firstOffer.offerToken,
-        }];
+        const subscriptionOffers = [
+          {
+            sku: subscriptionId,
+            offerToken: firstOffer.offerToken,
+          },
+        ];
 
         await requestPurchase({
           request: {
@@ -667,27 +670,29 @@ const buySubscription = async (subscriptionId: string) => {
   if (Platform.OS === 'ios') {
     // iOS: Simple SKU-based purchase
     await requestPurchase({
-      request: { sku: subscriptionId },
+      request: {sku: subscriptionId},
       type: 'subs',
     });
   } else {
     // Android: Requires offerToken for each subscription
-    const subscription = subscriptions.find(s => s.id === subscriptionId);
-    
+    const subscription = subscriptions.find((s) => s.id === subscriptionId);
+
     if (!subscription?.subscriptionOfferDetails?.length) {
       throw new Error('No subscription offers available');
     }
-    
+
     // Use the first available offer (or let user choose)
     const firstOffer = subscription.subscriptionOfferDetails[0];
-    
+
     await requestPurchase({
       request: {
         skus: [subscriptionId],
-        subscriptionOffers: [{
-          sku: subscriptionId,
-          offerToken: firstOffer.offerToken, // Required!
-        }],
+        subscriptionOffers: [
+          {
+            sku: subscriptionId,
+            offerToken: firstOffer.offerToken, // Required!
+          },
+        ],
       },
       type: 'subs',
     });
@@ -696,6 +701,7 @@ const buySubscription = async (subscriptionId: string) => {
 ```
 
 **Important Android Notes:**
+
 - Each subscription SKU must have a corresponding offerToken
 - The number of SKUs must match the number of offerTokens
 - offerToken comes from `subscriptionOfferDetails` in the product details
@@ -758,7 +764,7 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
     }
 
     // For Sandbox environment, consider recent purchases as active
-    if (purchase.environmentIos === 'Sandbox') {
+    if (purchase.environmentIOS === 'Sandbox') {
       const dayInMs = 24 * 60 * 60 * 1000;
       return (
         purchase.transactionDate &&

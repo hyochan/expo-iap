@@ -11,8 +11,11 @@ import {
   Purchase,
   SubscriptionPurchase,
 } from '../ExpoIap.types';
-import type {ProductStatusIos, AppTransactionIOS} from '../types/ExpoIapIos.types';
-import { Linking } from 'react-native';
+import type {
+  ProductStatusIOS,
+  AppTransactionIOS,
+} from '../types/ExpoIapIos.types';
+import {Linking} from 'react-native';
 
 export type TransactionEvent = {
   transaction?: ProductPurchase;
@@ -33,10 +36,9 @@ export type TransactionEvent = {
  * // Use:
  * // purchaseUpdatedListener((purchase) => { ... });
  */
-export const transactionUpdatedIos = (
+export const transactionUpdatedIOS = (
   listener: (event: TransactionEvent) => void,
 ) => {
-
   const isProductPurchase = (item: unknown): item is ProductPurchase => {
     return (
       item != null &&
@@ -87,10 +89,10 @@ export function isProductIos<T extends {platform?: string}>(
 /**
  * Sync state with Appstore (iOS only)
  * https://developer.apple.com/documentation/storekit/appstore/3791906-sync
- * 
+ *
  * @returns Promise resolving to null on success
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @platform iOS
  */
 export const syncIOS = (): Promise<null> => {
@@ -99,50 +101,56 @@ export const syncIOS = (): Promise<null> => {
 
 /**
  * Check if user is eligible for introductory offer
- * 
- * @param groupID The subscription group ID
+ *
+ * @param groupId The subscription group ID
  * @returns Promise resolving to true if eligible
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @platform iOS
  */
-export const isEligibleForIntroOfferIOS = (groupID: string): Promise<boolean> => {
-  return ExpoIapModule.isEligibleForIntroOffer(groupID);
+export const isEligibleForIntroOfferIOS = (
+  groupId: string,
+): Promise<boolean> => {
+  return ExpoIapModule.isEligibleForIntroOffer(groupId);
 };
 
 /**
  * Get subscription status for a specific SKU
- * 
+ *
  * @param sku The product SKU
  * @returns Promise resolving to array of subscription status
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @platform iOS
  */
-export const subscriptionStatusIOS = (sku: string): Promise<ProductStatusIos[]> => {
+export const subscriptionStatusIOS = (
+  sku: string,
+): Promise<ProductStatusIOS[]> => {
   return ExpoIapModule.subscriptionStatus(sku);
 };
 
 /**
  * Get current entitlement for a specific SKU
- * 
+ *
  * @param sku The product SKU
  * @returns Promise resolving to current entitlement
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @platform iOS
  */
-export const currentEntitlementIOS = (sku: string): Promise<ProductPurchase> => {
+export const currentEntitlementIOS = (
+  sku: string,
+): Promise<ProductPurchase> => {
   return ExpoIapModule.currentEntitlement(sku);
 };
 
 /**
  * Get latest transaction for a specific SKU
- * 
+ *
  * @param sku The product SKU
  * @returns Promise resolving to latest transaction
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @platform iOS
  */
 export const latestTransactionIOS = (sku: string): Promise<ProductPurchase> => {
@@ -151,15 +159,17 @@ export const latestTransactionIOS = (sku: string): Promise<ProductPurchase> => {
 
 /**
  * Begin refund request for a specific SKU
- * 
+ *
  * @param sku The product SKU
  * @returns Promise resolving to refund request status
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @platform iOS
  */
 type RefundRequestStatus = 'success' | 'userCancelled';
-export const beginRefundRequestIOS = (sku: string): Promise<RefundRequestStatus> => {
+export const beginRefundRequestIOS = (
+  sku: string,
+): Promise<RefundRequestStatus> => {
   return ExpoIapModule.beginRefundRequest(sku);
 };
 
@@ -167,10 +177,10 @@ export const beginRefundRequestIOS = (sku: string): Promise<RefundRequestStatus>
  * Shows the system UI for managing subscriptions.
  * When the user changes subscription renewal status, the system will emit events to
  * purchaseUpdatedListener and transactionUpdatedIos listeners.
- * 
+ *
  * @returns Promise resolving to null on success
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @platform iOS
  */
 export const showManageSubscriptionsIOS = (): Promise<null> => {
@@ -198,7 +208,7 @@ export const getReceiptIOS = (): Promise<string> => {
  * @param sku The product's SKU (on iOS)
  * @returns Promise resolving to true if the transaction is verified
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @platform iOS
  */
 export const isTransactionVerifiedIOS = (sku: string): Promise<boolean> => {
@@ -212,7 +222,7 @@ export const isTransactionVerifiedIOS = (sku: string): Promise<boolean> => {
  * @param sku The product's SKU (on iOS)
  * @returns Promise resolving to JWS representation of the transaction
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @platform iOS
  */
 export const getTransactionJwsIOS = (sku: string): Promise<string> => {
@@ -249,12 +259,12 @@ export const validateReceiptIOS = async (
 /**
  * Present the code redemption sheet for offer codes (iOS only).
  * This allows users to redeem promotional codes for in-app purchases and subscriptions.
- * 
+ *
  * Note: This only works on real devices, not simulators.
- * 
+ *
  * @returns Promise resolving to true if the sheet was presented successfully
  * @throws Error if called on non-iOS platform or tvOS
- * 
+ *
  * @platform iOS
  */
 export const presentCodeRedemptionSheetIOS = (): Promise<boolean> => {
@@ -264,14 +274,14 @@ export const presentCodeRedemptionSheetIOS = (): Promise<boolean> => {
 /**
  * Get app transaction information (iOS 16.0+).
  * AppTransaction represents the initial purchase that unlocked the app.
- * 
+ *
  * NOTE: This function requires:
  * - iOS 16.0 or later at runtime
  * - Xcode 15.0+ with iOS 16.0 SDK for compilation
- * 
+ *
  * @returns Promise resolving to the app transaction information or null if not available
  * @throws Error if called on non-iOS platform, iOS version < 16.0, or compiled with older SDK
- * 
+ *
  * @platform iOS
  * @since iOS 16.0
  */
@@ -282,10 +292,10 @@ export const getAppTransactionIOS = (): Promise<AppTransactionIOS | null> => {
 /**
  * Get the promoted product details (iOS only).
  * This is called after a promoted product event is received from the App Store.
- * 
+ *
  * @returns Promise resolving to the promoted product details or null if none available
  * @throws Error if called on non-iOS platform
- * 
+ *
  * @platform iOS
  */
 export const getPromotedProductIOS = (): Promise<any | null> => {
@@ -295,10 +305,10 @@ export const getPromotedProductIOS = (): Promise<any | null> => {
 /**
  * Complete the purchase of a promoted product (iOS only).
  * This should be called after showing your purchase UI for a promoted product.
- * 
+ *
  * @returns Promise resolving when the purchase is initiated
  * @throws Error if called on non-iOS platform or no promoted product is available
- * 
+ *
  * @platform iOS
  */
 export const buyPromotedProductIOS = (): Promise<void> => {
@@ -311,7 +321,7 @@ export const buyPromotedProductIOS = (): Promise<void> => {
  *
  * @platform iOS
  */
-export const deepLinkToSubscriptionsIos = (): Promise<void> =>
+export const deepLinkToSubscriptionsIOS = (): Promise<void> =>
   Linking.openURL('https://apps.apple.com/account/subscriptions');
 
 // ============= DEPRECATED FUNCTIONS =============
@@ -321,23 +331,31 @@ export const deepLinkToSubscriptionsIos = (): Promise<void> =>
  * @deprecated Use `syncIOS` instead. This function will be removed in version 3.0.0.
  */
 export const sync = (): Promise<null> => {
-  console.warn('`sync` is deprecated. Use `syncIOS` instead. This function will be removed in version 3.0.0.');
+  console.warn(
+    '`sync` is deprecated. Use `syncIOS` instead. This function will be removed in version 3.0.0.',
+  );
   return syncIOS();
 };
 
 /**
  * @deprecated Use `isEligibleForIntroOfferIOS` instead. This function will be removed in version 3.0.0.
  */
-export const isEligibleForIntroOffer = (groupID: string): Promise<boolean> => {
-  console.warn('`isEligibleForIntroOffer` is deprecated. Use `isEligibleForIntroOfferIOS` instead. This function will be removed in version 3.0.0.');
-  return isEligibleForIntroOfferIOS(groupID);
+export const isEligibleForIntroOffer = (groupId: string): Promise<boolean> => {
+  console.warn(
+    '`isEligibleForIntroOffer` is deprecated. Use `isEligibleForIntroOfferIOS` instead. This function will be removed in version 3.0.0.',
+  );
+  return isEligibleForIntroOfferIOS(groupId);
 };
 
 /**
  * @deprecated Use `subscriptionStatusIOS` instead. This function will be removed in version 3.0.0.
  */
-export const subscriptionStatus = (sku: string): Promise<ProductStatusIos[]> => {
-  console.warn('`subscriptionStatus` is deprecated. Use `subscriptionStatusIOS` instead. This function will be removed in version 3.0.0.');
+export const subscriptionStatus = (
+  sku: string,
+): Promise<ProductStatusIOS[]> => {
+  console.warn(
+    '`subscriptionStatus` is deprecated. Use `subscriptionStatusIOS` instead. This function will be removed in version 3.0.0.',
+  );
   return subscriptionStatusIOS(sku);
 };
 
@@ -345,7 +363,9 @@ export const subscriptionStatus = (sku: string): Promise<ProductStatusIos[]> => 
  * @deprecated Use `currentEntitlementIOS` instead. This function will be removed in version 3.0.0.
  */
 export const currentEntitlement = (sku: string): Promise<ProductPurchase> => {
-  console.warn('`currentEntitlement` is deprecated. Use `currentEntitlementIOS` instead. This function will be removed in version 3.0.0.');
+  console.warn(
+    '`currentEntitlement` is deprecated. Use `currentEntitlementIOS` instead. This function will be removed in version 3.0.0.',
+  );
   return currentEntitlementIOS(sku);
 };
 
@@ -353,15 +373,21 @@ export const currentEntitlement = (sku: string): Promise<ProductPurchase> => {
  * @deprecated Use `latestTransactionIOS` instead. This function will be removed in version 3.0.0.
  */
 export const latestTransaction = (sku: string): Promise<ProductPurchase> => {
-  console.warn('`latestTransaction` is deprecated. Use `latestTransactionIOS` instead. This function will be removed in version 3.0.0.');
+  console.warn(
+    '`latestTransaction` is deprecated. Use `latestTransactionIOS` instead. This function will be removed in version 3.0.0.',
+  );
   return latestTransactionIOS(sku);
 };
 
 /**
  * @deprecated Use `beginRefundRequestIOS` instead. This function will be removed in version 3.0.0.
  */
-export const beginRefundRequest = (sku: string): Promise<RefundRequestStatus> => {
-  console.warn('`beginRefundRequest` is deprecated. Use `beginRefundRequestIOS` instead. This function will be removed in version 3.0.0.');
+export const beginRefundRequest = (
+  sku: string,
+): Promise<RefundRequestStatus> => {
+  console.warn(
+    '`beginRefundRequest` is deprecated. Use `beginRefundRequestIOS` instead. This function will be removed in version 3.0.0.',
+  );
   return beginRefundRequestIOS(sku);
 };
 
@@ -369,23 +395,19 @@ export const beginRefundRequest = (sku: string): Promise<RefundRequestStatus> =>
  * @deprecated Use `showManageSubscriptionsIOS` instead. This function will be removed in version 3.0.0.
  */
 export const showManageSubscriptions = (): Promise<null> => {
-  console.warn('`showManageSubscriptions` is deprecated. Use `showManageSubscriptionsIOS` instead. This function will be removed in version 3.0.0.');
+  console.warn(
+    '`showManageSubscriptions` is deprecated. Use `showManageSubscriptionsIOS` instead. This function will be removed in version 3.0.0.',
+  );
   return showManageSubscriptionsIOS();
-};
-
-/**
- * @deprecated Use `getReceiptIOS` instead. This function will be removed in version 3.0.0.
- */
-export const getReceiptIos = (): Promise<string> => {
-  console.warn('`getReceiptIos` is deprecated. Use `getReceiptIOS` instead. This function will be removed in version 3.0.0.');
-  return getReceiptIOS();
 };
 
 /**
  * @deprecated Use `isTransactionVerifiedIOS` instead. This function will be removed in version 3.0.0.
  */
 export const isTransactionVerified = (sku: string): Promise<boolean> => {
-  console.warn('`isTransactionVerified` is deprecated. Use `isTransactionVerifiedIOS` instead. This function will be removed in version 3.0.0.');
+  console.warn(
+    '`isTransactionVerified` is deprecated. Use `isTransactionVerifiedIOS` instead. This function will be removed in version 3.0.0.',
+  );
   return isTransactionVerifiedIOS(sku);
 };
 
@@ -393,30 +415,19 @@ export const isTransactionVerified = (sku: string): Promise<boolean> => {
  * @deprecated Use `getTransactionJwsIOS` instead. This function will be removed in version 3.0.0.
  */
 export const getTransactionJws = (sku: string): Promise<string> => {
-  console.warn('`getTransactionJws` is deprecated. Use `getTransactionJwsIOS` instead. This function will be removed in version 3.0.0.');
+  console.warn(
+    '`getTransactionJws` is deprecated. Use `getTransactionJwsIOS` instead. This function will be removed in version 3.0.0.',
+  );
   return getTransactionJwsIOS(sku);
-};
-
-/**
- * @deprecated Use `validateReceiptIOS` instead. This function will be removed in version 3.0.0.
- */
-export const validateReceiptIos = async (
-  sku: string,
-): Promise<{
-  isValid: boolean;
-  receiptData: string;
-  jwsRepresentation: string;
-  latestTransaction?: ProductPurchase;
-}> => {
-  console.warn('`validateReceiptIos` is deprecated. Use `validateReceiptIOS` instead. This function will be removed in version 3.0.0.');
-  return validateReceiptIOS(sku);
 };
 
 /**
  * @deprecated Use `presentCodeRedemptionSheetIOS` instead. This function will be removed in version 3.0.0.
  */
 export const presentCodeRedemptionSheet = (): Promise<boolean> => {
-  console.warn('`presentCodeRedemptionSheet` is deprecated. Use `presentCodeRedemptionSheetIOS` instead. This function will be removed in version 3.0.0.');
+  console.warn(
+    '`presentCodeRedemptionSheet` is deprecated. Use `presentCodeRedemptionSheetIOS` instead. This function will be removed in version 3.0.0.',
+  );
   return presentCodeRedemptionSheetIOS();
 };
 
@@ -424,6 +435,8 @@ export const presentCodeRedemptionSheet = (): Promise<boolean> => {
  * @deprecated Use `getAppTransactionIOS` instead. This function will be removed in version 3.0.0.
  */
 export const getAppTransaction = (): Promise<AppTransactionIOS | null> => {
-  console.warn('`getAppTransaction` is deprecated. Use `getAppTransactionIOS` instead. This function will be removed in version 3.0.0.');
+  console.warn(
+    '`getAppTransaction` is deprecated. Use `getAppTransactionIOS` instead. This function will be removed in version 3.0.0.',
+  );
   return getAppTransactionIOS();
 };

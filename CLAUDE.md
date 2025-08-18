@@ -17,9 +17,13 @@ Before committing any changes:
 
 ### Platform-Specific Naming Conventions
 
-- **iOS-related code**: Use `Ios` in naming (e.g., `PurchaseIos`, `SubscriptionOfferIos`)
+- **iOS-related code**: Use `IOS` in naming (e.g., `PurchaseIOS`, `SubscriptionOfferIOS`)
+  - **Exception**: When an acronym appears at the end of a field name, use uppercase (e.g., `quantityIOS`, `appBundleIdIOS`, not `quantityIos`)
 - **Android-related code**: Use `Android` in naming (e.g., `PurchaseAndroid`, `SubscriptionOfferAndroid`)
 - **IAP-related code**: Use `Iap` in naming (e.g., `IapPurchase`, not `IAPPurchase`)
+- **ID fields**: Use `Id` instead of `ID` in field names (e.g., `productId`, `transactionId`, not `productID`, `transactionID`)
+  - This applies across all platforms for consistency
+  - Examples: `productId`, `originalTransactionId`, `purchaseId`
 - This applies to both functions, types, and file names
 
 ### React/JSX Conventions

@@ -92,7 +92,9 @@ type UseIap = {
   restorePurchases: () => Promise<void>; // 구매 복원 함수 추가
   getPromotedProductIOS: () => Promise<any | null>;
   buyPromotedProductIOS: () => Promise<void>;
-  getActiveSubscriptions: (subscriptionIds?: string[]) => Promise<ActiveSubscription[]>;
+  getActiveSubscriptions: (
+    subscriptionIds?: string[],
+  ) => Promise<ActiveSubscription[]>;
   hasActiveSubscriptions: (subscriptionIds?: string[]) => Promise<boolean>;
 };
 
@@ -122,7 +124,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const [currentPurchaseError, setCurrentPurchaseError] =
     useState<PurchaseError>();
   const [promotedProductIdIOS] = useState<string>();
-  const [activeSubscriptions, setActiveSubscriptions] = useState<ActiveSubscription[]>([]);
+  const [activeSubscriptions, setActiveSubscriptions] = useState<
+    ActiveSubscription[]
+  >([]);
 
   const optionsRef = useRef<UseIAPOptions | undefined>(options);
 
@@ -154,7 +158,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const subscriptionsRef = useRef<{
     purchaseUpdate?: EventSubscription;
     purchaseError?: EventSubscription;
-    promotedProductsIos?: EventSubscription;
+    promotedProductsIOS?: EventSubscription;
     promotedProductIOS?: EventSubscription;
   }>({});
 
@@ -381,7 +385,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
           setCurrentPurchaseError(undefined);
           setCurrentPurchase(purchase);
 
-          if ('expirationDateIos' in purchase) {
+          if ('expirationDateIOS' in purchase) {
             await refreshSubscriptionStatus(purchase.id);
           }
 
@@ -404,7 +408,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
 
       if (Platform.OS === 'ios') {
         // iOS promoted products listener
-        subscriptionsRef.current.promotedProductsIos =
+        subscriptionsRef.current.promotedProductsIOS =
           promotedProductListenerIOS((product: Product) => {
             setPromotedProductIOS(product);
 
@@ -423,7 +427,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     return () => {
       currentSubscriptions.purchaseUpdate?.remove();
       currentSubscriptions.purchaseError?.remove();
-      currentSubscriptions.promotedProductsIos?.remove();
+      currentSubscriptions.promotedProductsIOS?.remove();
       currentSubscriptions.promotedProductIOS?.remove();
       endConnection();
       setConnected(false);

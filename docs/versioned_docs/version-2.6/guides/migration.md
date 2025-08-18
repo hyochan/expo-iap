@@ -170,14 +170,14 @@ const {
   connected,
   products,
   subscriptions,
-  purchaseHistories,      // Note: plural form in expo-iap
+  purchaseHistories, // Note: plural form in expo-iap
   availablePurchases,
   currentPurchase,
   currentPurchaseError,
   finishTransaction,
   getProducts,
   getSubscriptions,
-  getPurchaseHistories,   // Method: plural form in expo-iap v2.6.0+
+  getPurchaseHistories, // Method: plural form in expo-iap v2.6.0+
   getAvailablePurchases,
   // Additional methods and better typing
 } = useIAP();
@@ -227,13 +227,14 @@ useEffect(() => {
 expo-iap maintains API compatibility with react-native-iap, with the following naming conventions:
 
 | react-native-iap | expo-iap | Status |
-|-----------------|----------|---------|
+| --- | --- | --- |
 | `getPurchaseHistory()` | `getPurchaseHistories()` | ✅ Updated in v2.6.0 |
 | `purchaseHistory` (in hook) | `purchaseHistories` | ✅ Plural form |
 | `getAvailablePurchases()` | `getAvailablePurchases()` | ✅ Same |
 | `availablePurchases` (in hook) | `availablePurchases` | ✅ Same |
 
-**⚠️ Breaking Change in v2.6.0:** 
+**⚠️ Breaking Change in v2.6.0:**
+
 - `getPurchaseHistory()` (singular) is now deprecated
 - Use `getPurchaseHistories()` (plural) instead
 - The hook already uses `purchaseHistories` (plural)
@@ -258,7 +259,7 @@ expo-iap includes some additional utility methods:
 import {validateReceiptIos, validateReceiptAndroid} from 'expo-iap';
 
 // Platform-specific receipt validation helpers
-const isValidIos = await validateReceiptIos({
+const isValidIOS = await validateReceiptIos({
   receiptBody: purchase.transactionReceipt,
   password: 'your_shared_secret',
 });

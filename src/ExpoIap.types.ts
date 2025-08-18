@@ -4,9 +4,9 @@ import {
   SubscriptionProductAndroid,
 } from './types/ExpoIapAndroid.types';
 import {
-  ProductIos,
-  ProductPurchaseIos,
-  SubscriptionProductIos,
+  ProductIOS,
+  ProductPurchaseIOS,
+  SubscriptionProductIOS,
 } from './types/ExpoIapIos.types';
 import {NATIVE_ERROR_CODES} from './ExpoIapModule';
 
@@ -43,11 +43,11 @@ export type AndroidPlatform = {platform: 'android'};
 // Platform-agnostic unified product types (public API)
 export type Product =
   | (ProductAndroid & AndroidPlatform)
-  | (ProductIos & IosPlatform);
+  | (ProductIOS & IosPlatform);
 
 export type SubscriptionProduct =
   | (SubscriptionProductAndroid & AndroidPlatform)
-  | (SubscriptionProductIos & IosPlatform);
+  | (SubscriptionProductIOS & IosPlatform);
 
 // ============================================================================
 // Legacy Types (For backward compatibility with useIap hook)
@@ -55,17 +55,17 @@ export type SubscriptionProduct =
 
 // Re-export platform-specific purchase types for legacy compatibility
 export type {ProductPurchaseAndroid} from './types/ExpoIapAndroid.types';
-export type {ProductPurchaseIos} from './types/ExpoIapIos.types';
+export type {ProductPurchaseIOS as ProductPurchaseIos} from './types/ExpoIapIos.types';
 
 // Union type for platform-specific purchase types (legacy support)
 export type ProductPurchase =
   | (ProductPurchaseAndroid & AndroidPlatform)
-  | (ProductPurchaseIos & IosPlatform);
+  | (ProductPurchaseIOS & IosPlatform);
 
 // Union type for platform-specific subscription purchase types (legacy support)
 export type SubscriptionPurchase =
   | (ProductPurchaseAndroid & AndroidPlatform & {autoRenewingAndroid: boolean})
-  | (ProductPurchaseIos & IosPlatform);
+  | (ProductPurchaseIOS & IosPlatform);
 
 export type Purchase = ProductPurchase | SubscriptionPurchase;
 

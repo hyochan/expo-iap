@@ -18,8 +18,8 @@ describe('iOS Functions Tests', () => {
     });
 
     it('should export deprecated validateReceiptIos function', () => {
-      expect(ExpoIap.validateReceiptIos).toBeDefined();
-      expect(typeof ExpoIap.validateReceiptIos).toBe('function');
+      expect(ExpoIap.validateReceiptIOS).toBeDefined();
+      expect(typeof ExpoIap.validateReceiptIOS).toBe('function');
     });
   });
 
@@ -48,8 +48,8 @@ describe('iOS Functions Tests', () => {
 
     it('should call getAppTransactionIOS successfully', async () => {
       const mockAppTransaction: ExpoIap.AppTransactionIOS = {
-        appTransactionID: 'test-transaction-id',
-        bundleID: 'com.example.testapp',
+        appTransactionId: 'test-transaction-id',
+        bundleId: 'com.example.testapp',
         appVersion: '2.0.0',
         originalAppVersion: '1.0.0',
         originalPurchaseDate: 1234567890000,
@@ -57,8 +57,8 @@ describe('iOS Functions Tests', () => {
         deviceVerificationNonce: 'nonce-value',
         environment: 'Production',
         signedDate: 1234567900000,
-        appID: 123456789,
-        appVersionID: 987654321,
+        appId: 123456789,
+        appVersionId: 987654321,
         originalPlatform: 'iOS',
         preorderDate: undefined,
       };
@@ -71,7 +71,7 @@ describe('iOS Functions Tests', () => {
 
       expect(ExpoIap.getAppTransactionIOS).toHaveBeenCalledTimes(1);
       expect(result).toEqual(mockAppTransaction);
-      expect(result?.appTransactionID).toBe('test-transaction-id');
+      expect(result?.appTransactionId).toBe('test-transaction-id');
       expect(result?.environment).toBe('Production');
     });
 
@@ -107,8 +107,8 @@ describe('iOS Functions Tests', () => {
 
     it('should handle deprecated getAppTransaction function', async () => {
       const mockTransaction: ExpoIap.AppTransactionIOS = {
-        appTransactionID: 'deprecated-test',
-        bundleID: 'com.example.app',
+        appTransactionId: 'deprecated-test',
+        bundleId: 'com.example.app',
         appVersion: '1.0.0',
         originalAppVersion: '1.0.0',
         originalPurchaseDate: Date.now(),
@@ -116,8 +116,8 @@ describe('iOS Functions Tests', () => {
         deviceVerificationNonce: 'nonce',
         environment: 'Sandbox',
         signedDate: Date.now(),
-        appID: 123456,
-        appVersionID: 789012,
+        appId: 123456,
+        appVersionId: 789012,
         originalPlatform: 'iOS',
       };
 
@@ -137,8 +137,8 @@ describe('iOS Functions Tests', () => {
     it('should have proper type structure for AppTransactionIOS', () => {
       // Type checking through object creation
       const mockTransaction: ExpoIap.AppTransactionIOS = {
-        appTransactionID: 'test-id',
-        bundleID: 'com.example.app',
+        appTransactionId: 'test-id',
+        bundleId: 'com.example.app',
         appVersion: '1.0.0',
         originalAppVersion: '1.0.0',
         originalPurchaseDate: Date.now(),
@@ -146,13 +146,13 @@ describe('iOS Functions Tests', () => {
         deviceVerificationNonce: 'nonce',
         environment: 'Production',
         signedDate: Date.now(),
-        appID: 123456,
-        appVersionID: 789012,
+        appId: 123456,
+        appVersionId: 789012,
         originalPlatform: 'iOS',
         preorderDate: undefined,
       };
 
-      expect(mockTransaction.appTransactionID).toBeDefined();
+      expect(mockTransaction.appTransactionId).toBeDefined();
     });
   });
 
@@ -181,7 +181,7 @@ describe('iOS Functions Tests', () => {
       expect(ExpoIap.latestTransaction).toBeDefined();
       expect(ExpoIap.beginRefundRequest).toBeDefined();
       expect(ExpoIap.showManageSubscriptions).toBeDefined();
-      expect(ExpoIap.getReceiptIos).toBeDefined();
+      expect(ExpoIap.getReceiptIOS).toBeDefined();
       expect(ExpoIap.isTransactionVerified).toBeDefined();
       expect(ExpoIap.getTransactionJws).toBeDefined();
       expect(ExpoIap.presentCodeRedemptionSheet).toBeDefined();

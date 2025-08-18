@@ -914,7 +914,7 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
     }
 
     // For Sandbox environment, consider recent purchases as active
-    if (purchase.environmentIos === 'Sandbox') {
+    if (purchase.environmentIOS === 'Sandbox') {
       const dayInMs = 24 * 60 * 60 * 1000;
       return (
         purchase.transactionDate &&
@@ -951,7 +951,7 @@ import {deepLinkToSubscriptions} from 'expo-iap';
 
 const openSubscriptionManagement = () => {
   // This opens the platform-specific subscription management UI
-  deepLinkToSubscriptions({ skuAndroid: 'your_subscription_sku' });
+  deepLinkToSubscriptions({skuAndroid: 'your_subscription_sku'});
 };
 ```
 

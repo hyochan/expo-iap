@@ -34,14 +34,14 @@ iOS product contains additional information:
 type SubscriptionIosPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | '';
 type PaymentMode = '' | 'FREETRIAL' | 'PAYASYOUGO' | 'PAYUPFRONT';
 
-type ProductIos = Product & {
+type ProductIOS = Product & {
   displayName: string;
   isFamilyShareable: boolean;
-  jsonRepresentation: string 
-  subscription?: SubscriptionInfo; 
-  introductoryPriceNumberOfPeriodsIOS?: string; 
-  introductoryPriceSubscriptionPeriodIOS?: SubscriptionIosPeriod; 
-}
+  jsonRepresentation: string;
+  subscription?: SubscriptionInfo;
+  introductoryPriceNumberOfPeriodsIOS?: string;
+  introductoryPriceSubscriptionPeriodIOS?: SubscriptionIosPeriod;
+};
 
 type SubscriptionInfo = {
   introductoryOffer?: SubscriptionOffer;

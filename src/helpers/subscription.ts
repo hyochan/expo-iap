@@ -35,7 +35,7 @@ export const getActiveSubscriptions = async (
       
       // Check if this purchase has subscription-specific fields
       const hasSubscriptionFields = 
-        ('expirationDateIos' in purchase && purchase.expirationDateIos) ||
+        ('expirationDateIOS' in purchase && purchase.expirationDateIOS) ||
         ('autoRenewingAndroid' in purchase);
       
       if (!hasSubscriptionFields) {
@@ -44,10 +44,10 @@ export const getActiveSubscriptions = async (
       
       // Check if it's actually active
       if (Platform.OS === 'ios') {
-        if ('expirationDateIos' in purchase && purchase.expirationDateIos) {
-          return purchase.expirationDateIos > currentTime;
+        if ('expirationDateIOS' in purchase && purchase.expirationDateIOS) {
+          return purchase.expirationDateIOS > currentTime;
         }
-        if ('environmentIos' in purchase && purchase.environmentIos === 'Sandbox') {
+        if ('environmentIOS' in purchase && purchase.environmentIOS === 'Sandbox') {
           const dayInMs = 24 * 60 * 60 * 1000;
           if (purchase.transactionDate && (currentTime - purchase.transactionDate) < dayInMs) {
             return true;
@@ -70,20 +70,20 @@ export const getActiveSubscriptions = async (
       
       // Add platform-specific details
       if (Platform.OS === 'ios') {
-        if ('expirationDateIos' in purchase && purchase.expirationDateIos) {
-          const expirationDate = new Date(purchase.expirationDateIos);
+        if ('expirationDateIOS' in purchase && purchase.expirationDateIOS) {
+          const expirationDate = new Date(purchase.expirationDateIOS);
           subscription.expirationDateIOS = expirationDate;
           
           // Calculate days until expiration
           const daysUntilExpiration = Math.floor(
-            (purchase.expirationDateIos - currentTime) / (1000 * 60 * 60 * 24)
+            (purchase.expirationDateIOS - currentTime) / (1000 * 60 * 60 * 24)
           );
           subscription.daysUntilExpirationIOS = daysUntilExpiration;
           subscription.willExpireSoon = daysUntilExpiration <= 7;
         }
         
-        if ('environmentIos' in purchase) {
-          subscription.environmentIOS = purchase.environmentIos;
+        if ('environmentIOS' in purchase) {
+          subscription.environmentIOS = purchase.environmentIOS;
         }
       } else if (Platform.OS === 'android') {
         if ('autoRenewingAndroid' in purchase) {

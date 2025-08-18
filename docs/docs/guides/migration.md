@@ -170,14 +170,14 @@ const {
   connected,
   products,
   subscriptions,
-  purchaseHistories,      // Note: plural form in expo-iap
+  purchaseHistories, // Note: plural form in expo-iap
   availablePurchases,
   currentPurchase,
   currentPurchaseError,
   finishTransaction,
   getProducts,
   getSubscriptions,
-  getPurchaseHistories,   // Method: plural form in expo-iap v2.6.0+
+  getPurchaseHistories, // Method: plural form in expo-iap v2.6.0+
   getAvailablePurchases,
   // Additional methods and better typing
 } = useIAP();
@@ -227,13 +227,14 @@ useEffect(() => {
 expo-iap maintains API compatibility with react-native-iap, with the following naming conventions:
 
 | react-native-iap | expo-iap | Status |
-|-----------------|----------|---------|
+| --- | --- | --- |
 | `getPurchaseHistory()` | `getPurchaseHistories()` | ✅ Updated in v2.6.0 |
 | `purchaseHistory` (in hook) | `purchaseHistories` | ✅ Plural form |
 | `getAvailablePurchases()` | `getAvailablePurchases()` | ✅ Same |
 | `availablePurchases` (in hook) | `availablePurchases` | ✅ Same |
 
-**⚠️ Breaking Change in v2.6.0:** 
+**⚠️ Breaking Change in v2.6.0:**
+
 - `getPurchaseHistory()` (singular) is now deprecated
 - Use `getPurchaseHistories()` (plural) instead
 - The hook already uses `purchaseHistories` (plural)
@@ -254,10 +255,10 @@ await getPurchaseHistories(); // Note: plural form in expo-iap v2.6.0+
 
 > **⚠️ Important:** The following methods are deprecated and will be removed in a future version:
 
-| Deprecated Method | Replacement |
-|------------------|-------------|
-| `getProducts(skus)` | `requestProducts({ skus, type: 'inapp' })` |
-| `getSubscriptions(skus)` | `requestProducts({ skus, type: 'subs' })` |
+| Deprecated Method        | Replacement                                |
+| ------------------------ | ------------------------------------------ |
+| `getProducts(skus)`      | `requestProducts({ skus, type: 'inapp' })` |
+| `getSubscriptions(skus)` | `requestProducts({ skus, type: 'subs' })`  |
 
 **Migration Examples:**
 
@@ -273,12 +274,12 @@ import {requestProducts} from 'expo-iap';
 
 const products = await requestProducts({
   skus: ['product1', 'product2'],
-  type: 'inapp'
+  type: 'inapp',
 });
 
 const subs = await requestProducts({
-  skus: ['sub1', 'sub2'], 
-  type: 'subs'
+  skus: ['sub1', 'sub2'],
+  type: 'subs',
 });
 ```
 
@@ -290,7 +291,7 @@ expo-iap includes some additional utility methods:
 import {validateReceiptIos, validateReceiptAndroid} from 'expo-iap';
 
 // Platform-specific receipt validation helpers
-const isValidIos = await validateReceiptIos({
+const isValidIOS = await validateReceiptIos({
   receiptBody: purchase.transactionReceipt,
   password: 'your_shared_secret',
 });
@@ -319,7 +320,7 @@ export default function MigrationTest() {
     if (connected) {
       console.log('✅ Connection successful');
 
-      requestProducts({ skus: ['test_product'], type: 'inapp' })
+      requestProducts({skus: ['test_product'], type: 'inapp'})
         .then((products) => {
           console.log('✅ Products fetched:', products.length);
         })
@@ -346,7 +347,10 @@ Test the complete purchase flow:
 const testPurchaseFlow = async () => {
   try {
     // 1. Fetch products
-    const products = await requestProducts({ skus: ['test_product'], type: 'inapp' });
+    const products = await requestProducts({
+      skus: ['test_product'],
+      type: 'inapp',
+    });
     console.log('✅ Products fetched');
 
     // 2. Request purchase
@@ -367,7 +371,7 @@ Ensure error handling transitions properly:
 ```tsx
 const testErrorHandling = () => {
   // Test with invalid product ID
-  requestProducts({ skus: ['invalid_product'], type: 'inapp' })
+  requestProducts({skus: ['invalid_product'], type: 'inapp'})
     .then((products) => {
       if (products.length === 0) {
         console.log('✅ Empty products handled correctly');

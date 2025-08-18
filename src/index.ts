@@ -7,7 +7,7 @@ import ExpoIapModule from './ExpoIapModule';
 import {
   isProductIos,
   validateReceiptIOS,
-  deepLinkToSubscriptionsIos,
+  deepLinkToSubscriptionsIOS,
 } from './modules/ios';
 import {
   isProductAndroid,
@@ -341,7 +341,7 @@ export const getAvailablePurchases = ({
     }) || (() => Promise.resolve([]))
   )();
 
-const offerToRecordIos = (
+const offerToRecordIOS = (
   offer: PaymentDiscount | undefined,
 ): Record<keyof PaymentDiscount, string> | undefined => {
   if (!offer) return undefined;
@@ -436,7 +436,7 @@ export const requestPurchase = (
     } = normalizedRequest;
 
     return (async () => {
-      const offer = offerToRecordIos(withOffer);
+      const offer = offerToRecordIOS(withOffer);
       const purchase = await ExpoIapModule.buyProduct(
         sku,
         andDangerouslyFinishTransactionAutomaticallyIOS,
@@ -683,7 +683,7 @@ export const deepLinkToSubscriptions = (options: {
   packageNameAndroid?: string;
 }): Promise<void> => {
   if (Platform.OS === 'ios') {
-    return deepLinkToSubscriptionsIos();
+    return deepLinkToSubscriptionsIOS();
   }
 
   if (Platform.OS === 'android') {

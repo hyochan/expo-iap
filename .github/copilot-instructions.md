@@ -1,6 +1,7 @@
 # GitHub Copilot Instructions for expo-iap
 
 ## Package Manager
+
 **IMPORTANT: This project uses Bun exclusively. Do not suggest npm, yarn, or pnpm commands.**
 
 - Install dependencies: `bun install`
@@ -16,37 +17,46 @@
 When suggesting code for expo-iap, follow these naming conventions:
 
 ### Platform-Specific Functions
+
 Functions that only work on one platform MUST have platform suffixes:
+
 - iOS: `functionNameIos()`
 - Android: `functionNameAndroid()`
 
 ```typescript
 // Correct examples:
-export const getStorefrontIos = async (): Promise<string> => { ... }
+export const getStorefrontIOS = async (): Promise<string> => { ... }
 export const consumeProductAndroid = async (token: string): Promise<void> => { ... }
-export const getAppTransactionIos = async (): Promise<AppTransactionIOS | null> => { ... }
+export const getAppTransactionIOS = async (): Promise<AppTransactionIOS | null> => { ... }
 ```
 
 ### Cross-Platform Functions
+
 Functions that abstract platform differences don't need suffixes:
 
 ```typescript
 // Correct cross-platform example:
 export const getProducts = async (skus: string[]): Promise<Product[]> => {
   return Platform.select({
-    ios: async () => { /* iOS implementation */ },
-    android: async () => { /* Android implementation */ },
+    ios: async () => {
+      /* iOS implementation */
+    },
+    android: async () => {
+      /* Android implementation */
+    },
   })();
-}
+};
 ```
 
 ## Type Naming
+
 - Platform-specific types: `ProductIos`, `ProductAndroid`, `PurchaseErrorIos`
 - Cross-platform types: `Product`, `Purchase`, `PurchaseError`
 
 ## Code Suggestions
 
 When generating code:
+
 1. Check if the function is platform-specific
 2. Add appropriate suffix if it only works on one platform
 3. Use Platform.select() for cross-platform implementations
@@ -55,7 +65,9 @@ When generating code:
 6. Add JSDoc comments for public APIs
 
 ## Testing
+
 Suggest tests that:
+
 - Cover both iOS and Android paths
 - Use `bun test` commands
 - Include platform mocking when needed
@@ -64,15 +76,23 @@ Suggest tests that:
 ## Common Patterns
 
 ### Platform Selection
+
 ```typescript
 Platform.select({
-  ios: () => { /* iOS code */ },
-  android: () => { /* Android code */ },
-  default: () => { /* Fallback */ },
-})
+  ios: () => {
+    /* iOS code */
+  },
+  android: () => {
+    /* Android code */
+  },
+  default: () => {
+    /* Fallback */
+  },
+});
 ```
 
 ### Receipt Validation (Platform-specific parameters)
+
 ```typescript
 // iOS only needs SKU
 await validateReceiptIos(sku);
