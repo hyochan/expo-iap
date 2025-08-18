@@ -12,6 +12,8 @@
     "lint:prettier": "prettier --write \"**/*.{md,js,jsx,ts,tsx}\"",
     "lint:tsc": "tsc -p tsconfig.json --noEmit --skipLibCheck",
     "lint:ci": "bun run lint:tsc && bun run lint:eslint && bun run lint:prettier",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
     "prepare": "expo-module prepare",
     "expo-module": "expo-module",
     "open:ios": "xed example/ios",
@@ -38,15 +40,18 @@
   "author": "hyochan <hyochan.dev@gmail.com> (https://github.com/hyochan)",
   "license": "MIT",
   "homepage": "https://github.com/hyochan/expo-iap#readme",
-  "dependencies": {},
   "devDependencies": {
+    "@jest/globals": "^30.0.5",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.1.7",
     "eslint": "8.57.0",
     "eslint-config-expo": "^9.2.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
     "expo-module-scripts": "^4.1.7",
-    "expo-modules-core": "^2.4.0"
+    "expo-modules-core": "^2.4.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.1"
   },
   "peerDependencies": {
     "expo": "*",
