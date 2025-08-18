@@ -11,6 +11,10 @@
   background: linear-gradient(135deg, #f8f4ef 0%, #f0ead6 100%);
 }
 
+[data-theme='dark'] .heroBanner {
+  background: linear-gradient(135deg, #2a241e 0%, #3d342a 100%);
+}
+
 .heroContent {
   display: flex;
   align-items: center;
@@ -34,6 +38,14 @@
   color: #8b6f47;
   font-size: 1.2rem;
   margin-bottom: 2rem;
+}
+
+[data-theme='dark'] .heroText h1 {
+  color: #e8d5c2;
+}
+
+[data-theme='dark'] .heroText p {
+  color: #b8a08a;
 }
 
 .heroImage {

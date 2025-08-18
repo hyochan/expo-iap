@@ -1,7 +1,7 @@
 .features {
   display: flex;
   align-items: center;
-  padding: 2rem 0;
+  padding: 4rem 0 2rem 0;
   width: 100%;
   background: linear-gradient(to bottom, #fefcf9 0%, #f8f4ef 100%);
 }
@@ -14,8 +14,12 @@
 .featureEmoji {
   font-size: 4rem;
   margin-bottom: 1rem;
-  display: inline-block;
-  padding: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 6rem;
+  height: 6rem;
+  padding: 0;
   background: rgba(212, 165, 116, 0.1);
   border-radius: 50%;
   box-shadow: 0 4px 12px rgba(212, 165, 116, 0.2);
