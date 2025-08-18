@@ -11,13 +11,40 @@ tags: [release, breaking-change, migration]
 
 Version 2.8.0 introduces a naming convention change for iOS-related field names. Fields with iOS suffixes now use uppercase `IOS` instead of `Ios` to follow the convention that acronyms at the end of field names should be uppercase.
 
+**Note:** Android field names remain unchanged as they already follow the correct convention (e.g., `autoRenewingAndroid`, `purchaseTokenAndroid`).
+
 <!-- truncate -->
 
 ## What Changed
 
-### Field Name Updates
+### iOS Field Name Updates
 
 All iOS-related field names ending with "Ios" have been renamed to end with "IOS":
+
+### Android Fields (No Breaking Changes)
+
+Android field names remain unchanged and already follow the correct convention. However, some new Android-specific fields have been added:
+
+**Product Fields:**
+- `name` - Product display name
+- `oneTimePurchaseOfferDetails` - One-time purchase offer details
+- `subscriptionOfferDetails` - Subscription offer details array
+
+**Purchase Fields:**
+- `ids` - Array of product IDs  
+- `purchaseTokenAndroid` - Android purchase token (deprecated, use `purchaseToken`)
+- `dataAndroid` - Purchase data
+- `signatureAndroid` - Purchase signature
+- `autoRenewingAndroid` - Auto-renewal status
+- `purchaseStateAndroid` - Purchase state enum
+- `isAcknowledgedAndroid` - Acknowledgment status
+- `packageNameAndroid` - App package name
+- `developerPayloadAndroid` - Developer payload
+- `obfuscatedAccountIdAndroid` - Obfuscated account ID
+- `obfuscatedProfileIdAndroid` - Obfuscated profile ID
+
+**Request Props:**
+- `isOfferPersonalized` - For Android Billing V5 personalized pricing
 
 | Old Field Name                     | New Field Name                     |
 | ---------------------------------- | ---------------------------------- |
@@ -69,10 +96,20 @@ Type names have also been updated to use uppercase `IOS`:
 
 ```typescript
 // Before (v2.7.x)
-import { ProductIos, ProductPurchaseIos, SubscriptionProductIos, ProductStatusIos } from 'expo-iap';
+import {
+  ProductIos,
+  ProductPurchaseIos,
+  SubscriptionProductIos,
+  ProductStatusIos,
+} from 'expo-iap';
 
 // After (v2.8.0)
-import { ProductIOS, ProductPurchaseIOS, SubscriptionProductIOS, ProductStatusIOS } from 'expo-iap';
+import {
+  ProductIOS,
+  ProductPurchaseIOS,
+  SubscriptionProductIOS,
+  ProductStatusIOS,
+} from 'expo-iap';
 ```
 
 **Note:** The old type names are still available as deprecated aliases for backward compatibility, but we recommend updating to the new names.
