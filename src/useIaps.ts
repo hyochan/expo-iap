@@ -19,7 +19,7 @@ import {
   getActiveSubscriptions,
   hasActiveSubscriptions,
   type ActiveSubscription,
-} from './';
+} from '.';
 import {
   syncIOS,
   getPromotedProductIOS,

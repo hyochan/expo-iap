@@ -333,9 +333,8 @@ export const getAvailablePurchases = ({
         ),
       android: async () => {
         const products = await ExpoIapModule.getAvailableItemsByType('inapp');
-        const subscriptions = await ExpoIapModule.getAvailableItemsByType(
-          'subs',
-        );
+        const subscriptions =
+          await ExpoIapModule.getAvailableItemsByType('subs');
         return products.concat(subscriptions);
       },
     }) || (() => Promise.resolve([]))
@@ -710,5 +709,5 @@ export const deepLinkToSubscriptions = (options: {
   return Promise.reject(new Error(`Unsupported platform: ${Platform.OS}`));
 };
 
-export * from './useIap';
+export * from './useIaps';
 export * from './utils/errorMapping';
