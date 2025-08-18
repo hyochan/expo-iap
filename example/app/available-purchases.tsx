@@ -101,7 +101,7 @@ export default function AvailablePurchases() {
       
       // Then load available purchases
       console.log('[AVAILABLE-PURCHASES] Loading available purchases...');
-      getAvailablePurchases([]).catch(error => {
+      getAvailablePurchases().catch(error => {
         console.warn('[AVAILABLE-PURCHASES] Failed to load available purchases:', error);
       });
     }
@@ -152,7 +152,7 @@ export default function AvailablePurchases() {
               <View style={styles.purchaseHeader}>
                 <Text style={styles.productId}>{subscription.productId}</Text>
                 <View style={styles.statusBadge}>
-                  <Text style={styles.statusText}>✅ Active</Text>
+                  <Text style={styles.statusBadgeText}>✅ Active</Text>
                 </View>
               </View>
               
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  statusText: {
+  statusBadgeText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#007AFF',
