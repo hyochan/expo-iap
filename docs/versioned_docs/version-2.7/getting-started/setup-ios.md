@@ -158,7 +158,9 @@ function App() {
 #### Receipt Validation
 
 ```tsx
-const validateReceipt = async (productId: string) => {
+const { validateReceipt } = useIAP();
+
+const validateReceiptIOS = async (productId: string) => {
   try {
     const result = await validateReceipt(productId);
 

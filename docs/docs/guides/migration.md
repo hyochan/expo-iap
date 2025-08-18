@@ -58,7 +58,7 @@ function App() {
 
 ```tsx
 try {
-  await requestPurchase({sku: 'product_id'});
+  await requestPurchase({request: {sku: 'product_id'}});
 } catch (error) {
   console.error(error.code, error.message);
 }
@@ -70,7 +70,7 @@ try {
 import {PurchaseError} from 'expo-iap';
 
 try {
-  await requestPurchase({sku: 'product_id'});
+  await requestPurchase({request: {sku: 'product_id'}});
 } catch (error) {
   if (error instanceof PurchaseError) {
     // Enhanced error handling with better typing
@@ -246,7 +246,7 @@ Most method signatures remain the same, but with improved TypeScript definitions
 ```tsx
 // Both libraries have the same signature
 await getProducts({skus: ['product1', 'product2']});
-await requestPurchase({sku: 'product_id'});
+await requestPurchase({request: {sku: 'product_id'}});
 await finishTransaction({purchase});
 await getPurchaseHistories(); // Note: plural form in expo-iap v2.6.0+
 ```

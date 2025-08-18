@@ -24,9 +24,9 @@ interface IapError {
 Handle network connectivity issues gracefully:
 
 ```typescript
-import {useIap} from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
-const {purchaseProduct} = useIap();
+const {purchaseProduct} = useIAP();
 
 try {
   await purchaseProduct('product_id');

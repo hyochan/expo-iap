@@ -4,7 +4,7 @@ sidebar_label: Core Methods
 sidebar_position: 1
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed"; 
+import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
 
 # Core Methods
 
@@ -16,11 +16,13 @@ This section covers the core methods available in expo-iap for managing in-app p
 
 > **Critical for Cross-Platform Development:** iOS and Android have fundamental differences in their purchase APIs.
 
-### Key Differences:
+### Key Differences
+
 - **iOS**: Can only purchase **one product at a time** (single SKU)
 - **Android**: Can purchase **multiple products at once** (array of SKUs)
 
 This difference exists because:
+
 - iOS App Store processes purchases individually
 - Google Play Store supports batch purchases
 
@@ -35,10 +37,10 @@ This difference exists because:
 // New API - no Platform.OS checks needed!
 await requestPurchase({
   request: {
-    ios: { sku: productId },
-    android: { skus: [productId] }
+    ios: {sku: productId},
+    android: {skus: [productId]},
   },
-  type: 'inapp'
+  type: 'inapp',
 });
 ```
 
@@ -49,16 +51,16 @@ import {Platform} from 'react-native';
 
 if (Platform.OS === 'ios') {
   await requestPurchase({
-    request: {sku: productId}
+    request: {sku: productId},
   });
 } else if (Platform.OS === 'android') {
   await requestPurchase({
-    request: {skus: [productId]}
+    request: {skus: [productId]},
   });
 }
 ```
 
-**🎯 Recommended Approach:** For the best developer experience, use the [ `useIAP` hook](/docs/api/use-iap) which handles platform differences automatically and provides a cleaner callback-based API.
+**🎯 Recommended Approach:** For the best developer experience, use the [`useIAP` hook](/docs/api/use-iap) which handles platform differences automatically and provides a cleaner callback-based API.
 
 ## initConnection()
 
@@ -131,6 +133,7 @@ const fetchStorefront = async () => {
 Gets app transaction information for iOS apps (iOS 16.0+). AppTransaction represents the initial purchase that unlocked the app, useful for premium apps or apps that were previously paid.
 
 > **⚠️ Important Requirements:**
+>
 > - **Runtime:** iOS 16.0 or later
 > - **Build Environment:** Xcode 15.0+ with iOS 16.0 SDK
 > - If built with older SDK versions, the method will throw an error
@@ -143,7 +146,10 @@ const fetchAppTransaction = async () => {
     const appTransaction = await getAppTransaction();
     if (appTransaction) {
       console.log('App Transaction ID:', appTransaction.appTransactionID);
-      console.log('Original Purchase Date:', new Date(appTransaction.originalPurchaseDate));
+      console.log(
+        'Original Purchase Date:',
+        new Date(appTransaction.originalPurchaseDate),
+      );
       console.log('Device Verification:', appTransaction.deviceVerification);
     } else {
       console.log('No app transaction found (app may be free)');
@@ -159,6 +165,7 @@ const fetchAppTransaction = async () => {
 **Platform:** iOS 16.0+ only
 
 **AppTransactionIOS Interface:**
+
 ```typescript
 interface AppTransactionIOS {
   appTransactionID: string;
@@ -183,7 +190,7 @@ const fetchProducts = async () => {
   try {
     const products = await requestProducts({
       skus: ['com.example.product1', 'com.example.product2'],
-      type: 'inapp'
+      type: 'inapp',
     });
 
     console.log('Products:', products);
@@ -198,7 +205,7 @@ const fetchSubscriptions = async () => {
   try {
     const subscriptions = await requestProducts({
       skus: ['com.example.premium_monthly', 'com.example.premium_yearly'],
-      type: 'subs'
+      type: 'subs',
     });
 
     console.log('Subscriptions:', subscriptions);
@@ -211,9 +218,9 @@ const fetchSubscriptions = async () => {
 
 **Parameters:**
 
-* `params` (object):
-  + `skus` (string[]): Array of product or subscription IDs to fetch
-  + `type` ('inapp' | 'subs'): Product type - 'inapp' for products, 'subs' for subscriptions
+- `params` (object):
+  - `skus` (string[]): Array of product or subscription IDs to fetch
+  - `type` ('inapp' | 'subs'): Product type - 'inapp' for products, 'subs' for subscriptions
 
 **Returns:** `Promise<Product[]>`
 
@@ -234,13 +241,13 @@ const products = await getProducts(['com.example.product1']);
 import {requestProducts} from 'expo-iap';
 const products = await requestProducts({
   skus: ['com.example.product1'],
-  type: 'inapp'
+  type: 'inapp',
 });
 ```
 
 **Parameters:**
 
-* `skus` (string[]): Array of product IDs to fetch
+- `skus` (string[]): Array of product IDs to fetch
 
 **Returns:** `Promise<Product[]>`
 
@@ -259,13 +266,13 @@ const subs = await getSubscriptions(['com.example.premium_monthly']);
 import {requestProducts} from 'expo-iap';
 const subs = await requestProducts({
   skus: ['com.example.premium_monthly'],
-  type: 'subs'
+  type: 'subs',
 });
 ```
 
 **Parameters:**
 
-* `skus` (string[]): Array of subscription IDs to fetch
+- `skus` (string[]): Array of subscription IDs to fetch
 
 **Returns:** `Promise<SubscriptionProduct[]>`
 
@@ -273,7 +280,8 @@ const subs = await requestProducts({
 
 Initiates a purchase request for products or subscriptions.
 
-> **⚠️ Platform Differences:** 
+> **⚠️ Platform Differences:**
+>
 > - **iOS**: Can only purchase one product at a time (uses `sku: string`)
 > - **Android**: Can purchase multiple products at once (uses `skus: string[]`)
 
@@ -293,7 +301,7 @@ const buyProduct = async (productId: string) => {
         },
         android: {
           skus: [productId],
-        }
+        },
       },
       type: 'inapp',
     });
@@ -313,11 +321,12 @@ const buySubscription = async (subscriptionId: string, subscription?: any) => {
         },
         android: {
           skus: [subscriptionId],
-          subscriptionOffers: subscription?.subscriptionOfferDetails?.map(offer => ({
-            sku: subscriptionId,
-            offerToken: offer.offerToken,
-          })) || [],
-        }
+          subscriptionOffers:
+            subscription?.subscriptionOfferDetails?.map((offer) => ({
+              sku: subscriptionId,
+              offerToken: offer.offerToken,
+            })) || [],
+        },
       },
       type: 'subs',
     });
@@ -388,8 +397,8 @@ await requestPurchase({
 
 **Parameters:**
 
-* `params` (object):
-  + `request` (object): Purchase request configuration
+- `params` (object):
+  - `request` (object): Purchase request configuration
     - **iOS**: `sku` (string) - Product ID to purchase
     - **Android**: `skus` (string[]) - Array of product IDs to purchase
     - **Cross-platform**: Include both `sku` and `skus` for compatibility
@@ -398,7 +407,7 @@ await requestPurchase({
     - `obfuscatedAccountIdAndroid?` (string, Android only): Obfuscated account ID
     - `obfuscatedProfileIdAndroid?` (string, Android only): Obfuscated profile ID
     - `isOfferPersonalized?` (boolean, Android only): Whether offer is personalized
-  + `type?` ('inapp' | 'subs'): Purchase type, defaults to 'inapp'
+  - `type?` ('inapp' | 'subs'): Purchase type, defaults to 'inapp'
 
 **Returns:** `Promise<ProductPurchase | ProductPurchase[] | SubscriptionPurchase | SubscriptionPurchase[] | void>`
 
@@ -411,6 +420,7 @@ await requestPurchase({
 ### Migration Guide
 
 **Old way (deprecated):**
+
 ```tsx
 await requestSubscription({
   sku: subscriptionId,
@@ -420,16 +430,17 @@ await requestSubscription({
 ```
 
 **New way (recommended):**
+
 ```tsx
 await requestPurchase({
   request: {
-    ios: { sku: subscriptionId },
-    android: { 
+    ios: {sku: subscriptionId},
+    android: {
       skus: [subscriptionId],
-      subscriptionOffers: [{sku: subscriptionId, offerToken: 'token'}]
-    }
+      subscriptionOffers: [{sku: subscriptionId, offerToken: 'token'}],
+    },
   },
-  type: 'subs'
+  type: 'subs',
 });
 ```
 
@@ -454,7 +465,7 @@ const buySubscription = async (subscriptionId: string, subscription?: any) => {
         (offer: any) => ({
           sku: subscriptionId,
           offerToken: offer.offerToken,
-        })
+        }),
       ) || [{sku: subscriptionId, offerToken: ''}];
 
       await requestPurchase({
@@ -499,8 +510,8 @@ const buySubscription = async (subscriptionId: string) => {
 
 **Parameters:**
 
-* `params` (object):
-  + `request` (object): Subscription request configuration
+- `params` (object):
+  - `request` (object): Subscription request configuration
     - **iOS**: `sku` (string) - Subscription ID to purchase
     - **Android**: `skus` (string[]) - Array of subscription IDs to purchase
     - **Android**: `subscriptionOffers` (array) - Android subscription offers (required, can be empty)
@@ -547,9 +558,9 @@ const completePurchase = async (purchase) => {
 
 **Parameters:**
 
-* `params` (object):
-  + `purchase` (Purchase): The purchase object to finish
-  + `isConsumable?` (boolean): Whether the product is consumable (Android)
+- `params` (object):
+  - `purchase` (Purchase): The purchase object to finish
+  - `isConsumable?` (boolean): Whether the product is consumable (Android)
 
 **Returns:** `Promise<PurchaseResult | boolean>`
 
@@ -612,7 +623,7 @@ import {deepLinkToSubscriptions} from 'expo-iap';
 
 const openSubscriptionSettings = () => {
   try {
-    deepLinkToSubscriptions({ skuAndroid: 'your_subscription_sku' });
+    deepLinkToSubscriptions({skuAndroid: 'your_subscription_sku'});
   } catch (error) {
     console.error('Failed to open subscription settings:', error);
   }
@@ -628,7 +639,7 @@ Return the storefront in ISO 3166-1 alpha-2 or ISO 3166-1 alpha-3 format
 ```tsx
 import {getStorefront} from 'expo-iap';
 
-const storeFront = await getStorefront()
+const storeFront = await getStorefront();
 ```
 
 **Returns:** `Promise<string>`
@@ -644,25 +655,28 @@ const checkSubscriptions = async () => {
   try {
     // Get all active subscriptions
     const allActiveSubscriptions = await getActiveSubscriptions();
-    
+
     // Or filter by specific subscription IDs
     const specificSubscriptions = await getActiveSubscriptions([
       'premium_monthly',
-      'premium_yearly'
+      'premium_yearly',
     ]);
-    
+
     for (const subscription of allActiveSubscriptions) {
       console.log('Product ID:', subscription.productId);
       console.log('Is Active:', subscription.isActive);
-      
+
       if (Platform.OS === 'ios') {
         console.log('Expiration Date:', subscription.expirationDateIOS);
-        console.log('Days until expiration:', subscription.daysUntilExpirationIOS);
+        console.log(
+          'Days until expiration:',
+          subscription.daysUntilExpirationIOS,
+        );
         console.log('Environment:', subscription.environmentIOS);
       } else if (Platform.OS === 'android') {
         console.log('Auto Renewing:', subscription.autoRenewingAndroid);
       }
-      
+
       console.log('Will expire soon:', subscription.willExpireSoon);
     }
   } catch (error) {
@@ -707,17 +721,17 @@ const checkIfUserHasSubscription = async () => {
   try {
     // Check if user has any active subscriptions
     const hasAny = await hasActiveSubscriptions();
-    
+
     // Or check for specific subscriptions
     const hasPremium = await hasActiveSubscriptions([
       'premium_monthly',
-      'premium_yearly'
+      'premium_yearly',
     ]);
-    
+
     if (hasAny) {
       console.log('User has active subscriptions');
     }
-    
+
     if (hasPremium) {
       console.log('User has premium subscription');
     }
@@ -742,13 +756,13 @@ interface Purchase {
   transactionDate: number;
   transactionReceipt: string;
   purchaseToken?: string;
-  
+
   // iOS-specific properties
   originalTransactionDateIos?: number;
   originalTransactionIdentifierIos?: string;
   expirationDateIos?: number; // Subscription expiration date (milliseconds)
   environmentIos?: 'Production' | 'Sandbox';
-  
+
   // Android-specific properties
   dataAndroid?: string;
   signatureAndroid?: string;
@@ -766,6 +780,7 @@ interface Purchase {
 ### Important Subscription Properties
 
 For subscription status checking:
+
 - **iOS**: Check `expirationDateIos` to determine if the subscription is still active
 - **Android**: Check `autoRenewingAndroid` to see if the user has canceled auto-renewal
 
@@ -777,7 +792,7 @@ All methods can throw errors that should be handled appropriately:
 import {PurchaseError} from 'expo-iap';
 
 try {
-  await requestPurchase({sku: 'product_id'});
+  await requestPurchase({request: {sku: 'product_id'}});
 } catch (error) {
   if (error instanceof PurchaseError) {
     switch (error.code) {

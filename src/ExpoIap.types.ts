@@ -50,7 +50,7 @@ export type SubscriptionProduct =
   | (SubscriptionProductIOS & IosPlatform);
 
 // ============================================================================
-// Legacy Types (For backward compatibility with useIap hook)
+// Legacy Types (For backward compatibility with useIAP hook)
 // ============================================================================
 
 // Re-export platform-specific purchase types for legacy compatibility

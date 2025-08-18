@@ -26,7 +26,7 @@ This document outlines the coding conventions and best practices for the expo-ia
 - Use PascalCase for TypeScript module files: `ExpoIapModule.ts`
 - Test files: `*.test.ts` or `*.test.tsx`
 - Type definition files: `*.types.ts`
-- Hook files: use camelCase: `useIap.ts`
+- Hook files: use camelCase: `useIAP.ts`
 
 ### Import Order
 
@@ -376,7 +376,7 @@ describe('PurchaseManager', () => {
 
 ### Commit Message Format
 
-```
+```text
 type(scope): subject
 
 body

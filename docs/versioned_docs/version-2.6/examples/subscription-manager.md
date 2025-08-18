@@ -326,10 +326,12 @@ export default function SubscriptionManager() {
             sku: productId,
             andDangerouslyFinishTransactionAutomaticallyIOS: false,
           },
+          type: 'subs',
         });
       } /* Platform.OS === "android" */ else {
         await requestPurchase({
           request: {skus: [productId]},
+          type: 'subs',
         });
       }
     } catch (error) {
@@ -686,6 +688,7 @@ await requestPurchase({
     sku: productId,
     andDangerouslyFinishTransactionAutomaticallyIOS: false,
   },
+  type: 'subs',
 });
 ```
 
@@ -706,6 +709,7 @@ if (Platform.OS === 'ios') {
       sku: productId,
       andDangerouslyFinishTransactionAutomaticallyIOS: false,
     },
+    type: 'subs',
   });
 } else {
   await requestPurchase({
