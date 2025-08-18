@@ -5,7 +5,7 @@ import {Platform} from 'react-native';
 // Internal modules
 import ExpoIapModule from './ExpoIapModule';
 import {
-  isProductIos,
+  isProductIOS,
   validateReceiptIOS,
   deepLinkToSubscriptionsIOS,
 } from './modules/ios';
@@ -135,7 +135,7 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
     ios: async () => {
       const rawItems = await ExpoIapModule.getItems(skus);
       return rawItems.filter((item: unknown) => {
-        if (!isProductIos(item)) return false;
+        if (!isProductIOS(item)) return false;
         return (
           typeof item === 'object' &&
           item !== null &&
@@ -169,7 +169,7 @@ export const getSubscriptions = async (
     ios: async () => {
       const rawItems = await ExpoIapModule.getItems(skus);
       return rawItems.filter((item: unknown) => {
-        if (!isProductIos(item)) return false;
+        if (!isProductIOS(item)) return false;
         return (
           typeof item === 'object' &&
           item !== null &&
@@ -236,7 +236,7 @@ export const requestProducts = async ({
   if (Platform.OS === 'ios') {
     const rawItems = await ExpoIapModule.getItems(skus);
     const filteredItems = rawItems.filter((item: unknown) => {
-      if (!isProductIos(item)) return false;
+      if (!isProductIOS(item)) return false;
       return (
         typeof item === 'object' &&
         item !== null &&

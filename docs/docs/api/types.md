@@ -26,7 +26,7 @@ interface Product {
 
 ### ⚠️ Breaking Change Notice (v2.6+)
 
-**Version 2.6+ Migration**: The `subscription` field in `ProductIos` has changed from a required field to an optional field (`subscription?`). This reflects that not all iOS products have subscription information. Please update your code to handle this field as optional when working with non-subscription products.
+**Version 2.6+ Migration**: The `subscription` field in `ProductIOS` has changed from a required field to an optional field (`subscription?`). This reflects that not all iOS products have subscription information. Please update your code to handle this field as optional when working with non-subscription products.
 
 iOS product contains additional information:
 

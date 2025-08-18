@@ -74,7 +74,7 @@ export const transactionUpdatedIOS = (
 };
 
 // Type guards
-export function isProductIos<T extends {platform?: string}>(
+export function isProductIOS<T extends {platform?: string}>(
   item: unknown,
 ): item is T & {platform: 'ios'} {
   return (

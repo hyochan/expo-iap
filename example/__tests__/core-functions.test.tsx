@@ -108,9 +108,9 @@ describe('Core Functions Tests', () => {
   });
 
   describe('Type Guards', () => {
-    it('should export isProductIos function', () => {
-      expect(ExpoIap.isProductIos).toBeDefined();
-      expect(typeof ExpoIap.isProductIos).toBe('function');
+    it('should export isProductIOS function', () => {
+      expect(ExpoIap.isProductIOS).toBeDefined();
+      expect(typeof ExpoIap.isProductIOS).toBe('function');
     });
 
     it('should export isProductAndroid function', () => {

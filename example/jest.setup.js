@@ -34,7 +34,7 @@ jest.mock('expo-iap', () => ({
   finishTransaction: jest.fn(),
   getPurchaseHistories: jest.fn(),
   getAvailablePurchases: jest.fn(),
-  
+
   // iOS functions with IOS suffix
   getStorefrontIOS: jest.fn(),
   syncIOS: jest.fn(),
@@ -50,7 +50,7 @@ jest.mock('expo-iap', () => ({
   presentCodeRedemptionSheetIOS: jest.fn(),
   getAppTransactionIOS: jest.fn(),
   validateReceiptIOS: jest.fn(),
-  
+
   // Deprecated iOS functions
   getStorefront: jest.fn(),
   sync: jest.fn(),
@@ -66,19 +66,19 @@ jest.mock('expo-iap', () => ({
   presentCodeRedemptionSheet: jest.fn(),
   getAppTransaction: jest.fn(),
   validateReceiptIos: jest.fn(),
-  
+
   // Android functions
   deepLinkToSubscriptionsAndroid: jest.fn(),
   validateReceiptAndroid: jest.fn(),
   acknowledgePurchaseAndroid: jest.fn(),
-  
+
   // Event listeners
   purchaseUpdatedListener: jest.fn(),
   purchaseErrorListener: jest.fn(),
-  
+
   // Hook
   useIAP: jest.fn(),
-  
+
   // Enums
   IapEvent: {
     PurchaseUpdated: 'purchase-updated',
@@ -94,11 +94,11 @@ jest.mock('expo-iap', () => ({
     E_NOT_PREPARED: 'E_NOT_PREPARED',
     E_UNKNOWN: 'E_UNKNOWN',
   },
-  
+
   // Type guards
-  isProductIos: jest.fn(),
+  isProductIOS: jest.fn(),
   isProductAndroid: jest.fn(),
-  
+
   // Mock types
   AppTransactionIOS: {},
 }));

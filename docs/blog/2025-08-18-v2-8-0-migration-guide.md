@@ -20,7 +20,9 @@ Version 2.8.0 introduces a naming convention change for iOS-related field names.
 ## iOS Changes
 
 ### Product Types
+
 **ProductIOS & SubscriptionProductIOS:**
+
 - `displayName` - Product display name
 - `isFamilyShareable` - Family sharing availability
 - `jsonRepresentation` - JSON representation of product
@@ -32,7 +34,9 @@ Version 2.8.0 introduces a naming convention change for iOS-related field names.
 - `subscriptionPeriodUnitIOS` - Subscription period unit
 
 ### Purchase Types
+
 **ProductPurchaseIOS** includes these StoreKit 2 fields:
+
 - `quantityIOS`, `originalTransactionDateIOS`, `originalTransactionIdentifierIOS`
 - `expirationDateIOS`, `webOrderLineItemIdIOS`, `environmentIOS`
 - `storefrontCountryCodeIOS`, `appBundleIdIOS`, `productTypeIOS`
@@ -70,14 +74,18 @@ Version 2.8.0 introduces a naming convention change for iOS-related field names.
 ## Android Changes
 
 ### Product Types
+
 **ProductAndroid & SubscriptionProductAndroid:**
+
 - `name` - Product display name
 - `oneTimePurchaseOfferDetails` - One-time purchase offer details
 - `subscriptionOfferDetails` - Subscription offer details array
 
 ### Purchase Types
+
 **ProductPurchaseAndroid** includes these Android Billing Library fields:
-- `ids` - Array of product IDs  
+
+- `ids` - Array of product IDs
 - `purchaseTokenAndroid` - Android purchase token (deprecated, use `purchaseToken`)
 - `dataAndroid` - Purchase data
 - `signatureAndroid` - Purchase signature
@@ -90,7 +98,9 @@ Version 2.8.0 introduces a naming convention change for iOS-related field names.
 - `obfuscatedProfileIdAndroid` - Obfuscated profile ID
 
 ### Request Props
+
 **RequestPurchaseAndroidProps:**
+
 - `isOfferPersonalized` - For Android Billing V5 personalized pricing
 
 **No Breaking Changes** - All Android fields maintain existing naming convention.
@@ -122,9 +132,9 @@ Type names have also been updated to use uppercase `IOS`:
 ```typescript
 // Before (v2.7.x)
 import {
-  ProductIos,
+  ProductIOS,
   ProductPurchaseIos,
-  SubscriptionProductIos,
+  SubscriptionProductIOS,
   ProductStatusIos,
 } from 'expo-iap';
 

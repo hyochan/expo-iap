@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.crossplatformkorea.cpk"
+      "bundleIdentifier": "dev.hyo.martie"
     },
     "android": {
       "adaptiveIcon": {

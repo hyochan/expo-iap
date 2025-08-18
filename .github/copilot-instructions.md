@@ -20,7 +20,7 @@ When suggesting code for expo-iap, follow these naming conventions:
 
 Functions that only work on one platform MUST have platform suffixes:
 
-- iOS: `functionNameIos()`
+- iOS: `functionNameIOS()`
 - Android: `functionNameAndroid()`
 
 ```typescript
@@ -50,7 +50,7 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
 
 ## Type Naming
 
-- Platform-specific types: `ProductIos`, `ProductAndroid`, `PurchaseErrorIos`
+- Platform-specific types: `ProductIOS`, `ProductAndroid`, `PurchaseErrorIOS`
 - Cross-platform types: `Product`, `Purchase`, `PurchaseError`
 
 ## Code Suggestions

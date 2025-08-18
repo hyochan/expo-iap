@@ -260,7 +260,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         return result;
       } catch (error) {
         console.error('Error getting active subscriptions:', error);
-        setActiveSubscriptions([]);
+        // Don't clear existing activeSubscriptions on error - preserve current state
+        // This prevents the UI from showing empty state when there are temporary network issues
         return [];
       }
     },
