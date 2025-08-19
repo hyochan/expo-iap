@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,10 @@ import {
   Alert,
   ScrollView,
   Platform,
+  Modal,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import {signal, effect} from '@preact/signals-react';
 import {requestPurchase, useIAP, getAppTransactionIOS} from '../../src';
 import type {
   Product,
@@ -27,24 +30,44 @@ const PRODUCT_IDS = ['dev.hyo.martie.10bulbs', 'dev.hyo.martie.30bulbs'];
  * - Clean success/error pattern through hooks
  * - Focused on one-time purchases (products)
  */
-export default function PurchaseFlow() {
-  const [purchaseResult, setPurchaseResult] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
+// Signals for state management
+const purchaseResultSignal = signal<string>('');
+const isProcessingSignal = signal(false);
+const selectedProductSignal = signal<Product | null>(null);
+const modalVisibleSignal = signal(false);
 
+export default function PurchaseFlow() {
+  // React state synced with signals
+  const [purchaseResult, setPurchaseResult] = useState(purchaseResultSignal.value);
+  const [isProcessing, setIsProcessing] = useState(isProcessingSignal.value);
+  const [selectedProduct, setSelectedProduct] = useState(selectedProductSignal.value);
+  const [modalVisible, setModalVisible] = useState(modalVisibleSignal.value);
+
+  // Subscribe to signal changes
+  useEffect(() => {
+    const unsubscribes = [
+      effect(() => setPurchaseResult(purchaseResultSignal.value)),
+      effect(() => setIsProcessing(isProcessingSignal.value)),
+      effect(() => setSelectedProduct(selectedProductSignal.value)),
+      effect(() => setModalVisible(modalVisibleSignal.value)),
+    ];
+
+    return () => unsubscribes.forEach(fn => fn());
+  }, []);
+  
   // Use the useIAP hook for managing purchases
   const {connected, products, requestProducts, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase: ProductPurchase) => {
       console.log('Purchase successful:', purchase);
-      setIsProcessing(false);
+      isProcessingSignal.value = false;
 
       // Handle successful purchase
-      setPurchaseResult(
+      purchaseResultSignal.value =
         `✅ Purchase successful (${purchase.platform})\n` +
-          `Product: ${purchase.productId}\n` +
-          `Transaction ID: ${purchase.transactionId || 'N/A'}\n` +
-          `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}\n` +
-          `Receipt: ${purchase.transactionReceipt?.substring(0, 50)}...`,
-      );
+        `Product: ${purchase.productId}\n` +
+        `Transaction ID: ${purchase.transactionId || 'N/A'}\n` +
+        `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}\n` +
+        `Receipt: ${purchase.transactionReceipt?.substring(0, 50)}...`;
 
       // IMPORTANT: Server-side receipt validation should be performed here
       // Send the receipt to your backend server for validation
@@ -66,11 +89,10 @@ export default function PurchaseFlow() {
     },
     onPurchaseError: (error: PurchaseError) => {
       console.error('Purchase failed:', error);
-      setIsProcessing(false);
+      isProcessingSignal.value = false;
 
       // Handle purchase error
-      setPurchaseResult(`❌ Purchase failed: ${error.message}`);
-      Alert.alert('Purchase Failed', error.message);
+      purchaseResultSignal.value = `❌ Purchase failed: ${error.message}`;
     },
     onSyncError: (error: Error) => {
       console.warn('Sync error:', error);
@@ -87,8 +109,8 @@ export default function PurchaseFlow() {
 
   const handlePurchase = async (itemId: string) => {
     try {
-      setIsProcessing(true);
-      setPurchaseResult('Processing purchase...');
+      isProcessingSignal.value = true;
+      purchaseResultSignal.value = 'Processing purchase...';
 
       // New platform-specific API (v2.7.0+) - no Platform.OS branching needed
       await requestPurchase({
@@ -104,11 +126,10 @@ export default function PurchaseFlow() {
         type: 'inapp',
       });
     } catch (error) {
-      setIsProcessing(false);
+      isProcessingSignal.value = false;
       const errorMessage =
         error instanceof Error ? error.message : 'Purchase failed';
-      setPurchaseResult(`❌ Purchase failed: ${errorMessage}`);
-      Alert.alert('Purchase Failed', errorMessage);
+      purchaseResultSignal.value = `❌ Purchase failed: ${errorMessage}`;
     }
   };
 
@@ -117,14 +138,67 @@ export default function PurchaseFlow() {
   };
 
   const getProductDisplayPrice = (product: Product): string => {
-    if (product.platform === 'android') {
+    if (
+      'oneTimePurchaseOfferDetailsAndroid' in product &&
+      product.oneTimePurchaseOfferDetailsAndroid
+    ) {
       return (
-        product.oneTimePurchaseOfferDetails?.formattedPrice ||
+        product.oneTimePurchaseOfferDetailsAndroid.formattedPrice ||
         product.displayPrice
       );
-    } else {
-      return product.displayPrice;
     }
+    return product.displayPrice;
+  };
+
+  const handleProductPress = (product: Product) => {
+    selectedProductSignal.value = product;
+    modalVisibleSignal.value = true;
+  };
+
+  const renderProductDetails = () => {
+    const product = selectedProduct;
+    if (!product) return null;
+
+    const jsonString = JSON.stringify(product, null, 2);
+
+    const copyToClipboard = async () => {
+      try {
+        await Clipboard.setStringAsync(jsonString);
+        Alert.alert('Copied', 'Product JSON copied to clipboard');
+      } catch {
+        Alert.alert('Copy Failed', 'Failed to copy to clipboard');
+      }
+    };
+
+    const logToConsole = () => {
+      console.log('=== PRODUCT DATA ===');
+      console.log(product);
+      console.log('=== PRODUCT JSON ===');
+      console.log(jsonString);
+      Alert.alert('Console', 'Product data logged to console');
+    };
+
+    return (
+      <View style={styles.modalContent}>
+        <ScrollView style={styles.jsonContainer}>
+          <Text style={styles.jsonText}>{jsonString}</Text>
+        </ScrollView>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.copyButton]}
+            onPress={copyToClipboard}
+          >
+            <Text style={styles.actionButtonText}>📋 Copy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.consoleButton]}
+            onPress={logToConsole}
+          >
+            <Text style={styles.actionButtonText}>🖥️ Console</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   };
 
   return (
@@ -160,18 +234,26 @@ export default function PurchaseFlow() {
                   {getProductDisplayPrice(product)}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={[
-                  styles.purchaseButton,
-                  isProcessing && styles.disabledButton,
-                ]}
-                onPress={() => handlePurchase(product.id)}
-                disabled={isProcessing || !connected}
-              >
-                <Text style={styles.purchaseButtonText}>
-                  {isProcessing ? 'Processing...' : 'Purchase'}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.productActions}>
+                <TouchableOpacity
+                  style={styles.infoButton}
+                  onPress={() => handleProductPress(product)}
+                >
+                  <Text style={styles.infoButtonText}>ℹ️</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.purchaseButton,
+                    isProcessing && styles.disabledButton,
+                  ]}
+                  onPress={() => handlePurchase(product.id)}
+                  disabled={isProcessing || !connected}
+                >
+                  <Text style={styles.purchaseButtonText}>
+                    {isProcessing ? 'Processing...' : 'Purchase'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ))
         ) : (
@@ -198,6 +280,30 @@ export default function PurchaseFlow() {
           </View>
         </View>
       ) : null}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          modalVisibleSignal.value = false;
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Product Details</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => (modalVisibleSignal.value = false)}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            {renderProductDetails()}
+          </View>
+        </View>
+      </Modal>
 
       <View style={styles.infoSection}>
         <Text style={styles.infoTitle}>🎯 Key Features Demonstrated</Text>
@@ -290,6 +396,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  productActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  infoButton: {
+    backgroundColor: '#e9ecef',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoButtonText: {
+    fontSize: 18,
   },
   productInfo: {
     flex: 1,
@@ -387,5 +509,85 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    width: '90%',
+    height: '80%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#666',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 0,
+  },
+  jsonContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  jsonText: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 12,
+    color: '#333',
+    lineHeight: 18,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  copyButton: {
+    backgroundColor: '#007AFF',
+  },
+  consoleButton: {
+    backgroundColor: '#28a745',
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

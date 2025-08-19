@@ -22,7 +22,7 @@ const createMockSubscription = (overrides = {}) => ({
   displayPrice: '$9.99',
   currency: 'USD',
   platform: 'ios',
-  subscription: {
+  subscriptionInfoIOS: {
     subscriptionPeriod: { unit: 'MONTH' },
     introductoryOffer: {
       paymentMode: 'FREETRIAL',
@@ -40,7 +40,7 @@ const createMockAndroidSubscription = () => ({
   description: 'Android Test Description',
   displayPrice: '$4.99',
   platform: 'android',
-  subscriptionOfferDetails: [
+  subscriptionOfferDetailsAndroid: [
     {
       pricingPhases: {
         pricingPhaseList: [
