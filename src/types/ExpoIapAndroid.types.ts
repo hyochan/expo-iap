@@ -22,7 +22,7 @@ type PricingPhasesAndroid = {
 
 type ProductSubscriptionAndroidOfferDetail = {
   basePlanId: string;
-  offerId: string;
+  offerId: string | null;
   offerToken: string;
   offerTags: string[];
   pricingPhases: PricingPhasesAndroid;
