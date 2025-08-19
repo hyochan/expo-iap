@@ -106,10 +106,26 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIOS: Stri
 
     if #available(iOS 15.4, *), let jsonData = jsonData {
         if let price = jsonData["price"] as? NSNumber {
+            // START: Deprecated - will be removed in v2.9.0
+            // Use currencyCodeIOS, currencySymbolIOS, countryCodeIOS instead
             purchaseMap["priceIOS"] = price.doubleValue
+            // END: Deprecated - will be removed in v2.9.0
         }
         if let currency = jsonData["currency"] as? String {
+            purchaseMap["currencyCodeIOS"] = currency
+            
+            // Try to get currency symbol from locale
+            let locale = Locale(identifier: Locale.identifier(fromComponents: [NSLocale.Key.currencyCode.rawValue: currency]))
+            purchaseMap["currencySymbolIOS"] = locale.currencySymbol
+            
+            // START: Deprecated - will be removed in v2.9.0
+            // Use currencyCodeIOS instead
             purchaseMap["currencyIOS"] = currency
+            // END: Deprecated - will be removed in v2.9.0
+        }
+        // Extract country code from storefront if available
+        if let storefront = jsonData["storefront"] as? String {
+            purchaseMap["countryCodeIOS"] = storefront
         }
     }
 
@@ -162,20 +178,86 @@ func serializeSubscription(_ s: Product.SubscriptionInfo?) -> [String: Any?]? {
 
 @available(iOS 15.0, *)
 func serializeProduct(_ p: Product) -> [String: Any?] {
+    // Convert Product.ProductType to our expected 'inapp' or 'subs' string
+    let productType: String = p.subscription != nil ? "subs" : "inapp"
+    
+    // For subscription products, add discounts and introductory price
+    var discounts: [[String: Any?]]? = nil
+    var introductoryPrice: String? = nil
+    var introductoryPriceAsAmountIOS: String? = nil
+    var introductoryPricePaymentModeIOS: String? = nil
+    var introductoryPriceNumberOfPeriodsIOS: String? = nil
+    var introductoryPriceSubscriptionPeriodIOS: String? = nil
+    var subscriptionPeriodNumberIOS: String? = nil
+    var subscriptionPeriodUnitIOS: String? = nil
+    
+    if let subscription = p.subscription {
+        // Extract discount information from promotional offers
+        if !subscription.promotionalOffers.isEmpty {
+            discounts = subscription.promotionalOffers.compactMap { offer in
+                return [
+                    "identifier": offer.id ?? "",
+                    "type": offer.type.rawValue,
+                    "numberOfPeriods": "\(offer.periodCount)",
+                    "price": "\(offer.price)",
+                    "localizedPrice": offer.displayPrice,
+                    "paymentMode": offer.paymentMode.rawValue,
+                    "subscriptionPeriod": getPeriodIOS(offer.period.unit)
+                ]
+            }
+        }
+        
+        // Extract introductory price from introductory offer
+        if let introOffer = subscription.introductoryOffer {
+            introductoryPrice = introOffer.displayPrice
+            introductoryPriceAsAmountIOS = "\(introOffer.price)"
+            introductoryPricePaymentModeIOS = introOffer.paymentMode.rawValue
+            introductoryPriceNumberOfPeriodsIOS = "\(introOffer.periodCount)"
+            introductoryPriceSubscriptionPeriodIOS = getPeriodIOS(introOffer.period.unit)
+        }
+        
+        // Extract subscription period information
+        subscriptionPeriodNumberIOS = "\(subscription.subscriptionPeriod.value)"
+        subscriptionPeriodUnitIOS = getPeriodIOS(subscription.subscriptionPeriod.unit)
+    }
+    
     return [
         "debugDescription": serializeDebug(p.debugDescription),
         "description": p.description,
-        "displayName": p.displayName,
+        // New iOS-suffixed fields
+        "displayNameIOS": p.displayName,
+        "discountsIOS": discounts,
+        "introductoryPriceIOS": introductoryPrice,
+        "introductoryPriceAsAmountIOS": introductoryPriceAsAmountIOS,
+        "introductoryPricePaymentModeIOS": introductoryPricePaymentModeIOS,
+        "introductoryPriceNumberOfPeriodsIOS": introductoryPriceNumberOfPeriodsIOS,
+        "introductoryPriceSubscriptionPeriodIOS": introductoryPriceSubscriptionPeriodIOS,
+        "subscriptionPeriodNumberIOS": subscriptionPeriodNumberIOS,
+        "subscriptionPeriodUnitIOS": subscriptionPeriodUnitIOS,
         "displayPrice": p.displayPrice,
         "id": p.id,
         "title": p.displayName,
-        "isFamilyShareable": p.isFamilyShareable,
-        "jsonRepresentation": String(data: p.jsonRepresentation, encoding: .utf8),
+        "isFamilyShareableIOS": p.isFamilyShareable,
+        "jsonRepresentationIOS": String(data: p.jsonRepresentation, encoding: .utf8),
         "price": p.price,
-        "subscription": serializeSubscription(p.subscription),
-        "type": p.type,
+        "subscriptionInfoIOS": serializeSubscription(p.subscription),
+        "type": productType,
         "currency": p.priceFormatStyle.currencyCode,
         "platform": "ios",
+        // START: Deprecated - will be removed in v2.9.0
+        // Use displayNameIOS instead of displayName
+        "displayName": p.displayName,
+        // Use discountsIOS instead of discounts
+        "discounts": discounts,
+        // Use introductoryPriceIOS instead of introductoryPrice
+        "introductoryPrice": introductoryPrice,
+        // Use isFamilyShareableIOS instead of isFamilyShareable
+        "isFamilyShareable": p.isFamilyShareable,
+        // Use jsonRepresentationIOS instead of jsonRepresentation
+        "jsonRepresentation": String(data: p.jsonRepresentation, encoding: .utf8),
+        // Use subscriptionInfoIOS instead of subscription
+        "subscription": serializeSubscription(p.subscription),
+        // END: Deprecated - will be removed in v2.9.0
     ]
 }
 

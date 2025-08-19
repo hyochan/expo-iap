@@ -54,7 +54,7 @@ await requestPurchase({
   request: {
     ios: {
       sku: productId,
-      andDangerouslyFinishTransactionAutomaticallyIOS: false,
+      andDangerouslyFinishTransactionAutomatically: false,
     },
     android: {
       skus: [productId],
@@ -72,7 +72,7 @@ await requestPurchase({
     ios: {
       sku: productId,
       // Set to false for manual transaction finishing
-      andDangerouslyFinishTransactionAutomaticallyIOS: false,
+      andDangerouslyFinishTransactionAutomatically: false,
     },
     android: {
       skus: [productId],
@@ -83,7 +83,7 @@ await requestPurchase({
 
 ### Key iOS Options
 
-- **`andDangerouslyFinishTransactionAutomaticallyIOS: false`**:
+- **`andDangerouslyFinishTransactionAutomatically: false`**:
   - **Recommended**: Set to `false` to manually handle transaction finishing
   - This allows proper receipt validation before completing the transaction
   - Prevents race conditions and ensures proper purchase flow

@@ -273,7 +273,7 @@ useEffect(() => {
 - This issue primarily affects iOS because of how StoreKit handles transactions
 - Android requires acknowledgment within 3 days to prevent automatic refunds
 - The `isConsumable` parameter defaults to `false`, which is appropriate for subscriptions and non-consumable products
-- Never set `andDangerouslyFinishTransactionAutomaticallyIOS: true` unless you understand the implications
+- Never set `andDangerouslyFinishTransactionAutomatically: true` unless you understand the implications
 - Always implement proper transaction finishing in your purchase flow
 
 #### 2. Testing on simulators/emulators
@@ -359,7 +359,6 @@ const handleStoreUnavailable = () => {
 3. **Xcode version issues**:
 
    If you're experiencing issues like duplicate purchase events or other unexpected behavior:
-
    - **Solution**: Upgrade to Xcode 16.4 or later
    - **Known issues resolved**: [#114](https://github.com/hyochan/expo-iap/issues/114), [react-native-iap #2970](https://github.com/hyochan/react-native-iap/issues/2970)
    - **Symptoms of old Xcode versions**:

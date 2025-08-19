@@ -66,7 +66,7 @@ const handlePurchase = async (productId) => {
       await requestPurchase({
         request: {
           sku: productId,
-          andDangerouslyFinishTransactionAutomaticallyIOS: false,
+          andDangerouslyFinishTransactionAutomatically: false,
         },
       });
     } /* Platform.OS === "android" */ else {
@@ -131,7 +131,7 @@ if (Platform.OS === 'ios') {
   await requestPurchase({
     request: {
       sku: productId,
-      andDangerouslyFinishTransactionAutomaticallyIOS: false, // Important!
+      andDangerouslyFinishTransactionAutomatically: false, // Important!
     },
   });
 } /* Platform.OS === "android" */ else {
@@ -338,7 +338,7 @@ export default function Store() {
             sku: productId,
             // Important: Set to false to manually handle transaction finishing
             // This allows proper receipt validation before finishing the transaction
-            andDangerouslyFinishTransactionAutomaticallyIOS: false,
+            andDangerouslyFinishTransactionAutomatically: false,
           },
         });
       } /* Platform.OS === "android" */ else {
@@ -393,14 +393,14 @@ export default function Store() {
         // CRITICAL: Check required Android parameters before validation
         if (!purchaseToken || !packageName) {
           throw new Error(
-            'Android validation requires packageName and purchaseToken'
+            'Android validation requires packageName and purchaseToken',
           );
         }
 
         // Note: For server-side validation with Google Play API, you may also need:
         // - accessToken: OAuth2 token for accessing Google Play Developer API
         // This is typically handled server-side, not in the client app
-        
+
         const response = await fetch(
           'https://your-server.com/validate-receipt-android',
           {
@@ -684,7 +684,7 @@ if (Platform.OS === 'ios') {
   await requestPurchase({
     request: {
       sku: productId,
-      andDangerouslyFinishTransactionAutomaticallyIOS: false,
+      andDangerouslyFinishTransactionAutomatically: false,
     },
   });
 } else {

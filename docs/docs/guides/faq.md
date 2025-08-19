@@ -156,7 +156,7 @@ Users cannot cancel subscriptions within your app. You need to direct them to th
 import {deepLinkToSubscriptions} from 'expo-iap';
 
 const openSubscriptionManagement = () => {
-  deepLinkToSubscriptions({ skuAndroid: 'your_subscription_sku' });
+  deepLinkToSubscriptions({skuAndroid: 'your_subscription_sku'});
 };
 ```
 
@@ -442,7 +442,7 @@ These issues ([#114](https://github.com/hyochan/expo-iap/issues/114), [react-nat
 
 #### purchaseUpdatedListener is called twice after finishTransaction
 
-**Issue:** On iOS, `purchaseUpdatedListener` may be called twice for the same transaction when using `andDangerouslyFinishTransactionAutomaticallyIOS: false` and manually calling `finishTransaction()`.
+**Issue:** On iOS, `purchaseUpdatedListener` may be called twice for the same transaction when using `andDangerouslyFinishTransactionAutomatically: false` and manually calling `finishTransaction()`.
 
 **Symptoms:**
 
@@ -463,7 +463,7 @@ const purchaseListener = purchaseUpdatedListener(async (purchase) => {
 
 await requestPurchase({
   sku: 'your.product.id',
-  andDangerouslyFinishTransactionAutomaticallyIOS: false,
+  andDangerouslyFinishTransactionAutomatically: false,
 });
 ```
 

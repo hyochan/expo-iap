@@ -324,7 +324,7 @@ export default function SubscriptionManager() {
         await requestPurchase({
           request: {
             sku: productId,
-            andDangerouslyFinishTransactionAutomaticallyIOS: false,
+            andDangerouslyFinishTransactionAutomatically: false,
           },
           type: 'subs',
         });
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
 await requestPurchase({
   request: {
     sku: productId,
-    andDangerouslyFinishTransactionAutomaticallyIOS: false,
+    andDangerouslyFinishTransactionAutomatically: false,
   },
   type: 'subs',
 });
@@ -707,7 +707,7 @@ if (Platform.OS === 'ios') {
   await requestPurchase({
     request: {
       sku: productId,
-      andDangerouslyFinishTransactionAutomaticallyIOS: false,
+      andDangerouslyFinishTransactionAutomatically: false,
     },
     type: 'subs',
   });

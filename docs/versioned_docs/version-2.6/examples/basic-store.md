@@ -53,7 +53,7 @@ This example shows how to implement a basic in-app purchase store using expo-iap
 await requestPurchase({
   request: {
     sku: productId,
-    andDangerouslyFinishTransactionAutomaticallyIOS: false,
+    andDangerouslyFinishTransactionAutomatically: false,
   },
 });
 ```
@@ -74,7 +74,7 @@ if (Platform.OS === 'ios') {
     request: {
       sku: productId,
       // Set to false for manual transaction finishing
-      andDangerouslyFinishTransactionAutomaticallyIOS: false,
+      andDangerouslyFinishTransactionAutomatically: false,
     },
   });
 } else {
@@ -86,7 +86,7 @@ if (Platform.OS === 'ios') {
 
 ### Key iOS Options
 
-- **`andDangerouslyFinishTransactionAutomaticallyIOS: false`**:
+- **`andDangerouslyFinishTransactionAutomatically: false`**:
   - **Recommended**: Set to `false` to manually handle transaction finishing
   - This allows proper receipt validation before completing the transaction
   - Prevents race conditions and ensures proper purchase flow

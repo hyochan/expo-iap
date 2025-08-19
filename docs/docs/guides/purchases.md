@@ -303,7 +303,7 @@ export default function PurchaseScreen() {
         request: {
           ios: {
             sku: productId,
-            andDangerouslyFinishTransactionAutomaticallyIOS: false,
+            andDangerouslyFinishTransactionAutomatically: false,
           },
           android: {
             skus: [productId],

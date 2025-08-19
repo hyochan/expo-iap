@@ -324,7 +324,7 @@ export default function SubscriptionManager() {
         request: {
           ios: {
             sku: productId,
-            andDangerouslyFinishTransactionAutomaticallyIOS: false,
+            andDangerouslyFinishTransactionAutomatically: false,
           },
           android: {
             skus: [productId],
@@ -686,7 +686,7 @@ await requestPurchase({
   request: {
     ios: {
       sku: productId,
-      andDangerouslyFinishTransactionAutomaticallyIOS: false,
+      andDangerouslyFinishTransactionAutomatically: false,
     },
     android: {
       skus: [productId],

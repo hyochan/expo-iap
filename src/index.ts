@@ -428,7 +428,7 @@ export const requestPurchase = (
 
     const {
       sku,
-      andDangerouslyFinishTransactionAutomaticallyIOS = false,
+      andDangerouslyFinishTransactionAutomatically = false,
       appAccountToken,
       quantity,
       withOffer,
@@ -438,7 +438,7 @@ export const requestPurchase = (
       const offer = offerToRecordIOS(withOffer);
       const purchase = await ExpoIapModule.buyProduct(
         sku,
-        andDangerouslyFinishTransactionAutomaticallyIOS,
+        andDangerouslyFinishTransactionAutomatically,
         appAccountToken,
         quantity ?? -1,
         offer,

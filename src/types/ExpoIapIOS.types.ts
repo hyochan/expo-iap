@@ -1,4 +1,4 @@
-import {PurchaseBase, ProductBase} from '../ExpoIap.types';
+import {PurchaseCommon, ProductCommon} from '../ExpoIap.types';
 
 type SubscriptionIosPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | '';
 type PaymentMode = '' | 'FREETRIAL' | 'PAYASYOUGO' | 'PAYUPFRONT';
@@ -26,10 +26,27 @@ type SubscriptionInfo = {
   };
 };
 
-export type ProductIOS = ProductBase & {
-  displayName: string;
-  isFamilyShareable: boolean;
-  jsonRepresentation: string;
+export type ProductIOS = ProductCommon & {
+  displayNameIOS: string;
+  isFamilyShareableIOS: boolean;
+  jsonRepresentationIOS: string;
+  platform: "ios";
+  subscriptionInfoIOS?: SubscriptionInfo;
+  /**
+   * @deprecated Use `displayNameIOS` instead. This field will be removed in v2.9.0.
+   */
+  displayName?: string;
+  /**
+   * @deprecated Use `isFamilyShareableIOS` instead. This field will be removed in v2.9.0.
+   */
+  isFamilyShareable?: boolean;
+  /**
+   * @deprecated Use `jsonRepresentationIOS` instead. This field will be removed in v2.9.0.
+   */
+  jsonRepresentation?: string;
+  /**
+   * @deprecated Use `subscriptionInfoIOS` instead. This field will be removed in v2.9.0.
+   */
   subscription?: SubscriptionInfo;
   introductoryPriceNumberOfPeriodsIOS?: string;
   introductoryPriceSubscriptionPeriodIOS?: SubscriptionIosPeriod;
@@ -45,16 +62,28 @@ export type Discount = {
   subscriptionPeriod: string;
 };
 
-export type SubscriptionProductIOS = ProductIOS & {
-  discounts?: Discount[];
-  introductoryPrice?: string;
+export type ProductSubscriptionIOS = ProductIOS & {
+  discountsIOS?: Discount[];
+  introductoryPriceIOS?: string;
   introductoryPriceAsAmountIOS?: string;
   introductoryPricePaymentModeIOS?: PaymentMode;
   introductoryPriceNumberOfPeriodsIOS?: string;
   introductoryPriceSubscriptionPeriodIOS?: SubscriptionIosPeriod;
+  platform: "ios";
   subscriptionPeriodNumberIOS?: string;
   subscriptionPeriodUnitIOS?: SubscriptionIosPeriod;
+  /**
+   * @deprecated Use `discountsIOS` instead. This field will be removed in v2.9.0.
+   */
+  discounts?: Discount[];
+  /**
+   * @deprecated Use `introductoryPriceIOS` instead. This field will be removed in v2.9.0.
+   */
+  introductoryPrice?: string;
 };
+
+// Legacy naming for backward compatibility
+export type SubscriptionProductIOS = ProductSubscriptionIOS;
 
 export type PaymentDiscount = {
   /**
@@ -79,9 +108,9 @@ export type PaymentDiscount = {
   timestamp: number;
 };
 
-export type RequestPurchaseIOSProps = {
+export type RequestPurchaseIosProps = {
   sku: string;
-  andDangerouslyFinishTransactionAutomaticallyIOS?: boolean;
+  andDangerouslyFinishTransactionAutomatically?: boolean;
   /**
    * UUID representing user account
    */
@@ -89,18 +118,6 @@ export type RequestPurchaseIOSProps = {
   quantity?: number;
   withOffer?: PaymentDiscount;
 };
-
-export type RequestSubscriptionIOSProps = RequestPurchaseIOSProps;
-
-/**
- * @deprecated Use RequestPurchaseIOSProps instead. This alias will be removed in v3.0.0.
- */
-export type RequestPurchaseIosProps = RequestPurchaseIOSProps;
-
-/**
- * @deprecated Use RequestSubscriptionIOSProps instead. This alias will be removed in v3.0.0.
- */
-export type RequestSubscriptionIosProps = RequestSubscriptionIOSProps;
 
 type SubscriptionStatus =
   | 'expired'
@@ -120,8 +137,10 @@ export type ProductStatusIOS = {
   renewalInfo?: RenewalInfo;
 };
 
-export type ProductPurchaseIOS = PurchaseBase & {
+// Legacy naming for backward compatibility
+export type ProductPurchaseIOS = PurchaseCommon & {
   // iOS basic fields
+  platform: "ios";
   quantityIOS?: number;
   originalTransactionDateIOS?: number;
   originalTransactionIdentifierIOS?: string;
@@ -146,14 +165,20 @@ export type ProductPurchaseIOS = PurchaseBase & {
     type: string;
     paymentMode: string;
   };
-  priceIOS?: number;
-  currencyIOS?: string;
+  // Price locale fields
+  currencyCodeIOS?: string;
+  currencySymbolIOS?: string;
+  countryCodeIOS?: string;
   /**
    * @deprecated Use `purchaseToken` instead. This field will be removed in a future version.
    * iOS 15+ JWS representation is now available through the `purchaseToken` field.
    */
   jwsRepresentationIOS?: string;
 };
+
+// Preferred naming
+export type PurchaseIOS = ProductPurchaseIOS;
+
 
 export type AppTransactionIOS = {
   appTransactionId?: string; // Only available in iOS 18.4+

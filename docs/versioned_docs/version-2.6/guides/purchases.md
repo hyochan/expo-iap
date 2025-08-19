@@ -274,7 +274,7 @@ export default function PurchaseScreen() {
         await requestPurchase({
           request: {
             sku: productId,
-            andDangerouslyFinishTransactionAutomaticallyIOS: false,
+            andDangerouslyFinishTransactionAutomatically: false,
           },
         });
       } else {

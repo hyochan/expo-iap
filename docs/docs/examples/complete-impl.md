@@ -44,8 +44,8 @@ useEffect(() => {
 
   const initializeStore = async () => {
     try {
-      await requestProducts({ skus: productSkus, type: 'inapp' });
-      await requestProducts({ skus: subscriptionSkus, type: 'subs' });
+      await requestProducts({skus: productSkus, type: 'inapp'});
+      await requestProducts({skus: subscriptionSkus, type: 'subs'});
     } catch (error) {
       console.error('Failed to initialize store:', error);
     }
@@ -65,7 +65,7 @@ const handlePurchase = async (productId) => {
       request: {
         ios: {
           sku: productId,
-          andDangerouslyFinishTransactionAutomaticallyIOS: false,
+          andDangerouslyFinishTransactionAutomatically: false,
         },
         android: {
           skus: [productId],
@@ -129,7 +129,7 @@ await requestPurchase({
   request: {
     ios: {
       sku: productId,
-      andDangerouslyFinishTransactionAutomaticallyIOS: false, // Important!
+      andDangerouslyFinishTransactionAutomatically: false, // Important!
     },
     android: {
       skus: [productId], // Android uses array
@@ -246,8 +246,8 @@ export default function Store() {
 
       // Load both products and subscriptions
       await Promise.all([
-        requestProducts({ skus: PRODUCT_IDS, type: 'inapp' }),
-        requestProducts({ skus: SUBSCRIPTION_IDS, type: 'subs' }),
+        requestProducts({skus: PRODUCT_IDS, type: 'inapp'}),
+        requestProducts({skus: SUBSCRIPTION_IDS, type: 'subs'}),
       ]);
 
       console.log('Products loaded successfully');
@@ -333,7 +333,7 @@ export default function Store() {
             sku: productId,
             // Important: Set to false to manually handle transaction finishing
             // This allows proper receipt validation before finishing the transaction
-            andDangerouslyFinishTransactionAutomaticallyIOS: false,
+            andDangerouslyFinishTransactionAutomatically: false,
           },
           android: {
             skus: [productId],
@@ -385,14 +385,14 @@ export default function Store() {
         // CRITICAL: Check required Android parameters before validation
         if (!purchaseToken || !packageName) {
           throw new Error(
-            'Android validation requires packageName and purchaseToken'
+            'Android validation requires packageName and purchaseToken',
           );
         }
 
         // Note: For server-side validation with Google Play API, you may also need:
         // - accessToken: OAuth2 token for accessing Google Play Developer API
         // This is typically handled server-side, not in the client app
-        
+
         const response = await fetch(
           'https://your-server.com/validate-receipt-android',
           {
@@ -676,7 +676,7 @@ await requestPurchase({
   request: {
     ios: {
       sku: productId,
-      andDangerouslyFinishTransactionAutomaticallyIOS: false,
+      andDangerouslyFinishTransactionAutomatically: false,
     },
     android: {
       skus: [productId],
