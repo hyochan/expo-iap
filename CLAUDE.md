@@ -1,5 +1,17 @@
 # Implementation Guidelines
 
+## Release Notes
+
+### v2.8.1 (2025-08-19)
+- Added `platform` field to all types for runtime type discrimination
+- Moved common fields to shared base types (`ids`, `debugDescription`)
+- Fixed iOS native code to populate missing subscription fields
+- No breaking changes, but deprecated fields will be removed in v2.9.0
+
+### v2.8.0 (2025-08-18)
+- **Breaking**: iOS field naming convention changed (e.g., `quantityIos` → `quantityIOS`)
+- All iOS-related field names ending with "Ios" now end with "IOS"
+
 ## Expo-Specific Guidelines
 
 ### Pre-Commit Checks
