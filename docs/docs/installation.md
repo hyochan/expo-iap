@@ -42,6 +42,7 @@ After installing the package, you need to:
    {
      "expo": {
        "plugins": [
+         "expo-iap",
          [
            "expo-build-properties",
            {
@@ -118,6 +119,7 @@ Add the following to your `app.json`:
 {
   "expo": {
     "plugins": [
+      "expo-iap",
       [
         "expo-build-properties",
         {
