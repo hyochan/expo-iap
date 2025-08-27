@@ -4,6 +4,7 @@ import {
   WarningAggregator,
   withAndroidManifest,
   withAppBuildGradle,
+  withEntitlementsPlist,
 } from 'expo/config-plugins';
 
 const pkg = require('../../package.json');
@@ -56,7 +57,22 @@ const modifyAppBuildGradle = (gradle: string): string => {
   return modified;
 };
 
-const withIAPAndroid: ConfigPlugin = (config) => {
+const withIapIOS: ConfigPlugin = (config) => {
+  // Add In-App Purchase capability to entitlements
+  config = withEntitlementsPlist(config, (config) => {
+    config.modResults['com.apple.developer.in-app-payments'] = ['Default'];
+    
+    if (!hasLoggedPluginExecution) {
+      console.log('✅ Added In-App Purchase capability to iOS entitlements');
+    }
+    
+    return config;
+  });
+
+  return config;
+};
+
+const withIapAndroid: ConfigPlugin = (config) => {
   // Add IAP dependencies to app build.gradle
   config = withAppBuildGradle(config, (config) => {
     config.modResults.contents = modifyAppBuildGradle(
@@ -100,10 +116,13 @@ const withIAPAndroid: ConfigPlugin = (config) => {
 
 const withIAP: ConfigPlugin = (config, _props) => {
   try {
-    const result = withIAPAndroid(config);
+    // Apply both iOS and Android configurations
+    config = withIapIOS(config);
+    config = withIapAndroid(config);
+    
     // Set flag after first execution to prevent duplicate logs
     hasLoggedPluginExecution = true;
-    return result;
+    return config;
   } catch (error) {
     WarningAggregator.addWarningAndroid(
       'expo-iap',
