@@ -18,14 +18,16 @@
 
 ### iOS Pod Configuration
 
-**CRITICAL WARNING**: Never modify the iOS platform version in `ios/ExpoIap.podspec`
+**CRITICAL WARNING**: Never modify the platform versions in `ios/ExpoIap.podspec`
 
-- The iOS platform version MUST remain at `13.4` even though the code requires iOS 15.0+
-- Changing to `15.0` causes expo prebuild to exclude the module in older Expo versions (known bug)
+- Both iOS and tvOS platform versions MUST remain at `13.4` even though the code requires iOS/tvOS 15.0+
+- Changing to `15.0` can cause expo prebuild to exclude the module in certain Expo SDKs (known bug)
 - See issue: [#168](https://github.com/hyochan/expo-iap/issues/168)
-- This is kept at `13.4` for compatibility across all Expo versions
-- The actual iOS 15.0+ requirement is enforced at build time
-- Users must ensure their app target is set to iOS 15.0 or higher
+- This is kept at `13.4` for compatibility with affected Expo SDKs
+- The actual iOS/tvOS 15.0+ requirement is enforced at build time via @available annotations
+- Users must ensure their app target is set to iOS 15.0 or higher:
+  - app.json: `"expo": { "ios": { "deploymentTarget": "15.0" } }`
+  - or app.config.ts: `ios: { deploymentTarget: '15.0' }`
 
 ### Pre-Commit Checks
 
