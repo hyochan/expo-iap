@@ -10,7 +10,12 @@ Pod::Spec.new do |s|
   s.license        = package['license']
   s.author         = package['author']
   s.homepage       = package['homepage']
-  s.platforms      = { :ios => '15.0', :tvos => '15.0' }
+  # WARNING: DO NOT MODIFY iOS platform version from 13.4
+  # Changing this to 15.0 causes expo prebuild to exclude the module in older Expo versions (known bug)
+  # See: https://github.com/hyochan/expo-iap/issues/168
+  # Even though the code requires iOS 15.0+ for StoreKit 2, keep this at 13.4 for compatibility across all Expo versions
+  # The actual iOS 15.0+ requirement is enforced at build time
+  s.platforms      = { :ios => '13.4', :tvos => '13.4' }
   s.swift_version  = '5.4'
   s.source         = { git: 'https://github.com/hyochan/expo-iap' }
   s.static_framework = true
