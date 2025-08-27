@@ -37,6 +37,22 @@ import {
   RequestSubscriptionProps,
 } from './ExpoIap.types';
 
+/**
+ * Return type for the useIAP hook.
+ * 
+ * IMPORTANT: The useIAP hook is designed to follow React Hooks conventions.
+ * Unlike the underlying native module methods, the hook methods like `requestProducts`,
+ * `getProducts`, etc., return Promise<void> instead of returning the data directly.
+ * 
+ * This is because the hook:
+ * - Automatically manages state internally (products, subscriptions, etc.)
+ * - Updates the state that components can consume via the returned object
+ * - Handles connection lifecycle automatically (calls initConnection on mount, endConnection on unmount)
+ * - Provides automatic error handling and state management
+ * 
+ * Product caching is handled automatically by the native module, so you don't need to
+ * implement caching at the application level.
+ */
 type UseIap = {
   connected: boolean;
   products: Product[];
@@ -60,6 +76,13 @@ type UseIap = {
   }) => Promise<PurchaseResult | boolean>;
   getAvailablePurchases: (skus: string[]) => Promise<void>;
   getPurchaseHistories: (skus: string[]) => Promise<void>;
+  /**
+   * Fetch products from the store and update the `products` or `subscriptions` state.
+   * 
+   * NOTE: Returns Promise<void> because the hook updates internal state instead of
+   * returning the products directly. Access the products via the `products` or
+   * `subscriptions` properties of the returned object.
+   */
   requestProducts: (params: {
     skus: string[];
     type?: 'inapp' | 'subs';
@@ -106,6 +129,44 @@ export interface UseIAPOptions {
   onPromotedProductIOS?: (product: Product) => void;
 }
 
+/**
+ * React Hook for managing In-App Purchases.
+ * 
+ * This hook automatically:
+ * - Calls `initConnection` when the component mounts
+ * - Calls `endConnection` when the component unmounts
+ * - Sets up purchase and error listeners
+ * - Manages product, subscription, and purchase state
+ * 
+ * IMPORTANT: Unlike the native module methods, hook methods return Promise<void>
+ * because they update internal state instead of returning values directly.
+ * 
+ * @param options - Optional configuration for the hook
+ * @returns An object containing IAP state and methods
+ * 
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const {
+ *     connected,
+ *     products,
+ *     requestProducts,
+ *     requestPurchase
+ *   } = useIAP();
+ * 
+ *   useEffect(() => {
+ *     if (connected) {
+ *       // Products are automatically cached in the native module
+ *       // No need to implement caching at the app level
+ *       requestProducts({ skus: ['product1', 'product2'] });
+ *     }
+ *   }, [connected]);
+ * 
+ *   // Access products from state
+ *   console.log('Available products:', products);
+ * }
+ * ```
+ */
 export function useIAP(options?: UseIAPOptions): UseIap {
   const [connected, setConnected] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
