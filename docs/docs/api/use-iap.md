@@ -18,6 +18,14 @@ The `useIAP` hook is the main interface for interacting with in-app purchases in
 import {useIAP} from 'expo-iap';
 ```
 
+## Important: Hook Behavior
+
+The `useIAP` hook follows React Hooks conventions and differs from the underlying native module methods:
+
+- **Automatic Connection Management**: The hook automatically calls `initConnection` when the component mounts and `endConnection` when it unmounts.
+- **State Management**: Hook methods like `requestProducts`, `getProducts`, etc., return `Promise<void>` instead of returning data directly. They update the internal state which you access through the returned properties.
+- **Product Caching**: Product caching is handled automatically by the native module - you don't need to implement caching at the application level.
+
 ## Basic Usage
 
 ```tsx
@@ -220,13 +228,13 @@ interface UseIAPOptions {
 
 #### requestProducts
 
-- **Type**: `(params: RequestProductsParams) => Promise<Product[]>`
-- **Description**: Fetch products or subscriptions from the store
+- **Type**: `(params: RequestProductsParams) => Promise<void>`
+- **Description**: Fetch products or subscriptions from the store and update the `products` or `subscriptions` state
 - **Parameters**:
   - `params`: Object containing:
     - `skus`: Array of product/subscription IDs to fetch
     - `type`: Product type - either `'inapp'` for products or `'subs'` for subscriptions
-- **Returns**: Promise resolving to array of products
+- **Returns**: `Promise<void>` - The fetched products are available in the `products` or `subscriptions` state properties
 - **Example**:
 
   ```tsx
@@ -261,7 +269,7 @@ interface UseIAPOptions {
 
 > **⚠️ DEPRECATED:** This method is deprecated. Use `requestProducts({ skus, type: 'inapp' })` instead.
 
-- **Type**: `(productIds: string[]) => Promise<Product[]>`
+- **Type**: `(productIds: string[]) => Promise<void>`
 - **Migration**:
 
   ```tsx
@@ -279,7 +287,7 @@ interface UseIAPOptions {
 
 > **⚠️ DEPRECATED:** This method is deprecated. Use `requestProducts({ skus, type: 'subs' })` instead.
 
-- **Type**: `(subscriptionIds: string[]) => Promise<SubscriptionProduct[]>`
+- **Type**: `(subscriptionIds: string[]) => Promise<void>`
 - **Migration**:
 
   ```tsx
@@ -547,7 +555,7 @@ const {requestPurchase} = useIAP({
    ```tsx
    useEffect(() => {
      if (connected) {
-       getProducts(productIds);
+       requestProducts({ skus: productIds, type: 'inapp' });
      }
    }, [connected]);
    ```
@@ -584,20 +592,6 @@ const {requestPurchase} = useIAP({
        Alert.alert('Purchase Failed', error.message);
      }
    };
-   ```
-
-4. **Cache products to avoid repeated fetches**:
-
-   ```tsx
-   const [productsLoaded, setProductsLoaded] = useState(false);
-
-   useEffect(() => {
-     if (connected && !productsLoaded) {
-       getProducts(productIds).then(() => {
-         setProductsLoaded(true);
-       });
-     }
-   }, [connected, productsLoaded]);
    ```
 
 ## Promoted Products (iOS Only)

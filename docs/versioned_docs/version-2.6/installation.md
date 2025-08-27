@@ -40,6 +40,7 @@ If you're using Expo managed workflow, you'll need to create a [custom developme
    ```
 
 2. **Create a development build**:
+
    ```bash
    eas build --platform ios --profile development
    eas build --platform android --profile development
@@ -139,6 +140,7 @@ If you encounter issues during installation:
    ```
 
 3. **For React Native, reset Metro cache**:
+
    ```bash
    npx react-native start --reset-cache
    ```

@@ -241,7 +241,9 @@ useEffect(() => {
 
 6. **Finish transactions after validation**: Always call `finishTransaction` after successfully validating a purchase on your server. Failing to do so will cause the purchase to remain in a pending state and may trigger repeated purchase prompts.
 
-7. **Check server-side validation libraries**: Consider using open-source libraries like [node-app-store-receipt-verify](https://github.com/ladeiko/node-app-store-receipt-verify) for iOS or [google-play-billing-validator](https://github.com/macklinu/google-play-billing-validator) for Android to simplify server-side validation.
+7. **Product caching is automatic**: The native modules (StoreKit for iOS and Google Play Billing for Android) automatically cache product information. You don't need to implement manual caching - just fetch products when needed.
+
+8. **Check server-side validation libraries**: Consider using open-source libraries like [node-app-store-receipt-verify](https://github.com/ladeiko/node-app-store-receipt-verify) for iOS or [google-play-billing-validator](https://github.com/macklinu/google-play-billing-validator) for Android to simplify server-side validation.
 
 ## Next Steps
 

@@ -323,28 +323,24 @@ const handlePurchase = async (productId) => {
 
 ### Should I cache product information?
 
-Yes, cache products to improve performance:
+No, you don't need to implement caching at the application level. The native module automatically handles product caching internally for optimal performance.
+
+When using the `useIAP` hook:
+
+- Products are automatically cached by the native StoreKit (iOS) and Google Play Billing (Android) modules
+- The hook maintains state of fetched products in the `products` and `subscriptions` arrays
+- Simply call `requestProducts` when needed - the library handles caching efficiently
 
 ```tsx
-const [cachedProducts, setCachedProducts] = useState({});
-
-const getProductsWithCache = async (skus) => {
-  const uncachedSkus = skus.filter((sku) => !cachedProducts[sku]);
-
-  if (uncachedSkus.length > 0) {
-    const products = await requestProducts({skus: uncachedSkus, type: 'inapp'});
-    // Cache the products
-    setCachedProducts((prev) => ({
-      ...prev,
-      ...products.reduce((acc, product) => {
-        acc[product.productId] = product;
-        return acc;
-      }, {}),
-    }));
+// No manual caching needed - just fetch when connected
+useEffect(() => {
+  if (connected) {
+    requestProducts({skus: productIds, type: 'inapp'});
   }
+}, [connected]);
 
-  return skus.map((sku) => cachedProducts[sku]).filter(Boolean);
-};
+// Access products directly from state
+products.map((product) => <ProductItem key={product.id} product={product} />);
 ```
 
 ## Migration and Updates

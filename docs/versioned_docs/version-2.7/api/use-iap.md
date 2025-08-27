@@ -70,6 +70,7 @@ interface UseIAPOptions {
 - **Type**: `(purchase: Purchase) => void`
 - **Description**: Called when a purchase completes successfully
 - **Example**:
+
   ```tsx
   onPurchaseSuccess: (purchase) => {
     // Grant user access to purchased content
@@ -82,6 +83,7 @@ interface UseIAPOptions {
 - **Type**: `(error: PurchaseError) => void`
 - **Description**: Called when a purchase fails
 - **Example**:
+
   ```tsx
   onPurchaseError: (error) => {
     if (error.code !== ErrorCode.E_USER_CANCELLED) {
@@ -95,6 +97,7 @@ interface UseIAPOptions {
 - **Type**: `(error: Error) => void`
 - **Description**: Called when there's an error syncing with the store
 - **Example**:
+
   ```tsx
   onSyncError: (error) => {
     console.warn('Store sync error:', error.message);
@@ -116,6 +119,7 @@ interface UseIAPOptions {
 - **Type**: `boolean`
 - **Description**: Whether the IAP service is connected and ready
 - **Example**:
+
   ```tsx
   if (connected) {
     // Safe to make IAP calls
@@ -128,6 +132,7 @@ interface UseIAPOptions {
 - **Type**: `Product[]`
 - **Description**: Array of available products
 - **Example**:
+
   ```tsx
   products.map((product) => <ProductItem key={product.id} product={product} />);
   ```
@@ -137,6 +142,7 @@ interface UseIAPOptions {
 - **Type**: `SubscriptionProduct[]`
 - **Description**: Array of available subscription products
 - **Example**:
+
   ```tsx
   subscriptions.map((subscription) => (
     <SubscriptionItem key={subscription.id} subscription={subscription} />
@@ -148,6 +154,7 @@ interface UseIAPOptions {
 - **Type**: `Purchase | null`
 - **Description**: Currently active purchase (if any)
 - **Example**:
+
   ```tsx
   useEffect(() => {
     if (currentPurchase) {
@@ -161,6 +168,7 @@ interface UseIAPOptions {
 - **Type**: `PurchaseError | null`
 - **Description**: Current purchase error (if any)
 - **Example**:
+
   ```tsx
   useEffect(() => {
     if (currentPurchaseError) {
@@ -174,6 +182,7 @@ interface UseIAPOptions {
 - **Type**: `ProductPurchase[]`
 - **Description**: Array of purchase history items
 - **Example**:
+
   ```tsx
   purchaseHistories.map((purchase) => (
     <PurchaseHistoryItem key={purchase.transactionId} purchase={purchase} />
@@ -185,6 +194,7 @@ interface UseIAPOptions {
 - **Type**: `ProductPurchase[]`
 - **Description**: Array of available purchases (restorable items)
 - **Example**:
+
   ```tsx
   availablePurchases.map((purchase) => (
     <RestorableItem key={purchase.transactionId} purchase={purchase} />
@@ -201,6 +211,7 @@ interface UseIAPOptions {
   - `productIds`: Array of product IDs to fetch
 - **Returns**: Promise resolving to array of products
 - **Example**:
+
   ```tsx
   const fetchProducts = async () => {
     try {
@@ -223,6 +234,7 @@ interface UseIAPOptions {
   - `subscriptionIds`: Array of subscription IDs to fetch
 - **Returns**: Promise resolving to array of subscription products
 - **Example**:
+
   ```tsx
   const fetchSubscriptions = async () => {
     try {
@@ -244,6 +256,7 @@ interface UseIAPOptions {
 - **Parameters**:
   - `request`: Purchase request configuration
 - **Example**:
+
   ```tsx
   const buyProduct = async (productId: string) => {
     try {
@@ -261,6 +274,7 @@ interface UseIAPOptions {
 - **Type**: `() => Promise<void>`
 - **Description**: Fetch purchase history from the store
 - **Example**:
+
   ```tsx
   const fetchPurchaseHistory = async () => {
     try {
@@ -277,6 +291,7 @@ interface UseIAPOptions {
 - **Type**: `() => Promise<void>`
 - **Description**: Fetch available purchases (restorable items) from the store
 - **Example**:
+
   ```tsx
   const restorePurchases = async () => {
     try {
@@ -302,10 +317,12 @@ interface UseIAPOptions {
 - **Returns**: Promise resolving to validation result
 
 **Important Platform Differences:**
+
 - **iOS**: Only requires the product ID
 - **Android**: Requires additional parameters (packageName, productToken)
 
 - **Example**:
+
   ```tsx
   const validatePurchase = async (productId: string, purchase: any) => {
     try {
@@ -317,11 +334,13 @@ interface UseIAPOptions {
         // Android: Requires additional parameters
         const purchaseToken = purchase.purchaseTokenAndroid;
         const packageName = purchase.packageNameAndroid;
-        
+
         if (!purchaseToken || !packageName) {
-          throw new Error('Android validation requires packageName and productToken');
+          throw new Error(
+            'Android validation requires packageName and productToken',
+          );
         }
-        
+
         const result = await validateReceipt(productId, {
           packageName,
           productToken: purchaseToken,
@@ -478,20 +497,6 @@ const {requestPurchase} = useIAP({
        Alert.alert('Purchase Failed', error.message);
      }
    };
-   ```
-
-4. **Cache products to avoid repeated fetches**:
-
-   ```tsx
-   const [productsLoaded, setProductsLoaded] = useState(false);
-
-   useEffect(() => {
-     if (connected && !productsLoaded) {
-       getProducts(productIds).then(() => {
-         setProductsLoaded(true);
-       });
-     }
-   }, [connected, productsLoaded]);
    ```
 
 ## See Also

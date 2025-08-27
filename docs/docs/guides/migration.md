@@ -188,6 +188,7 @@ const {
 Starting from v2.8.1, expo-iap provides improved type consistency across platforms:
 
 **Platform Identification:**
+
 ```tsx
 // v2.8.1+ includes platform fields for better type discrimination
 if (product.platform === 'ios') {
@@ -200,6 +201,7 @@ if (product.platform === 'ios') {
 ```
 
 **Common Fields:**
+
 ```tsx
 // Before v2.8.1
 const ids = purchase.idsAndroid; // Android only
@@ -209,6 +211,7 @@ const ids = purchase.ids; // Works for both platforms
 ```
 
 **Note:** Deprecated fields will be removed in v2.9.0. Update your code to use platform-specific field names:
+
 - Android: Use fields with `Android` suffix (e.g., `nameAndroid` instead of `name`)
 - iOS: Use fields with `IOS` suffix (e.g., `displayNameIOS` instead of `displayName`)
 

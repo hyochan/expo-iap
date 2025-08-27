@@ -13,6 +13,7 @@ For complete iOS setup instructions including App Store Connect configuration, X
 👉 **[iOS Setup Guide - openiap.dev](https://openiap.dev/docs/ios-setup)**
 
 The guide covers:
+
 - App Store Connect configuration
 - Xcode project setup
 - Sandbox testing
@@ -32,22 +33,27 @@ const productIds = [
 ];
 
 function App() {
-  const {connected, products, requestProducts, requestPurchase, validateReceipt} =
-    useIAP({
-      onPurchaseSuccess: (purchase) => {
-        console.log('Purchase successful:', purchase);
-        // Handle successful purchase
-        validatePurchase(purchase);
-      },
-      onPurchaseError: (error) => {
-        console.error('Purchase failed:', error);
-        // Handle purchase error
-      },
-    });
+  const {
+    connected,
+    products,
+    requestProducts,
+    requestPurchase,
+    validateReceipt,
+  } = useIAP({
+    onPurchaseSuccess: (purchase) => {
+      console.log('Purchase successful:', purchase);
+      // Handle successful purchase
+      validatePurchase(purchase);
+    },
+    onPurchaseError: (error) => {
+      console.error('Purchase failed:', error);
+      // Handle purchase error
+    },
+  });
 
   React.useEffect(() => {
     if (connected) {
-      requestProducts({ skus: productIds, type: 'inapp' });
+      requestProducts({skus: productIds, type: 'inapp'});
     }
   }, [connected]);
 
@@ -169,8 +175,7 @@ const handlePurchaseError = (error: any) => {
 1. **Always validate receipts** server-side for production apps
 2. **Handle all error cases** gracefully
 3. **Test thoroughly** with sandbox users
-4. **Cache purchase state** to handle app restarts
-5. **Provide restore functionality** for non-consumable products
+4. **Provide restore functionality** for non-consumable products
 
 ## Next Steps
 

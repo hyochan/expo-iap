@@ -276,32 +276,6 @@ const handlePurchase = async (productId) => {
 };
 ```
 
-### Should I cache product information?
-
-Yes, cache products to improve performance:
-
-```tsx
-const [cachedProducts, setCachedProducts] = useState({});
-
-const getProductsWithCache = async (skus) => {
-  const uncachedSkus = skus.filter((sku) => !cachedProducts[sku]);
-
-  if (uncachedSkus.length > 0) {
-    const products = await getProducts({skus: uncachedSkus});
-    // Cache the products
-    setCachedProducts((prev) => ({
-      ...prev,
-      ...products.reduce((acc, product) => {
-        acc[product.productId] = product;
-        return acc;
-      }, {}),
-    }));
-  }
-
-  return skus.map((sku) => cachedProducts[sku]).filter(Boolean);
-};
-```
-
 ## Migration and Updates
 
 ### How do I migrate from react-native-iap?

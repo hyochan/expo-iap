@@ -228,8 +228,7 @@ const handlePurchaseError = (error: any) => {
 1. **Always validate receipts** server-side for production apps
 2. **Handle all error cases** gracefully
 3. **Test thoroughly** with sandbox users
-4. **Cache purchase state** to handle app restarts
-5. **Provide restore functionality** for non-consumable products
+4. **Provide restore functionality** for non-consumable products
 
 ## Next Steps
 

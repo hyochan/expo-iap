@@ -182,23 +182,27 @@ const AndroidProductItem = ({product}: {product: Product}) => {
 
 > **💡 Cross-Platform Note:** This example shows Android-specific usage with `skus`. For cross-platform compatibility, include both `sku` and `skus` in your request object. See the [Core Methods](/docs/api/methods/core-methods#requestpurchase) documentation for details.
 
-````
-
 ### Android-Specific Subscription Handling
 
 ```tsx
-const AndroidSubscriptionItem = ({ subscription }: { subscription: SubscriptionProduct }) => {
-  const { requestPurchase } = useIAP();
+const AndroidSubscriptionItem = ({
+  subscription,
+}: {
+  subscription: SubscriptionProduct;
+}) => {
+  const {requestPurchase} = useIAP();
 
   const handleSubscribe = (offer: any) => {
     if (subscription.platform === 'android') {
       requestPurchase({
         request: {
           skus: [subscription.id],
-          subscriptionOffers: [{
-            sku: subscription.id,
-            offerToken: offer.offerToken,
-          }],
+          subscriptionOffers: [
+            {
+              sku: subscription.id,
+              offerToken: offer.offerToken,
+            },
+          ],
         },
         type: 'subs',
       });
@@ -217,16 +221,15 @@ const AndroidSubscriptionItem = ({ subscription }: { subscription: SubscriptionP
         >
           <Text>
             {offer.pricingPhases.pricingPhaseList
-              .map(phase => `${phase.formattedPrice}/${phase.billingPeriod}`)
-              .join(' then ')
-            }
+              .map((phase) => `${phase.formattedPrice}/${phase.billingPeriod}`)
+              .join(' then ')}
           </Text>
         </TouchableOpacity>
       ))}
     </View>
   );
 };
-````
+```
 
 ### Error Handling for Android
 
@@ -299,7 +302,6 @@ const handleAndroidError = (error: PurchaseError) => {
 3. **Handle all error cases** - especially network and service errors
 4. **Test with multiple accounts** - verify behavior for new and existing users
 5. **Implement proper retry logic** - for transient failures
-6. **Cache purchase state** - to handle app restarts gracefully
 
 ## Android-Specific Features
 
