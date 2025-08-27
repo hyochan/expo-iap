@@ -56,7 +56,7 @@ const modifyAppBuildGradle = (gradle: string): string => {
   return modified;
 };
 
-const withIAPAndroid: ConfigPlugin = (config) => {
+const withIapAndroid: ConfigPlugin = (config) => {
   // Add IAP dependencies to app build.gradle
   config = withAppBuildGradle(config, (config) => {
     config.modResults.contents = modifyAppBuildGradle(
@@ -98,9 +98,9 @@ const withIAPAndroid: ConfigPlugin = (config) => {
   return config;
 };
 
-const withIAP: ConfigPlugin = (config, _props) => {
+const withIap: ConfigPlugin = (config, _props) => {
   try {
-    const result = withIAPAndroid(config);
+    const result = withIapAndroid(config);
     // Set flag after first execution to prevent duplicate logs
     hasLoggedPluginExecution = true;
     return result;
@@ -114,4 +114,4 @@ const withIAP: ConfigPlugin = (config, _props) => {
   }
 };
 
-export default createRunOncePlugin(withIAP, pkg.name, pkg.version);
+export default createRunOncePlugin(withIap, pkg.name, pkg.version);
