@@ -44,9 +44,8 @@ object IapErrorCode {
     // Unknown error
     const val E_UNKNOWN = "E_UNKNOWN"
     
-    // Legacy constants (to be merged)
-    const val EMPTY_SKU_LIST = "EMPTY_SKU_LIST"
-    const val PROMISE_BUY_ITEM = "PROMISE_BUY_ITEM"
+    // Empty SKU list error
+    const val E_EMPTY_SKU_LIST = "E_EMPTY_SKU_LIST"
     
     // Cached map for Constants export - initialized once at class loading time
     // Using constants as keys to avoid duplication and ensure type safety
@@ -71,7 +70,12 @@ object IapErrorCode {
         E_REMOTE_ERROR to E_REMOTE_ERROR,
         E_USER_ERROR to E_USER_ERROR,
         E_BILLING_RESPONSE_JSON_PARSE_ERROR to E_BILLING_RESPONSE_JSON_PARSE_ERROR,
-        E_CONNECTION_CLOSED to E_CONNECTION_CLOSED
+        E_CONNECTION_CLOSED to E_CONNECTION_CLOSED,
+        E_SERVICE_DISCONNECTED to E_SERVICE_DISCONNECTED,
+        E_BILLING_UNAVAILABLE to E_BILLING_UNAVAILABLE,
+        E_FEATURE_NOT_SUPPORTED to E_FEATURE_NOT_SUPPORTED,
+        E_ITEM_NOT_OWNED to E_ITEM_NOT_OWNED,
+        E_EMPTY_SKU_LIST to E_EMPTY_SKU_LIST
     )
     
     // Return cached map reference - no new allocations on repeated calls
@@ -87,9 +91,8 @@ object IapEvent {
 }
 
 /**
- * Other IAP-related constants
+ * Other IAP-related constants (Promise keys, etc.)
  */
 object IapConstants {
-    const val EMPTY_SKU_LIST = "EMPTY_SKU_LIST"
     const val PROMISE_BUY_ITEM = "PROMISE_BUY_ITEM"
 }

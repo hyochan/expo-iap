@@ -166,7 +166,7 @@ class ExpoIapModule :
                         }
 
                     if (skuList.isEmpty()) {
-                        promise.reject(IapConstants.EMPTY_SKU_LIST, "The SKU list is empty.", null)
+                        promise.reject(IapErrorCode.E_EMPTY_SKU_LIST, "The SKU list is empty.", null)
                         return@ensureConnection
                     }
 
