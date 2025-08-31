@@ -570,12 +570,21 @@ export const finishTransaction = ({
       },
       android: async () => {
         const androidPurchase = purchase as PurchaseAndroid;
-
-        if (isConsumable) {
-          return ExpoIapModule.consumeProduct(androidPurchase.purchaseToken);
+        
+        // Use purchaseToken if available, fallback to purchaseTokenAndroid for backward compatibility
+        const token = androidPurchase.purchaseToken || androidPurchase.purchaseTokenAndroid;
+        
+        if (!token) {
+          return Promise.reject(
+            new Error('Purchase token is required to finish transaction')
+          );
         }
 
-        return ExpoIapModule.acknowledgePurchase(androidPurchase.purchaseToken);
+        if (isConsumable) {
+          return ExpoIapModule.consumeProduct(token);
+        }
+
+        return ExpoIapModule.acknowledgePurchase(token);
       },
     }) || (() => Promise.reject(new Error('Unsupported Platform')))
   )();
