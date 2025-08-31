@@ -1,7 +1,7 @@
 // External dependencies
 import {useCallback, useEffect, useState, useRef} from 'react';
 import {Platform} from 'react-native';
-import {Subscription} from 'expo-modules-core';
+import {EventSubscription} from 'expo-modules-core';
 
 // Internal modules
 import {
@@ -158,10 +158,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   }, [options]);
 
   const subscriptionsRef = useRef<{
-    purchaseUpdate?: Subscription;
-    purchaseError?: Subscription;
-    promotedProductsIOS?: Subscription;
-    promotedProductIOS?: Subscription;
+    purchaseUpdate?: EventSubscription;
+    purchaseError?: EventSubscription;
+    promotedProductsIOS?: EventSubscription;
+    promotedProductIOS?: EventSubscription;
   }>({});
 
   const subscriptionsRefState = useRef<SubscriptionProduct[]>([]);

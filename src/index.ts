@@ -20,6 +20,7 @@ import {
   Product,
   Purchase,
   PurchaseError,
+  ErrorCode,
   PurchaseResult,
   RequestSubscriptionProps,
   RequestPurchaseProps,
@@ -576,7 +577,15 @@ export const finishTransaction = ({
         
         if (!token) {
           return Promise.reject(
-            new Error('Purchase token is required to finish transaction')
+            new PurchaseError(
+              '[expo-iap]: PurchaseError',
+              'Purchase token is required to finish transaction',
+              undefined,
+              undefined,
+              'E_DEVELOPER_ERROR' as ErrorCode,
+              androidPurchase.productId,
+              'android'
+            )
           );
         }
 
