@@ -288,17 +288,9 @@ export const getAppTransactionIOS = (): Promise<AppTransactionIOS | null> => {
 };
 
 /**
- * Get the promoted product details (iOS only).
- * This is called after a promoted product event is received from the App Store.
- *
- * @returns Promise resolving to the promoted product details or null if none available
- * @throws Error if called on non-iOS platform
- *
- * @platform iOS
- */
-/**
  * Get information about a promoted product if one is available (iOS only).
  * Promoted products are products that the App Store promotes on your behalf.
+ * This is called after a promoted product event is received from the App Store.
  *
  * @returns Promise resolving to the promoted product information or null if none available
  * @throws Error if called on non-iOS platform
