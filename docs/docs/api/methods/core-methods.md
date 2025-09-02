@@ -592,25 +592,29 @@ const restorePurchases = async () => {
 
 **Returns:** `Promise<Purchase[]>`
 
-## getPurchaseHistories()
+## ~~getPurchaseHistories()~~ (Deprecated)
+
+:::warning Deprecated
+`getPurchaseHistories` is deprecated and will be removed in v2.9.0. Use `getAvailablePurchases()` instead.
+
+This function internally just calls `getAvailablePurchases()` on iOS and returns an empty array on Android (Google Play Billing v8 removed purchase history API).
+:::
 
 Retrieves purchase history for the user.
 
 ```tsx
-import {getPurchaseHistories} from 'expo-iap';
+import {getAvailablePurchases} from 'expo-iap'; // Use this instead
 
 const fetchPurchaseHistory = async () => {
   try {
-    const histories = await getPurchaseHistories();
-    console.log('Purchase histories:', histories);
-    return histories;
+    const purchases = await getAvailablePurchases();
+    console.log('Available purchases:', purchases);
+    return purchases;
   } catch (error) {
-    console.error('Failed to fetch purchase histories:', error);
+    console.error('Failed to fetch purchases:', error);
   }
 };
 ```
-
-**Note:** The previous `getPurchaseHistory` (singular) function is deprecated and will be removed in version 3.0.0. Please use `getPurchaseHistories` (plural) instead.
 
 **Returns:** `Promise<Purchase[]>`
 

@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## [2.8.6] - TBD
+
+### Changed
+- **BREAKING NAMING CONVENTION**: Added platform-specific suffixes to native functions for clarity
+  - iOS functions now use `IOS` suffix (e.g., `getPromotedProductIOS`, `clearTransactionIOS`)
+  - Android functions now use `Android` suffix (e.g., `acknowledgePurchaseAndroid`, `consumeProductAndroid`)
+  - Common cross-platform functions remain without suffix (`requestProducts`, `requestPurchase`)
+- Renamed `buyPromotedProductIOS` to `requestPurchaseOnPromotedProductIOS` for consistency
+
+### Added
+- Added `getPendingTransactionsIOS` function for iOS
+- Added `clearTransactionIOS` function for iOS
+
+### Deprecated
+- `getPurchaseHistories` - Use `getAvailablePurchases` instead (will be removed in v2.9.0)
+- `buyPromotedProductIOS` - Use `requestPurchaseOnPromotedProductIOS` instead (will be removed in v2.9.0)
+- `disable` function - No longer needed, observer management is automatic (will be removed in v2.9.0)
+
 ## [2.8.5] - 2025-09-03
 
 ### Fixed

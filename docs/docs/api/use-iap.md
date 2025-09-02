@@ -426,16 +426,17 @@ interface UseIAPOptions {
   };
   ```
 
-#### buyPromotedProductIOS
+#### requestPurchaseOnPromotedProductIOS
 
 - **Type**: `() => Promise<void>`
 - **Description**: Complete the purchase of a promoted product (iOS only)
+- **Note**: `buyPromotedProductIOS` is deprecated, use `requestPurchaseOnPromotedProductIOS` instead
 - **Example**:
 
   ```tsx
   const completePurchase = async () => {
     try {
-      await buyPromotedProductIOS();
+      await requestPurchaseOnPromotedProductIOS();
       console.log('Promoted product purchase completed');
     } catch (error) {
       console.error('Failed to purchase promoted product:', error);
@@ -600,7 +601,7 @@ Handle App Store promoted products when users tap on them in the App Store:
 
 ```tsx
 const PromotedProductExample = () => {
-  const {promotedProductIOS, buyPromotedProductIOS} = useIAP({
+  const {promotedProductIOS, requestPurchaseOnPromotedProductIOS} = useIAP({
     onPromotedProductIOS: (product) => {
       console.log('Promoted product detected:', product);
     },
@@ -619,7 +620,7 @@ const PromotedProductExample = () => {
 
       if (confirmed) {
         // Complete the promoted purchase
-        await buyPromotedProductIOS();
+        await requestPurchaseOnPromotedProductIOS();
       }
     } catch (error) {
       console.error('Error handling promoted product:', error);

@@ -88,7 +88,7 @@ type UseIap = {
     },
   ) => Promise<any>;
   restorePurchases: () => Promise<void>; // 구매 복원 함수 추가
-  getPromotedProductIOS: () => Promise<any | null>;
+  getPromotedProductIOS: () => Promise<Product | null>;
   requestPurchaseOnPromotedProductIOS: () => Promise<void>;
   /** @deprecated Use requestPurchaseOnPromotedProductIOS instead */
   buyPromotedProductIOS: () => Promise<void>;

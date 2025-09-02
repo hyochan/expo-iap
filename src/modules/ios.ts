@@ -6,6 +6,7 @@ import ExpoIapModule from '../ExpoIapModule';
 
 // Types
 import {
+  Product,
   Purchase,
   PurchaseError,
 } from '../ExpoIap.types';
@@ -297,7 +298,7 @@ export const getAppTransactionIOS = (): Promise<AppTransactionIOS | null> => {
  *
  * @platform iOS
  */
-export const getPromotedProductIOS = (): Promise<any | null> => {
+export const getPromotedProductIOS = (): Promise<Product | null> => {
   return ExpoIapModule.getPromotedProductIOS();
 };
 
