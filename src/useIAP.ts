@@ -23,7 +23,7 @@ import {
 import {
   syncIOS,
   getPromotedProductIOS,
-  buyPromotedProductIOS,
+  requestPurchaseOnPromotedProductIOS,
 } from './modules/ios';
 
 // Types
@@ -89,6 +89,8 @@ type UseIap = {
   ) => Promise<any>;
   restorePurchases: () => Promise<void>; // 구매 복원 함수 추가
   getPromotedProductIOS: () => Promise<any | null>;
+  requestPurchaseOnPromotedProductIOS: () => Promise<void>;
+  /** @deprecated Use requestPurchaseOnPromotedProductIOS instead */
   buyPromotedProductIOS: () => Promise<void>;
   getActiveSubscriptions: (
     subscriptionIds?: string[],
@@ -282,6 +284,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     [],
   );
 
+  /**
+   * @deprecated Use getAvailablePurchases instead. This function is just calling getAvailablePurchases internally.
+   * Will be removed in v2.9.0
+   */
   const getPurchaseHistoriesInternal = useCallback(async (): Promise<void> => {
     setPurchaseHistories(await getPurchaseHistories());
   }, []);
@@ -461,7 +467,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     getProducts: getProductsInternal,
     getSubscriptions: getSubscriptionsInternal,
     getPromotedProductIOS,
-    buyPromotedProductIOS,
+    requestPurchaseOnPromotedProductIOS,
+    buyPromotedProductIOS: requestPurchaseOnPromotedProductIOS, // deprecated alias
     getActiveSubscriptions: getActiveSubscriptionsInternal,
     hasActiveSubscriptions: hasActiveSubscriptionsInternal,
   };
