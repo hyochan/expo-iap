@@ -358,7 +358,7 @@ public class ExpoIapModule: Module {
             return storefront?.countryCode
         }
 
-        AsyncFunction("getAppTransaction") { () async throws -> [String: Any?]? in
+        AsyncFunction("getAppTransactionIOS") { () async throws -> [String: Any?]? in
             if #available(iOS 16.0, *) {
                 #if compiler(>=5.7)
                 let verificationResult = try await AppTransaction.shared
@@ -411,7 +411,7 @@ public class ExpoIapModule: Module {
             }
         }
         
-        AsyncFunction("getPromotedProduct") { () -> [String: Any?]? in
+        AsyncFunction("getPromotedProductIOS") { () -> [String: Any?]? in
             guard let product = self.promotedProduct else {
                 return nil
             }
@@ -430,7 +430,7 @@ public class ExpoIapModule: Module {
             ]
         }
         
-        AsyncFunction("buyPromotedProduct") { () -> Void in
+        AsyncFunction("requestPurchaseOnPromotedProductIOS") { () -> Void in
             guard let payment = self.promotedPayment else {
                 throw Exception(
                     name: "ExpoIapModule",
@@ -447,7 +447,7 @@ public class ExpoIapModule: Module {
             self.promotedProduct = nil
         }
 
-        AsyncFunction("getItems") { (skus: [String]) -> [[String: Any?]?] in
+        AsyncFunction("requestProducts") { (skus: [String]) -> [[String: Any?]?] in
             try self.ensureConnection()
             
             let productStore = self.productStore!
@@ -545,7 +545,7 @@ public class ExpoIapModule: Module {
             return purchasedItemsSerialized
         }
 
-        AsyncFunction("buyProduct") {
+        AsyncFunction("requestPurchase") {
             (
                 sku: String, andDangerouslyFinishTransactionAutomatically: Bool,
                 appAccountToken: String?, quantity: Int, discountOffer: [String: String]?
@@ -735,11 +735,11 @@ public class ExpoIapModule: Module {
             }
         }
 
-        AsyncFunction("isEligibleForIntroOffer") { (groupID: String) -> Bool in
+        AsyncFunction("isEligibleForIntroOfferIOS") { (groupID: String) -> Bool in
             return await Product.SubscriptionInfo.isEligibleForIntroOffer(for: groupID)
         }
 
-        AsyncFunction("subscriptionStatus") { (sku: String) -> [[String: Any?]?]? in
+        AsyncFunction("subscriptionStatusIOS") { (sku: String) -> [[String: Any?]?]? in
             try self.ensureConnection()
             let productStore = self.productStore!
 
@@ -759,7 +759,7 @@ public class ExpoIapModule: Module {
             }
         }
 
-        AsyncFunction("currentEntitlement") { (sku: String) -> [String: Any?]? in
+        AsyncFunction("currentEntitlementIOS") { (sku: String) -> [String: Any?]? in
             try self.ensureConnection()
             let productStore = self.productStore!
 
@@ -784,7 +784,7 @@ public class ExpoIapModule: Module {
             }
         }
 
-        AsyncFunction("latestTransaction") { (sku: String) -> [String: Any?]? in
+        AsyncFunction("latestTransactionIOS") { (sku: String) -> [String: Any?]? in
             try self.ensureConnection()
             let productStore = self.productStore!
 
@@ -819,11 +819,11 @@ public class ExpoIapModule: Module {
             }
         }
 
-        AsyncFunction("getPendingTransactions") { () -> [[String: Any?]?] in
+        AsyncFunction("getPendingTransactionsIOS") { () -> [[String: Any?]?] in
             return self.transactions.values.map { serializeTransaction($0) }
         }
 
-        AsyncFunction("sync") { () -> Bool in
+        AsyncFunction("syncIOS") { () -> Bool in
             do {
                 try await AppStore.sync()
                 return true
@@ -835,7 +835,7 @@ public class ExpoIapModule: Module {
             }
         }
 
-        AsyncFunction("presentCodeRedemptionSheet") { () -> Bool in
+        AsyncFunction("presentCodeRedemptionSheetIOS") { () -> Bool in
             #if !os(tvOS)
                 SKPaymentQueue.default().presentCodeRedemptionSheet()
                 return true
@@ -844,7 +844,7 @@ public class ExpoIapModule: Module {
             #endif
         }
 
-        AsyncFunction("showManageSubscriptions") { () -> Bool in
+        AsyncFunction("showManageSubscriptionsIOS") { () -> Bool in
             #if !os(tvOS)
                 guard let windowScene = await self.currentWindowScene() else {
                     throw Exception(name: "ExpoIapModule", description: "Cannot find window scene or not available on macOS", code: IapErrorCode.serviceError)
@@ -862,7 +862,7 @@ public class ExpoIapModule: Module {
             #endif
         }
 
-        AsyncFunction("clearTransaction") { () -> Void in
+        AsyncFunction("clearTransactionIOS") { () -> Void in
             Task {
                 for await result in Transaction.unfinished {
                     do {
@@ -879,7 +879,7 @@ public class ExpoIapModule: Module {
             }
         }
 
-        AsyncFunction("beginRefundRequest") { (sku: String) -> String? in
+        AsyncFunction("beginRefundRequestIOS") { (sku: String) -> String? in
             #if !os(tvOS)
                 try self.ensureConnection()
                 let productStore = self.productStore!
@@ -910,16 +910,18 @@ public class ExpoIapModule: Module {
             #endif
         }
 
+        // @deprecated - This function is deprecated and will be removed in v2.9.0
+        // The transaction observer is now managed automatically
         Function("disable") { () -> Bool in
-            self.removeTransactionObserver()
+            // No longer needed - observer management is automatic
             return true
         }
 
-        AsyncFunction("getReceiptData") { () -> String? in
+        AsyncFunction("getReceiptDataIOS") { () -> String? in
             return try self.getReceiptDataInternal()
         }
 
-        AsyncFunction("isTransactionVerified") { (sku: String) -> Bool in
+        AsyncFunction("isTransactionVerifiedIOS") { (sku: String) -> Bool in
             try self.ensureConnection()
             let productStore = self.productStore!
             
@@ -936,7 +938,7 @@ public class ExpoIapModule: Module {
             return false
         }
 
-        AsyncFunction("getTransactionJws") { (sku: String) -> String? in
+        AsyncFunction("getTransactionJwsIOS") { (sku: String) -> String? in
             try self.ensureConnection()
             let productStore = self.productStore!
             
