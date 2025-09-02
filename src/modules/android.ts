@@ -111,7 +111,7 @@ export const acknowledgePurchaseAndroid = ({
 }: {
   token: string;
 }): Promise<PurchaseResult | boolean | void> => {
-  return ExpoIapModule.acknowledgePurchase(token);
+  return ExpoIapModule.acknowledgePurchaseAndroid(token);
 };
 
 /**

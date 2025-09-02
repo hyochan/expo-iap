@@ -94,7 +94,7 @@ export function isProductIOS<T extends {platform?: string}>(
  * @platform iOS
  */
 export const syncIOS = (): Promise<null> => {
-  return ExpoIapModule.sync();
+  return ExpoIapModule.syncIOS();
 };
 
 /**
@@ -109,7 +109,7 @@ export const syncIOS = (): Promise<null> => {
 export const isEligibleForIntroOfferIOS = (
   groupId: string,
 ): Promise<boolean> => {
-  return ExpoIapModule.isEligibleForIntroOffer(groupId);
+  return ExpoIapModule.isEligibleForIntroOfferIOS(groupId);
 };
 
 /**
@@ -124,7 +124,7 @@ export const isEligibleForIntroOfferIOS = (
 export const subscriptionStatusIOS = (
   sku: string,
 ): Promise<ProductStatusIOS[]> => {
-  return ExpoIapModule.subscriptionStatus(sku);
+  return ExpoIapModule.subscriptionStatusIOS(sku);
 };
 
 /**
@@ -139,7 +139,7 @@ export const subscriptionStatusIOS = (
 export const currentEntitlementIOS = (
   sku: string,
 ): Promise<Purchase> => {
-  return ExpoIapModule.currentEntitlement(sku);
+  return ExpoIapModule.currentEntitlementIOS(sku);
 };
 
 /**
@@ -152,7 +152,7 @@ export const currentEntitlementIOS = (
  * @platform iOS
  */
 export const latestTransactionIOS = (sku: string): Promise<Purchase> => {
-  return ExpoIapModule.latestTransaction(sku);
+  return ExpoIapModule.latestTransactionIOS(sku);
 };
 
 /**
@@ -168,7 +168,7 @@ type RefundRequestStatus = 'success' | 'userCancelled';
 export const beginRefundRequestIOS = (
   sku: string,
 ): Promise<RefundRequestStatus> => {
-  return ExpoIapModule.beginRefundRequest(sku);
+  return ExpoIapModule.beginRefundRequestIOS(sku);
 };
 
 /**
@@ -182,7 +182,7 @@ export const beginRefundRequestIOS = (
  * @platform iOS
  */
 export const showManageSubscriptionsIOS = (): Promise<null> => {
-  return ExpoIapModule.showManageSubscriptions();
+  return ExpoIapModule.showManageSubscriptionsIOS();
 };
 
 /**
@@ -196,7 +196,7 @@ export const showManageSubscriptionsIOS = (): Promise<null> => {
  * @returns {Promise<string>} Base64 encoded receipt data
  */
 export const getReceiptIOS = (): Promise<string> => {
-  return ExpoIapModule.getReceiptData();
+  return ExpoIapModule.getReceiptDataIOS();
 };
 
 /**
@@ -210,7 +210,7 @@ export const getReceiptIOS = (): Promise<string> => {
  * @platform iOS
  */
 export const isTransactionVerifiedIOS = (sku: string): Promise<boolean> => {
-  return ExpoIapModule.isTransactionVerified(sku);
+  return ExpoIapModule.isTransactionVerifiedIOS(sku);
 };
 
 /**
@@ -224,7 +224,7 @@ export const isTransactionVerifiedIOS = (sku: string): Promise<boolean> => {
  * @platform iOS
  */
 export const getTransactionJwsIOS = (sku: string): Promise<string> => {
-  return ExpoIapModule.getTransactionJws(sku);
+  return ExpoIapModule.getTransactionJwsIOS(sku);
 };
 
 /**
@@ -266,7 +266,7 @@ export const validateReceiptIOS = async (
  * @platform iOS
  */
 export const presentCodeRedemptionSheetIOS = (): Promise<boolean> => {
-  return ExpoIapModule.presentCodeRedemptionSheet();
+  return ExpoIapModule.presentCodeRedemptionSheetIOS();
 };
 
 /**
@@ -284,7 +284,7 @@ export const presentCodeRedemptionSheetIOS = (): Promise<boolean> => {
  * @since iOS 16.0
  */
 export const getAppTransactionIOS = (): Promise<AppTransactionIOS | null> => {
-  return ExpoIapModule.getAppTransaction();
+  return ExpoIapModule.getAppTransactionIOS();
 };
 
 /**
@@ -296,8 +296,17 @@ export const getAppTransactionIOS = (): Promise<AppTransactionIOS | null> => {
  *
  * @platform iOS
  */
+/**
+ * Get information about a promoted product if one is available (iOS only).
+ * Promoted products are products that the App Store promotes on your behalf.
+ *
+ * @returns Promise resolving to the promoted product information or null if none available
+ * @throws Error if called on non-iOS platform
+ *
+ * @platform iOS
+ */
 export const getPromotedProductIOS = (): Promise<any | null> => {
-  return ExpoIapModule.getPromotedProduct();
+  return ExpoIapModule.getPromotedProductIOS();
 };
 
 /**
@@ -309,8 +318,35 @@ export const getPromotedProductIOS = (): Promise<any | null> => {
  *
  * @platform iOS
  */
+export const requestPurchaseOnPromotedProductIOS = (): Promise<void> => {
+  return ExpoIapModule.requestPurchaseOnPromotedProductIOS();
+};
+
+/**
+ * @deprecated Use requestPurchaseOnPromotedProductIOS instead. Will be removed in v2.9.0
+ */
 export const buyPromotedProductIOS = (): Promise<void> => {
-  return ExpoIapModule.buyPromotedProduct();
+  return requestPurchaseOnPromotedProductIOS();
+};
+
+/**
+ * Get pending transactions that haven't been finished yet (iOS only).
+ * 
+ * @returns Promise resolving to array of pending transactions
+ * @platform iOS
+ */
+export const getPendingTransactionsIOS = (): Promise<any[]> => {
+  return ExpoIapModule.getPendingTransactionsIOS();
+};
+
+/**
+ * Clear a specific transaction (iOS only).
+ * 
+ * @returns Promise resolving when transaction is cleared
+ * @platform iOS  
+ */
+export const clearTransactionIOS = (): Promise<void> => {
+  return ExpoIapModule.clearTransactionIOS();
 };
 
 /**
