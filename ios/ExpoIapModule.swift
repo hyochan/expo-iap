@@ -473,7 +473,7 @@ public class ExpoIapModule: Module {
         }
 
         AsyncFunction("getAvailableItems") {
-            (alsoPublishToEventListener: Bool, onlyIncludeActiveItems: Bool) -> [[String: Any?]?] in
+            (alsoPublishToEventListenerIOS: Bool, onlyIncludeActiveItemsIOS: Bool) -> [[String: Any?]?] in
             
             try self.ensureConnection()
             
@@ -483,17 +483,17 @@ public class ExpoIapModule: Module {
                 let serialized = serializeTransaction(transaction, jwsRepresentationIOS: jwsRepresentationIOS)
                 purchasedItemsSerialized.append(serialized)
                 
-                if alsoPublishToEventListener {
+                if alsoPublishToEventListenerIOS {
                     self.sendEvent(IapEvent.PurchaseUpdated, serialized)
                 }
             }
 
-            for await verification in onlyIncludeActiveItems
+            for await verification in onlyIncludeActiveItemsIOS
                 ? Transaction.currentEntitlements : Transaction.all
             {
                 do {
                     let transaction = try self.checkVerified(verification)
-                    if !onlyIncludeActiveItems {
+                    if !onlyIncludeActiveItemsIOS {
                         addTransaction(transaction: transaction, jwsRepresentationIOS: verification.jwsRepresentation)
                         continue
                     }
@@ -526,7 +526,7 @@ public class ExpoIapModule: Module {
                         "message": StoreError.failedVerification.localizedDescription,
                         "productId": "unknown",
                     ]
-                    if alsoPublishToEventListener {
+                    if alsoPublishToEventListenerIOS {
                         self.sendEvent(IapEvent.PurchaseError, err)
                     }
                 } catch {
@@ -537,7 +537,7 @@ public class ExpoIapModule: Module {
                         "message": error.localizedDescription,
                         "productId": "unknown",
                     ]
-                    if alsoPublishToEventListener {
+                    if alsoPublishToEventListenerIOS {
                         self.sendEvent(IapEvent.PurchaseError, err)
                     }
                 }

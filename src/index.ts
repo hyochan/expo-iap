@@ -277,16 +277,22 @@ export const requestProducts = async ({
 export const getPurchaseHistory = ({
   alsoPublishToEventListener = false,
   onlyIncludeActiveItems = false,
+  alsoPublishToEventListenerIOS = false,
+  onlyIncludeActiveItemsIOS = false,
 }: {
+  /** @deprecated Use alsoPublishToEventListenerIOS instead */
   alsoPublishToEventListener?: boolean;
+  /** @deprecated Use onlyIncludeActiveItemsIOS instead */
   onlyIncludeActiveItems?: boolean;
+  alsoPublishToEventListenerIOS?: boolean;
+  onlyIncludeActiveItemsIOS?: boolean;
 } = {}): Promise<Purchase[]> => {
   console.warn(
     '`getPurchaseHistory` is deprecated. Use `getPurchaseHistories` instead. This function will be removed in version 3.0.0.',
   );
   return getPurchaseHistories({
-    alsoPublishToEventListener,
-    onlyIncludeActiveItems,
+    alsoPublishToEventListenerIOS: alsoPublishToEventListenerIOS || alsoPublishToEventListener,
+    onlyIncludeActiveItemsIOS: onlyIncludeActiveItemsIOS || onlyIncludeActiveItems,
   });
 };
 
@@ -298,16 +304,22 @@ export const getPurchaseHistory = ({
 export const getPurchaseHistories = ({
   alsoPublishToEventListener = false,
   onlyIncludeActiveItems = false,
+  alsoPublishToEventListenerIOS = false,
+  onlyIncludeActiveItemsIOS = false,
 }: {
+  /** @deprecated Use alsoPublishToEventListenerIOS instead */
   alsoPublishToEventListener?: boolean;
+  /** @deprecated Use onlyIncludeActiveItemsIOS instead */
   onlyIncludeActiveItems?: boolean;
+  alsoPublishToEventListenerIOS?: boolean;
+  onlyIncludeActiveItemsIOS?: boolean;
 } = {}): Promise<Purchase[]> =>
   (
     Platform.select({
       ios: async () => {
         return ExpoIapModule.getAvailableItems(
-          alsoPublishToEventListener,
-          onlyIncludeActiveItems,
+          alsoPublishToEventListenerIOS || alsoPublishToEventListener,
+          onlyIncludeActiveItemsIOS || onlyIncludeActiveItems,
         );
       },
       android: async () => {
@@ -324,16 +336,22 @@ export const getPurchaseHistories = ({
 export const getAvailablePurchases = ({
   alsoPublishToEventListener = false,
   onlyIncludeActiveItems = true,
+  alsoPublishToEventListenerIOS = false,
+  onlyIncludeActiveItemsIOS = true,
 }: {
+  /** @deprecated Use alsoPublishToEventListenerIOS instead */
   alsoPublishToEventListener?: boolean;
+  /** @deprecated Use onlyIncludeActiveItemsIOS instead */
   onlyIncludeActiveItems?: boolean;
+  alsoPublishToEventListenerIOS?: boolean;
+  onlyIncludeActiveItemsIOS?: boolean;
 } = {}): Promise<Purchase[]> =>
   (
     Platform.select({
       ios: () =>
         ExpoIapModule.getAvailableItems(
-          alsoPublishToEventListener,
-          onlyIncludeActiveItems,
+          alsoPublishToEventListenerIOS || alsoPublishToEventListener,
+          onlyIncludeActiveItemsIOS || onlyIncludeActiveItems,
         ),
       android: async () => {
         const products = await ExpoIapModule.getAvailableItemsByType('inapp');
