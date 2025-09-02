@@ -154,7 +154,7 @@ class ExpoIapModule :
                 promise.resolve(true)
             }
 
-            AsyncFunction("getItemsByType") { type: String, skuArr: Array<String>, promise: Promise ->
+            AsyncFunction("requestProducts") { type: String, skuArr: Array<String>, promise: Promise ->
                 ensureConnection(promise) { billingClient ->
                     val skuList =
                         skuArr.map { sku ->
@@ -310,7 +310,7 @@ class ExpoIapModule :
             // getPurchaseHistoryByType removed in Google Play Billing Library v8
             // Use getAvailableItemsByType instead to get active purchases
 
-            AsyncFunction("buyItemByType") { params: Map<String, Any?>, promise: Promise ->
+            AsyncFunction("requestPurchase") { params: Map<String, Any?>, promise: Promise ->
                 val type = params["type"] as String
                 val skuArr =
                     (params["skuArr"] as? List<*>)?.filterIsInstance<String>()?.toTypedArray()
@@ -475,7 +475,7 @@ class ExpoIapModule :
                 }
             }
 
-            AsyncFunction("acknowledgePurchase") {
+            AsyncFunction("acknowledgePurchaseAndroid") {
                     token: String,
                     promise: Promise,
                 ->
@@ -507,7 +507,7 @@ class ExpoIapModule :
                 }
             }
 
-            AsyncFunction("consumeProduct") {
+            AsyncFunction("consumeProductAndroid") {
                     token: String,
                     promise: Promise,
                 ->
