@@ -676,7 +676,7 @@ export const getStorefrontIOS = (): Promise<string> => {
     console.warn('getStorefrontIOS: This method is only available on iOS');
     return Promise.resolve('');
   }
-  return ExpoIapModule.getStorefront();
+  return ExpoIapModule.getStorefrontIOS();
 };
 
 /**

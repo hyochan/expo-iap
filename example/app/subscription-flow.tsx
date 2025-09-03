@@ -13,7 +13,12 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import {signal, effect} from '@preact/signals-react';
 import {requestPurchase, useIAP} from '../../src';
-import type {SubscriptionProduct, PurchaseError} from '../../src/ExpoIap.types';
+import type {
+  SubscriptionProduct,
+  PurchaseError,
+  PurchaseIOS,
+  Purchase,
+} from '../../src/ExpoIap.types';
 
 /**
  * Subscription Flow Example - Subscription Products
@@ -39,6 +44,28 @@ const selectedSubscriptionSignal = signal<SubscriptionProduct | null>(null);
 const modalVisibleSignal = signal(false);
 
 export default function SubscriptionFlow() {
+  // Deduplicate purchases by productId, keeping the most recent transaction
+  const deduplicatePurchases = (purchases: Purchase[]): Purchase[] => {
+    const uniquePurchases = new Map<string, Purchase>();
+
+    for (const purchase of purchases) {
+      const existingPurchase = uniquePurchases.get(purchase.productId);
+      if (!existingPurchase) {
+        uniquePurchases.set(purchase.productId, purchase);
+      } else {
+        // Keep the most recent transaction (higher timestamp)
+        const existingTimestamp = existingPurchase.transactionDate || 0;
+        const newTimestamp = purchase.transactionDate || 0;
+
+        if (newTimestamp > existingTimestamp) {
+          uniquePurchases.set(purchase.productId, purchase);
+        }
+      }
+    }
+
+    return Array.from(uniquePurchases.values());
+  };
+
   // React state synced with signals
   const [purchaseResult, setPurchaseResult] = useState(
     purchaseResultSignal.value,
@@ -80,16 +107,74 @@ export default function SubscriptionFlow() {
       console.log('Subscription successful:', purchase);
       isProcessingSignal.value = false;
 
-      // Check if this is a duplicate subscription (already active)
-      const isAlreadySubscribed = activeSubscriptions.some(
-        (sub) => sub.productId === purchase.productId,
-      );
+      // Determine if this is a valid purchase using logic similar to Flutter implementation
+      let isPurchased = false;
+      let isRestoration = false;
 
-      if (isAlreadySubscribed) {
-        // This is likely a duplicate transaction or restoration
+      if (Platform.OS === 'ios' && purchase.platform === 'ios') {
+        // Type-safe access to iOS-specific fields
+        const iosPurchase = purchase as PurchaseIOS;
+
+        // Check if purchase was successful based on transaction data
+        const hasValidToken =
+          purchase.purchaseToken && purchase.purchaseToken.length > 0;
+        const hasValidTransactionId =
+          purchase.transactionId && purchase.transactionId.length > 0;
+
+        const isPurchased = hasValidToken || hasValidTransactionId;
+
+        // For iOS, check if this is a restoration by comparing original vs current transaction
+        // A restoration typically has originalTransactionIdentifierIOS different from transactionId
+        isRestoration = Boolean(
+          iosPurchase.originalTransactionIdentifierIOS &&
+            iosPurchase.originalTransactionIdentifierIOS !==
+              purchase.transactionId &&
+            iosPurchase.transactionReasonIOS &&
+            iosPurchase.transactionReasonIOS !== 'PURCHASE',
+        );
+
+        console.log('iOS Purchase Analysis:');
+        console.log('  hasValidToken:', hasValidToken);
+        console.log('  hasValidTransactionId:', hasValidTransactionId);
+        console.log('  isPurchased:', isPurchased);
+        console.log('  isRestoration:', isRestoration);
+        console.log(
+          '  originalTransactionId:',
+          iosPurchase.originalTransactionIdentifierIOS,
+        );
+        console.log('  currentTransactionId:', purchase.transactionId);
+        console.log('  transactionReason:', iosPurchase.transactionReasonIOS);
+      } else if (Platform.OS === 'android' && purchase.platform === 'android') {
+        // For Android, consider it purchased if we received the purchase callback
+        // The purchase callback itself indicates success in most cases
+        isPurchased = true;
+        isRestoration = false; // Android doesn't have the same restoration concept
+
+        console.log('Android Purchase Analysis:');
+        console.log('  isPurchased:', isPurchased);
+        console.log('  isRestoration:', isRestoration);
+      }
+
+      if (!isPurchased) {
+        console.warn(
+          'Purchase callback received but purchase validation failed',
+        );
+        purchaseResultSignal.value = `⚠️ Purchase validation failed`;
+        Alert.alert(
+          'Purchase Issue',
+          'Purchase could not be validated. Please try again.',
+        );
+        return;
+      }
+
+      if (isRestoration) {
+        // This is a subscription restoration (existing subscription reactivated)
         purchaseResultSignal.value =
-          `ℹ️ Subscription restored/verified (${purchase.platform})\n` +
+          `ℹ️ Subscription restored (${purchase.platform})\n` +
           `Product: ${purchase.productId}\n` +
+          `Original Transaction: ${
+            (purchase as PurchaseIOS).originalTransactionIdentifierIOS || 'N/A'
+          }\n` +
           `No additional charge - existing subscription confirmed`;
 
         await finishTransaction({
@@ -98,15 +183,36 @@ export default function SubscriptionFlow() {
         });
 
         Alert.alert(
-          'Subscription Status',
-          'Your subscription is already active. No additional charge was made.',
+          'Subscription Restored',
+          'Your existing subscription has been restored. No additional charge was made.',
         );
+
+        console.log('✅ Subscription restoration completed');
+
+        // Immediately refresh subscription status to update UI
+        console.log(
+          '🔄 Immediately refreshing subscription status after restoration...',
+        );
+
+        const refreshStatus = async () => {
+          try {
+            await getActiveSubscriptions();
+            await getAvailablePurchases([]);
+          } catch (error) {
+            console.warn('Failed to refresh status:', error);
+          }
+        };
+
+        // Call immediately and multiple times to ensure UI updates
+        refreshStatus();
+        setTimeout(refreshStatus, 500);
+        setTimeout(refreshStatus, 2000);
         return;
       }
 
-      // Handle new subscription
+      // Handle new subscription purchase
       purchaseResultSignal.value =
-        `✅ Subscription successful (${purchase.platform})\n` +
+        `✅ New subscription activated (${purchase.platform})\n` +
         `Product: ${purchase.productId}\n` +
         `Transaction ID: ${purchase.transactionId || 'N/A'}\n` +
         `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}\n` +
@@ -128,12 +234,36 @@ export default function SubscriptionFlow() {
         isConsumable: false, // Set to false for subscriptions
       });
 
-      Alert.alert('Success', 'Subscription activated successfully!');
+      Alert.alert('Success', 'New subscription activated successfully!');
 
-      // Refresh subscription status after successful purchase
-      setTimeout(() => {
-        checkSubscriptionStatus();
-      }, 1000);
+      console.log('✅ New subscription purchase completed');
+
+      // Immediately refresh subscription status to update UI
+      console.log(
+        '🔄 Immediately refreshing subscription status after purchase...',
+      );
+
+      // Call checkSubscriptionStatus multiple times to ensure the UI updates
+      const refreshStatus = async () => {
+        try {
+          await getActiveSubscriptions();
+          await getAvailablePurchases([]);
+        } catch (error) {
+          console.warn('Failed to refresh status:', error);
+        }
+      };
+
+      // Call immediately
+      refreshStatus();
+
+      // Call again after short delay
+      setTimeout(refreshStatus, 500);
+
+      // Call again after longer delay to ensure server sync
+      setTimeout(refreshStatus, 2000);
+
+      // Final call after even longer delay for server processing
+      setTimeout(refreshStatus, 5000);
     },
     onPurchaseError: (error: PurchaseError) => {
       console.error('Subscription failed:', error);
@@ -210,7 +340,14 @@ export default function SubscriptionFlow() {
     console.log(
       '[STATE CHANGE] activeSubscriptions:',
       activeSubscriptions.length,
-      activeSubscriptions,
+      'items:',
+      activeSubscriptions.map((sub) => ({
+        productId: sub.productId,
+        isActive: sub.isActive,
+        expirationDateIOS: sub.expirationDateIOS?.toString(),
+        environmentIOS: sub.environmentIOS,
+        willExpireSoon: sub.willExpireSoon,
+      })),
     );
   }, [activeSubscriptions]);
 
@@ -225,6 +362,20 @@ export default function SubscriptionFlow() {
 
   const handleSubscription = async (itemId: string) => {
     try {
+      // Check if already subscribed to this product
+      const isAlreadySubscribed = activeSubscriptions.some(
+        (sub) => sub.productId === itemId,
+      );
+
+      if (isAlreadySubscribed) {
+        Alert.alert(
+          'Already Subscribed',
+          'You already have an active subscription to this product.',
+          [{text: 'OK', style: 'default'}],
+        );
+        return;
+      }
+
       isProcessingSignal.value = true;
       purchaseResultSignal.value = 'Processing subscription...';
 
@@ -300,11 +451,17 @@ export default function SubscriptionFlow() {
       const offer = subscription.subscriptionInfoIOS.introductoryOffer;
       switch (offer.paymentMode) {
         case 'FREETRIAL':
-          return `${offer.periodCount} ${offer.period.unit.toLowerCase()}(s) free trial`;
+          return `${
+            offer.periodCount
+          } ${offer.period.unit.toLowerCase()}(s) free trial`;
         case 'PAYASYOUGO':
-          return `${offer.displayPrice} for ${offer.periodCount} ${offer.period.unit.toLowerCase()}(s)`;
+          return `${offer.displayPrice} for ${
+            offer.periodCount
+          } ${offer.period.unit.toLowerCase()}(s)`;
         case 'PAYUPFRONT':
-          return `${offer.displayPrice} for first ${offer.periodCount} ${offer.period.unit.toLowerCase()}(s)`;
+          return `${offer.displayPrice} for first ${
+            offer.periodCount
+          } ${offer.period.unit.toLowerCase()}(s)`;
         default:
           return null;
       }
@@ -420,9 +577,15 @@ export default function SubscriptionFlow() {
             Checking Status: {isCheckingStatus.toString()}
             {'\n'}
             {activeSubscriptions.length > 0 &&
-              `Active IDs: ${activeSubscriptions.map((s) => s.productId).join(', ')}\n`}
+              `Active IDs: ${activeSubscriptions
+                .map((s) => s.productId)
+                .join(', ')}\n`}
             {activeSubscriptions.length > 0 &&
-              `Active Status: ${JSON.stringify(activeSubscriptions[0], null, 2)}`}
+              `Active Status: ${JSON.stringify(
+                activeSubscriptions[0],
+                null,
+                2,
+              )}`}
           </Text>
         </View>
       )}
@@ -591,10 +754,10 @@ export default function SubscriptionFlow() {
                     {isProcessing
                       ? 'Processing...'
                       : activeSubscriptions.some(
-                            (sub) => sub.productId === subscription.id,
-                          )
-                        ? '✅ Subscribed'
-                        : 'Subscribe'}
+                          (sub) => sub.productId === subscription.id,
+                        )
+                      ? '✅ Subscribed'
+                      : 'Subscribe'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -617,55 +780,61 @@ export default function SubscriptionFlow() {
       </View>
 
       {/* Available Purchases Section */}
-      {availablePurchases.length > 0 ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Available Purchases History</Text>
-          <Text style={styles.subtitle}>
-            Past purchases and subscription transactions
-          </Text>
-          {availablePurchases.map((purchase, index) => (
-            <View
-              key={`${purchase.productId}-${index}`}
-              style={styles.purchaseCard}
-            >
-              <View style={styles.purchaseInfo}>
-                <Text style={styles.purchaseTitle}>{purchase.productId}</Text>
-                <Text style={styles.purchaseDate}>
-                  {new Date(purchase.transactionDate).toLocaleDateString()}
-                </Text>
-                <Text style={styles.purchasePlatform}>
-                  Platform: {purchase.platform}
-                </Text>
-                {Platform.OS === 'ios' &&
-                'expirationDateIOS' in purchase &&
-                purchase.expirationDateIOS ? (
-                  <Text style={styles.purchaseExpiry}>
-                    Expires:{' '}
-                    {new Date(purchase.expirationDateIOS).toLocaleDateString()}
+      {(() => {
+        const deduplicatedPurchases = deduplicatePurchases(availablePurchases);
+        return deduplicatedPurchases.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Available Purchases History</Text>
+            <Text style={styles.subtitle}>
+              Past purchases and subscription transactions (deduplicated)
+            </Text>
+            {deduplicatedPurchases.map((purchase, index) => (
+              <View
+                key={`${purchase.productId}-${index}`}
+                style={styles.purchaseCard}
+              >
+                <View style={styles.purchaseInfo}>
+                  <Text style={styles.purchaseTitle}>{purchase.productId}</Text>
+                  <Text style={styles.purchaseDate}>
+                    {new Date(purchase.transactionDate).toLocaleDateString()}
                   </Text>
-                ) : null}
-                {Platform.OS === 'android' &&
-                'autoRenewingAndroid' in purchase ? (
-                  <Text style={styles.purchaseRenewal}>
-                    Auto-Renewing: {purchase.autoRenewingAndroid ? 'Yes' : 'No'}
+                  <Text style={styles.purchasePlatform}>
+                    Platform: {purchase.platform}
                   </Text>
-                ) : null}
-              </View>
-              <View style={styles.purchaseStatus}>
-                <Text style={styles.purchaseStatusText}>
-                  {purchase.platform === 'ios' &&
+                  {Platform.OS === 'ios' &&
                   'expirationDateIOS' in purchase &&
-                  purchase.expirationDateIOS
-                    ? purchase.expirationDateIOS > Date.now()
-                      ? '✅ Active'
-                      : '❌ Expired'
-                    : '✅ Purchased'}
-                </Text>
+                  purchase.expirationDateIOS ? (
+                    <Text style={styles.purchaseExpiry}>
+                      Expires:{' '}
+                      {new Date(
+                        purchase.expirationDateIOS,
+                      ).toLocaleDateString()}
+                    </Text>
+                  ) : null}
+                  {Platform.OS === 'android' &&
+                  'autoRenewingAndroid' in purchase ? (
+                    <Text style={styles.purchaseRenewal}>
+                      Auto-Renewing:{' '}
+                      {purchase.autoRenewingAndroid ? 'Yes' : 'No'}
+                    </Text>
+                  ) : null}
+                </View>
+                <View style={styles.purchaseStatus}>
+                  <Text style={styles.purchaseStatusText}>
+                    {purchase.platform === 'ios' &&
+                    'expirationDateIOS' in purchase &&
+                    purchase.expirationDateIOS
+                      ? purchase.expirationDateIOS > Date.now()
+                        ? '✅ Active'
+                        : '❌ Expired'
+                      : '✅ Purchased'}
+                  </Text>
+                </View>
               </View>
-            </View>
-          ))}
-        </View>
-      ) : null}
+            ))}
+          </View>
+        ) : null;
+      })()}
 
       {purchaseResult ? (
         <View style={styles.section}>

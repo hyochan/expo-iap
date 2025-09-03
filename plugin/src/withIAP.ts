@@ -5,6 +5,7 @@ import {
   withAndroidManifest,
   withAppBuildGradle,
 } from 'expo/config-plugins';
+import withLocalOpenIAP from './withLocalOpenIAP';
 
 const pkg = require('../../package.json');
 
@@ -98,9 +99,27 @@ const withIapAndroid: ConfigPlugin = (config) => {
   return config;
 };
 
-const withIap: ConfigPlugin = (config, _props) => {
+export interface ExpoIapPluginOptions {
+  /** Local development path for OpenIAP library */
+  localPath?: string;
+  /** Enable local development mode */
+  enableLocalDev?: boolean;
+}
+
+const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (config, options) => {
   try {
-    const result = withIapAndroid(config);
+    // Apply Android modifications
+    let result = withIapAndroid(config);
+    
+    // Apply iOS local development if enabled
+    if (options?.enableLocalDev || options?.localPath) {
+      const localPath = options.localPath || '/Users/crossplatformkorea/Github/hyodotdev/openiap-apple';
+      console.log(`🔧 [expo-iap] Enabling local OpenIAP development at: ${localPath}`);
+      result = withLocalOpenIAP(result, { localPath });
+    } else {
+      console.log('📦 [expo-iap] Using OpenIAP from CocoaPods');
+    }
+    
     // Set flag after first execution to prevent duplicate logs
     hasLoggedPluginExecution = true;
     return result;

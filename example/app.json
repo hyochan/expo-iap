@@ -20,7 +20,13 @@
       "package": "dev.hyo.martie"
     },
     "plugins": [
-      "../app.plugin.js",
+      [
+        "../app.plugin.js",
+        {
+          "enableLocalDev": true,
+          "localPath": "/Users/crossplatformkorea/Github/hyodotdev/openiap-apple"
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
