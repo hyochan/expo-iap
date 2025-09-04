@@ -52,12 +52,12 @@ public class ExpoIapModule: Module {
             
             // Debug logging
             for product in products {
-                logDebug("Product: id=\(product.id), title=\(product.title), description=\(product.description)")
-                logDebug("Product: price=\(product.price), displayPrice=\(product.displayPrice), currency=\(product.currency ?? "nil")")
-                logDebug("Product: type=\(product.type), platform=\(product.platform)")
+                logDebug("Product: id=\(product.id), title=\(product.localizedTitle), description=\(product.localizedDescription)")
+                logDebug("Product: price=\(product.price), displayPrice=\(product.localizedPrice), currency=\(product.currencyCode ?? "nil")")
+                logDebug("Product: type=\(product.productType.rawValue), platform=\(product.platform)")
             }
             
-            let serializedProducts = products.map { self.serializeProductData($0) }
+            let serializedProducts = products.map { self.serializeProduct($0) }
             logDebug("Serialized products: \(serializedProducts)")
             return serializedProducts
         }
@@ -270,53 +270,147 @@ public class ExpoIapModule: Module {
     
     // MARK: - Serialization Helpers
     
+    private func mapPeriodUnit(_ unit: OpenIapProduct.SubscriptionPeriod.PeriodUnit?) -> String {
+        guard let unit = unit else { return "" }
+        switch unit {
+        case .day:
+            return "DAY"
+        case .week:
+            return "WEEK"
+        case .month:
+            return "MONTH"
+        case .year:
+            return "YEAR"
+        }
+    }
+    
+    private func mapPaymentMode(_ mode: OpenIapProduct.IntroductoryOffer.PaymentMode?) -> String {
+        guard let mode = mode else { return "" }
+        switch mode {
+        case .freeTrial:
+            return "FREETRIAL"
+        case .payAsYouGo:
+            return "PAYASYOUGO"
+        case .payUpFront:
+            return "PAYUPFRONT"
+        }
+    }
+    
     private func serializePurchase(_ purchase: OpenIapPurchase) -> [String: Any?] {
         return [
-            "id": purchase.transactionId,
+            // PurchaseCommon required fields
+            "id": purchase.id,
             "productId": purchase.productId,
-            "transactionId": purchase.transactionId,
             "transactionDate": purchase.purchaseTime.timeIntervalSince1970 * 1000,
             "transactionReceipt": purchase.purchaseToken,
+            "purchaseToken": purchase.purchaseToken,
             "platform": "ios",
+            
+            // PurchaseCommon optional fields
+            "ids": nil, // Multiple product ids if applicable
+            "transactionId": purchase.transactionId, // deprecated but kept for backward compatibility
+            
+            // PurchaseIOS specific fields
             "quantityIOS": purchase.quantity,
             "originalTransactionDateIOS": purchase.originalPurchaseTime.map { $0.timeIntervalSince1970 * 1000 },
             "originalTransactionIdentifierIOS": purchase.originalTransactionId,
             "appAccountToken": purchase.appAccountToken,
-            "purchaseToken": purchase.purchaseToken,
+            
+            // Additional iOS fields from StoreKit 2
+            "expirationDateIOS": purchase.expiryTime.map { $0.timeIntervalSince1970 * 1000 },
+            "webOrderLineItemIdIOS": purchase.webOrderLineItemIdIOS,
+            "environmentIOS": purchase.environmentIOS,
+            "storefrontCountryCodeIOS": purchase.storefrontCountryCodeIOS,
+            "appBundleIdIOS": purchase.appBundleIdIOS,
+            "productTypeIOS": purchase.productTypeIOS,
+            "subscriptionGroupIdIOS": purchase.subscriptionGroupIdIOS,
+            "isUpgradedIOS": purchase.isUpgradedIOS,
+            "ownershipTypeIOS": purchase.ownershipTypeIOS,
+            "reasonIOS": purchase.reasonIOS,
+            "reasonStringRepresentationIOS": purchase.reasonStringRepresentationIOS,
+            "transactionReasonIOS": purchase.transactionReasonIOS,
+            "revocationDateIOS": purchase.revocationDateIOS.map { $0.timeIntervalSince1970 * 1000 },
+            "revocationReasonIOS": purchase.revocationReasonIOS,
+            
+            // Offer information
+            "offerIOS": purchase.offerIOS != nil ? [
+                "id": purchase.offerIOS!.id,
+                "type": purchase.offerIOS!.type,
+                "paymentMode": purchase.offerIOS!.paymentMode
+            ] : nil,
+            
+            // Price locale fields
+            "currencyCodeIOS": purchase.currencyCodeIOS,
+            "currencySymbolIOS": purchase.currencySymbolIOS,
+            "countryCodeIOS": purchase.countryCodeIOS,
+            
+            // Deprecated but kept for backward compatibility
             "jwsRepresentationIOS": purchase.jwsRepresentation
         ]
     }
     
-    private func serializeProductData(_ product: OpenIapProductData) -> [String: Any?] {
-        let priceValue = NSDecimalNumber(decimal: product.price).doubleValue
-        
+    private func serializeProduct(_ product: OpenIapProduct) -> [String: Any?] {
         return [
             // Common fields (required by ProductCommon)
             "id": product.id,
-            "productId": product.id, // Keep for backward compatibility
             "title": product.title,
             "description": product.description,
             "type": product.type,
+            "displayName": product.displayName, // Optional field
             "displayPrice": product.displayPrice,
-            "currency": product.currency ?? "USD",
-            "price": priceValue,
-            "platform": product.platform,
-            "debugDescription": "Product: \(product.id) - \(product.title) (\(product.displayPrice))",
+            "currency": product.currencyCode ?? "USD",
+            "price": product.priceIOS, // Optional field
+            "debugDescription": "Product: \(product.id) - \(product.title) (\(product.displayPrice))", // Optional field
+            "platform": product.platform, // Optional field but important for platform identification
             
             // iOS-specific fields (required by ProductIOS)
-            "displayNameIOS": product.title,
-            "descriptionIOS": product.description,  
-            "displayPriceIOS": product.displayPrice,
-            "priceIOS": priceValue,
+            "displayNameIOS": product.displayNameIOS,
+            "isFamilyShareableIOS": product.isFamilyShareableIOS,
+            "jsonRepresentationIOS": product.jsonRepresentationIOS,
             
-            // Additional iOS fields (can be enhanced with actual StoreKit data)
-            "isFamilyShareableIOS": false, // TODO: Get from actual Product
-            "jsonRepresentationIOS": "", // TODO: Get from actual Product
+            // Additional iOS-specific fields
+            "descriptionIOS": product.descriptionIOS,  
+            "displayPriceIOS": product.displayPriceIOS,
+            "priceIOS": product.priceIOS,
             
-            // Deprecated fields for backward compatibility
-            "displayName": product.title,
-            "isFamilyShareable": false,
-            "jsonRepresentation": ""
+            // subscriptionInfoIOS - map subscription information if available
+            "subscriptionInfoIOS": product.subscriptionPeriod != nil ? [
+                "subscriptionPeriod": [
+                    "unit": mapPeriodUnit(product.subscriptionPeriod?.unit),
+                    "value": product.subscriptionPeriod?.value ?? 0
+                ],
+                "subscriptionGroupId": product.subscriptionGroupId ?? "",
+                "introductoryOffer": product.introductoryPrice != nil ? [
+                    "displayPrice": product.introductoryPrice!.localizedPrice,
+                    "id": product.introductoryPrice!.id ?? "",
+                    "paymentMode": mapPaymentMode(product.introductoryPrice!.paymentMode),
+                    "period": [
+                        "unit": mapPeriodUnit(product.introductoryPrice!.period.unit),
+                        "value": product.introductoryPrice!.period.value
+                    ],
+                    "periodCount": product.introductoryPrice!.numberOfPeriods,
+                    "price": NSDecimalNumber(decimal: product.introductoryPrice!.price).doubleValue,
+                    "type": "introductory"
+                ] : nil,
+                "promotionalOffers": product.discounts?.map { discount in
+                    [
+                        "displayPrice": discount.localizedPrice,
+                        "id": discount.identifier,
+                        "paymentMode": discount.paymentMode,
+                        "period": [
+                            "unit": mapPeriodUnit(discount.period?.unit),
+                            "value": discount.period?.value ?? 0
+                        ],
+                        "periodCount": discount.numberOfPeriods,
+                        "price": NSDecimalNumber(decimal: discount.price).doubleValue,
+                        "type": "promotional"
+                    ]
+                } ?? []
+            ] : nil,
+            
+            // Deprecated fields for backward compatibility  
+            "isFamilyShareable": product.isFamilyShareable ?? false,
+            "jsonRepresentation": product.jsonRepresentation ?? ""
         ]
     }
     
