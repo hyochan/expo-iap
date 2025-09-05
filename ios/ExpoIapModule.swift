@@ -821,12 +821,24 @@ public class ExpoIapModule: Module {
                 
                 for sku in subscriptionSkus {
                     if let product = await self.productStore?.getProduct(productID: sku),
-                       let status = try? await product.subscription?.status.first {
-                        var willAutoRenew = false
-                        if case .verified(let info) = status.renewalInfo {
-                            willAutoRenew = info.willAutoRenew
+                       let subscription = product.subscription {
+                        do {
+                            let statuses = try await subscription.status
+                            if let s = statuses.first(where: { status in
+                                if case .verified(let info) = status.renewalInfo {
+                                    return info.currentProductID == sku
+                                }
+                                return false
+                            }) {
+                                var willAutoRenew = false
+                                if case .verified(let info) = s.renewalInfo {
+                                    willAutoRenew = info.willAutoRenew
+                                }
+                                beforeStatuses[sku] = willAutoRenew
+                            }
+                        } catch {
+                            // ignore
                         }
-                        beforeStatuses[sku] = willAutoRenew
                     }
                 }
                 
@@ -838,12 +850,18 @@ public class ExpoIapModule: Module {
                 
                 for sku in subscriptionSkus {
                     if let product = await self.productStore?.getProduct(productID: sku),
-                       let status = try? await product.subscription?.status.first,
+                       let subscription = product.subscription,
                        let result = await product.latestTransaction {
+                        let statuses = try? await subscription.status
+                        let matchedStatus = statuses?.first(where: { status in
+                            if case .verified(let info) = status.renewalInfo {
+                                return info.currentProductID == sku
+                            }
+                            return false
+                        })
                         
-                        // Check current status
                         var currentWillAutoRenew = false
-                        if case .verified(let info) = status.renewalInfo {
+                        if let s = matchedStatus, case .verified(let info) = s.renewalInfo {
                             currentWillAutoRenew = info.willAutoRenew
                         }
                         
@@ -851,7 +869,8 @@ public class ExpoIapModule: Module {
                         if previousWillAutoRenew != currentWillAutoRenew {
                             do {
                                 let transaction = try self.checkVerified(result)
-                                let purchaseMap = serializeTransaction(transaction, jwsRepresentationIOS: result.jwsRepresentation)
+                                var purchaseMap = serializeTransaction(transaction, jwsRepresentationIOS: result.jwsRepresentation)
+                                purchaseMap["willAutoRenewIOS"] = currentWillAutoRenew
                                 updatedSubscriptions.append(purchaseMap)
                             } catch {
                                 print("[ExpoIapModule] Failed to verify subscription change: \(error)")
@@ -1116,9 +1135,6 @@ public class ExpoIapModule: Module {
         }
     }
 
-    // Removed pollForSubscriptionStatusChanges - no longer needed
-    // Event sending should only happen in requestPurchase and listenForTransactions
-    
     private func getReceiptDataInternal() throws -> String {
         if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
            FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
