@@ -12,8 +12,16 @@ import withLocalOpenIAP from './withLocalOpenIAP';
 
 const pkg = require('../../package.json');
 
-// Global flag to prevent duplicate logs
-let hasLoggedPluginExecution = false;
+// Log a message only once per Node process
+const logOnce = (() => {
+  const printed = new Set<string>();
+  return (msg: string) => {
+    if (!printed.has(msg)) {
+      console.log(msg);
+      printed.add(msg);
+    }
+  };
+})();
 
 const addLineToGradle = (
   content: string,
@@ -53,9 +61,8 @@ const modifyAppBuildGradle = (gradle: string): string => {
   }
 
   // Log only once and only if we actually added dependencies
-  if (hasAddedDependency && !hasLoggedPluginExecution) {
-    console.log('🛠️ expo-iap: Added billing dependencies to build.gradle');
-  }
+  if (hasAddedDependency)
+    logOnce('🛠️ expo-iap: Added billing dependencies to build.gradle');
 
   return modified;
 };
@@ -83,17 +90,11 @@ const withIapAndroid: ConfigPlugin = (config) => {
     );
     if (!alreadyExists) {
       permissions.push(billingPerm);
-      if (!hasLoggedPluginExecution) {
-        console.log(
-          '✅ Added com.android.vending.BILLING to AndroidManifest.xml',
-        );
-      }
+      logOnce('✅ Added com.android.vending.BILLING to AndroidManifest.xml');
     } else {
-      if (!hasLoggedPluginExecution) {
-        console.log(
-          'ℹ️ com.android.vending.BILLING already exists in AndroidManifest.xml',
-        );
-      }
+      logOnce(
+        'ℹ️ com.android.vending.BILLING already exists in AndroidManifest.xml',
+      );
     }
 
     return config;
@@ -107,7 +108,7 @@ const withIapIOS: ConfigPlugin = (config) => {
   return withDangerousMod(config, [
     'ios',
     async (config) => {
-      const { platformProjectRoot } = config.modRequest;
+      const {platformProjectRoot} = config.modRequest;
       const podfilePath = path.join(platformProjectRoot, 'Podfile');
 
       if (!fs.existsSync(podfilePath)) {
@@ -120,18 +121,15 @@ const withIapIOS: ConfigPlugin = (config) => {
       const cdnLine = `source 'https://cdn.cocoapods.org/'`;
       if (!content.includes(cdnLine)) {
         content = `${cdnLine}\n\n${content}`;
-        if (!hasLoggedPluginExecution) {
-          console.log('📦 expo-iap: Added CocoaPods CDN source to Podfile');
-        }
+        logOnce('📦 expo-iap: Added CocoaPods CDN source to Podfile');
       }
 
       // 2) Remove any lingering local OpenIAP pod injection
-      const localPodRegex = /^\s*pod\s+'openiap'\s*,\s*:path\s*=>\s*['"][^'"]+['"][^\n]*$/gm;
+      const localPodRegex =
+        /^\s*pod\s+'openiap'\s*,\s*:path\s*=>\s*['"][^'"]+['"][^\n]*$/gm;
       if (localPodRegex.test(content)) {
         content = content.replace(localPodRegex, '').replace(/\n{3,}/g, '\n\n');
-        if (!hasLoggedPluginExecution) {
-          console.log('🧹 expo-iap: Removed local OpenIAP pod from Podfile');
-        }
+        logOnce('🧹 expo-iap: Removed local OpenIAP pod from Podfile');
       }
 
       fs.writeFileSync(podfilePath, content);
@@ -147,24 +145,29 @@ export interface ExpoIapPluginOptions {
   enableLocalDev?: boolean;
 }
 
-const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (config, options) => {
+const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
+  config,
+  options,
+) => {
   try {
     // Apply Android modifications
     let result = withIapAndroid(config);
 
     // iOS: choose one path to avoid overlap
     if (options?.enableLocalDev || options?.localPath) {
-      const localPath = options.localPath || '/Users/crossplatformkorea/Github/hyodotdev/openiap-apple';
-      console.log(`🔧 [expo-iap] Enabling local OpenIAP development at: ${localPath}`);
-      result = withLocalOpenIAP(result, { localPath });
+      const localPath =
+        options.localPath ||
+        '/Users/crossplatformkorea/Github/hyodotdev/openiap-apple';
+      logOnce(
+        `🔧 [expo-iap] Enabling local OpenIAP development at: ${localPath}`,
+      );
+      result = withLocalOpenIAP(result, {localPath});
     } else {
       // Ensure iOS Podfile is set up to resolve public CocoaPods specs
       result = withIapIOS(result);
-      console.log('📦 [expo-iap] Using OpenIAP from CocoaPods');
+      logOnce('📦 [expo-iap] Using OpenIAP from CocoaPods');
     }
-    
-    // Set flag after first execution to prevent duplicate logs
-    hasLoggedPluginExecution = true;
+
     return result;
   } catch (error) {
     WarningAggregator.addWarningAndroid(
