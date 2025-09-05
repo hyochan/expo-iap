@@ -48,8 +48,12 @@ const config: Config = {
           lastVersion: 'current',
           versions: {
             current: {
-              label: '2.8 (Current)',
+              label: '2.9 (Current)',
               path: '',
+            },
+            '2.9': {
+              label: '2.9',
+              path: '2.9',
             },
             '2.7': {
               label: '2.7',

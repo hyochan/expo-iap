@@ -171,30 +171,6 @@ For other iOS-specific types and enums, refer to the [iOS setup guide](../gettin
 
 For Android-specific types and enums, refer to the [Android setup guide](../getting-started/setup-android.md).
 
-## Event Types
-
-### OpenIapEvent
-
-Event names for purchase listeners.
-
-```typescript
-enum OpenIapEvent {
-  PurchaseUpdated = 'purchase-updated',
-  PurchaseError = 'purchase-error',
-}
-```
-
-**Usage:**
-
-```typescript
-import { purchaseUpdatedListener, purchaseErrorListener, OpenIapEvent } from 'expo-iap';
-
-// Using with event listeners
-const subscription = purchaseUpdatedListener((purchase) => {
-  console.log('Purchase received:', purchase);
-}, OpenIapEvent.PurchaseUpdated);
-```
-
 ## Error Types
 
 For error codes and error handling types, see the [Error Codes](./error-codes.md) documentation.

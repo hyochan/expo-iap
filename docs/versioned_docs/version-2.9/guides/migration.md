@@ -252,46 +252,6 @@ useEffect(() => {
 }, [currentPurchaseError]);
 ```
 
-## Version-Specific Breaking Changes
-
-### v2.9.0 Breaking Changes
-
-**IapEvent → OpenIapEvent**
-
-The `IapEvent` enum has been renamed to `OpenIapEvent` to align with the OpenIAP specification:
-
-```tsx
-// ❌ Before v2.9.0
-import { IapEvent } from 'expo-iap';
-
-purchaseUpdatedListener((purchase) => {
-  console.log('Purchase updated');
-}, IapEvent.PurchaseUpdated);
-
-// ✅ After v2.9.0
-import { OpenIapEvent } from 'expo-iap';
-
-purchaseUpdatedListener((purchase) => {
-  console.log('Purchase updated');
-}, OpenIapEvent.PurchaseUpdated);
-```
-
-**Note:** The event values remain the same (`'purchase-updated'`, `'purchase-error'`), only the enum name has changed.
-
-### v2.8.7 Changes
-
-**fetchProducts() Introduction**
-
-`fetchProducts()` was introduced to replace `requestProducts()` following OpenIAP terminology:
-
-```tsx
-// ❌ Old (deprecated in v2.8.7)
-const products = await requestProducts({ skus: ['product1'], type: 'inapp' });
-
-// ✅ New (v2.8.7+)
-const products = await fetchProducts({ skus: ['product1'], type: 'inapp' });
-```
-
 ## API Changes
 
 ### Method Naming Differences
