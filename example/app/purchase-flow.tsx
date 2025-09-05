@@ -12,13 +12,8 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import {signal, effect} from '@preact/signals-react';
 import {requestPurchase, useIAP, getAppTransactionIOS} from '../../src';
-import type {
-  Product,
-  Purchase,
-  PurchaseError,
-} from '../../src/ExpoIap.types';
-
-const PRODUCT_IDS = ['dev.hyo.martie.10bulbs', 'dev.hyo.martie.30bulbs'];
+import {PRODUCT_IDS} from '../../src/utils/constants';
+import type {Product, Purchase, PurchaseError} from '../../src/ExpoIap.types';
 
 /**
  * Purchase Flow Example - In-App Products
@@ -38,9 +33,13 @@ const modalVisibleSignal = signal(false);
 
 export default function PurchaseFlow() {
   // React state synced with signals
-  const [purchaseResult, setPurchaseResult] = useState(purchaseResultSignal.value);
+  const [purchaseResult, setPurchaseResult] = useState(
+    purchaseResultSignal.value,
+  );
   const [isProcessing, setIsProcessing] = useState(isProcessingSignal.value);
-  const [selectedProduct, setSelectedProduct] = useState(selectedProductSignal.value);
+  const [selectedProduct, setSelectedProduct] = useState(
+    selectedProductSignal.value,
+  );
   const [modalVisible, setModalVisible] = useState(modalVisibleSignal.value);
 
   // Subscribe to signal changes
@@ -52,9 +51,9 @@ export default function PurchaseFlow() {
       effect(() => setModalVisible(modalVisibleSignal.value)),
     ];
 
-    return () => unsubscribes.forEach(fn => fn());
+    return () => unsubscribes.forEach((fn) => fn());
   }, []);
-  
+
   // Use the useIAP hook for managing purchases
   const {connected, products, requestProducts, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {

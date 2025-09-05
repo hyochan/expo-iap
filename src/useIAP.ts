@@ -107,9 +107,7 @@ type UseIap = {
 };
 
 export interface UseIAPOptions {
-  onPurchaseSuccess?: (
-    purchase: Purchase,
-  ) => void;
+  onPurchaseSuccess?: (purchase: Purchase) => void;
   onPurchaseError?: (error: PurchaseError) => void;
   onSyncError?: (error: Error) => void;
   shouldAutoSyncPurchases?: boolean; // New option to control auto-syncing
@@ -125,12 +123,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const [products, setProducts] = useState<Product[]>([]);
   const [promotedProductsIOS] = useState<Purchase[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionProduct[]>([]);
-  const [purchaseHistories, setPurchaseHistories] = useState<Purchase[]>(
-    [],
-  );
-  const [availablePurchases, setAvailablePurchases] = useState<
-    Purchase[]
-  >([]);
+  const [purchaseHistories, setPurchaseHistories] = useState<Purchase[]>([]);
+  const [availablePurchases, setAvailablePurchases] = useState<Purchase[]>([]);
   const [currentPurchase, setCurrentPurchase] = useState<Purchase>();
   const [promotedProductIOS, setPromotedProductIOS] = useState<Product>();
   const [currentPurchaseError, setCurrentPurchaseError] =
@@ -261,7 +255,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       type?: 'inapp' | 'subs';
     }): Promise<void> => {
       console.warn(
-        "`requestProducts` is deprecated in useIAP hook. Use the new `fetchProducts` method instead. The 'request' prefix should only be used for event-based operations."
+        "`requestProducts` is deprecated in useIAP hook. Use the new `fetchProducts` method instead. The 'request' prefix should only be used for event-based operations.",
       );
       return fetchProductsInternal(params);
     },
@@ -270,7 +264,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
 
   const getAvailablePurchasesInternal = useCallback(async (): Promise<void> => {
     try {
-      const result = await getAvailablePurchases();
+      const result = await getAvailablePurchases({
+        alsoPublishToEventListenerIOS: false,
+        onlyIncludeActiveItemsIOS: true,
+      });
       setAvailablePurchases(result);
     } catch (error) {
       console.error('Error fetching available purchases:', error);

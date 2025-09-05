@@ -13,6 +13,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import {signal, effect} from '@preact/signals-react';
 import {requestPurchase, useIAP, showManageSubscriptionsIOS} from '../../src';
+import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {
   SubscriptionProduct,
   PurchaseError,
@@ -339,9 +340,7 @@ export default function SubscriptionFlow() {
   // Load subscriptions and check status when component mounts
   useEffect(() => {
     if (connected) {
-      const subscriptionIds = [
-        'dev.hyo.martie.premium', // Example subscription ID
-      ];
+      const subscriptionIds = SUBSCRIPTION_PRODUCT_IDS;
       console.log('Connected to store, loading subscription products...');
       // requestProducts is event-based, not promise-based
       // Results will be available through the useIAP hook's subscriptions state
@@ -449,8 +448,7 @@ export default function SubscriptionFlow() {
   };
 
   const retryLoadSubscriptions = () => {
-    const subscriptionIds = ['dev.hyo.martie.premium'];
-    fetchProducts({skus: subscriptionIds, type: 'subs'});
+    fetchProducts({skus: SUBSCRIPTION_PRODUCT_IDS, type: 'subs'});
   };
 
   const getSubscriptionDisplayPrice = (

@@ -10,12 +10,8 @@ import {
   Platform,
 } from 'react-native';
 import {useIAP} from '../../src';
+import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {Purchase, PurchaseError} from '../../src/ExpoIap.types';
-
-// Define subscription IDs at component level like in the working example
-const subscriptionIds = [
-  'dev.hyo.martie.premium', // Same as subscription-flow
-];
 
 export default function AvailablePurchases() {
   const [loading, setLoading] = useState(false);
@@ -51,7 +47,7 @@ export default function AvailablePurchases() {
     activeSubscriptions,
     getAvailablePurchases,
     getActiveSubscriptions,
-    requestProducts,
+    fetchProducts,
     finishTransaction,
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
@@ -132,7 +128,7 @@ export default function AvailablePurchases() {
         '[AVAILABLE-PURCHASES] Connected to store, loading subscription products...',
       );
       // Request products first - this is event-based, not promise-based
-      requestProducts({skus: subscriptionIds, type: 'subs'});
+      fetchProducts({skus: SUBSCRIPTION_PRODUCT_IDS, type: 'subs'});
       console.log(
         '[AVAILABLE-PURCHASES] Product loading request sent - waiting for results...',
       );
@@ -150,12 +146,7 @@ export default function AvailablePurchases() {
         },
       );
     }
-  }, [
-    connected,
-    requestProducts,
-    getAvailablePurchases,
-    getActiveSubscriptions,
-  ]);
+  }, [connected, fetchProducts, getAvailablePurchases, getActiveSubscriptions]);
 
   // Check subscription status separately like subscription-flow does
   useEffect(() => {

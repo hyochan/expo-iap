@@ -4,19 +4,18 @@
 
 ### Added
 
-- **iOS**: Integrated [OpenIAP Apple](https://github.com/hyodotdev/openiap-apple) v1.1.5
-- Updated types to match [OpenIAP v1.1.0 specification](https://www.openiap.dev/docs/versions#v1-1-0)
+- iOS: Integrated OpenIAP Apple v1.1.5
+- Updated types to match OpenIAP v1.1.0 specification
 - Enhanced error handling with `PurchaseError` type and native error code mapping
 - New type system: `ProductRequest`, `RequestPurchaseProps`, `ReceiptValidationProps`
 - Improved receipt validation with `ReceiptValidationResult`
-- Root-level type re-exports to remove deep imports (e.g., `ProductAndroid`, `ProductIOS`, `PaymentDiscount`)
+- Root-level type re-exports to avoid deep imports (e.g., `ProductAndroid`, `ProductIOS`, `PaymentDiscount`)
 
 ### Changed
 
-- Updated `serializePurchase` and `serializeProduct` for new OpenIAP structure
+- Updated serializers for purchases/products to follow OpenIAP structure
 - Updated listener setup to use new OpenIAP methods (`purchaseUpdatedListener`, `purchaseErrorListener`)
 - Added unified `removeAllListeners()` for cleanup
-- Avoid deep imports: consumers can import all public types from `expo-iap` root
 
 ### Fixed
 
@@ -26,7 +25,30 @@
 
 ### Note
 
-- Android native module integration with OpenIAP Android planned for v3.0.0
+- Android native module integration with OpenIAP Android is planned for v3.0.0
+
+## [2.8.8] - 2025-09-05
+
+### Added
+
+- Enhanced `ActiveSubscription` interface with backend validation fields:
+  - `transactionId` - Transaction identifier for backend validation  
+  - `purchaseToken` - JWT token (iOS) or purchase token (Android) for backend validation
+  - `transactionDate` - Transaction timestamp
+- Return subscription changes from `showManageSubscriptionsIOS()` as Promise data
+
+### Fixed
+
+- Fixed iOS `getAvailablePurchases({ onlyIncludeActiveItemsIOS: true })` returning expired subscriptions
+  - Now correctly uses `Transaction.currentEntitlements` for better performance and accuracy
+- Fixed subscription status matching to specific SKU in `showManageSubscriptionsIOS()`
+  - Prevents picking wrong status when multiple statuses exist in a subscription group
+
+### Changed
+
+- Removed unnecessary event sending from `getAvailableItems()` - events are only sent from `requestPurchase()`
+- Removed polling logic from subscription status monitoring for cleaner code
+- Updated to comply with OpenIAP v1.1.1 specification
 
 ## [2.8.7] - 2025-09-03
 
