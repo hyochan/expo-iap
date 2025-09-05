@@ -48,6 +48,8 @@ describe('Subscription Helper Functions', () => {
         expect(result).toHaveLength(1);
         expect(result[0].productId).toBe('test.subscription');
         expect(result[0].isActive).toBe(true);
+        expect(result[0].transactionId).toBe('trans-123');
+        expect(result[0].transactionDate).toBe(currentTime);
         expect(result[0].expirationDateIOS).toBeInstanceOf(Date);
         expect(result[0].daysUntilExpirationIOS).toBe(7);
         expect(result[0].willExpireSoon).toBe(true); // <= 7 days
@@ -147,6 +149,27 @@ describe('Subscription Helper Functions', () => {
         expect(result[0].daysUntilExpirationIOS).toBe(5);
       });
 
+      it('should include purchaseToken when available', async () => {
+        const mockPurchases: Purchase[] = [
+          {
+            id: 'trans-123',
+            productId: 'test.subscription',
+            transactionId: 'trans-123',
+            transactionDate: currentTime,
+            platform: 'ios',
+            transactionReceipt: 'receipt',
+            purchaseToken: 'jwt-token-example',
+            expirationDateIOS: currentTime + (7 * oneDayMs),
+          } as Purchase,
+        ];
+
+        (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
+
+        const result = await getActiveSubscriptions();
+
+        expect(result[0].purchaseToken).toBe('jwt-token-example');
+      });
+
       it('should not mark subscription as expiring soon if > 7 days remaining', async () => {
         const mockPurchases: Purchase[] = [
           {
@@ -194,6 +217,8 @@ describe('Subscription Helper Functions', () => {
         expect(result).toHaveLength(1);
         expect(result[0].productId).toBe('test.subscription');
         expect(result[0].isActive).toBe(true);
+        expect(result[0].transactionId).toBe('trans-123');
+        expect(result[0].transactionDate).toBe(currentTime);
         expect(result[0].autoRenewingAndroid).toBe(true);
         expect(result[0].willExpireSoon).toBe(false);
       });

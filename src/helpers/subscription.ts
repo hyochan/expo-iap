@@ -4,6 +4,9 @@ import { getAvailablePurchases } from '../index';
 export interface ActiveSubscription {
   productId: string;
   isActive: boolean;
+  transactionId: string; // Transaction identifier for backend validation
+  purchaseToken?: string; // JWT token (iOS) or purchase token (Android) for backend validation
+  transactionDate: number; // Transaction timestamp
   expirationDateIOS?: Date;
   autoRenewingAndroid?: boolean;
   environmentIOS?: string;
@@ -72,6 +75,9 @@ export const getActiveSubscriptions = async (
       const subscription: ActiveSubscription = {
         productId: purchase.productId,
         isActive: true,
+        transactionId: purchase.transactionId || purchase.id,
+        purchaseToken: purchase.purchaseToken,
+        transactionDate: purchase.transactionDate,
       };
       
       // Add platform-specific details

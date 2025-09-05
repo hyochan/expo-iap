@@ -174,15 +174,14 @@ export const beginRefundRequestIOS = (
 
 /**
  * Shows the system UI for managing subscriptions.
- * When the user changes subscription renewal status, the system will emit events to
- * purchaseUpdatedListener and transactionUpdatedIOS listeners.
+ * Returns an array of subscriptions that had status changes after the UI is closed.
  *
- * @returns Promise resolving to null on success
+ * @returns Promise<Purchase[]> - Array of subscriptions with status changes (e.g., auto-renewal toggled)
  * @throws Error if called on non-iOS platform
  *
  * @platform iOS
  */
-export const showManageSubscriptionsIOS = (): Promise<null> => {
+export const showManageSubscriptionsIOS = (): Promise<Purchase[]> => {
   return ExpoIapModule.showManageSubscriptionsIOS();
 };
 
@@ -421,7 +420,7 @@ export const beginRefundRequest = (
 /**
  * @deprecated Use `showManageSubscriptionsIOS` instead. This function will be removed in version 3.0.0.
  */
-export const showManageSubscriptions = (): Promise<null> => {
+export const showManageSubscriptions = (): Promise<Purchase[]> => {
   console.warn(
     '`showManageSubscriptions` is deprecated. Use `showManageSubscriptionsIOS` instead. This function will be removed in version 3.0.0.',
   );
