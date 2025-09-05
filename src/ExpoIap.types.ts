@@ -1,9 +1,9 @@
-import {
+import type {
   ProductAndroid,
   PurchaseAndroid,
   ProductSubscriptionAndroid,
 } from './types/ExpoIapAndroid.types';
-import {
+import type {
   ProductIOS,
   PurchaseIOS,
   ProductSubscriptionIOS,
@@ -61,15 +61,9 @@ export type SubscriptionProduct =
   | (ProductSubscriptionAndroid & AndroidPlatform)
   | (ProductSubscriptionIOS & IosPlatform);
 
-// Re-export platform-specific types
-export type {
-  PurchaseAndroid,
-  ProductSubscriptionAndroid,
-} from './types/ExpoIapAndroid.types';
-export type {
-  PurchaseIOS,
-  ProductSubscriptionIOS,
-} from './types/ExpoIapIOS.types';
+// Re-export all platform-specific types to avoid deep imports
+export * from './types/ExpoIapAndroid.types';
+export * from './types/ExpoIapIOS.types';
 
 // Unified purchase type for both products and subscriptions
 export type Purchase =

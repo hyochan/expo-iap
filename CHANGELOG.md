@@ -9,12 +9,14 @@
 - Enhanced error handling with `PurchaseError` type and native error code mapping
 - New type system: `ProductRequest`, `RequestPurchaseProps`, `ReceiptValidationProps`
 - Improved receipt validation with `ReceiptValidationResult`
+- Root-level type re-exports to remove deep imports (e.g., `ProductAndroid`, `ProductIOS`, `PaymentDiscount`)
 
 ### Changed
 
 - Updated `serializePurchase` and `serializeProduct` for new OpenIAP structure
 - Updated listener setup to use new OpenIAP methods (`purchaseUpdatedListener`, `purchaseErrorListener`)
 - Added unified `removeAllListeners()` for cleanup
+- Avoid deep imports: consumers can import all public types from `expo-iap` root
 
 ### Fixed
 
