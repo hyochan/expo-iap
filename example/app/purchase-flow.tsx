@@ -55,7 +55,7 @@ export default function PurchaseFlow() {
   }, []);
 
   // Use the useIAP hook for managing purchases
-  const {connected, products, requestProducts, finishTransaction} = useIAP({
+  const {connected, products, fetchProducts, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
       console.log('Purchase successful:', purchase);
       isProcessingSignal.value = false;
@@ -102,9 +102,9 @@ export default function PurchaseFlow() {
   // Load products when component mounts
   useEffect(() => {
     if (connected) {
-      requestProducts({skus: PRODUCT_IDS, type: 'inapp'});
+      fetchProducts({skus: PRODUCT_IDS, type: 'inapp'});
     }
-  }, [connected, requestProducts]);
+  }, [connected, fetchProducts]);
 
   const handlePurchase = async (itemId: string) => {
     try {
@@ -133,7 +133,7 @@ export default function PurchaseFlow() {
   };
 
   const retryLoadProducts = () => {
-    requestProducts({skus: PRODUCT_IDS, type: 'inapp'});
+    fetchProducts({skus: PRODUCT_IDS, type: 'inapp'});
   };
 
   const getProductDisplayPrice = (product: Product): string => {
