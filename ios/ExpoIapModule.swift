@@ -498,7 +498,6 @@ public class ExpoIapModule: Module {
                             addTransaction(transaction: transaction, jwsRepresentationIOS: verification.jwsRepresentation)
                         }
                     } catch {
-                        // Skip unverified transactions
                         print("[ExpoIapModule] Failed to verify transaction: \(error)")
                     }
                 }
@@ -508,7 +507,6 @@ public class ExpoIapModule: Module {
                         let transaction = try self.checkVerified(verification)
                         addTransaction(transaction: transaction, jwsRepresentationIOS: verification.jwsRepresentation)
                     } catch {
-                        // Skip unverified transactions
                         print("[ExpoIapModule] Failed to verify transaction: \(error)")
                     }
                 }
