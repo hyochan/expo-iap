@@ -4,7 +4,10 @@ import {
   WarningAggregator,
   withAndroidManifest,
   withAppBuildGradle,
+  withDangerousMod,
 } from 'expo/config-plugins';
+import * as fs from 'fs';
+import * as path from 'path';
 import withLocalOpenIAP from './withLocalOpenIAP';
 
 const pkg = require('../../package.json');
@@ -99,6 +102,44 @@ const withIapAndroid: ConfigPlugin = (config) => {
   return config;
 };
 
+/** Ensure Podfile uses CocoaPods CDN and no stale local OpenIAP entry remains. */
+const withIapIOS: ConfigPlugin = (config) => {
+  return withDangerousMod(config, [
+    'ios',
+    async (config) => {
+      const { platformProjectRoot } = config.modRequest;
+      const podfilePath = path.join(platformProjectRoot, 'Podfile');
+
+      if (!fs.existsSync(podfilePath)) {
+        return config;
+      }
+
+      let content = fs.readFileSync(podfilePath, 'utf8');
+
+      // 1) Ensure CocoaPods CDN source is present at the very top
+      const cdnLine = `source 'https://cdn.cocoapods.org/'`;
+      if (!content.includes(cdnLine)) {
+        content = `${cdnLine}\n\n${content}`;
+        if (!hasLoggedPluginExecution) {
+          console.log('📦 expo-iap: Added CocoaPods CDN source to Podfile');
+        }
+      }
+
+      // 2) Remove any lingering local OpenIAP pod injection
+      const localPodRegex = /^\s*pod\s+'openiap'\s*,\s*:path\s*=>\s*['"][^'"]+['"][^\n]*$/gm;
+      if (localPodRegex.test(content)) {
+        content = content.replace(localPodRegex, '').replace(/\n{3,}/g, '\n\n');
+        if (!hasLoggedPluginExecution) {
+          console.log('🧹 expo-iap: Removed local OpenIAP pod from Podfile');
+        }
+      }
+
+      fs.writeFileSync(podfilePath, content);
+      return config;
+    },
+  ]);
+};
+
 export interface ExpoIapPluginOptions {
   /** Local development path for OpenIAP library */
   localPath?: string;
@@ -110,13 +151,15 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (config, options) => 
   try {
     // Apply Android modifications
     let result = withIapAndroid(config);
-    
-    // Apply iOS local development if enabled
+
+    // iOS: choose one path to avoid overlap
     if (options?.enableLocalDev || options?.localPath) {
       const localPath = options.localPath || '/Users/crossplatformkorea/Github/hyodotdev/openiap-apple';
       console.log(`🔧 [expo-iap] Enabling local OpenIAP development at: ${localPath}`);
       result = withLocalOpenIAP(result, { localPath });
     } else {
+      // Ensure iOS Podfile is set up to resolve public CocoaPods specs
+      result = withIapIOS(result);
       console.log('📦 [expo-iap] Using OpenIAP from CocoaPods');
     }
     
