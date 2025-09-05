@@ -312,6 +312,9 @@ public class ExpoIapModule: Module {
     private var promotedPayment: SKPayment?
     private var promotedProduct: SKProduct?
     
+    // Constants
+    private let subscriptionChangePropagationDelay: UInt64 = 1_500_000_000 // 1.5 seconds in nanoseconds
+    
     // Add a flag to track initialization state
     private var isInitialized = false
 
@@ -514,6 +517,7 @@ public class ExpoIapModule: Module {
                         }
                     } catch {
                         // Skip unverified transactions
+                        print("[ExpoIapModule] Failed to verify transaction: \(error)")
                     }
                 }
             } else {
@@ -524,6 +528,7 @@ public class ExpoIapModule: Module {
                         addTransaction(transaction: transaction, jwsRepresentationIOS: verification.jwsRepresentation)
                     } catch {
                         // Skip unverified transactions
+                        print("[ExpoIapModule] Failed to verify transaction: \(error)")
                     }
                 }
             }
@@ -854,7 +859,7 @@ public class ExpoIapModule: Module {
                 try await AppStore.showManageSubscriptions(in: windowScene)
                 
                 // Wait a bit for changes to propagate
-                try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
+                try? await Task.sleep(nanoseconds: subscriptionChangePropagationDelay)
                 
                 // Check for changes and return updated subscriptions
                 var updatedSubscriptions: [[String: Any?]] = []
@@ -881,6 +886,7 @@ public class ExpoIapModule: Module {
                                 updatedSubscriptions.append(purchaseMap)
                             } catch {
                                 // Skip if verification fails
+                                print("[ExpoIapModule] Failed to verify subscription change: \(error)"
                             }
                         }
                     }
@@ -1144,69 +1150,6 @@ public class ExpoIapModule: Module {
 
     // Removed pollForSubscriptionStatusChanges - no longer needed
     // Event sending should only happen in requestPurchase and listenForTransactions
-        subscriptionPollingTask?.cancel()
-        subscriptionPollingTask = Task {
-            try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
-            
-            var previousStatuses: [String: Bool] = [:] // Track auto-renewal state with Bool
-            
-            for sku in self.pollingSkus {
-                guard let product = await self.productStore?.getProduct(productID: sku),
-                      let status = try? await product.subscription?.status.first else { continue }
-                
-                // Track willAutoRenew as a bool value
-                var willAutoRenew = false
-                if case .verified(let info) = status.renewalInfo {
-                    willAutoRenew = info.willAutoRenew
-                }
-                previousStatuses[sku] = willAutoRenew
-            }
-
-            for _ in 1...5 {
-                try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
-                if Task.isCancelled {
-                    return
-                }
-                
-                for sku in self.pollingSkus {
-                    guard let product = await self.productStore?.getProduct(productID: sku),
-                          let status = try? await product.subscription?.status.first,
-                          let result = await product.latestTransaction else { continue }
-                    // Try to verify the transaction
-                    let transaction: Transaction
-                    do {
-                        transaction = try self.checkVerified(result)
-                    } catch {
-                        continue // Skip if verification fails
-                    }
-                    
-                    // Track current auto-renewal state
-                    var currentWillAutoRenew = false
-                    if case .verified(let info) = status.renewalInfo {
-                        currentWillAutoRenew = info.willAutoRenew
-                    }
-                    
-                    // Compare with previous state
-                    if let previousWillAutoRenew = previousStatuses[sku], 
-                       previousWillAutoRenew != currentWillAutoRenew {
-                        
-                        // Use the jwsRepresentation when serializing the transaction
-                        var purchaseMap = serializeTransaction(transaction, jwsRepresentationIOS: result.jwsRepresentation)
-                        
-                        if case .verified(let renewalInfo) = status.renewalInfo {
-                            if let renewalInfoDict = serializeRenewalInfo(.verified(renewalInfo)) {
-                                purchaseMap["renewalInfo"] = renewalInfoDict
-                            }
-                        }
-                        
-                        // Don't send event here - only track status change
-                        // self.sendEvent(IapEvent.PurchaseUpdated, purchaseMap)
-                        previousStatuses[sku] = currentWillAutoRenew
-                    }
-                }
-            }
-        }
-    }
     
     private func getReceiptDataInternal() throws -> String {
         if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
