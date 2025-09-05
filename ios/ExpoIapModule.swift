@@ -18,6 +18,9 @@ struct OpenIapEvent {
 public class ExpoIapModule: Module {
     private let iapModule = OpenIapModule.shared
     private var hasListeners = false
+    private var purchaseUpdatedSubscription: Subscription?
+    private var purchaseErrorSubscription: Subscription?
+    private var promotedProductSubscription: Subscription?
     
     public func definition() -> ModuleDefinition {
         Name("ExpoIap")
@@ -44,7 +47,9 @@ public class ExpoIapModule: Module {
             logDebug("endConnection called")
             
             if self.hasListeners {
-                // OpenIAP now exposes unified listener management
+                // Remove explicit subscriptions first to avoid dangling references
+                self.cleanupPurchaseListeners()
+                // OpenIAP exposes unified listener management as well
                 self.iapModule.removeAllListeners()
                 self.hasListeners = false
             }
@@ -262,11 +267,30 @@ public class ExpoIapModule: Module {
     // MARK: - Purchase Listeners
     
     private func setupPurchaseListeners() {
-        _ = iapModule.purchaseUpdatedListener { [weak self] purchase in
+        purchaseUpdatedSubscription = iapModule.purchaseUpdatedListener { [weak self] purchase in
             self?.handlePurchaseUpdated(purchase)
         }
-        _ = iapModule.purchaseErrorListener { [weak self] error in
+        purchaseErrorSubscription = iapModule.purchaseErrorListener { [weak self] error in
             self?.handlePurchaseError(error)
+        }
+        // If promoted product events are used later, keep the subscription
+        // promotedProductSubscription = iapModule.promotedProductListenerIOS { [weak self] sku in
+        //     // Currently not forwarded; add when needed
+        // }
+    }
+
+    private func cleanupPurchaseListeners() {
+        if let sub = purchaseUpdatedSubscription {
+            iapModule.removeListener(sub)
+            purchaseUpdatedSubscription = nil
+        }
+        if let sub = purchaseErrorSubscription {
+            iapModule.removeListener(sub)
+            purchaseErrorSubscription = nil
+        }
+        if let sub = promotedProductSubscription {
+            iapModule.removeListener(sub)
+            promotedProductSubscription = nil
         }
     }
     
