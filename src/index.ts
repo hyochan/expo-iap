@@ -25,15 +25,15 @@ import {
   RequestSubscriptionProps,
   RequestPurchaseProps,
   SubscriptionProduct,
+  // Bring platform types from the barrel to avoid deep imports
+  PurchaseAndroid,
+  PaymentDiscount,
 } from './ExpoIap.types';
-import {PurchaseAndroid} from './types/ExpoIapAndroid.types';
-import {PaymentDiscount} from './types/ExpoIapIOS.types';
 
 // Export all types
 export * from './ExpoIap.types';
 export * from './modules/android';
 export * from './modules/ios';
-export type {AppTransactionIOS} from './types/ExpoIapIOS.types';
 
 // Export subscription helpers
 export {

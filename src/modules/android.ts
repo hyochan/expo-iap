@@ -5,8 +5,7 @@ import {Linking} from 'react-native';
 import ExpoIapModule from '../ExpoIapModule';
 
 // Types
-import {PurchaseResult} from '../ExpoIap.types';
-import {ReceiptAndroid} from '../types/ExpoIapAndroid.types';
+import type {PurchaseResult, ReceiptAndroid} from '../ExpoIap.types';
 
 // Type guards
 export function isProductAndroid<T extends {platform?: string}>(
@@ -26,7 +25,7 @@ export function isProductAndroid<T extends {platform?: string}>(
  * @param {string} params.sku - The product's SKU (on Android)
  * @param {string} params.packageName - The package name of your Android app (e.g., 'com.example.app')
  * @returns {Promise<void>}
- * 
+ *
  * @example
  * ```typescript
  * await deepLinkToSubscriptionsAndroid({
@@ -43,9 +42,11 @@ export const deepLinkToSubscriptionsAndroid = async ({
   packageName: string;
 }): Promise<void> => {
   if (!packageName) {
-    throw new Error('packageName is required for deepLinkToSubscriptionsAndroid');
+    throw new Error(
+      'packageName is required for deepLinkToSubscriptionsAndroid',
+    );
   }
-  
+
   return Linking.openURL(
     `https://play.google.com/store/account/subscriptions?package=${packageName}&sku=${sku}`,
   );
@@ -118,11 +119,9 @@ export const acknowledgePurchaseAndroid = ({
  * Open the Google Play Store to redeem offer codes (Android only).
  * Note: Google Play does not provide a direct API to redeem codes within the app.
  * This function opens the Play Store where users can manually enter their codes.
- * 
+ *
  * @returns {Promise<void>}
  */
 export const openRedeemOfferCodeAndroid = async (): Promise<void> => {
-  return Linking.openURL(
-    `https://play.google.com/redeem?code=`
-  );
+  return Linking.openURL(`https://play.google.com/redeem?code=`);
 };

@@ -5,15 +5,13 @@ import {purchaseUpdatedListener} from '..';
 import ExpoIapModule from '../ExpoIapModule';
 
 // Types
-import {
+import type {
   Product,
   Purchase,
   PurchaseError,
-} from '../ExpoIap.types';
-import type {
   ProductStatusIOS,
   AppTransactionIOS,
-} from '../types/ExpoIapIOS.types';
+} from '../ExpoIap.types';
 import {Linking} from 'react-native';
 
 export type TransactionEvent = {
@@ -137,9 +135,7 @@ export const subscriptionStatusIOS = (
  *
  * @platform iOS
  */
-export const currentEntitlementIOS = (
-  sku: string,
-): Promise<Purchase> => {
+export const currentEntitlementIOS = (sku: string): Promise<Purchase> => {
   return ExpoIapModule.currentEntitlementIOS(sku);
 };
 
@@ -324,7 +320,7 @@ export const buyPromotedProductIOS = (): Promise<void> => {
 
 /**
  * Get pending transactions that haven't been finished yet (iOS only).
- * 
+ *
  * @returns Promise resolving to array of pending transactions
  * @platform iOS
  */
@@ -334,9 +330,9 @@ export const getPendingTransactionsIOS = (): Promise<any[]> => {
 
 /**
  * Clear a specific transaction (iOS only).
- * 
+ *
  * @returns Promise resolving when transaction is cleared
- * @platform iOS  
+ * @platform iOS
  */
 export const clearTransactionIOS = (): Promise<void> => {
   return ExpoIapModule.clearTransactionIOS();
