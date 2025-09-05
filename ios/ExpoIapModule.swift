@@ -246,9 +246,11 @@ public class ExpoIapModule: Module {
             return try await self.iapModule.presentCodeRedemptionSheetIOS()
         }
         
-        AsyncFunction("showManageSubscriptionsIOS") { () async throws -> Bool in
+        AsyncFunction("showManageSubscriptionsIOS") { () async throws -> [[String: Any?]] in
             logDebug("showManageSubscriptionsIOS called")
-            return try await self.iapModule.showManageSubscriptionsIOS()
+            // OpenIAP returns an array of updated subscription purchase maps
+            let updated = try await self.iapModule.showManageSubscriptionsIOS()
+            return updated
         }
         
         AsyncFunction("isTransactionVerifiedIOS") { (sku: String) async -> Bool in

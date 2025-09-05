@@ -4,7 +4,7 @@
 
 ### Added
 
-- iOS: Integrated OpenIAP Apple v1.1.5
+- iOS: Integrated OpenIAP Apple v1.1.6
 - Updated types to match OpenIAP v1.1.0 specification
 - Enhanced error handling with `PurchaseError` type and native error code mapping
 - New type system: `ProductRequest`, `RequestPurchaseProps`, `ReceiptValidationProps`
@@ -16,6 +16,7 @@
 - Updated serializers for purchases/products to follow OpenIAP structure
 - Updated listener setup to use new OpenIAP methods (`purchaseUpdatedListener`, `purchaseErrorListener`)
 - Added unified `removeAllListeners()` for cleanup
+ - `showManageSubscriptionsIOS()` now returns updated subscriptions array (not boolean)
 
 ### Fixed
 
