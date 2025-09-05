@@ -100,10 +100,10 @@ describe('Core Functions Tests', () => {
   });
 
   describe('Enums and Constants', () => {
-    it('should export IapEvent enum', () => {
-      expect(ExpoIap.IapEvent).toBeDefined();
-      expect(ExpoIap.IapEvent.PurchaseUpdated).toBe('purchase-updated');
-      expect(ExpoIap.IapEvent.PurchaseError).toBe('purchase-error');
+    it('should export OpenIapEvent enum', () => {
+      expect(ExpoIap.OpenIapEvent).toBeDefined();
+      expect(ExpoIap.OpenIapEvent.PurchaseUpdated).toBe('purchase-updated');
+      expect(ExpoIap.OpenIapEvent.PurchaseError).toBe('purchase-error');
     });
 
     it('should export ErrorCode enum', () => {

@@ -34,7 +34,7 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: string} | void> = (
       let podfileContent = fs.readFileSync(podfilePath, 'utf8');
 
       // Check if already has the local pod reference
-      if (podfileContent.includes("pod 'OpenIAP',")) {
+      if (podfileContent.includes("pod 'openiap',")) {
         console.log('✅ Local OpenIAP pod already configured');
         return config;
       }
@@ -48,7 +48,7 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: string} | void> = (
           return `${match}
   
   # Local OpenIAP pod for development (added by expo-iap plugin)
-  pod 'OpenIAP', :path => '${localOpenIapPath}'`;
+  pod 'openiap', :path => '${localOpenIapPath}'`;
         });
 
         // Write back to Podfile

@@ -85,7 +85,7 @@ object IapErrorCode {
 /**
  * IAP Event constants
  */
-object IapEvent {
+object OpenIapEvent {
     const val PURCHASE_UPDATED = "purchase-updated"
     const val PURCHASE_ERROR = "purchase-error"
 }

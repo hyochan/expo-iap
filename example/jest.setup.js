@@ -23,18 +23,29 @@ jest.mock('expo-modules-core', () => ({
 }));
 
 // Mock the expo-iap module
-jest.mock('expo-iap', () => ({
+jest.mock('expo-iap', () => {
+  // Create stable mock functions inside the factory
+  const mockFetchProducts = jest.fn();
+  const mockGetAvailablePurchases = jest.fn();
+  const mockFinishTransaction = jest.fn();
+  const mockGetActiveSubscriptions = jest.fn();
+  const mockGetProducts = jest.fn();
+  const mockGetSubscriptions = jest.fn();
+  const mockRequestPurchase = jest.fn();
+  const mockGetPurchaseHistories = jest.fn();
+  
+  return {
   // Core functions
   initConnection: jest.fn(),
   endConnection: jest.fn(),
-  getProducts: jest.fn(),
-  getSubscriptions: jest.fn(),
-  fetchProducts: jest.fn(),
+  getProducts: mockGetProducts,
+  getSubscriptions: mockGetSubscriptions,
+  fetchProducts: mockFetchProducts,
   requestProducts: jest.fn(),
-  requestPurchase: jest.fn(),
-  finishTransaction: jest.fn(),
-  getPurchaseHistories: jest.fn(),
-  getAvailablePurchases: jest.fn(),
+  requestPurchase: mockRequestPurchase,
+  finishTransaction: mockFinishTransaction,
+  getPurchaseHistories: mockGetPurchaseHistories,
+  getAvailablePurchases: mockGetAvailablePurchases,
 
   // iOS functions with IOS suffix
   getStorefrontIOS: jest.fn(),
@@ -78,10 +89,26 @@ jest.mock('expo-iap', () => ({
   purchaseErrorListener: jest.fn(),
 
   // Hook
-  useIAP: jest.fn(),
+  useIAP: jest.fn(() => ({
+    connected: false,
+    products: [],
+    subscriptions: [],
+    availablePurchases: [],
+    activeSubscriptions: [],
+    currentPurchase: null,
+    currentPurchaseError: null,
+    fetchProducts: mockFetchProducts,
+    getProducts: mockGetProducts,
+    getSubscriptions: mockGetSubscriptions,
+    requestPurchase: mockRequestPurchase,
+    getAvailablePurchases: mockGetAvailablePurchases,
+    getPurchaseHistories: mockGetPurchaseHistories,
+    finishTransaction: mockFinishTransaction,
+    getActiveSubscriptions: mockGetActiveSubscriptions,
+  })),
 
   // Enums
-  IapEvent: {
+  OpenIapEvent: {
     PurchaseUpdated: 'purchase-updated',
     PurchaseError: 'purchase-error',
   },
@@ -102,4 +129,5 @@ jest.mock('expo-iap', () => ({
 
   // Mock types
   AppTransactionIOS: {},
-}));
+  };
+});

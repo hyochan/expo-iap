@@ -9,6 +9,7 @@ jest.spyOn(Alert, 'alert');
 // Mock the functions
 const mockInitConnection = jest.fn().mockResolvedValue(true);
 const mockRequestProducts = jest.fn();
+const mockFetchProducts = jest.fn();
 const mockRequestPurchase = jest.fn();
 const mockFinishTransaction = jest.fn();
 const mockGetActiveSubscriptions = jest.fn();
@@ -77,6 +78,7 @@ describe('SubscriptionFlow Component', () => {
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
       requestProducts: mockRequestProducts,
+      fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
       getActiveSubscriptions: mockGetActiveSubscriptions,
@@ -109,13 +111,13 @@ describe('SubscriptionFlow Component', () => {
     fireEvent.press(subscribeButton);
     
     // The actual implementation uses the useIAP hook's internal function
-    // so we check if requestProducts was called on mount instead
-    expect(mockRequestProducts).toHaveBeenCalled();
+    // so we check if fetchProducts was called on mount instead
+    expect(mockFetchProducts).toHaveBeenCalled();
   });
 
-  it('should call requestProducts on mount', () => {
+  it('should call fetchProducts on mount', () => {
     render(<SubscriptionFlow />);
-    expect(mockRequestProducts).toHaveBeenCalled();
+    expect(mockFetchProducts).toHaveBeenCalled();
   });
 
   it('should display active subscriptions when available', () => {
@@ -133,6 +135,7 @@ describe('SubscriptionFlow Component', () => {
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
       requestProducts: mockRequestProducts,
+      fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
       getActiveSubscriptions: mockGetActiveSubscriptions,
@@ -159,6 +162,7 @@ describe('SubscriptionFlow Component', () => {
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
       requestProducts: mockRequestProducts,
+      fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
       getActiveSubscriptions: mockGetActiveSubscriptions,
@@ -188,6 +192,7 @@ describe('SubscriptionFlow Component', () => {
       subscriptions: [createMockAndroidSubscription()],
       availablePurchases: [],
       requestProducts: mockRequestProducts,
+      fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
       getActiveSubscriptions: mockGetActiveSubscriptions,
@@ -205,6 +210,7 @@ describe('SubscriptionFlow Component', () => {
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
       requestProducts: mockRequestProducts,
+      fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
       getActiveSubscriptions: mockGetActiveSubscriptions,
@@ -227,6 +233,7 @@ describe('SubscriptionFlow Component', () => {
       subscriptions: [],
       availablePurchases: [],
       requestProducts: mockRequestProducts,
+      fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
       getActiveSubscriptions: mockGetActiveSubscriptions,
@@ -244,6 +251,7 @@ describe('SubscriptionFlow Component', () => {
       subscriptions: [],
       availablePurchases: [],
       requestProducts: mockRequestProducts,
+      fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
       getActiveSubscriptions: mockGetActiveSubscriptions,
@@ -254,7 +262,7 @@ describe('SubscriptionFlow Component', () => {
     const retryButton = getByText('Retry');
     
     fireEvent.press(retryButton);
-    expect(mockRequestProducts).toHaveBeenCalledWith({
+    expect(mockFetchProducts).toHaveBeenCalledWith({
       skus: ['dev.hyo.martie.premium'],
       type: 'subs',
     });
@@ -266,6 +274,7 @@ describe('SubscriptionFlow Component', () => {
       subscriptions: [],
       availablePurchases: [],
       requestProducts: mockRequestProducts,
+      fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
       getActiveSubscriptions: mockGetActiveSubscriptions,
@@ -293,6 +302,7 @@ describe('SubscriptionFlow Component', () => {
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
       requestProducts: mockRequestProducts,
+      fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
       getActiveSubscriptions: mockGetActiveSubscriptions,
@@ -312,6 +322,7 @@ describe('SubscriptionFlow Component', () => {
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
       requestProducts: mockRequestProducts,
+      fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
       getActiveSubscriptions: mockGetActiveSubscriptions,

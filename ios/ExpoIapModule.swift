@@ -7,13 +7,14 @@ func logDebug(_ message: String) {
     #endif
 }
 
-struct IapEvent {
+struct OpenIapEvent {
     static let PurchaseUpdated = "purchase-updated"
     static let PurchaseError = "purchase-error"
     static let PromotedProductIOS = "promoted-product-ios"
 }
 
 @available(iOS 15.0, tvOS 15.0, *)
+@MainActor
 public class ExpoIapModule: Module {
     private let iapModule = OpenIapModule.shared
     private var hasListeners = false
@@ -21,7 +22,12 @@ public class ExpoIapModule: Module {
     public func definition() -> ModuleDefinition {
         Name("ExpoIap")
         
-        Events(IapEvent.PurchaseUpdated, IapEvent.PurchaseError, IapEvent.PromotedProductIOS)
+        // Export native constants for error code mapping
+        Constants([
+            "ERROR_CODES": IapErrorCode.toDictionary()
+        ])
+        
+        Events(OpenIapEvent.PurchaseUpdated, OpenIapEvent.PurchaseError, OpenIapEvent.PromotedProductIOS)
         
         AsyncFunction("initConnection") { () async throws -> Bool in
             logDebug("initConnection called")
@@ -38,8 +44,8 @@ public class ExpoIapModule: Module {
             logDebug("endConnection called")
             
             if self.hasListeners {
-                self.iapModule.removeAllPurchaseUpdatedListeners()
-                self.iapModule.removeAllPurchaseErrorListeners()
+                // OpenIAP now exposes unified listener management
+                await self.iapModule.removeAllListeners()
                 self.hasListeners = false
             }
             
@@ -48,13 +54,15 @@ public class ExpoIapModule: Module {
         
         AsyncFunction("fetchProducts") { (skus: [String]) async throws -> [[String: Any?]] in
             logDebug("fetchProducts called with skus: \(skus)")
-            let products = try await self.iapModule.fetchProducts(skus: skus)
+            // Use ProductRequest for OpenIAP PR #3
+            let request = ProductRequest(skus: skus, type: "all")
+            let products = try await self.iapModule.fetchProducts(request)
             
             // Debug logging
             for product in products {
-                logDebug("Product: id=\(product.id), title=\(product.localizedTitle), description=\(product.localizedDescription)")
-                logDebug("Product: price=\(product.price), displayPrice=\(product.localizedPrice), currency=\(product.currencyCode ?? "nil")")
-                logDebug("Product: type=\(product.productType.rawValue), platform=\(product.platform)")
+                logDebug("Product: id=\(product.id), title=\(product.title), description=\(product.description)")
+                logDebug("Product: price=\(product.price ?? 0), displayPrice=\(product.displayPrice), currency=\(product.currency)")
+                logDebug("Product: type=\(product.type), platform=\(product.platform)")
             }
             
             let serializedProducts = products.map { self.serializeProduct($0) }
@@ -62,18 +70,20 @@ public class ExpoIapModule: Module {
             return serializedProducts
         }
         
-        AsyncFunction("getAvailableItems") { 
+        AsyncFunction("getAvailableItems") {
             (alsoPublishToEventListenerIOS: Bool?, onlyIncludeActiveItemsIOS: Bool?) async throws -> [[String: Any?]] in
             logDebug("getAvailableItems called")
-            let transactions = try await self.iapModule.getAvailableItems(
+            // Use PurchaseOptions for OpenIAP PR #3
+            let options = PurchaseOptions(
                 alsoPublishToEventListenerIOS: alsoPublishToEventListenerIOS,
                 onlyIncludeActiveItemsIOS: onlyIncludeActiveItemsIOS
             )
+            let transactions = try await self.iapModule.getAvailablePurchases(options)
             return transactions.map { self.serializePurchase($0) }
         }
         
-        AsyncFunction("requestPurchase") { 
-            (sku: String, 
+        AsyncFunction("requestPurchase") {
+            (sku: String,
              andDangerouslyFinishTransactionAutomaticallyIOS: Bool?,
              appAccountToken: String?,
              quantity: Int?,
@@ -84,18 +94,16 @@ public class ExpoIapModule: Module {
             let finishAutomatically = andDangerouslyFinishTransactionAutomaticallyIOS ?? false
             let qty = quantity ?? 1
             
-            let transaction = try await self.iapModule.requestPurchase(
+            // Use RequestPurchaseProps for OpenIAP PR #3
+            let props = RequestPurchaseProps(
                 sku: sku,
                 andDangerouslyFinishTransactionAutomatically: finishAutomatically,
                 appAccountToken: appAccountToken,
                 quantity: qty,
                 discountOffer: discountOffer
             )
-            
-            if let transaction = transaction {
-                return self.serializePurchase(transaction)
-            }
-            return nil
+            let purchase = try await self.iapModule.requestPurchase(props)
+            return self.serializePurchase(purchase)
         }
         
         AsyncFunction("finishTransaction") { (transactionIdentifier: String) async throws -> Bool in
@@ -126,11 +134,18 @@ public class ExpoIapModule: Module {
         
         AsyncFunction("validateReceiptIOS") { (sku: String) async throws -> [String: Any?] in
             logDebug("validateReceiptIOS called for sku: \(sku)")
-            let validation = try await self.iapModule.validateReceiptIOS(sku: sku)
-            return [
+            // Use ReceiptValidationProps for OpenIAP PR #3
+            let props = ReceiptValidationProps(sku: sku)
+            let validation = try await self.iapModule.validateReceiptIOS(props)
+            var result: [String: Any?] = [
                 "isValid": validation.isValid,
-                "errorMessage": nil
+                "receiptData": validation.receiptData,
+                "jwsRepresentation": validation.jwsRepresentation
             ]
+            if let latest = validation.latestTransaction {
+                result["latestTransaction"] = self.serializePurchase(latest)
+            }
+            return result
         }
         
         AsyncFunction("getStorefrontIOS") { () async throws -> String in
@@ -174,9 +189,9 @@ public class ExpoIapModule: Module {
                     [
                         "state": status.state,
                         "renewalInfo": status.renewalInfo != nil ? [
-                            "autoRenewPreference": status.renewalInfo!.autoRenewPreference,
-                            "expirationReason": status.renewalInfo!.expirationReason,
-                            "gracePeriodExpirationDate": status.renewalInfo!.gracePeriodExpirationDate.map { $0.timeIntervalSince1970 * 1000 }
+                            "autoRenewPreference": status.renewalInfo!.autoRenewPreference as Any,
+                            "expirationReason": status.renewalInfo!.expirationReason as Any,
+                            "gracePeriodExpirationDate": status.renewalInfo!.gracePeriodExpirationDate.map { $0.timeIntervalSince1970 * 1000 } as Any
                         ] : nil
                     ]
                 }
@@ -245,10 +260,10 @@ public class ExpoIapModule: Module {
     // MARK: - Purchase Listeners
     
     private func setupPurchaseListeners() {
-        iapModule.addPurchaseUpdatedListener { [weak self] purchase in
+        _ = iapModule.purchaseUpdatedListener { [weak self] purchase in
             self?.handlePurchaseUpdated(purchase)
         }
-        iapModule.addPurchaseErrorListener { [weak self] error in
+        _ = iapModule.purchaseErrorListener { [weak self] error in
             self?.handlePurchaseError(error)
         }
     }
@@ -256,68 +271,46 @@ public class ExpoIapModule: Module {
     private func handlePurchaseUpdated(_ purchase: OpenIapPurchase) {
         logDebug("Purchase updated: \(purchase.productId)")
         let serialized = serializePurchase(purchase)
-        sendEvent(IapEvent.PurchaseUpdated, serialized)
+        sendEvent(OpenIapEvent.PurchaseUpdated, serialized)
     }
     
-    private func handlePurchaseError(_ error: OpenIapError) {
+    private func handlePurchaseError(_ error: PurchaseError) {
         logDebug("Purchase error: \(error)")
         let serialized: [String: Any?] = [
-            "code": "E_PURCHASE_ERROR",
-            "message": error.localizedDescription
+            "code": error.code,
+            "message": error.message,
+            "productId": error.productId as Any
         ]
-        sendEvent(IapEvent.PurchaseError, serialized)
+        sendEvent(OpenIapEvent.PurchaseError, serialized)
     }
     
     // MARK: - Serialization Helpers
-    
-    private func mapPeriodUnit(_ unit: OpenIapProduct.SubscriptionPeriod.PeriodUnit?) -> String {
-        guard let unit = unit else { return "" }
-        switch unit {
-        case .day:
-            return "DAY"
-        case .week:
-            return "WEEK"
-        case .month:
-            return "MONTH"
-        case .year:
-            return "YEAR"
-        }
-    }
-    
-    private func mapPaymentMode(_ mode: OpenIapProduct.IntroductoryOffer.PaymentMode?) -> String {
-        guard let mode = mode else { return "" }
-        switch mode {
-        case .freeTrial:
-            return "FREETRIAL"
-        case .payAsYouGo:
-            return "PAYASYOUGO"
-        case .payUpFront:
-            return "PAYUPFRONT"
-        }
-    }
     
     private func serializePurchase(_ purchase: OpenIapPurchase) -> [String: Any?] {
         return [
             // PurchaseCommon required fields
             "id": purchase.id,
             "productId": purchase.productId,
-            "transactionDate": purchase.purchaseTime.timeIntervalSince1970 * 1000,
-            "transactionReceipt": purchase.purchaseToken,
+            "transactionDate": purchase.transactionDate,
+            "transactionReceipt": purchase.transactionReceipt,
             "purchaseToken": purchase.purchaseToken,
-            "platform": "ios",
+            "platform": purchase.platform,
             
             // PurchaseCommon optional fields
-            "ids": nil, // Multiple product ids if applicable
-            "transactionId": purchase.transactionId, // deprecated but kept for backward compatibility
+            "ids": purchase.ids,
+            "transactionId": purchase.id, // deprecated but kept for backward compatibility
+            "quantity": purchase.quantity,
+            "purchaseState": purchase.purchaseState.rawValue,
+            "isAutoRenewing": purchase.isAutoRenewing,
             
             // PurchaseIOS specific fields
-            "quantityIOS": purchase.quantity,
-            "originalTransactionDateIOS": purchase.originalPurchaseTime.map { $0.timeIntervalSince1970 * 1000 },
-            "originalTransactionIdentifierIOS": purchase.originalTransactionId,
+            "quantityIOS": purchase.quantityIOS,
+            "originalTransactionDateIOS": purchase.originalTransactionDateIOS,
+            "originalTransactionIdentifierIOS": purchase.originalTransactionIdentifierIOS,
             "appAccountToken": purchase.appAccountToken,
             
             // Additional iOS fields from StoreKit 2
-            "expirationDateIOS": purchase.expiryTime.map { $0.timeIntervalSince1970 * 1000 },
+            "expirationDateIOS": purchase.expirationDateIOS,
             "webOrderLineItemIdIOS": purchase.webOrderLineItemIdIOS,
             "environmentIOS": purchase.environmentIOS,
             "storefrontCountryCodeIOS": purchase.storefrontCountryCodeIOS,
@@ -329,7 +322,7 @@ public class ExpoIapModule: Module {
             "reasonIOS": purchase.reasonIOS,
             "reasonStringRepresentationIOS": purchase.reasonStringRepresentationIOS,
             "transactionReasonIOS": purchase.transactionReasonIOS,
-            "revocationDateIOS": purchase.revocationDateIOS.map { $0.timeIntervalSince1970 * 1000 },
+            "revocationDateIOS": purchase.revocationDateIOS,
             "revocationReasonIOS": purchase.revocationReasonIOS,
             
             // Offer information
@@ -342,76 +335,106 @@ public class ExpoIapModule: Module {
             // Price locale fields
             "currencyCodeIOS": purchase.currencyCodeIOS,
             "currencySymbolIOS": purchase.currencySymbolIOS,
-            "countryCodeIOS": purchase.countryCodeIOS,
-            
-            // Deprecated but kept for backward compatibility
-            "jwsRepresentationIOS": purchase.jwsRepresentation
+            "countryCodeIOS": purchase.countryCodeIOS
         ]
     }
     
     private func serializeProduct(_ product: OpenIapProduct) -> [String: Any?] {
-        return [
+        var result: [String: Any?] = [
             // Common fields (required by ProductCommon)
             "id": product.id,
             "title": product.title,
             "description": product.description,
             "type": product.type,
-            "displayName": product.displayName, // Optional field
+            "displayName": product.displayName,
             "displayPrice": product.displayPrice,
-            "currency": product.currencyCode ?? "USD",
-            "price": product.priceIOS, // Optional field
-            "debugDescription": "Product: \(product.id) - \(product.title) (\(product.displayPrice))", // Optional field
-            "platform": product.platform, // Optional field but important for platform identification
+            "currency": product.currency,
+            "price": product.price,
+            "debugDescription": product.debugDescription,
+            "platform": product.platform,
             
             // iOS-specific fields (required by ProductIOS)
             "displayNameIOS": product.displayNameIOS,
             "isFamilyShareableIOS": product.isFamilyShareableIOS,
             "jsonRepresentationIOS": product.jsonRepresentationIOS,
+            "typeIOS": product.typeIOS.rawValue,
             
             // Additional iOS-specific fields
-            "descriptionIOS": product.descriptionIOS,  
-            "displayPriceIOS": product.displayPriceIOS,
-            "priceIOS": product.priceIOS,
+            "descriptionIOS": product.description,  
+            "displayPriceIOS": product.displayPrice,
+            "priceIOS": product.price,
             
-            // subscriptionInfoIOS - map subscription information if available
-            "subscriptionInfoIOS": product.subscriptionPeriod != nil ? [
-                "subscriptionPeriod": [
-                    "unit": mapPeriodUnit(product.subscriptionPeriod?.unit),
-                    "value": product.subscriptionPeriod?.value ?? 0
-                ],
-                "subscriptionGroupId": product.subscriptionGroupId ?? "",
-                "introductoryOffer": product.introductoryPrice != nil ? [
-                    "displayPrice": product.introductoryPrice!.localizedPrice,
-                    "id": product.introductoryPrice!.id ?? "",
-                    "paymentMode": mapPaymentMode(product.introductoryPrice!.paymentMode),
-                    "period": [
-                        "unit": mapPeriodUnit(product.introductoryPrice!.period.unit),
-                        "value": product.introductoryPrice!.period.value
-                    ],
-                    "periodCount": product.introductoryPrice!.numberOfPeriods,
-                    "price": NSDecimalNumber(decimal: product.introductoryPrice!.price).doubleValue,
-                    "type": "introductory"
-                ] : nil,
-                "promotionalOffers": product.discounts?.map { discount in
-                    [
-                        "displayPrice": discount.localizedPrice,
-                        "id": discount.identifier,
-                        "paymentMode": discount.paymentMode,
-                        "period": [
-                            "unit": mapPeriodUnit(discount.period?.unit),
-                            "value": discount.period?.value ?? 0
-                        ],
-                        "periodCount": discount.numberOfPeriods,
-                        "price": NSDecimalNumber(decimal: discount.price).doubleValue,
-                        "type": "promotional"
-                    ]
-                } ?? []
-            ] : nil,
-            
-            // Deprecated fields for backward compatibility  
-            "isFamilyShareable": product.isFamilyShareable ?? false,
-            "jsonRepresentation": product.jsonRepresentation ?? ""
+            // ProductSubscriptionIOS specific fields
+            "discountsIOS": product.discountsIOS?.map { discount in
+                [
+                    "identifier": discount.identifier,
+                    "type": discount.type,
+                    "numberOfPeriods": discount.numberOfPeriods,
+                    "price": discount.price,
+                    "priceAmount": discount.priceAmount,
+                    "paymentMode": discount.paymentMode,
+                    "subscriptionPeriod": discount.subscriptionPeriod
+                ]
+            },
+            "introductoryPriceIOS": product.introductoryPriceIOS,
+            "introductoryPriceAsAmountIOS": product.introductoryPriceAsAmountIOS,
+            "introductoryPricePaymentModeIOS": product.introductoryPricePaymentModeIOS,
+            "introductoryPriceNumberOfPeriodsIOS": product.introductoryPriceNumberOfPeriodsIOS,
+            "introductoryPriceSubscriptionPeriodIOS": product.introductoryPriceSubscriptionPeriodIOS,
+            "subscriptionPeriodNumberIOS": product.subscriptionPeriodNumberIOS,
+            "subscriptionPeriodUnitIOS": product.subscriptionPeriodUnitIOS
         ]
+        
+        // Add subscriptionInfoIOS if available
+        if let subInfo = product.subscriptionInfoIOS {
+            var subInfoDict: [String: Any?] = [
+                "subscriptionGroupId": subInfo.subscriptionGroupId,
+                "subscriptionPeriod": [
+                    "unit": subInfo.subscriptionPeriod.unit.rawValue,
+                    "value": subInfo.subscriptionPeriod.value
+                ]
+            ]
+            
+            if let intro = subInfo.introductoryOffer {
+                subInfoDict["introductoryOffer"] = [
+                    "displayPrice": intro.displayPrice,
+                    "id": intro.id,
+                    "paymentMode": intro.paymentMode.rawValue,
+                    "period": [
+                        "unit": intro.period.unit.rawValue,
+                        "value": intro.period.value
+                    ],
+                    "periodCount": intro.periodCount,
+                    "price": intro.price,
+                    "type": intro.type.rawValue
+                ]
+            }
+            
+            if let promos = subInfo.promotionalOffers {
+                subInfoDict["promotionalOffers"] = promos.map { offer in
+                    [
+                        "displayPrice": offer.displayPrice,
+                        "id": offer.id,
+                        "paymentMode": offer.paymentMode.rawValue,
+                        "period": [
+                            "unit": offer.period.unit.rawValue,
+                            "value": offer.period.value
+                        ],
+                        "periodCount": offer.periodCount,
+                        "price": offer.price,
+                        "type": offer.type.rawValue
+                    ]
+                }
+            }
+            
+            result["subscriptionInfoIOS"] = subInfoDict
+        }
+        
+        // Deprecated fields for backward compatibility  
+        result["isFamilyShareable"] = product.isFamilyShareableIOS
+        result["jsonRepresentation"] = product.jsonRepresentationIOS
+        
+        return result
     }
     
 }

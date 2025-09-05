@@ -45,7 +45,7 @@ export {
 // Get the native constant value
 export const PI = ExpoIapModule.PI;
 
-export enum IapEvent {
+export enum OpenIapEvent {
   PurchaseUpdated = 'purchase-updated',
   PurchaseError = 'purchase-error',
   /** @deprecated Use PurchaseUpdated instead. This will be removed in a future version. */
@@ -73,7 +73,7 @@ export const purchaseUpdatedListener = (
   listener: (event: Purchase) => void,
 ) => {
   const emitterSubscription = emitter.addListener(
-    IapEvent.PurchaseUpdated,
+    OpenIapEvent.PurchaseUpdated,
     listener,
   );
   return emitterSubscription;
@@ -82,7 +82,7 @@ export const purchaseUpdatedListener = (
 export const purchaseErrorListener = (
   listener: (error: PurchaseError) => void,
 ) => {
-  return emitter.addListener(IapEvent.PurchaseError, listener);
+  return emitter.addListener(OpenIapEvent.PurchaseError, listener);
 };
 
 /**
@@ -114,7 +114,7 @@ export const promotedProductListenerIOS = (
     );
     return {remove: () => {}};
   }
-  return emitter.addListener(IapEvent.PromotedProductIOS, listener);
+  return emitter.addListener(OpenIapEvent.PromotedProductIOS, listener);
 };
 
 export function initConnection(): Promise<boolean> {

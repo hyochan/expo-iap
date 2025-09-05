@@ -73,7 +73,7 @@ class ExpoIapModule :
             error["code"] = errorData.code
             error["message"] = errorData.message
             try {
-                sendEvent(IapEvent.PURCHASE_ERROR, error.toMap())
+                sendEvent(OpenIapEvent.PURCHASE_ERROR, error.toMap())
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
             }
@@ -109,7 +109,7 @@ class ExpoIapModule :
                 }
                 promiseItems.add(item.toMap())
                 try {
-                    sendEvent(IapEvent.PURCHASE_UPDATED, item.toMap())
+                    sendEvent(OpenIapEvent.PURCHASE_UPDATED, item.toMap())
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to send PURCHASE_UPDATED event: ${e.message}")
                 }
@@ -125,7 +125,7 @@ class ExpoIapModule :
                         "The purchases are null. This is a normal behavior if you have requested DEFERRED proration. If not please report an issue.",
                 )
             try {
-                sendEvent(IapEvent.PURCHASE_UPDATED, result.toMap())
+                sendEvent(OpenIapEvent.PURCHASE_UPDATED, result.toMap())
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to send PURCHASE_UPDATED event: ${e.message}")
             }
@@ -141,7 +141,7 @@ class ExpoIapModule :
                 "ERROR_CODES" to IapErrorCode.toMap()
             )
 
-            Events(IapEvent.PURCHASE_UPDATED, IapEvent.PURCHASE_ERROR)
+            Events(OpenIapEvent.PURCHASE_UPDATED, OpenIapEvent.PURCHASE_ERROR)
 
             AsyncFunction("initConnection") { promise: Promise ->
                 initBillingClient(promise) { promise.resolve(true) }
@@ -450,7 +450,7 @@ class ExpoIapModule :
                         val debugMessage = "The number of skus (${skuArr.size}) must match: the number of offerTokens (${offerTokenArr.size}) for Subscriptions"
                         try {
                             sendEvent(
-                                IapEvent.PURCHASE_ERROR,
+                                OpenIapEvent.PURCHASE_ERROR,
                                 mapOf(
                                     "debugMessage" to debugMessage,
                                     "code" to IapErrorCode.E_SKU_OFFER_MISMATCH,
@@ -472,7 +472,7 @@ class ExpoIapModule :
                                     "The sku was not found. Please fetch products first by calling getItems"
                                 try {
                                     sendEvent(
-                                        IapEvent.PURCHASE_ERROR,
+                                        OpenIapEvent.PURCHASE_ERROR,
                                         mapOf(
                                             "debugMessage" to debugMessage,
                                             "code" to IapErrorCode.E_SKU_NOT_FOUND,
@@ -577,7 +577,7 @@ class ExpoIapModule :
                         }
                         
                         try {
-                            sendEvent(IapEvent.PURCHASE_ERROR, errorMap.toMap())
+                            sendEvent(OpenIapEvent.PURCHASE_ERROR, errorMap.toMap())
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
                         }

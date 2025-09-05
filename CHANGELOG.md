@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## [2.9.0] - 2025-09-05
+
+### Added
+
+- **iOS**: Integrated [OpenIAP Apple](https://github.com/hyodotdev/openiap-apple) v1.1.5
+- Updated types to match [OpenIAP v1.1.0 specification](https://www.openiap.dev/docs/versions#v1-1-0)
+- Enhanced error handling with `PurchaseError` type and native error code mapping
+- New type system: `ProductRequest`, `RequestPurchaseProps`, `ReceiptValidationProps`
+- Improved receipt validation with `ReceiptValidationResult`
+
+### Changed
+
+- Updated `serializePurchase` and `serializeProduct` for new OpenIAP structure
+- Updated listener setup to use new OpenIAP methods (`purchaseUpdatedListener`, `purchaseErrorListener`)
+- Added unified `removeAllListeners()` for cleanup
+
+### Fixed
+
+- Fixed duplicate purchase success alerts
+- Fixed restore purchase alerts on screen entry
+- Improved purchase validation logic
+
+### Note
+
+- Android native module integration with OpenIAP Android planned for v3.0.0
+
 ## [2.8.7] - 2025-09-03
 
 ### Added

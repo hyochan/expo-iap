@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import {signal, effect} from '@preact/signals-react';
-import {requestPurchase, useIAP} from '../../src';
+import {requestPurchase, useIAP, showManageSubscriptionsIOS} from '../../src';
 import type {
   SubscriptionProduct,
   PurchaseError,
@@ -42,6 +42,7 @@ const isProcessingSignal = signal(false);
 const isCheckingStatusSignal = signal(false);
 const selectedSubscriptionSignal = signal<SubscriptionProduct | null>(null);
 const modalVisibleSignal = signal(false);
+const isHandlingPurchaseSignal = signal(false);
 
 export default function SubscriptionFlow() {
   // Deduplicate purchases by productId, keeping the most recent transaction
@@ -97,7 +98,7 @@ export default function SubscriptionFlow() {
     connected,
     subscriptions,
     availablePurchases,
-    requestProducts,
+    fetchProducts,
     getAvailablePurchases,
     finishTransaction,
     getActiveSubscriptions,
@@ -105,6 +106,14 @@ export default function SubscriptionFlow() {
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
       console.log('Subscription successful:', purchase);
+
+      // Prevent duplicate handling of the same purchase
+      if (isHandlingPurchaseSignal.value) {
+        console.log('Already handling a purchase, skipping duplicate callback');
+        return;
+      }
+
+      isHandlingPurchaseSignal.value = true;
       isProcessingSignal.value = false;
 
       // Determine if this is a valid purchase using logic similar to Flutter implementation
@@ -116,12 +125,14 @@ export default function SubscriptionFlow() {
         const iosPurchase = purchase as PurchaseIOS;
 
         // Check if purchase was successful based on transaction data
-        const hasValidToken =
-          purchase.purchaseToken && purchase.purchaseToken.length > 0;
-        const hasValidTransactionId =
-          purchase.transactionId && purchase.transactionId.length > 0;
+        const hasValidToken = !!(
+          purchase.purchaseToken && purchase.purchaseToken.length > 0
+        );
+        const hasValidTransactionId = !!(
+          purchase.transactionId && purchase.transactionId.length > 0
+        );
 
-        const isPurchased = hasValidToken || hasValidTransactionId;
+        isPurchased = hasValidToken || hasValidTransactionId;
 
         // For iOS, check if this is a restoration by comparing original vs current transaction
         // A restoration typically has originalTransactionIdentifierIOS different from transactionId
@@ -164,6 +175,7 @@ export default function SubscriptionFlow() {
           'Purchase Issue',
           'Purchase could not be validated. Please try again.',
         );
+        isHandlingPurchaseSignal.value = false; // Reset flag
         return;
       }
 
@@ -177,14 +189,26 @@ export default function SubscriptionFlow() {
           }\n` +
           `No additional charge - existing subscription confirmed`;
 
+        // IMPORTANT: Server-side receipt validation should be performed here
+        // Send the receipt to your backend server for validation
+        // Example:
+        // const isValid = await validateReceiptOnServer(purchase.transactionReceipt);
+        // if (!isValid) {
+        //   Alert.alert('Error', 'Receipt validation failed');
+        //   return;
+        // }
+
+        // After successful server validation, finish the transaction
+        // For subscriptions, isConsumable should be false (subscriptions are non-consumable)
         await finishTransaction({
           purchase,
-          isConsumable: false,
+          isConsumable: false, // Set to false for subscriptions
         });
 
-        Alert.alert(
-          'Subscription Restored',
-          'Your existing subscription has been restored. No additional charge was made.',
+        // Only show alert if user explicitly requested restoration
+        // Don't show on initial load
+        console.log(
+          'Subscription restoration detected - skipping alert on initial load',
         );
 
         console.log('✅ Subscription restoration completed');
@@ -207,6 +231,11 @@ export default function SubscriptionFlow() {
         refreshStatus();
         setTimeout(refreshStatus, 500);
         setTimeout(refreshStatus, 2000);
+
+        // Reset the handling flag after a delay
+        setTimeout(() => {
+          isHandlingPurchaseSignal.value = false;
+        }, 3000);
         return;
       }
 
@@ -264,6 +293,11 @@ export default function SubscriptionFlow() {
 
       // Final call after even longer delay for server processing
       setTimeout(refreshStatus, 5000);
+
+      // Reset the handling flag after a delay
+      setTimeout(() => {
+        isHandlingPurchaseSignal.value = false;
+      }, 3000);
     },
     onPurchaseError: (error: PurchaseError) => {
       console.error('Subscription failed:', error);
@@ -311,7 +345,7 @@ export default function SubscriptionFlow() {
       console.log('Connected to store, loading subscription products...');
       // requestProducts is event-based, not promise-based
       // Results will be available through the useIAP hook's subscriptions state
-      requestProducts({skus: subscriptionIds, type: 'subs'});
+      fetchProducts({skus: subscriptionIds, type: 'subs'});
       console.log('Product loading request sent - waiting for results...');
 
       // Load available purchases to check subscription history
@@ -320,7 +354,7 @@ export default function SubscriptionFlow() {
         console.warn('Failed to load available purchases:', error);
       });
     }
-  }, [connected, requestProducts, getAvailablePurchases]);
+  }, [connected, getAvailablePurchases, fetchProducts]);
 
   // Check subscription status separately to avoid infinite loop
   useEffect(() => {
@@ -416,7 +450,7 @@ export default function SubscriptionFlow() {
 
   const retryLoadSubscriptions = () => {
     const subscriptionIds = ['dev.hyo.martie.premium'];
-    requestProducts({skus: subscriptionIds, type: 'subs'});
+    fetchProducts({skus: subscriptionIds, type: 'subs'});
   };
 
   const getSubscriptionDisplayPrice = (
@@ -438,6 +472,32 @@ export default function SubscriptionFlow() {
     } else {
       // iOS subscription pricing
       return subscription.displayPrice;
+    }
+  };
+
+  const handleManageSubscriptions = async () => {
+    try {
+      if (Platform.OS === 'ios') {
+        console.log('Opening subscription management...');
+        await showManageSubscriptionsIOS();
+        console.log('Subscription management opened');
+
+        // After returning from subscription management, refresh status
+        setTimeout(() => {
+          console.log('Refreshing subscription status after management...');
+          checkSubscriptionStatus();
+        }, 1000);
+      } else {
+        Alert.alert(
+          'Manage Subscriptions',
+          'On Android, subscriptions are managed through Google Play Store.\n\n' +
+            'Go to: Play Store → Menu → Subscriptions',
+          [{text: 'OK', style: 'default'}],
+        );
+      }
+    } catch (error) {
+      console.error('Failed to open subscription management:', error);
+      Alert.alert('Error', 'Failed to open subscription management');
     }
   };
 
@@ -664,17 +724,28 @@ export default function SubscriptionFlow() {
             ) : null}
           </View>
 
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={checkSubscriptionStatus}
-            disabled={isCheckingStatus}
-          >
-            {isCheckingStatus ? (
-              <ActivityIndicator color="#007AFF" />
-            ) : (
-              <Text style={styles.refreshButtonText}>🔄 Refresh Status</Text>
-            )}
-          </TouchableOpacity>
+          <View style={styles.subscriptionActionButtons}>
+            <TouchableOpacity
+              style={styles.refreshButton}
+              onPress={checkSubscriptionStatus}
+              disabled={isCheckingStatus}
+            >
+              {isCheckingStatus ? (
+                <ActivityIndicator color="#007AFF" />
+              ) : (
+                <Text style={styles.refreshButtonText}>🔄 Refresh Status</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.manageButton, {backgroundColor: '#007AFF'}]}
+              onPress={handleManageSubscriptions}
+            >
+              <Text style={styles.manageButtonText}>
+                ⚙️ Manage Subscription
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : null}
 
@@ -1114,12 +1185,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#007AFF',
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
+    flex: 1,
+    minHeight: 44,
   },
   refreshButtonText: {
     color: '#007AFF',
     fontWeight: '600',
     fontSize: 14,
+    textAlign: 'center',
+  },
+  subscriptionActionButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  manageButton: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  manageButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
   },
   sectionHeader: {
     flexDirection: 'row',
