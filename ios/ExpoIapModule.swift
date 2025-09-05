@@ -45,7 +45,7 @@ public class ExpoIapModule: Module {
             
             if self.hasListeners {
                 // OpenIAP now exposes unified listener management
-                await self.iapModule.removeAllListeners()
+                self.iapModule.removeAllListeners()
                 self.hasListeners = false
             }
             
