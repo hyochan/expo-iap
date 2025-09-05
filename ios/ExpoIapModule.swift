@@ -114,7 +114,6 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIOS: Stri
         if let currency = jsonData["currency"] as? String {
             purchaseMap["currencyCodeIOS"] = currency
             
-            // Try to get currency symbol from locale
             let locale = Locale(identifier: Locale.identifier(fromComponents: [NSLocale.Key.currencyCode.rawValue: currency]))
             purchaseMap["currencySymbolIOS"] = locale.currencySymbol
             
@@ -123,7 +122,6 @@ func serializeTransaction(_ transaction: Transaction, jwsRepresentationIOS: Stri
             purchaseMap["currencyIOS"] = currency
             // END: Deprecated - will be removed in v2.9.0
         }
-        // Extract country code from storefront if available
         if let storefront = jsonData["storefront"] as? String {
             purchaseMap["countryCodeIOS"] = storefront
         }
@@ -178,10 +176,8 @@ func serializeSubscription(_ s: Product.SubscriptionInfo?) -> [String: Any?]? {
 
 @available(iOS 15.0, *)
 func serializeProduct(_ p: Product) -> [String: Any?] {
-    // Convert Product.ProductType to our expected 'inapp' or 'subs' string
     let productType: String = p.subscription != nil ? "subs" : "inapp"
     
-    // For subscription products, add discounts and introductory price
     var discounts: [[String: Any?]]? = nil
     var introductoryPrice: String? = nil
     var introductoryPriceAsAmountIOS: String? = nil
@@ -192,7 +188,6 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
     var subscriptionPeriodUnitIOS: String? = nil
     
     if let subscription = p.subscription {
-        // Extract discount information from promotional offers
         if !subscription.promotionalOffers.isEmpty {
             discounts = subscription.promotionalOffers.compactMap { offer in
                 return [
@@ -207,7 +202,6 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
             }
         }
         
-        // Extract introductory price from introductory offer
         if let introOffer = subscription.introductoryOffer {
             introductoryPrice = introOffer.displayPrice
             introductoryPriceAsAmountIOS = "\(introOffer.price)"
@@ -216,7 +210,6 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
             introductoryPriceSubscriptionPeriodIOS = getPeriodIOS(introOffer.period.unit)
         }
         
-        // Extract subscription period information
         subscriptionPeriodNumberIOS = "\(subscription.subscriptionPeriod.value)"
         subscriptionPeriodUnitIOS = getPeriodIOS(subscription.subscriptionPeriod.unit)
     }
@@ -224,7 +217,6 @@ func serializeProduct(_ p: Product) -> [String: Any?] {
     return [
         "debugDescription": serializeDebug(p.debugDescription),
         "description": p.description,
-        // New iOS-suffixed fields
         "displayNameIOS": p.displayName,
         "discountsIOS": discounts,
         "introductoryPriceIOS": introductoryPrice,
@@ -312,10 +304,7 @@ public class ExpoIapModule: Module {
     private var promotedPayment: SKPayment?
     private var promotedProduct: SKProduct?
     
-    // Constants
     private let subscriptionChangePropagationDelay: UInt64 = 1_500_000_000 // 1.5 seconds in nanoseconds
-    
-    // Add a flag to track initialization state
     private var isInitialized = false
 
     public func definition() -> ModuleDefinition {
@@ -338,13 +327,10 @@ public class ExpoIapModule: Module {
         }
 
         Function("initConnection") { () -> Bool in
-            // Clean up any existing state first (important for hot reload)
             self.cleanupExistingState()
             
-            // Initialize fresh state
             self.productStore = ProductStore()
             
-            // Set up PaymentObserver for promoted products
             if self.paymentObserver == nil {
                 self.paymentObserver = PaymentObserver(module: self)
                 SKPaymentQueue.default().add(self.paymentObserver!)
@@ -417,7 +403,6 @@ public class ExpoIapModule: Module {
                 return nil
             }
             
-            // Convert SKProduct to dictionary
             return [
                 "productIdentifier": product.productIdentifier,
                 "localizedTitle": product.localizedTitle,
@@ -440,10 +425,8 @@ public class ExpoIapModule: Module {
                 )
             }
             
-            // Add the deferred payment to the queue
             SKPaymentQueue.default().add(payment)
             
-            // Clear the promoted product data
             self.promotedPayment = nil
             self.promotedProduct = nil
         }
@@ -508,7 +491,6 @@ public class ExpoIapModule: Module {
             }
 
             if onlyIncludeActiveItemsIOS {
-                // Use currentEntitlements for better performance - automatically filters active items
                 for await verification in Transaction.currentEntitlements {
                     do {
                         let transaction = try self.checkVerified(verification)
@@ -521,7 +503,6 @@ public class ExpoIapModule: Module {
                     }
                 }
             } else {
-                // Include all verified transactions
                 for await verification in Transaction.all {
                     do {
                         let transaction = try self.checkVerified(verification)
@@ -599,7 +580,6 @@ public class ExpoIapModule: Module {
                     case .success(let verification):
                         let transaction = try self.checkVerified(verification)
                         
-                        // Debug: Log JWS representation
                         let jwsRepresentation = verification.jwsRepresentation
                         if !jwsRepresentation.isEmpty {
                             logDebug("buyProduct JWS: exists")
@@ -615,7 +595,6 @@ public class ExpoIapModule: Module {
                             self.transactions[String(transaction.id)] = transaction
                             let serialized = serializeTransaction(transaction, jwsRepresentationIOS: verification.jwsRepresentation)
                             
-                            // Debug: Check if jwsRepresentationIOS is included in serialized result
                             logDebug("buyProduct serialized includes JWS: \(serialized["jwsRepresentationIOS"] != nil)")
                             
                             self.sendEvent(IapEvent.PurchaseUpdated, serialized)
@@ -657,15 +636,12 @@ public class ExpoIapModule: Module {
                         throw error
                     }
                     
-                    // Map StoreKit errors to proper error codes
                     var errorCode = IapErrorCode.purchaseError
                     var errorMessage = error.localizedDescription
                     
-                    // Check for specific StoreKit error types
                     if let nsError = error as NSError? {
                         switch nsError.domain {
                         case "SKErrorDomain":
-                            // Handle SKError codes
                             switch nsError.code {
                             case 0: // SKError.unknown
                                 errorCode = IapErrorCode.unknown
@@ -840,7 +816,6 @@ public class ExpoIapModule: Module {
                     throw Exception(name: "ExpoIapModule", description: "Cannot find window scene or not available on macOS", code: IapErrorCode.serviceError)
                 }
                 
-                // Get current subscription statuses before showing UI
                 var beforeStatuses: [String: Bool] = [:]
                 let subscriptionSkus = await self.getAllSubscriptionProductIds()
                 
@@ -855,13 +830,10 @@ public class ExpoIapModule: Module {
                     }
                 }
                 
-                // Show the management UI
                 try await AppStore.showManageSubscriptions(in: windowScene)
                 
-                // Wait a bit for changes to propagate
                 try? await Task.sleep(nanoseconds: subscriptionChangePropagationDelay)
                 
-                // Check for changes and return updated subscriptions
                 var updatedSubscriptions: [[String: Any?]] = []
                 
                 for sku in subscriptionSkus {
@@ -875,18 +847,14 @@ public class ExpoIapModule: Module {
                             currentWillAutoRenew = info.willAutoRenew
                         }
                         
-                        // Check if status changed
                         let previousWillAutoRenew = beforeStatuses[sku] ?? false
                         if previousWillAutoRenew != currentWillAutoRenew {
-                            // Status changed, include in result
                             do {
                                 let transaction = try self.checkVerified(result)
-                                // Return standard Purchase format
                                 let purchaseMap = serializeTransaction(transaction, jwsRepresentationIOS: result.jwsRepresentation)
                                 updatedSubscriptions.append(purchaseMap)
                             } catch {
-                                // Skip if verification fails
-                                print("[ExpoIapModule] Failed to verify subscription change: \(error)"
+                                print("[ExpoIapModule] Failed to verify subscription change: \(error)")
                             }
                         }
                     }
