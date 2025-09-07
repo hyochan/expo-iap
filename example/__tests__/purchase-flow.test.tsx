@@ -1,9 +1,9 @@
 import React from 'react';
-import { render, fireEvent, act } from '@testing-library/react-native';
+import {render, fireEvent, act} from '@testing-library/react-native';
 import PurchaseFlow from '../app/purchase-flow';
 
 // Mock the useIAP hook
-const mockRequestProducts = jest.fn();
+const mockFetchProducts = jest.fn();
 const mockUseIAP = {
   connected: true,
   products: [
@@ -14,10 +14,10 @@ const mockUseIAP = {
       price: '$0.99',
       displayPrice: '$0.99',
       currency: 'USD',
-      platform: 'ios'
-    }
+      platform: 'ios',
+    },
   ],
-  requestProducts: mockRequestProducts,
+  fetchProducts: mockFetchProducts,
 };
 
 jest.mock('../../src', () => ({
@@ -28,26 +28,27 @@ jest.mock('../../src', () => ({
 describe('PurchaseFlow Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFetchProducts.mockResolvedValue([]);
   });
 
   it('should render without crashing', () => {
-    const { getByText } = render(<PurchaseFlow />);
+    const {getByText} = render(<PurchaseFlow />);
     expect(getByText('In-App Purchase Flow')).toBeDefined();
   });
 
   it('should show connected status', () => {
-    const { getByText } = render(<PurchaseFlow />);
+    const {getByText} = render(<PurchaseFlow />);
     // Look for the text that contains "Connected"
     expect(getByText(/✅ Connected/)).toBeDefined();
   });
 
   it('should load products on mount', () => {
     render(<PurchaseFlow />);
-    expect(mockRequestProducts).toHaveBeenCalled();
+    expect(mockFetchProducts).toHaveBeenCalled();
   });
 
   it('should display products', () => {
-    const { getByText } = render(<PurchaseFlow />);
+    const {getByText} = render(<PurchaseFlow />);
     expect(getByText('Test Product')).toBeDefined();
     // The price is rendered by getProductDisplayPrice which returns displayPrice
     expect(getByText('Test Description')).toBeDefined();
@@ -55,18 +56,18 @@ describe('PurchaseFlow Component', () => {
 
   it('should handle purchase button click', async () => {
     const requestPurchase = require('../../src').requestPurchase;
-    const { getByText } = render(<PurchaseFlow />);
-    
+    const {getByText} = render(<PurchaseFlow />);
+
     const purchaseButton = getByText('Purchase');
     fireEvent.press(purchaseButton);
-    
+
     // The actual call includes platform-specific request structure
     expect(requestPurchase).toHaveBeenCalledWith({
       request: {
-        ios: { sku: 'test.product.1', quantity: 1 },
-        android: { skus: ['test.product.1'] }
+        ios: {sku: 'test.product.1', quantity: 1},
+        android: {skus: ['test.product.1']},
       },
-      type: 'inapp'
+      type: 'inapp',
     });
   });
 });

@@ -864,13 +864,14 @@ Your server should:
 For non-consumable products and subscriptions, implement purchase restoration:
 
 ```tsx
-const {getAvailablePurchases} = useIAP();
+const {getAvailablePurchases, availablePurchases} = useIAP();
 
 const restorePurchases = async () => {
   try {
-    const purchases = await getAvailablePurchases();
+    // In hook: updates state, does not return purchases
+    await getAvailablePurchases();
 
-    for (const purchase of purchases) {
+    for (const purchase of availablePurchases) {
       // Validate and restore each purchase
       const isValid = await validateReceiptOnServer(purchase);
       if (isValid) {

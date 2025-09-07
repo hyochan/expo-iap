@@ -8,7 +8,6 @@ jest.spyOn(Alert, 'alert');
 
 // Mock the functions
 const mockInitConnection = jest.fn().mockResolvedValue(true);
-const mockRequestProducts = jest.fn();
 const mockFetchProducts = jest.fn();
 const mockRequestPurchase = jest.fn();
 const mockFinishTransaction = jest.fn();
@@ -59,7 +58,7 @@ const createMockAndroidSubscription = () => ({
 const mockUseIAP = jest.fn();
 jest.mock('../../src', () => ({
   initConnection: mockInitConnection,
-  requestProducts: mockRequestProducts,
+  requestProducts: jest.fn(),
   requestPurchase: mockRequestPurchase,
   useIAP: () => mockUseIAP(),
 }));
@@ -67,7 +66,7 @@ jest.mock('../../src', () => ({
 describe('SubscriptionFlow Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRequestProducts.mockResolvedValue([createMockSubscription()]);
+    mockFetchProducts.mockResolvedValue([createMockSubscription()]);
     mockGetActiveSubscriptions.mockResolvedValue([]);
     mockFinishTransaction.mockResolvedValue(undefined);
     mockGetAvailablePurchases.mockResolvedValue([]);
@@ -77,7 +76,6 @@ describe('SubscriptionFlow Component', () => {
       connected: true,
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
-      requestProducts: mockRequestProducts,
       fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
@@ -110,8 +108,7 @@ describe('SubscriptionFlow Component', () => {
     
     fireEvent.press(subscribeButton);
     
-    // The actual implementation uses the useIAP hook's internal function
-    // so we check if fetchProducts was called on mount instead
+    // The actual implementation triggers product fetch on mount
     expect(mockFetchProducts).toHaveBeenCalled();
   });
 
@@ -134,7 +131,6 @@ describe('SubscriptionFlow Component', () => {
       connected: true,
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
-      requestProducts: mockRequestProducts,
       fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
@@ -161,7 +157,6 @@ describe('SubscriptionFlow Component', () => {
       connected: true,
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
-      requestProducts: mockRequestProducts,
       fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
@@ -191,7 +186,6 @@ describe('SubscriptionFlow Component', () => {
       connected: true,
       subscriptions: [createMockAndroidSubscription()],
       availablePurchases: [],
-      requestProducts: mockRequestProducts,
       fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
@@ -209,7 +203,6 @@ describe('SubscriptionFlow Component', () => {
       connected: true,
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
-      requestProducts: mockRequestProducts,
       fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
@@ -232,7 +225,6 @@ describe('SubscriptionFlow Component', () => {
       connected: true,
       subscriptions: [],
       availablePurchases: [],
-      requestProducts: mockRequestProducts,
       fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
@@ -250,7 +242,6 @@ describe('SubscriptionFlow Component', () => {
       connected: true,
       subscriptions: [],
       availablePurchases: [],
-      requestProducts: mockRequestProducts,
       fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
@@ -273,7 +264,6 @@ describe('SubscriptionFlow Component', () => {
       connected: false,
       subscriptions: [],
       availablePurchases: [],
-      requestProducts: mockRequestProducts,
       fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
@@ -301,7 +291,6 @@ describe('SubscriptionFlow Component', () => {
       connected: true,
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
-      requestProducts: mockRequestProducts,
       fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,
@@ -321,7 +310,6 @@ describe('SubscriptionFlow Component', () => {
       connected: true,
       subscriptions: [createMockSubscription()],
       availablePurchases: [],
-      requestProducts: mockRequestProducts,
       fetchProducts: mockFetchProducts,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,

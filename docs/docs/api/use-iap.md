@@ -20,11 +20,12 @@ import {useIAP} from 'expo-iap';
 
 ## Important: Hook Behavior
 
-The `useIAP` hook follows React Hooks conventions and differs from the underlying native module methods:
+The `useIAP` hook follows React Hooks conventions and differs from calling functions directly from `expo-iap` (index exports):
 
-- **Automatic Connection Management**: The hook automatically calls `initConnection` when the component mounts and `endConnection` when it unmounts.
-- **State Management**: Hook methods like `requestProducts`, `getProducts`, etc., return `Promise<void>` instead of returning data directly. They update the internal state which you access through the returned properties.
-- **Product Caching**: Product caching is handled automatically by the native module - you don't need to implement caching at the application level.
+- **Automatic connection**: Automatically calls `initConnection` on mount and `endConnection` on unmount.
+- **Void-returning methods**: Methods like `fetchProducts`, `requestProducts`, `getProducts`, `getSubscriptions`, `requestPurchase`, `getAvailablePurchases`, etc. return `Promise<void>` in the hook. They do not resolve to data. Instead, they update internal state exposed by the hook: `products`, `subscriptions`, `availablePurchases`, `currentPurchase`, etc.
+- **Don’t await for data**: When using the hook, do not write `const x = await fetchProducts(...)`. Call the method, then read the corresponding state from the hook.
+- **Prefer callbacks over `currentPurchase`**: `currentPurchase` was historically useful for debugging and migration, but for new code you should rely on `onPurchaseSuccess` and `onPurchaseError` options passed to `useIAP`.
 
 ## Basic Usage
 
@@ -33,14 +34,18 @@ const {
   connected,
   products,
   subscriptions,
-  currentPurchase,
-  currentPurchaseError,
-  getProducts,
-  getSubscriptions,
+  availablePurchases,
+  currentPurchase, // Debugging/migration friendly; prefer callbacks
+  currentPurchaseError, // Debugging/migration friendly; prefer callbacks
+  fetchProducts,
+  requestProducts, // deprecated alias to fetchProducts inside the hook
+  getProducts, // deprecated helper; keep for migration
+  getSubscriptions, // deprecated helper; keep for migration
   requestPurchase,
   validateReceipt,
 } = useIAP({
   onPurchaseSuccess: (purchase) => {
+    // Validate on your backend, then finish the transaction
     console.log('Purchase successful:', purchase);
   },
   onPurchaseError: (error) => {
@@ -67,7 +72,8 @@ interface UseIAPOptions {
   onPurchaseSuccess?: (purchase: Purchase) => void;
   onPurchaseError?: (error: PurchaseError) => void;
   onSyncError?: (error: Error) => void;
-  autoFinishTransactions?: boolean; // Default: true
+  shouldAutoSyncPurchases?: boolean; // Controls auto sync behavior inside the hook
+  onPromotedProductIOS?: (product: Product) => void; // iOS promoted products
 }
 ```
 
@@ -160,13 +166,13 @@ interface UseIAPOptions {
 #### currentPurchase
 
 - **Type**: `Purchase | null`
-- **Description**: Currently active purchase (if any)
-- **Example**:
+- **Description**: Last purchase event captured by the hook. This value is primarily helpful for debugging and migration. For production flows, prefer handling purchase results via `onPurchaseSuccess` and errors via `onPurchaseError` passed to `useIAP`.
+- **Example (debug logging only)**:
 
   ```tsx
   useEffect(() => {
     if (currentPurchase) {
-      processPurchase(currentPurchase);
+      console.log('Debug purchase event:', currentPurchase.id);
     }
   }, [currentPurchase]);
   ```
@@ -226,79 +232,57 @@ interface UseIAPOptions {
 
 ### Methods
 
-#### requestProducts
+#### fetchProducts / requestProducts (hook)
 
-- **Type**: `(params: RequestProductsParams) => Promise<void>`
-- **Description**: Fetch products or subscriptions from the store and update the `products` or `subscriptions` state
-- **Parameters**:
-  - `params`: Object containing:
-    - `skus`: Array of product/subscription IDs to fetch
-    - `type`: Product type - either `'inapp'` for products or `'subs'` for subscriptions
-- **Returns**: `Promise<void>` - The fetched products are available in the `products` or `subscriptions` state properties
+- **Type**: `(params: { skus: string[]; type?: 'inapp' | 'subs' }) => Promise<void>`
+- **Description**: Fetch products or subscriptions and update `products` / `subscriptions` state. In the hook these functions return `void` (no data result), by design.
+- **Do not await for data**: Call them, then consume `products` / `subscriptions` state from the hook.
 - **Example**:
 
   ```tsx
-  // Fetch in-app products
-  const fetchProducts = async () => {
-    try {
-      const products = await requestProducts({
-        skus: ['com.app.premium', 'com.app.coins_100'],
-        type: 'inapp',
-      });
-      console.log('Fetched products:', products);
-    } catch (error) {
-      console.error('Failed to fetch products:', error);
-    }
-  };
+  useEffect(() => {
+    if (!connected) return;
+    // In hook: returns void, updates state
+    fetchProducts({
+      skus: ['com.app.premium', 'com.app.coins_100'],
+      type: 'inapp',
+    });
+    fetchProducts({skus: ['com.app.premium_monthly'], type: 'subs'});
+  }, [connected, fetchProducts]);
 
-  // Fetch subscriptions
-  const fetchSubscriptions = async () => {
-    try {
-      const subs = await requestProducts({
-        skus: ['com.app.premium_monthly', 'com.app.premium_yearly'],
-        type: 'subs',
-      });
-      console.log('Fetched subscriptions:', subs);
-    } catch (error) {
-      console.error('Failed to fetch subscriptions:', error);
-    }
-  };
+  // Later in render/effects
+  products.forEach((p) => console.log('product', p.id));
+  subscriptions.forEach((s) => console.log('sub', s.id));
   ```
 
-#### getProducts (Deprecated)
+#### getProducts (Deprecated helper)
 
-> **⚠️ DEPRECATED:** This method is deprecated. Use `requestProducts({ skus, type: 'inapp' })` instead.
+> ⚠️ Deprecated. Inside the hook, prefer `fetchProducts({ skus, type: 'inapp' })`.
 
 - **Type**: `(productIds: string[]) => Promise<void>`
 - **Migration**:
 
   ```tsx
-  // Old way (deprecated)
-  const products = await getProducts(['product1', 'product2']);
+  // Old way (deprecated helper)
+  getProducts(['product1', 'product2']); // updates `products` state
 
-  // New way
-  const products = await requestProducts({
-    skus: ['product1', 'product2'],
-    type: 'inapp',
-  });
+  // Preferred
+  fetchProducts({skus: ['product1', 'product2'], type: 'inapp'}); // updates `products` state
   ```
 
-#### getSubscriptions (Deprecated)
+#### getSubscriptions (Deprecated helper)
 
-> **⚠️ DEPRECATED:** This method is deprecated. Use `requestProducts({ skus, type: 'subs' })` instead.
+> ⚠️ Deprecated. Inside the hook, prefer `fetchProducts({ skus, type: 'subs' })`.
 
 - **Type**: `(subscriptionIds: string[]) => Promise<void>`
 - **Migration**:
 
   ```tsx
-  // Old way (deprecated)
-  const subs = await getSubscriptions(['sub1', 'sub2']);
+  // Old way (deprecated helper)
+  getSubscriptions(['sub1', 'sub2']); // updates `subscriptions` state
 
-  // New way
-  const subs = await requestProducts({
-    skus: ['sub1', 'sub2'],
-    type: 'subs',
-  });
+  // Preferred
+  fetchProducts({skus: ['sub1', 'sub2'], type: 'subs'}); // updates `subscriptions` state
   ```
 
 #### requestPurchase
@@ -312,6 +296,7 @@ interface UseIAPOptions {
   ```tsx
   const buyProduct = async (productId: string) => {
     try {
+      // In hook: returns void. Listen via callbacks or `currentPurchase`.
       await requestPurchase({
         request: {
           ios: {sku: productId},
@@ -323,6 +308,29 @@ interface UseIAPOptions {
     }
   };
   ```
+
+#### Subscription helpers (hook)
+
+- `getActiveSubscriptions(subscriptionIds?) => Promise<ActiveSubscription[]>`
+  - Returns active subscription info and also updates `activeSubscriptions` state.
+  - Exception to the hook’s void-return design: this method returns data for convenience.
+  - Example:
+
+    ```tsx
+    const {getActiveSubscriptions, activeSubscriptions} = useIAP();
+
+    useEffect(() => {
+      if (!connected) return;
+      (async () => {
+        const subs = await getActiveSubscriptions(['premium_monthly']);
+        console.log('Subs from return:', subs.length);
+        console.log('Subs from state:', activeSubscriptions.length);
+      })();
+    }, [connected]);
+    ```
+
+- `hasActiveSubscriptions(subscriptionIds?) => Promise<boolean>`
+  - Boolean convenience check to see if any active subscriptions exist (optionally filtered by IDs).
 
 #### getPurchaseHistories
 
@@ -350,8 +358,10 @@ interface UseIAPOptions {
   ```tsx
   const restorePurchases = async () => {
     try {
+      // Updates `availablePurchases` state; do not expect a return value
       await getAvailablePurchases();
-      console.log('Available purchases:', availablePurchases);
+      // Read from state afterwards
+      console.log('Available purchases count:', availablePurchases.length);
     } catch (error) {
       console.error('Failed to fetch available purchases:', error);
     }
@@ -556,9 +566,9 @@ const {requestPurchase} = useIAP({
    ```tsx
    useEffect(() => {
      if (connected) {
-       requestProducts({ skus: productIds, type: 'inapp' });
+       fetchProducts({skus: productIds, type: 'inapp'});
      }
-   }, [connected]);
+   }, [connected, fetchProducts]);
    ```
 
 2. **Handle loading states**:
@@ -604,6 +614,12 @@ const PromotedProductExample = () => {
   const {promotedProductIOS, requestPurchaseOnPromotedProductIOS} = useIAP({
     onPromotedProductIOS: (product) => {
       console.log('Promoted product detected:', product);
+    },
+    onPurchaseSuccess: (purchase) => {
+      // Recommended: handle success via callback
+    },
+    onPurchaseError: (error) => {
+      // Recommended: handle errors via callback
     },
   });
 

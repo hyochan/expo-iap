@@ -120,8 +120,9 @@ export default function SubscriptionManager() {
 
   const checkSubscriptionStatus = async () => {
     try {
-      const purchases = await getAvailablePurchases();
-      const activeSubscription = findActiveSubscription(purchases);
+      // In hook: updates state, does not return purchases
+      await getAvailablePurchases();
+      const activeSubscription = findActiveSubscription(availablePurchases);
 
       if (activeSubscription) {
         const status = await validateSubscriptionStatus(activeSubscription);

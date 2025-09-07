@@ -1,6 +1,8 @@
 module.exports = {
   preset: 'jest-expo',
   testEnvironment: 'node',
+  // Disable watchman to avoid sandbox/permission issues in CI and sandboxes
+  watchman: false,
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   testMatch: ['**/__tests__/**/*.test.{ts,tsx,js,jsx}'],
   transform: {

@@ -320,7 +320,7 @@ export default function SubscriptionFlow() {
         console.warn('Failed to load available purchases:', error);
       });
     }
-  }, [connected, getAvailablePurchases, fetchProducts]);
+  }, [connected, fetchProducts, getAvailablePurchases]);
 
   // Defer loading guard until after all hooks are declared
 
@@ -570,11 +570,6 @@ export default function SubscriptionFlow() {
       </View>
     );
   };
-
-  // Show loading screen while disconnected
-  if (!connected) {
-    return <Loading message="Connecting to Store..." />;
-  }
 
   return (
     <ScrollView style={styles.container}>
@@ -890,7 +885,10 @@ export default function SubscriptionFlow() {
                 onPress={async () => {
                   if (purchaseResult) {
                     await Clipboard.setStringAsync(purchaseResult);
-                    Alert.alert('Copied', 'Purchase result copied to clipboard');
+                    Alert.alert(
+                      'Copied',
+                      'Purchase result copied to clipboard',
+                    );
                   }
                 }}
               >
