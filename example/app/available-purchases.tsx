@@ -60,9 +60,7 @@ export default function AvailablePurchases() {
       });
 
       // Refresh status after success
-      setTimeout(() => {
-        checkSubscriptionStatus();
-      }, 1000);
+      checkSubscriptionStatus();
     },
     onPurchaseError: (error: PurchaseError) => {
       console.error('[AVAILABLE-PURCHASES] Purchase failed:', error);
@@ -148,15 +146,10 @@ export default function AvailablePurchases() {
     }
   }, [connected, fetchProducts, getAvailablePurchases, getActiveSubscriptions]);
 
-  // Check subscription status separately like subscription-flow does
+  // Check subscription status when connected
   useEffect(() => {
     if (connected) {
-      // Use a timeout to avoid rapid consecutive calls
-      const timer = setTimeout(() => {
-        checkSubscriptionStatus();
-      }, 500);
-
-      return () => clearTimeout(timer);
+      checkSubscriptionStatus();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected]);

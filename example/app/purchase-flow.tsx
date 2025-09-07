@@ -10,8 +10,12 @@ import {
   Modal,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import {signal, effect} from '@preact/signals-react';
-import {requestPurchase, useIAP, getAppTransactionIOS} from '../../src';
+import {
+  requestPurchase,
+  useIAP,
+  getAppTransactionIOS,
+  isProductIOS,
+} from '../../src';
 import {PRODUCT_IDS} from '../../src/utils/constants';
 import type {Product, Purchase, PurchaseError} from '../../src/ExpoIap.types';
 
@@ -25,48 +29,28 @@ import type {Product, Purchase, PurchaseError} from '../../src/ExpoIap.types';
  * - Clean success/error pattern through hooks
  * - Focused on one-time purchases (products)
  */
-// Signals for state management
-const purchaseResultSignal = signal<string>('');
-const isProcessingSignal = signal(false);
-const selectedProductSignal = signal<Product | null>(null);
-const modalVisibleSignal = signal(false);
 
 export default function PurchaseFlow() {
-  // React state synced with signals
-  const [purchaseResult, setPurchaseResult] = useState(
-    purchaseResultSignal.value,
-  );
-  const [isProcessing, setIsProcessing] = useState(isProcessingSignal.value);
-  const [selectedProduct, setSelectedProduct] = useState(
-    selectedProductSignal.value,
-  );
-  const [modalVisible, setModalVisible] = useState(modalVisibleSignal.value);
-
-  // Subscribe to signal changes
-  useEffect(() => {
-    const unsubscribes = [
-      effect(() => setPurchaseResult(purchaseResultSignal.value)),
-      effect(() => setIsProcessing(isProcessingSignal.value)),
-      effect(() => setSelectedProduct(selectedProductSignal.value)),
-      effect(() => setModalVisible(modalVisibleSignal.value)),
-    ];
-
-    return () => unsubscribes.forEach((fn) => fn());
-  }, []);
+  // State management with useState
+  const [purchaseResult, setPurchaseResult] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Use the useIAP hook for managing purchases
   const {connected, products, fetchProducts, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
       console.log('Purchase successful:', purchase);
-      isProcessingSignal.value = false;
+      setIsProcessing(false);
 
       // Handle successful purchase
-      purchaseResultSignal.value =
+      setPurchaseResult(
         `✅ Purchase successful (${purchase.platform})\n` +
-        `Product: ${purchase.productId}\n` +
-        `Transaction ID: ${purchase.transactionId || 'N/A'}\n` +
-        `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}\n` +
-        `Receipt: ${purchase.transactionReceipt?.substring(0, 50)}...`;
+          `Product: ${purchase.productId}\n` +
+          `Transaction ID: ${purchase.transactionId || 'N/A'}\n` +
+          `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}\n` +
+          `Receipt: ${purchase.transactionReceipt?.substring(0, 10)}...`,
+      );
 
       // IMPORTANT: Server-side receipt validation should be performed here
       // Send the receipt to your backend server for validation
@@ -88,10 +72,10 @@ export default function PurchaseFlow() {
     },
     onPurchaseError: (error: PurchaseError) => {
       console.error('Purchase failed:', error);
-      isProcessingSignal.value = false;
+      setIsProcessing(false);
 
       // Handle purchase error
-      purchaseResultSignal.value = `❌ Purchase failed: ${error.message}`;
+      setPurchaseResult(`❌ Purchase failed: ${error.message}`);
     },
     onSyncError: (error: Error) => {
       console.warn('Sync error:', error);
@@ -101,15 +85,26 @@ export default function PurchaseFlow() {
 
   // Load products when component mounts
   useEffect(() => {
+    console.log('[PurchaseFlow] useEffect - connected:', connected);
+    console.log('[PurchaseFlow] PRODUCT_IDS:', PRODUCT_IDS);
     if (connected) {
-      fetchProducts({skus: PRODUCT_IDS, type: 'inapp'});
+      console.log('[PurchaseFlow] Calling fetchProducts with:', PRODUCT_IDS);
+      fetchProducts({skus: PRODUCT_IDS, type: 'inapp'})
+        .then(() => {
+          console.log('[PurchaseFlow] fetchProducts completed');
+        })
+        .catch((error) => {
+          console.error('[PurchaseFlow] fetchProducts error:', error);
+        });
+    } else {
+      console.log('[PurchaseFlow] Not fetching products - not connected');
     }
   }, [connected, fetchProducts]);
 
   const handlePurchase = async (itemId: string) => {
     try {
-      isProcessingSignal.value = true;
-      purchaseResultSignal.value = 'Processing purchase...';
+      setIsProcessing(true);
+      setPurchaseResult('Processing purchase...');
 
       // New platform-specific API (v2.7.0+) - no Platform.OS branching needed
       await requestPurchase({
@@ -125,79 +120,70 @@ export default function PurchaseFlow() {
         type: 'inapp',
       });
     } catch (error) {
-      isProcessingSignal.value = false;
+      setIsProcessing(false);
       const errorMessage =
         error instanceof Error ? error.message : 'Purchase failed';
-      purchaseResultSignal.value = `❌ Purchase failed: ${errorMessage}`;
+      setPurchaseResult(`❌ Purchase failed: ${errorMessage}`);
     }
   };
 
-  const retryLoadProducts = () => {
-    fetchProducts({skus: PRODUCT_IDS, type: 'inapp'});
-  };
-
-  const getProductDisplayPrice = (product: Product): string => {
-    if (
-      'oneTimePurchaseOfferDetailsAndroid' in product &&
-      product.oneTimePurchaseOfferDetailsAndroid
-    ) {
-      return (
-        product.oneTimePurchaseOfferDetailsAndroid.formattedPrice ||
-        product.displayPrice
+  // Monitor products changes
+  useEffect(() => {
+    console.log('[PurchaseFlow] Products updated:', products.length, 'items');
+    products.forEach((product, index) => {
+      console.log(
+        `[PurchaseFlow] Product ${index}:`,
+        product.id,
+        product.title,
+        product.displayPrice,
       );
+    });
+  }, [products]);
+
+  const handleCopyResult = async () => {
+    if (purchaseResult) {
+      await Clipboard.setStringAsync(purchaseResult);
+      Alert.alert('Copied', 'Purchase result copied to clipboard');
     }
-    return product.displayPrice;
   };
 
-  const handleProductPress = (product: Product) => {
-    selectedProductSignal.value = product;
-    modalVisibleSignal.value = true;
-  };
+  const checkAppTransaction = async () => {
+    try {
+      console.log('Checking app transaction...');
+      const transaction = await getAppTransactionIOS();
 
-  const renderProductDetails = () => {
-    const product = selectedProduct;
-    if (!product) return null;
-
-    const jsonString = JSON.stringify(product, null, 2);
-
-    const copyToClipboard = async () => {
-      try {
-        await Clipboard.setStringAsync(jsonString);
-        Alert.alert('Copied', 'Product JSON copied to clipboard');
-      } catch {
-        Alert.alert('Copy Failed', 'Failed to copy to clipboard');
+      if (transaction) {
+        Alert.alert(
+          'App Transaction',
+          `App Transaction Found:\n\n` +
+            `Original App Version: ${
+              transaction.originalAppVersion || 'N/A'
+            }\n` +
+            `Purchase Date: ${
+              transaction.originalPurchaseDate
+                ? new Date(
+                    transaction.originalPurchaseDate,
+                  ).toLocaleDateString()
+                : 'N/A'
+            }\n` +
+            `Device Verification: ${
+              transaction.deviceVerification || 'N/A'
+            }\n` +
+            `Environment: ${transaction.environment || 'N/A'}`,
+          [{text: 'OK'}],
+        );
+      } else {
+        Alert.alert('App Transaction', 'No app transaction found');
       }
-    };
+    } catch (error) {
+      console.error('Failed to get app transaction:', error);
+      Alert.alert('Error', 'Failed to get app transaction');
+    }
+  };
 
-    const logToConsole = () => {
-      console.log('=== PRODUCT DATA ===');
-      console.log(product);
-      console.log('=== PRODUCT JSON ===');
-      console.log(jsonString);
-      Alert.alert('Console', 'Product data logged to console');
-    };
-
-    return (
-      <View style={styles.modalContent}>
-        <ScrollView style={styles.jsonContainer}>
-          <Text style={styles.jsonText}>{jsonString}</Text>
-        </ScrollView>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.copyButton]}
-            onPress={copyToClipboard}
-          >
-            <Text style={styles.actionButtonText}>📋 Copy</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.consoleButton]}
-            onPress={logToConsole}
-          >
-            <Text style={styles.actionButtonText}>🖥️ Console</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
+  const handleShowDetails = (product: Product) => {
+    setSelectedProduct(product);
+    setModalVisible(true);
   };
 
   return (
@@ -205,139 +191,179 @@ export default function PurchaseFlow() {
       <View style={styles.header}>
         <Text style={styles.title}>In-App Purchase Flow</Text>
         <Text style={styles.subtitle}>
-          TypeScript-first approach for products
+          Testing consumable and non-consumable products
         </Text>
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusText}>
-            Store: {connected ? '✅ Connected' : '❌ Disconnected'}
-          </Text>
-          <Text style={styles.statusText}>
-            Platform: {Platform.OS === 'ios' ? '🍎 iOS' : '🤖 Android'}
-          </Text>
-        </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Available Products</Text>
-        {!connected ? (
-          <Text style={styles.loadingText}>Connecting to store...</Text>
-        ) : products.length > 0 ? (
-          products.map((product) => (
+      <View style={styles.content}>
+        {/* Connection Status */}
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusLabel}>Store Connection:</Text>
+          <Text
+            style={[
+              styles.statusValue,
+              {color: connected ? '#4CAF50' : '#F44336'},
+            ]}
+          >
+            {connected ? '✅ Connected' : '❌ Disconnected'}
+          </Text>
+        </View>
+
+        {/* Products List */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Available Products</Text>
+          <Text style={styles.sectionSubtitle}>
+            {products.length > 0
+              ? `${products.length} product(s) loaded`
+              : 'Loading products...'}
+          </Text>
+
+          {products.map((product) => (
             <View key={product.id} style={styles.productCard}>
-              <View style={styles.productInfo}>
+              <View style={styles.productHeader}>
                 <Text style={styles.productTitle}>{product.title}</Text>
-                <Text style={styles.productDescription}>
-                  {product.description}
-                </Text>
-                <Text style={styles.productPrice}>
-                  {getProductDisplayPrice(product)}
-                </Text>
+                <Text style={styles.productPrice}>{product.displayPrice}</Text>
               </View>
+              <Text style={styles.productDescription}>
+                {product.description}
+              </Text>
               <View style={styles.productActions}>
-                <TouchableOpacity
-                  style={styles.infoButton}
-                  onPress={() => handleProductPress(product)}
-                >
-                  <Text style={styles.infoButtonText}>ℹ️</Text>
-                </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.purchaseButton,
-                    isProcessing && styles.disabledButton,
+                    isProcessing && {opacity: 0.5},
                   ]}
                   onPress={() => handlePurchase(product.id)}
-                  disabled={isProcessing || !connected}
+                  disabled={isProcessing}
                 >
                   <Text style={styles.purchaseButtonText}>
-                    {isProcessing ? 'Processing...' : 'Purchase'}
+                    {isProcessing ? 'Processing...' : `Purchase`}
                   </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.detailsButton}
+                  onPress={() => handleShowDetails(product)}
+                >
+                  <Text style={styles.detailsButtonText}>Details</Text>
                 </TouchableOpacity>
               </View>
             </View>
-          ))
-        ) : (
-          <View style={styles.noProductsCard}>
-            <Text style={styles.noProductsText}>
-              No products found. Make sure to configure your product IDs in your
-              app store.
-            </Text>
+          ))}
+
+          {products.length === 0 && connected && (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>
+                No products available. Please check your App Store Connect
+                configuration.
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Purchase Result */}
+        {purchaseResult ? (
+          <View style={styles.resultContainer}>
+            <Text style={styles.resultTitle}>Purchase Result:</Text>
+            <Text style={styles.resultText}>{purchaseResult}</Text>
             <TouchableOpacity
-              style={styles.retryButton}
-              onPress={retryLoadProducts}
+              style={styles.copyButton}
+              onPress={handleCopyResult}
             >
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.copyButtonText}>📋 Copy Result</Text>
             </TouchableOpacity>
           </View>
+        ) : null}
+
+        {/* App Transaction Check (iOS) */}
+        {Platform.OS === 'ios' && (
+          <TouchableOpacity
+            style={styles.appTransactionButton}
+            onPress={checkAppTransaction}
+          >
+            <Text style={styles.appTransactionButtonText}>
+              🔍 Check App Transaction (iOS 16+)
+            </Text>
+          </TouchableOpacity>
         )}
+
+        {/* Instructions */}
+        <View style={styles.instructions}>
+          <Text style={styles.instructionsTitle}>How to test:</Text>
+          <Text style={styles.instructionsText}>
+            1. Make sure you're signed in with a Sandbox account
+          </Text>
+          <Text style={styles.instructionsText}>
+            2. Products must be configured in App Store Connect
+          </Text>
+          <Text style={styles.instructionsText}>
+            3. Tap "Purchase" to initiate the transaction
+          </Text>
+          <Text style={styles.instructionsText}>
+            4. The transaction will be processed via the hook callbacks
+          </Text>
+          <Text style={styles.instructionsText}>
+            5. Server-side receipt validation is recommended for production
+          </Text>
+        </View>
       </View>
 
-      {purchaseResult ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Result</Text>
-          <View style={styles.resultCard}>
-            <Text style={styles.resultText}>{purchaseResult}</Text>
-          </View>
-        </View>
-      ) : null}
-
+      {/* Product Details Modal */}
       <Modal
+        visible={modalVisible}
         animationType="slide"
         transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          modalVisibleSignal.value = false;
-        }}
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Product Details</Text>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => (modalVisibleSignal.value = false)}
-              >
-                <Text style={styles.closeButtonText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            {renderProductDetails()}
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Product Details</Text>
+            {selectedProduct && (
+              <>
+                <Text style={styles.modalLabel}>Product ID:</Text>
+                <Text style={styles.modalValue}>{selectedProduct.id}</Text>
+
+                <Text style={styles.modalLabel}>Title:</Text>
+                <Text style={styles.modalValue}>{selectedProduct.title}</Text>
+
+                <Text style={styles.modalLabel}>Description:</Text>
+                <Text style={styles.modalValue}>
+                  {selectedProduct.description}
+                </Text>
+
+                <Text style={styles.modalLabel}>Price:</Text>
+                <Text style={styles.modalValue}>
+                  {selectedProduct.displayPrice}
+                </Text>
+
+                <Text style={styles.modalLabel}>Currency:</Text>
+                <Text style={styles.modalValue}>
+                  {selectedProduct.currency || 'N/A'}
+                </Text>
+
+                <Text style={styles.modalLabel}>Type:</Text>
+                <Text style={styles.modalValue}>
+                  {selectedProduct.type || 'N/A'}
+                </Text>
+
+                {isProductIOS(selectedProduct) && (
+                  <>
+                    <Text style={styles.modalLabel}>Is Family Shareable:</Text>
+                    <Text style={styles.modalValue}>
+                      {selectedProduct.isFamilyShareableIOS ? 'Yes' : 'No'}
+                    </Text>
+                  </>
+                )}
+              </>
+            )}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
-      <View style={styles.infoSection}>
-        <Text style={styles.infoTitle}>🎯 Key Features Demonstrated</Text>
-        <Text style={styles.infoText}>
-          • Automatic TypeScript type inference{'\n'}• Platform-agnostic
-          property access{'\n'}• No manual type casting required{'\n'}• Focused
-          on one-time purchases{'\n'}• Type-safe error handling
-          {'\n'}• CPK React Native compliance
-        </Text>
-      </View>
-
-      {Platform.OS === 'ios' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Test iOS 16.0 Feature</Text>
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={async () => {
-              try {
-                const appTransaction = await getAppTransactionIOS();
-                Alert.alert(
-                  'Success',
-                  `App Transaction: ${JSON.stringify(appTransaction)}`,
-                );
-              } catch (error: any) {
-                Alert.alert(
-                  'Error',
-                  error.message || 'Failed to get app transaction',
-                );
-              }
-            }}
-          >
-            <Text style={styles.testButtonText}>Test getAppTransaction</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </ScrollView>
   );
 }
@@ -345,169 +371,185 @@ export default function PurchaseFlow() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
   header: {
+    backgroundColor: '#007AFF',
     padding: 20,
-    paddingTop: 60,
-    backgroundColor: '#f8f9fa',
+    paddingTop: 40,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: 'white',
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 15,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  content: {
+    padding: 15,
   },
   statusContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 15,
+    alignItems: 'center',
   },
-  statusText: {
-    fontSize: 12,
+  statusLabel: {
+    fontSize: 14,
     color: '#666',
+    marginRight: 10,
+  },
+  statusValue: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   section: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 15,
-    color: '#333',
+    marginBottom: 5,
   },
-  loadingText: {
-    textAlign: 'center',
+  sectionSubtitle: {
+    fontSize: 12,
     color: '#666',
-    fontSize: 16,
-    padding: 20,
+    marginBottom: 10,
   },
   productCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  productHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  productActions: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  infoButton: {
-    backgroundColor: '#e9ecef',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoButtonText: {
-    fontSize: 18,
-  },
-  productInfo: {
-    flex: 1,
-    marginRight: 15,
+    marginBottom: 8,
   },
   productTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  productDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 6,
+    flex: 1,
   },
   productPrice: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#007AFF',
   },
+  productDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+  },
+  productActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   purchaseButton: {
+    flex: 1,
     backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 6,
+    alignItems: 'center',
   },
   purchaseButtonText: {
-    color: '#fff',
+    color: 'white',
     fontWeight: '600',
+    fontSize: 14,
   },
-  disabledButton: {
-    opacity: 0.5,
+  detailsButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    alignItems: 'center',
   },
-  noProductsCard: {
-    backgroundColor: '#fff3cd',
+  detailsButtonText: {
+    color: '#007AFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  emptyState: {
+    backgroundColor: 'white',
     borderRadius: 8,
     padding: 20,
     alignItems: 'center',
   },
-  noProductsText: {
+  emptyStateText: {
+    fontSize: 14,
+    color: '#666',
     textAlign: 'center',
-    color: '#856404',
-    marginBottom: 15,
-    lineHeight: 20,
   },
-  retryButton: {
-    backgroundColor: '#ffc107',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  retryButtonText: {
-    color: '#212529',
-    fontWeight: '600',
-  },
-  resultCard: {
-    backgroundColor: '#f8f9fa',
+  resultContainer: {
+    backgroundColor: '#e8f5e9',
     borderRadius: 8,
     padding: 15,
-    borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
+    marginBottom: 15,
+  },
+  resultTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   resultText: {
-    fontSize: 14,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    lineHeight: 20,
+    fontSize: 12,
     color: '#333',
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
   },
-  infoSection: {
-    padding: 20,
-    backgroundColor: '#f0f8ff',
-    margin: 20,
-    borderRadius: 12,
+  copyButton: {
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#4CAF50',
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   },
-  infoTitle: {
-    fontSize: 16,
+  copyButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  appTransactionButton: {
+    backgroundColor: '#FF9800',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  appTransactionButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  instructions: {
+    backgroundColor: '#fff3e0',
+    borderRadius: 8,
+    padding: 15,
+  },
+  instructionsTitle: {
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 10,
-    color: '#0066cc',
+    color: '#e65100',
   },
-  infoText: {
-    fontSize: 14,
-    color: '#0066cc',
-    lineHeight: 20,
-  },
-  testButton: {
-    backgroundColor: '#FF6B6B',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  testButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
+  instructionsText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 5,
   },
   modalOverlay: {
     flex: 1,
@@ -515,78 +557,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    width: '90%',
-    height: '80%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    width: '90%',
+    maxHeight: '80%',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  modalLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  modalValue: {
+    fontSize: 14,
     color: '#333',
+    marginBottom: 5,
   },
   closeButton: {
-    padding: 4,
-  },
-  closeButtonText: {
-    fontSize: 24,
-    color: '#666',
-  },
-  modalContent: {
-    flex: 1,
-    padding: 20,
-    paddingTop: 0,
-  },
-  jsonContainer: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  jsonText: {
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontSize: 12,
-    color: '#333',
-    lineHeight: 18,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    padding: 12,
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 20,
   },
-  copyButton: {
-    backgroundColor: '#007AFF',
-  },
-  consoleButton: {
-    backgroundColor: '#28a745',
-  },
-  actionButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  closeButtonText: {
+    color: 'white',
     fontWeight: '600',
+    fontSize: 16,
   },
 });

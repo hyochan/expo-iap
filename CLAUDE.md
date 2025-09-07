@@ -94,6 +94,34 @@ For new feature proposals:
 3. Ensure alignment with OpenIAP standards
 4. Implement following the agreed specification
 
+### State Management with OpenIapStore
+
+#### IapStatus Structure
+The `IapStatus` struct provides standardized state management for OpenIAP operations:
+
+```swift
+public struct IapStatus {
+    public var loadings: LoadingStates = LoadingStates()
+    public var lastPurchaseResult: PurchaseResultData?
+    public var lastError: ErrorData?
+    // ...
+}
+
+public struct LoadingStates {
+    public var initConnection: Bool = false
+    public var fetchProducts: Bool = false  
+    public var restorePurchases: Bool = false
+    public var purchasing: Set<String> = []  // Product IDs currently being purchased
+}
+```
+
+#### Usage Guidelines
+- **OpenIapStore** manages data state only, not UI state
+- UI components should manage their own display state (alerts, sheets, etc.)
+- Loading states are automatically managed within OpenIapStore
+- Use `status.loadings.purchasing.contains(productId)` to check if a specific product is being purchased
+- Use `status.isLoading` computed property to check if any operation is in progress
+
 ## Documentation Guidelines
 
 ### Blog Post Conventions

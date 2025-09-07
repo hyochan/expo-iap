@@ -11,7 +11,6 @@ import {
   Modal,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import {signal, effect} from '@preact/signals-react';
 import {requestPurchase, useIAP, showManageSubscriptionsIOS} from '../../src';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {
@@ -37,13 +36,6 @@ import type {
  * - activeSubscriptions state - automatically updated subscription list
  */
 
-// Signals for state management
-const purchaseResultSignal = signal<string>('');
-const isProcessingSignal = signal(false);
-const isCheckingStatusSignal = signal(false);
-const selectedSubscriptionSignal = signal<SubscriptionProduct | null>(null);
-const modalVisibleSignal = signal(false);
-const isHandlingPurchaseSignal = signal(false);
 
 export default function SubscriptionFlow() {
   // Deduplicate purchases by productId, keeping the most recent transaction
@@ -68,31 +60,13 @@ export default function SubscriptionFlow() {
     return Array.from(uniquePurchases.values());
   };
 
-  // React state synced with signals
-  const [purchaseResult, setPurchaseResult] = useState(
-    purchaseResultSignal.value,
-  );
-  const [isProcessing, setIsProcessing] = useState(isProcessingSignal.value);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(
-    isCheckingStatusSignal.value,
-  );
-  const [selectedSubscription, setSelectedSubscription] = useState(
-    selectedSubscriptionSignal.value,
-  );
-  const [modalVisible, setModalVisible] = useState(modalVisibleSignal.value);
-
-  // Subscribe to signal changes
-  useEffect(() => {
-    const unsubscribes = [
-      effect(() => setPurchaseResult(purchaseResultSignal.value)),
-      effect(() => setIsProcessing(isProcessingSignal.value)),
-      effect(() => setIsCheckingStatus(isCheckingStatusSignal.value)),
-      effect(() => setSelectedSubscription(selectedSubscriptionSignal.value)),
-      effect(() => setModalVisible(modalVisibleSignal.value)),
-    ];
-
-    return () => unsubscribes.forEach((fn) => fn());
-  }, []);
+  // React state management
+  const [purchaseResult, setPurchaseResult] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState<SubscriptionProduct | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isHandlingPurchase, setIsHandlingPurchase] = useState(false);
 
   // Use the useIAP hook for managing subscriptions with built-in subscription status
   const {
@@ -109,13 +83,13 @@ export default function SubscriptionFlow() {
       console.log('Subscription successful:', purchase);
 
       // Prevent duplicate handling of the same purchase
-      if (isHandlingPurchaseSignal.value) {
+      if (isHandlingPurchase) {
         console.log('Already handling a purchase, skipping duplicate callback');
         return;
       }
 
-      isHandlingPurchaseSignal.value = true;
-      isProcessingSignal.value = false;
+      setIsHandlingPurchase(true);
+      setIsProcessing(false);
 
       // Determine if this is a valid purchase using logic similar to Flutter implementation
       let isPurchased = false;
@@ -171,24 +145,25 @@ export default function SubscriptionFlow() {
         console.warn(
           'Purchase callback received but purchase validation failed',
         );
-        purchaseResultSignal.value = `⚠️ Purchase validation failed`;
+        setPurchaseResult(`⚠️ Purchase validation failed`);
         Alert.alert(
           'Purchase Issue',
           'Purchase could not be validated. Please try again.',
         );
-        isHandlingPurchaseSignal.value = false; // Reset flag
+        setIsHandlingPurchase(false); // Reset flag
         return;
       }
 
       if (isRestoration) {
         // This is a subscription restoration (existing subscription reactivated)
-        purchaseResultSignal.value =
+        setPurchaseResult(
           `ℹ️ Subscription restored (${purchase.platform})\n` +
           `Product: ${purchase.productId}\n` +
           `Original Transaction: ${
             (purchase as PurchaseIOS).originalTransactionIdentifierIOS || 'N/A'
           }\n` +
-          `No additional charge - existing subscription confirmed`;
+          `No additional charge - existing subscription confirmed`
+        );
 
         // IMPORTANT: Server-side receipt validation should be performed here
         // Send the receipt to your backend server for validation
@@ -219,34 +194,27 @@ export default function SubscriptionFlow() {
           '🔄 Immediately refreshing subscription status after restoration...',
         );
 
-        const refreshStatus = async () => {
-          try {
-            await getActiveSubscriptions();
-            await getAvailablePurchases([]);
-          } catch (error) {
-            console.warn('Failed to refresh status:', error);
-          }
-        };
+        try {
+          await getActiveSubscriptions();
+          await getAvailablePurchases([]);
+        } catch (error) {
+          console.warn('Failed to refresh status:', error);
+        }
 
-        // Call immediately and multiple times to ensure UI updates
-        refreshStatus();
-        setTimeout(refreshStatus, 500);
-        setTimeout(refreshStatus, 2000);
-
-        // Reset the handling flag after a delay
-        setTimeout(() => {
-          isHandlingPurchaseSignal.value = false;
-        }, 3000);
+        // Reset the handling flag
+        setIsHandlingPurchase(false);
         return;
       }
 
       // Handle new subscription purchase
-      purchaseResultSignal.value =
+      const receiptSnippet = purchase.transactionReceipt?.substring(0, 10) || '';
+      setPurchaseResult(
         `✅ New subscription activated (${purchase.platform})\n` +
         `Product: ${purchase.productId}\n` +
         `Transaction ID: ${purchase.transactionId || 'N/A'}\n` +
         `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}\n` +
-        `Receipt: ${purchase.transactionReceipt?.substring(0, 50)}...`;
+        `Receipt: ${receiptSnippet}${receiptSnippet ? '...' : 'N/A'}`
+      );
 
       // IMPORTANT: Server-side receipt validation should be performed here
       // Send the receipt to your backend server for validation
@@ -273,39 +241,24 @@ export default function SubscriptionFlow() {
         '🔄 Immediately refreshing subscription status after purchase...',
       );
 
-      // Call checkSubscriptionStatus multiple times to ensure the UI updates
-      const refreshStatus = async () => {
-        try {
-          await getActiveSubscriptions();
-          await getAvailablePurchases([]);
-        } catch (error) {
-          console.warn('Failed to refresh status:', error);
-        }
-      };
+      try {
+        await getActiveSubscriptions();
+        await getAvailablePurchases([]);
+      } catch (error) {
+        console.warn('Failed to refresh status:', error);
+      }
 
-      // Call immediately
-      refreshStatus();
-
-      // Call again after short delay
-      setTimeout(refreshStatus, 500);
-
-      // Call again after longer delay to ensure server sync
-      setTimeout(refreshStatus, 2000);
-
-      // Final call after even longer delay for server processing
-      setTimeout(refreshStatus, 5000);
-
-      // Reset the handling flag after a delay
-      setTimeout(() => {
-        isHandlingPurchaseSignal.value = false;
-      }, 3000);
+      // Reset the handling flag
+      setIsHandlingPurchase(false);
+      setIsProcessing(false);
     },
     onPurchaseError: (error: PurchaseError) => {
       console.error('Subscription failed:', error);
-      isProcessingSignal.value = false;
+      setIsProcessing(false);
+      setIsHandlingPurchase(false); // Reset both flags on error
 
       // Handle subscription error
-      purchaseResultSignal.value = `❌ Subscription failed: ${error.message}`;
+      setPurchaseResult(`❌ Subscription failed: ${error.message}`);
     },
     onSyncError: (error: Error) => {
       console.warn('Sync error:', error);
@@ -318,10 +271,10 @@ export default function SubscriptionFlow() {
 
   // Check subscription status using the new library API
   const checkSubscriptionStatus = useCallback(async () => {
-    if (!connected || isCheckingStatusSignal.value) return;
+    if (!connected || isCheckingStatus) return;
 
     console.log('Checking subscription status...');
-    isCheckingStatusSignal.value = true;
+    setIsCheckingStatus(true);
     try {
       // No need to pass subscriptionIds - it will check all active subscriptions
       const subs = await getActiveSubscriptions();
@@ -333,14 +286,26 @@ export default function SubscriptionFlow() {
         'Subscription status check failed, but existing state preserved',
       );
     } finally {
-      isCheckingStatusSignal.value = false;
+      setIsCheckingStatus(false);
     }
-  }, [connected, getActiveSubscriptions]);
+  }, [connected, isCheckingStatus, getActiveSubscriptions]);
 
-  // Load subscriptions and check status when component mounts
+  // Load subscriptions immediately on component mount
   useEffect(() => {
+    const subscriptionIds = SUBSCRIPTION_PRODUCT_IDS;
+    console.log('Component mounted, immediately loading subscription products...');
+    console.log('Subscription IDs to fetch:', subscriptionIds);
+    
+    // Fetch subscription products
+    console.log('Fetching as subscriptions (type: subs)...');
+    fetchProducts({skus: subscriptionIds, type: 'subs'});
+  }, [fetchProducts]);
+
+  // Load subscriptions and check status when connected
+  useEffect(() => {
+    const subscriptionIds = SUBSCRIPTION_PRODUCT_IDS;
+    
     if (connected) {
-      const subscriptionIds = SUBSCRIPTION_PRODUCT_IDS;
       console.log('Connected to store, loading subscription products...');
       // requestProducts is event-based, not promise-based
       // Results will be available through the useIAP hook's subscriptions state
@@ -355,15 +320,10 @@ export default function SubscriptionFlow() {
     }
   }, [connected, getAvailablePurchases, fetchProducts]);
 
-  // Check subscription status separately to avoid infinite loop
+  // Check subscription status when connected
   useEffect(() => {
     if (connected) {
-      // Use a timeout to avoid rapid consecutive calls
-      const timer = setTimeout(() => {
-        checkSubscriptionStatus();
-      }, 500);
-
-      return () => clearTimeout(timer);
+      checkSubscriptionStatus();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected]);
@@ -389,8 +349,12 @@ export default function SubscriptionFlow() {
     console.log(
       '[STATE CHANGE] subscriptions (products):',
       subscriptions.length,
-      subscriptions.map((s) => ({id: s.id, title: s.title})),
+      subscriptions.map((s) => ({id: s.id, title: s.title, type: s.type})),
     );
+    
+    if (subscriptions.length > 0) {
+      console.log('Full subscription details:', JSON.stringify(subscriptions, null, 2));
+    }
   }, [subscriptions]);
 
   const handleSubscription = async (itemId: string) => {
@@ -409,8 +373,8 @@ export default function SubscriptionFlow() {
         return;
       }
 
-      isProcessingSignal.value = true;
-      purchaseResultSignal.value = 'Processing subscription...';
+      setIsProcessing(true);
+      setPurchaseResult('Processing subscription...');
 
       // Find the subscription to get offer details for Android
       const subscription = subscriptions.find((sub) => sub.id === itemId);
@@ -439,10 +403,10 @@ export default function SubscriptionFlow() {
         type: 'subs',
       });
     } catch (error) {
-      isProcessingSignal.value = false;
+      setIsProcessing(false);
       const errorMessage =
         error instanceof Error ? error.message : 'Subscription failed';
-      purchaseResultSignal.value = `❌ Subscription failed: ${errorMessage}`;
+      setPurchaseResult(`❌ Subscription failed: ${errorMessage}`);
       Alert.alert('Subscription Failed', errorMessage);
     }
   };
@@ -481,10 +445,8 @@ export default function SubscriptionFlow() {
         console.log('Subscription management opened');
 
         // After returning from subscription management, refresh status
-        setTimeout(() => {
-          console.log('Refreshing subscription status after management...');
-          checkSubscriptionStatus();
-        }, 1000);
+        console.log('Refreshing subscription status after management...');
+        checkSubscriptionStatus();
       } else {
         Alert.alert(
           'Manage Subscriptions',
@@ -552,8 +514,8 @@ export default function SubscriptionFlow() {
   };
 
   const handleSubscriptionPress = (subscription: SubscriptionProduct) => {
-    selectedSubscriptionSignal.value = subscription;
-    modalVisibleSignal.value = true;
+    setSelectedSubscription(subscription);
+    setModalVisible(true);
   };
 
   const renderSubscriptionDetails = () => {
@@ -919,7 +881,7 @@ export default function SubscriptionFlow() {
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => {
-          modalVisibleSignal.value = false;
+          setModalVisible(false);
         }}
       >
         <View style={styles.modalOverlay}>
@@ -928,7 +890,7 @@ export default function SubscriptionFlow() {
               <Text style={styles.modalTitle}>Subscription Details</Text>
               <TouchableOpacity
                 style={styles.closeButton}
-                onPress={() => (modalVisibleSignal.value = false)}
+                onPress={() => setModalVisible(false)}
               >
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>

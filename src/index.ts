@@ -72,17 +72,30 @@ export const emitter = (ExpoIapModule || NativeModulesProxy.ExpoIap) as {
 export const purchaseUpdatedListener = (
   listener: (event: Purchase) => void,
 ) => {
+  console.log('[JS] Registering purchaseUpdatedListener');
+  const wrappedListener = (event: Purchase) => {
+    console.log('[JS] purchaseUpdatedListener fired:', event);
+    listener(event);
+  };
   const emitterSubscription = emitter.addListener(
     OpenIapEvent.PurchaseUpdated,
-    listener,
+    wrappedListener,
   );
+  console.log('[JS] purchaseUpdatedListener registered successfully');
   return emitterSubscription;
 };
 
 export const purchaseErrorListener = (
   listener: (error: PurchaseError) => void,
 ) => {
-  return emitter.addListener(OpenIapEvent.PurchaseError, listener);
+  console.log('[JS] Registering purchaseErrorListener');
+  const wrappedListener = (error: PurchaseError) => {
+    console.log('[JS] purchaseErrorListener fired:', error);
+    listener(error);
+  };
+  const emitterSubscription = emitter.addListener(OpenIapEvent.PurchaseError, wrappedListener);
+  console.log('[JS] purchaseErrorListener registered successfully');
+  return emitterSubscription;
 };
 
 /**
@@ -233,16 +246,20 @@ export const fetchProducts = async ({
   }
 
   if (Platform.OS === 'ios') {
-    const rawItems = await ExpoIapModule.fetchProducts(skus);
+    const rawItems = await ExpoIapModule.fetchProducts({ skus, type });
+    
     const filteredItems = rawItems.filter((item: unknown) => {
-      if (!isProductIOS(item)) return false;
-      return (
+      if (!isProductIOS(item)) {
+        return false;
+      }
+      const isValid = (
         typeof item === 'object' &&
         item !== null &&
         'id' in item &&
         typeof item.id === 'string' &&
         skus.includes(item.id)
       );
+      return isValid;
     });
 
     return type === 'inapp'
@@ -491,13 +508,13 @@ export const requestPurchase = (
 
     return (async () => {
       const offer = offerToRecordIOS(withOffer);
-      const purchase = await ExpoIapModule.requestPurchase(
+      const purchase = await ExpoIapModule.requestPurchase({
         sku,
         andDangerouslyFinishTransactionAutomatically,
         appAccountToken,
-        quantity ?? -1,
-        offer,
-      );
+        quantity,
+        withOffer: offer,
+      });
 
       return type === 'inapp'
         ? (purchase as Purchase)

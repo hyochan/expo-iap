@@ -225,6 +225,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }): Promise<void> => {
       try {
         const result = await fetchProducts(params);
+        
         if (params.type === 'subs') {
           setSubscriptions((prevSubscriptions) =>
             mergeWithDuplicateCheck(
@@ -403,47 +404,68 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   );
 
   const initIapWithSubscriptions = useCallback(async (): Promise<void> => {
+    // CRITICAL: Register listeners BEFORE initConnection to avoid race condition
+    // Events might fire immediately after initConnection, so listeners must be ready
+    console.log('[useIAP] Setting up event listeners BEFORE initConnection...');
+    
+    subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
+      async (purchase: Purchase) => {
+        console.log('[useIAP] Purchase success callback triggered:', purchase);
+        setCurrentPurchaseError(undefined);
+        setCurrentPurchase(purchase);
+
+        if ('expirationDateIOS' in purchase) {
+          await refreshSubscriptionStatus(purchase.id);
+        }
+
+        if (optionsRef.current?.onPurchaseSuccess) {
+          optionsRef.current.onPurchaseSuccess(purchase);
+        }
+      },
+    );
+
+    subscriptionsRef.current.purchaseError = purchaseErrorListener(
+      (error: PurchaseError) => {
+        console.log('[useIAP] Purchase error callback triggered:', error);
+        setCurrentPurchase(undefined);
+        setCurrentPurchaseError(error);
+
+        if (optionsRef.current?.onPurchaseError) {
+          optionsRef.current.onPurchaseError(error);
+        }
+      },
+    );
+
+    if (Platform.OS === 'ios') {
+      // iOS promoted products listener
+      subscriptionsRef.current.promotedProductsIOS =
+        promotedProductListenerIOS((product: Product) => {
+          console.log('[useIAP] Promoted product callback triggered:', product);
+          setPromotedProductIOS(product);
+
+          if (optionsRef.current?.onPromotedProductIOS) {
+            optionsRef.current.onPromotedProductIOS(product);
+          }
+        });
+    }
+    
+    console.log('[useIAP] Event listeners registered, now calling initConnection...');
+    
+    // NOW call initConnection after listeners are ready
     const result = await initConnection();
     setConnected(result);
-
-    if (result) {
-      subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
-        async (purchase: Purchase) => {
-          setCurrentPurchaseError(undefined);
-          setCurrentPurchase(purchase);
-
-          if ('expirationDateIOS' in purchase) {
-            await refreshSubscriptionStatus(purchase.id);
-          }
-
-          if (optionsRef.current?.onPurchaseSuccess) {
-            optionsRef.current.onPurchaseSuccess(purchase);
-          }
-        },
-      );
-
-      subscriptionsRef.current.purchaseError = purchaseErrorListener(
-        (error: PurchaseError) => {
-          setCurrentPurchase(undefined);
-          setCurrentPurchaseError(error);
-
-          if (optionsRef.current?.onPurchaseError) {
-            optionsRef.current.onPurchaseError(error);
-          }
-        },
-      );
-
-      if (Platform.OS === 'ios') {
-        // iOS promoted products listener
-        subscriptionsRef.current.promotedProductsIOS =
-          promotedProductListenerIOS((product: Product) => {
-            setPromotedProductIOS(product);
-
-            if (optionsRef.current?.onPromotedProductIOS) {
-              optionsRef.current.onPromotedProductIOS(product);
-            }
-          });
-      }
+    
+    console.log('[useIAP] initConnection result:', result);
+    
+    if (!result) {
+      // If connection failed, clean up listeners
+      console.warn('[useIAP] Connection failed, cleaning up listeners...');
+      subscriptionsRef.current.purchaseUpdate?.remove();
+      subscriptionsRef.current.purchaseError?.remove();
+      subscriptionsRef.current.promotedProductsIOS?.remove();
+      subscriptionsRef.current.purchaseUpdate = undefined;
+      subscriptionsRef.current.purchaseError = undefined;
+      subscriptionsRef.current.promotedProductsIOS = undefined;
     }
   }, [refreshSubscriptionStatus]);
 

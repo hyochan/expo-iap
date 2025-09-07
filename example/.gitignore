@@ -45,3 +45,4 @@ coverage/
 
 # Test artifacts
 __snapshots__/
+.claude
