@@ -140,11 +140,13 @@ const handlePurchaseError = (error: any) => {
 **Solutions**:
 
 1. **Check Prerequisites** (Most common cause):
+
    - Verify ALL agreements are signed in App Store Connect > Business
    - Ensure ALL banking, legal, and tax information is completed AND approved by Apple
    - These are the most commonly overlooked requirements
 
 2. **Verify Product Configuration**:
+
    - Product IDs match exactly between code and App Store Connect
    - Products are in "Ready to Submit" or "Approved" state
    - Bundle identifier matches

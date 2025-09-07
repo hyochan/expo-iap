@@ -556,7 +556,7 @@ const {requestPurchase} = useIAP({
    ```tsx
    useEffect(() => {
      if (connected) {
-       requestProducts({ skus: productIds, type: 'inapp' });
+       requestProducts({skus: productIds, type: 'inapp'});
      }
    }, [connected]);
    ```

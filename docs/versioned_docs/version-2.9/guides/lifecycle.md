@@ -17,8 +17,9 @@ For complete understanding of the in-app purchase lifecycle, flow diagrams, and 
 ![Purchase Flow](https://openiap.dev/purchase-flow.png)
 
 The Open IAP specification provides detailed documentation on:
+
 - Complete purchase flow
-- State transitions and management  
+- State transitions and management
 - Connection lifecycle
 - Error recovery patterns
 - Platform-specific considerations
@@ -49,7 +50,7 @@ export default function App() {
     if (connected) {
       console.log('Connected to store');
       // You can now safely call store methods
-      requestProducts({ skus: ['product1', 'product2'], type: 'inapp' });
+      requestProducts({skus: ['product1', 'product2'], type: 'inapp'});
     }
   }, [connected, requestProducts]);
 
@@ -226,7 +227,7 @@ function MyApp() {
 
   useEffect(() => {
     if (connected) {
-      requestProducts({ skus: productIds, type: 'inapp' });
+      requestProducts({skus: productIds, type: 'inapp'});
     }
   }, [connected]);
 

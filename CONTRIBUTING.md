@@ -47,6 +47,7 @@ This project includes VSCode configurations for easier development:
 1. **Install recommended extensions**: When you open the project in VSCode, you'll be prompted to install recommended extensions. Accept to install them.
 
 1. **Use Debug Configurations**: Press `F5` or go to Run → Start Debugging and select:
+
    - `Debug iOS (Expo)` - Runs the example app on iOS simulator
    - `Debug Android (Expo)` - Runs the example app on Android emulator
    - `iOS + Metro` - Starts Metro bundler and iOS app together
@@ -182,7 +183,7 @@ bun start
 # Run on iOS simulator
 bun run ios
 
-# Run on Android emulator  
+# Run on Android emulator
 bun run android
 
 # Run tests
@@ -286,12 +287,12 @@ bun run test:coverage
 Example test structure:
 
 ```typescript
-import { render, fireEvent } from '@testing-library/react-native';
+import {render, fireEvent} from '@testing-library/react-native';
 import MyComponent from '../MyComponent';
 
 describe('MyComponent', () => {
   it('should render correctly', () => {
-    const { getByText } = render(<MyComponent />);
+    const {getByText} = render(<MyComponent />);
     expect(getByText('Expected Text')).toBeTruthy();
   });
 });

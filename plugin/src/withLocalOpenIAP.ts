@@ -23,7 +23,9 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: string} | void> = (
 
       // Check if local path exists
       if (!fs.existsSync(localOpenIapPath)) {
-        console.warn(`⚠️  Local openiap-apple path not found: ${localOpenIapPath}`);
+        console.warn(
+          `⚠️  Local openiap-apple path not found: ${localOpenIapPath}`,
+        );
         console.warn(
           '   Skipping local pod injection. Using default pod resolution.',
         );

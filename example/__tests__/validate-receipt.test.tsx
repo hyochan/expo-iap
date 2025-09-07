@@ -17,8 +17,12 @@ describe('Purchase Token Unified API Tests', () => {
     // Test structure
     expect(mockValidationResult).toHaveProperty('isValid');
     expect(mockValidationResult).toHaveProperty('receiptData');
-    expect(mockValidationResult.latestTransaction).toHaveProperty('purchaseToken');
-    expect(mockValidationResult.latestTransaction?.purchaseToken).toBe('mock-jws-token');
+    expect(mockValidationResult.latestTransaction).toHaveProperty(
+      'purchaseToken',
+    );
+    expect(mockValidationResult.latestTransaction?.purchaseToken).toBe(
+      'mock-jws-token',
+    );
   });
 
   it('should handle invalid receipt result', () => {
@@ -54,10 +58,10 @@ describe('Purchase Token Unified API Tests', () => {
     // Both platforms should have purchaseToken
     expect(iosPurchase).toHaveProperty('purchaseToken');
     expect(androidPurchase).toHaveProperty('purchaseToken');
-    
+
     // iOS purchaseToken should look like JWT
     expect(iosPurchase.purchaseToken.startsWith('eyJ')).toBe(true);
-    
+
     // Android purchaseToken should be a string
     expect(typeof androidPurchase.purchaseToken).toBe('string');
     expect(androidPurchase.purchaseToken.length).toBeGreaterThan(0);

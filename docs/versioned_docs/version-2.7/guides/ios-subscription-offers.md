@@ -30,15 +30,15 @@ Available only to new subscribers who haven't previously subscribed to any produ
 
 ```typescript
 type SubscriptionOffer = {
-  displayPrice: string;      // Localized price string
-  id: string;               // Offer identifier
+  displayPrice: string; // Localized price string
+  id: string; // Offer identifier
   paymentMode: PaymentMode; // 'FREETRIAL' | 'PAYASYOUGO' | 'PAYUPFRONT'
   period: {
     unit: 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
     value: number;
   };
-  periodCount: number;      // Number of periods
-  price: number;           // Price in decimal
+  periodCount: number; // Number of periods
+  price: number; // Price in decimal
   type: 'introductory';
 };
 ```
@@ -54,7 +54,7 @@ type SubscriptionOffer = {
 ### With expo-iap v2.6.0+
 
 ```typescript
-import { getSubscriptions } from 'expo-iap';
+import {getSubscriptions} from 'expo-iap';
 
 const subscriptions = await getSubscriptions(['com.example.premium']);
 const subscription = subscriptions[0];
@@ -62,13 +62,15 @@ const subscription = subscriptions[0];
 // Access introductory offer
 if (subscription.subscription?.introductoryOffer) {
   const offer = subscription.subscription.introductoryOffer;
-  console.log(`Offer: ${offer.displayPrice} for ${offer.periodCount} ${offer.period.unit}(s)`);
+  console.log(
+    `Offer: ${offer.displayPrice} for ${offer.periodCount} ${offer.period.unit}(s)`,
+  );
   console.log(`Payment mode: ${offer.paymentMode}`);
 }
 
 // Access promotional offers
 const promotionalOffers = subscription.subscription?.promotionalOffers || [];
-promotionalOffers.forEach(offer => {
+promotionalOffers.forEach((offer) => {
   console.log(`Promo: ${offer.id} - ${offer.displayPrice}`);
 });
 ```
@@ -83,7 +85,7 @@ const jsonData = JSON.parse(subscription.jsonRepresentation);
 
 // Access offers through discounts array
 const discounts = jsonData.discounts || [];
-discounts.forEach(discount => {
+discounts.forEach((discount) => {
   console.log(`Offer ID: ${discount.id}`);
   console.log(`Price: ${discount.price}`);
   console.log(`Period: ${discount.subscriptionPeriod}`);
@@ -100,7 +102,7 @@ Use the `isEligibleForIntroOffer` property to check if a user can redeem an intr
 const checkEligibility = async () => {
   const subscriptions = await getSubscriptions(['com.example.premium']);
   const subscription = subscriptions[0];
-  
+
   // This property indicates if the user is eligible for intro offer
   if (subscription.isEligibleForIntroOffer) {
     // Show introductory offer UI
@@ -119,8 +121,8 @@ const checkEligibility = async () => {
 When a user is eligible for an introductory offer, the purchase flow remains the same:
 
 ```typescript
-import { requestPurchase } from 'expo-iap';
-import { Platform } from 'react-native';
+import {requestPurchase} from 'expo-iap';
+import {Platform} from 'react-native';
 
 const purchaseWithOffer = async (subscription: any) => {
   try {
@@ -128,7 +130,7 @@ const purchaseWithOffer = async (subscription: any) => {
     if (subscription.isEligibleForIntroOffer) {
       console.log('User is eligible for introductory offer');
     }
-    
+
     // Purchase request (offers are automatically applied)
     await requestPurchase({
       request: {
@@ -136,7 +138,7 @@ const purchaseWithOffer = async (subscription: any) => {
       },
       type: 'subs',
     });
-    
+
     // Handle success in purchase listener
   } catch (error) {
     console.error('Purchase failed:', error);
@@ -152,8 +154,11 @@ For promotional offers, you need to prepare the offer signature on your server:
 const purchasePromotionalOffer = async (subscription: any, offerId: string) => {
   try {
     // 1. Get offer details from your server
-    const offerDetails = await fetchOfferDetailsFromServer(offerId, subscription.id);
-    
+    const offerDetails = await fetchOfferDetailsFromServer(
+      offerId,
+      subscription.id,
+    );
+
     // 2. Purchase with promotional offer
     await requestPurchase({
       request: {
@@ -174,26 +179,32 @@ const purchasePromotionalOffer = async (subscription: any, offerId: string) => {
 ### Example: Intro Offer Banner
 
 ```typescript
-const IntroOfferBanner = ({ subscription }) => {
+const IntroOfferBanner = ({subscription}) => {
   const offer = subscription.subscription?.introductoryOffer;
-  
+
   if (!offer || !subscription.isEligibleForIntroOffer) {
     return null;
   }
-  
+
   const getOfferText = () => {
     switch (offer.paymentMode) {
       case 'FREETRIAL':
-        return `Try ${offer.periodCount} ${offer.period.unit.toLowerCase()}(s) FREE`;
+        return `Try ${
+          offer.periodCount
+        } ${offer.period.unit.toLowerCase()}(s) FREE`;
       case 'PAYASYOUGO':
-        return `${offer.displayPrice} for ${offer.periodCount} ${offer.period.unit.toLowerCase()}(s)`;
+        return `${offer.displayPrice} for ${
+          offer.periodCount
+        } ${offer.period.unit.toLowerCase()}(s)`;
       case 'PAYUPFRONT':
-        return `${offer.displayPrice} for first ${offer.periodCount} ${offer.period.unit.toLowerCase()}(s)`;
+        return `${offer.displayPrice} for first ${
+          offer.periodCount
+        } ${offer.period.unit.toLowerCase()}(s)`;
       default:
         return offer.displayPrice;
     }
   };
-  
+
   return (
     <View style={styles.offerBanner}>
       <Text style={styles.offerText}>{getOfferText()}</Text>
@@ -234,26 +245,27 @@ For promotional offers, you'll need server-side implementation:
 3. Return signed offer details to your app
 
 Example server endpoint:
+
 ```javascript
 // Node.js example
 app.post('/generate-offer-signature', async (req, res) => {
-  const { userId, productId, offerId } = req.body;
-  
+  const {userId, productId, offerId} = req.body;
+
   // 1. Verify user eligibility
   const isEligible = await checkUserEligibility(userId, productId);
-  
+
   if (!isEligible) {
-    return res.status(403).json({ error: 'User not eligible' });
+    return res.status(403).json({error: 'User not eligible'});
   }
-  
+
   // 2. Generate signature using Apple's StoreKit API
   const signature = await generateOfferSignature(productId, offerId);
-  
+
   res.json({
     signature,
     nonce: generateNonce(),
     timestamp: Date.now(),
-    keyIdentifier: process.env.APPLE_KEY_ID
+    keyIdentifier: process.env.APPLE_KEY_ID,
   });
 });
 ```

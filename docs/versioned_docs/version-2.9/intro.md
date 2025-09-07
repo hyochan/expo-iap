@@ -71,7 +71,7 @@ Load your products when the store connects:
 useEffect(() => {
   if (connected) {
     // Fetch your products
-    requestProducts({ skus: productIds, type: 'inapp' });
+    requestProducts({skus: productIds, type: 'inapp'});
   }
 }, [connected]);
 ```
@@ -110,8 +110,8 @@ const handlePurchase = async (productId: string) => {
         },
         android: {
           skus: [productId],
-        }
-      }
+        },
+      },
     });
   } catch (error) {
     console.error('Purchase failed:', error);
@@ -171,7 +171,7 @@ export default function SimpleStore() {
 
   useEffect(() => {
     if (connected) {
-      requestProducts({ skus: productIds, type: 'inapp' });
+      requestProducts({skus: productIds, type: 'inapp'});
     }
   }, [connected]);
 
@@ -201,8 +201,8 @@ export default function SimpleStore() {
           },
           android: {
             skus: [productId],
-          }
-        }
+          },
+        },
       });
     } catch (error) {
       console.error('Purchase failed:', error);
@@ -253,7 +253,7 @@ Expo IAP is built with a modern architecture that emphasizes:
 
 | Platform          | Support | Notes                                        |
 | ----------------- | ------- | -------------------------------------------- |
-| iOS               | ✅      | StoreKit 1 & 2 (StoreKit 2 requires iOS 15+)|
+| iOS               | ✅      | StoreKit 1 & 2 (StoreKit 2 requires iOS 15+) |
 | Android           | ✅      | Google Play Billing v5+                      |
 | Expo Go           | ⚠️      | Limited (requires custom development client) |
 | Expo Dev Client   | ✅      | Full support                                 |

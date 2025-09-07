@@ -6,18 +6,21 @@ module.exports = {
   roots: ['<rootDir>/src'],
   testMatch: [
     '**/__tests__/**/*.+(ts|tsx|js)',
-    '**/?(*.)+(spec|test).+(ts|tsx|js)'
+    '**/?(*.)+(spec|test).+(ts|tsx|js)',
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: {
-        jsx: 'react',
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-        moduleResolution: 'node',
-        skipLibCheck: true,
-      }
-    }]
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          jsx: 'react',
+          esModuleInterop: true,
+          allowSyntheticDefaultImports: true,
+          moduleResolution: 'node',
+          skipLibCheck: true,
+        },
+      },
+    ],
   },
   moduleNameMapper: {
     '^react-native$': '<rootDir>/src/__mocks__/react-native.js',
@@ -36,7 +39,7 @@ module.exports = {
       branches: 15,
       functions: 15,
       lines: 15,
-      statements: 15
-    }
-  }
+      statements: 15,
+    },
+  },
 };

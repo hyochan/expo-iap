@@ -262,14 +262,14 @@ The `IapEvent` enum has been renamed to `OpenIapEvent` to align with the OpenIAP
 
 ```tsx
 // ❌ Before v2.9.0
-import { IapEvent } from 'expo-iap';
+import {IapEvent} from 'expo-iap';
 
 purchaseUpdatedListener((purchase) => {
   console.log('Purchase updated');
 }, IapEvent.PurchaseUpdated);
 
 // ✅ After v2.9.0
-import { OpenIapEvent } from 'expo-iap';
+import {OpenIapEvent} from 'expo-iap';
 
 purchaseUpdatedListener((purchase) => {
   console.log('Purchase updated');
@@ -286,10 +286,10 @@ purchaseUpdatedListener((purchase) => {
 
 ```tsx
 // ❌ Old (deprecated in v2.8.7)
-const products = await requestProducts({ skus: ['product1'], type: 'inapp' });
+const products = await requestProducts({skus: ['product1'], type: 'inapp'});
 
 // ✅ New (v2.8.7+)
-const products = await fetchProducts({ skus: ['product1'], type: 'inapp' });
+const products = await fetchProducts({skus: ['product1'], type: 'inapp'});
 ```
 
 ## API Changes

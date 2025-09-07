@@ -129,7 +129,7 @@ class PurchaseError implements Error {
     public code?: ErrorCode,
     public productId?: string,
     public platform?: 'ios' | 'android',
-  )
+  );
 }
 ```
 
@@ -343,9 +343,9 @@ const handlePurchaseWithRetry = async (productId: string, retryCount = 0) => {
   try {
     await requestPurchase({
       request: {
-        ios: { sku: productId },
-        android: { skus: [productId] }
-      }
+        ios: {sku: productId},
+        android: {skus: [productId]},
+      },
     });
   } catch (error: any) {
     const purchaseError = PurchaseError.fromPlatformError(error, Platform.OS);

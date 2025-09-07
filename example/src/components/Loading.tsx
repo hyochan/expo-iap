@@ -1,14 +1,25 @@
 import React from 'react';
-import {View, ActivityIndicator, Text, StyleSheet, Platform} from 'react-native';
+import {
+  View,
+  ActivityIndicator,
+  Text,
+  StyleSheet,
+  Platform,
+} from 'react-native';
 
 type LoadingProps = {
   message?: string;
 };
 
-export default function Loading({message = 'Connecting to Store...'}: LoadingProps) {
+export default function Loading({
+  message = 'Connecting to Store...',
+}: LoadingProps) {
   return (
     <View style={styles.container}>
-      <ActivityIndicator size={Platform.OS === 'ios' ? 'large' : 48} color="#007AFF" />
+      <ActivityIndicator
+        size={Platform.OS === 'ios' ? 'large' : 48}
+        color="#007AFF"
+      />
       <Text style={styles.message}>{message}</Text>
     </View>
   );
@@ -27,4 +38,3 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 });
-

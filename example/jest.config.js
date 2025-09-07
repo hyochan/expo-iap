@@ -14,16 +14,8 @@ module.exports = {
     '^expo-iap$': '<rootDir>/../src/index',
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  collectCoverageFrom: [
-    'app/**/*.{ts,tsx}',
-    '!app/**/*.d.ts',
-    '!__tests__/**',
-  ],
+  collectCoverageFrom: ['app/**/*.{ts,tsx}', '!app/**/*.d.ts', '!__tests__/**'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json'],
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/android/',
-    '/ios/',
-  ],
+  testPathIgnorePatterns: ['/node_modules/', '/android/', '/ios/'],
 };

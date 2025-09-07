@@ -138,12 +138,12 @@ const handlePurchase = async (productId: string) => {
     if (Platform.OS === 'ios') {
       // iOS: single product purchase
       await requestPurchase({
-        request: {sku: productId}
+        request: {sku: productId},
       });
     } else if (Platform.OS === 'android') {
       // Android: array of products (even for single purchase)
       await requestPurchase({
-        request: {skus: [productId]}
+        request: {skus: [productId]},
       });
     }
   } catch (error) {
@@ -159,6 +159,7 @@ This platform difference exists because iOS can only purchase one product at a t
 The `useIAP` hook automatically handles purchase updates. When a purchase is successful, you should validate the receipt on your server and then finish the transaction.
 
 **Important**: Receipt validation also has platform-specific requirements:
+
 - **iOS**: Only needs the receipt data
 - **Android**: Requires `packageName`, `purchaseToken`, and optionally `accessToken`
 
@@ -178,25 +179,27 @@ useEffect(() => {
           // Android: Check required parameters first
           const purchaseToken = currentPurchase.purchaseTokenAndroid;
           const packageName = currentPurchase.packageNameAndroid;
-          
+
           if (!purchaseToken || !packageName) {
-            throw new Error('Android validation requires packageName and purchaseToken');
+            throw new Error(
+              'Android validation requires packageName and purchaseToken',
+            );
           }
-          
+
           await validateReceiptOnServer({
             packageName,
             purchaseToken,
             productId: currentPurchase.productId,
           });
         }
-        
+
         // If validation successful, finish the transaction
         await finishTransaction({purchase: currentPurchase});
       } catch (error) {
         console.error('Receipt validation failed:', error);
       }
     };
-    
+
     validateAndFinish();
   }
 }, [currentPurchase, finishTransaction]);

@@ -31,7 +31,7 @@ type ProductSubscriptionAndroidOfferDetail = {
 export type ProductAndroid = ProductCommon & {
   nameAndroid: string;
   oneTimePurchaseOfferDetailsAndroid?: ProductAndroidOneTimePurchaseOfferDetail;
-  platform: "android";
+  platform: 'android';
   subscriptionOfferDetailsAndroid?: ProductSubscriptionAndroidOfferDetail[];
   /**
    * @deprecated Use `nameAndroid` instead. This field will be removed in v2.9.0.
@@ -144,7 +144,7 @@ export const PurchaseStateAndroid = PurchaseAndroidState;
 
 // Legacy naming for backward compatibility
 export type ProductPurchaseAndroid = PurchaseCommon & {
-  platform: "android";
+  platform: 'android';
   /**
    * @deprecated Use `purchaseToken` instead. This field will be removed in a future version.
    */
@@ -167,7 +167,8 @@ export type PurchaseAndroid = ProductPurchaseAndroid;
 /**
  * @deprecated Use `ProductAndroidOneTimePurchaseOfferDetail` instead. This type will be removed in v2.9.0.
  */
-export type OneTimePurchaseOfferDetails = ProductAndroidOneTimePurchaseOfferDetail;
+export type OneTimePurchaseOfferDetails =
+  ProductAndroidOneTimePurchaseOfferDetail;
 
 /**
  * @deprecated Use `ProductSubscriptionAndroidOfferDetail` instead. This type will be removed in v2.9.0.

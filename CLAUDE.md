@@ -107,6 +107,7 @@ For new feature proposals:
 ### State Management with OpenIapStore
 
 #### IapStatus Structure
+
 The `IapStatus` struct provides standardized state management for OpenIAP operations:
 
 ```swift
@@ -119,13 +120,14 @@ public struct IapStatus {
 
 public struct LoadingStates {
     public var initConnection: Bool = false
-    public var fetchProducts: Bool = false  
+    public var fetchProducts: Bool = false
     public var restorePurchases: Bool = false
     public var purchasing: Set<String> = []  // Product IDs currently being purchased
 }
 ```
 
 #### Usage Guidelines
+
 - **OpenIapStore** manages data state only, not UI state
 - UI components should manage their own display state (alerts, sheets, etc.)
 - Loading states are automatically managed within OpenIapStore

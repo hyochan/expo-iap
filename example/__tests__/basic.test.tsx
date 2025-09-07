@@ -1,6 +1,6 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
-import { Text, View } from 'react-native';
+import {render} from '@testing-library/react-native';
+import {Text, View} from 'react-native';
 
 // Simple component for testing
 const TestComponent = () => (
@@ -11,7 +11,7 @@ const TestComponent = () => (
 
 describe('Basic Tests', () => {
   it('should render test component', () => {
-    const { getByText } = render(<TestComponent />);
+    const {getByText} = render(<TestComponent />);
     expect(getByText('expo-iap Example App')).toBeTruthy();
   });
 
@@ -35,7 +35,7 @@ describe('Basic Tests', () => {
     const product = {
       id: 'com.example.product',
       price: 9.99,
-      platform: 'ios'
+      platform: 'ios',
     };
     expect(product.id).toBe('com.example.product');
     expect(product.price).toBeGreaterThan(0);

@@ -229,7 +229,7 @@ const loadSubscriptions = async () => {
 ## requestProducts() - Deprecated
 
 > **⚠️ DEPRECATED:** This method is deprecated. Use `fetchProducts({ skus, type })` instead. This method will be removed in version 3.0.0.
-> 
+>
 > The 'request' prefix should only be used for event-based operations that trigger purchase flows. Since this function simply fetches product information, it has been renamed to `fetchProducts` to follow OpenIAP terminology guidelines.
 
 Fetches product or subscription information from the store.
@@ -628,11 +628,9 @@ const restorePurchases = async () => {
 
 ## ~~getPurchaseHistories()~~ (Deprecated)
 
-:::warning Deprecated
-`getPurchaseHistories` is deprecated and will be removed in v2.9.0. Use `getAvailablePurchases()` instead.
+:::warning Deprecated `getPurchaseHistories` is deprecated and will be removed in v2.9.0. Use `getAvailablePurchases()` instead.
 
-This function internally just calls `getAvailablePurchases()` on iOS and returns an empty array on Android (Google Play Billing v8 removed purchase history API).
-:::
+This function internally just calls `getAvailablePurchases()` on iOS and returns an empty array on Android (Google Play Billing v8 removed purchase history API). :::
 
 Retrieves purchase history for the user.
 

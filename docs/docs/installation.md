@@ -36,8 +36,9 @@ After installing the package, you need to:
 1. **Configure expo-build-properties for Android** (required for Kotlin 2.0+ support):
 
    Starting from version 2.7, expo-iap supports Google Play Billing Library v8, which requires Kotlin 2.0+. Since `expo-modules-core` doesn't support Kotlin 2.0 yet, you need to manually configure the Kotlin version.
-   
+
    Add the following to your `app.json`:
+
    ```json
    {
      "expo": {
@@ -57,10 +58,11 @@ After installing the package, you need to:
    ```
 
 2. **Install the plugin and run prebuild**:
+
    ```bash
    npx expo prebuild --clean
    ```
-   
+
    This will generate the native iOS and Android directories with the necessary configurations. Learn more about [adopting prebuild](https://docs.expo.dev/guides/adopting-prebuild/).
 
 3. **Create a development build** (see the Platform Configuration section below for details)

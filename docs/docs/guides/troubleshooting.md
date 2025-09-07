@@ -359,6 +359,7 @@ const handleStoreUnavailable = () => {
 3. **Xcode version issues**:
 
    If you're experiencing issues like duplicate purchase events or other unexpected behavior:
+
    - **Solution**: Upgrade to Xcode 16.4 or later
    - **Known issues resolved**: [#114](https://github.com/hyochan/expo-iap/issues/114), [react-native-iap #2970](https://github.com/hyochan/react-native-iap/issues/2970)
    - **Symptoms of old Xcode versions**:

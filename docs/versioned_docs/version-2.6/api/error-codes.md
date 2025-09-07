@@ -129,7 +129,7 @@ class PurchaseError implements Error {
     public code?: ErrorCode,
     public productId?: string,
     public platform?: 'ios' | 'android',
-  )
+  );
 }
 ```
 

@@ -127,7 +127,11 @@ const handlePurchaseError = (error) => {
 Listens for promoted product purchases initiated from the App Store. This fires when a user taps on a promoted product in the App Store.
 
 ```tsx
-import {promotedProductListenerIOS, getPromotedProductIOS, buyPromotedProductIOS} from 'expo-iap';
+import {
+  promotedProductListenerIOS,
+  getPromotedProductIOS,
+  buyPromotedProductIOS,
+} from 'expo-iap';
 
 const setupPromotedProductListener = () => {
   const subscription = promotedProductListenerIOS((product) => {

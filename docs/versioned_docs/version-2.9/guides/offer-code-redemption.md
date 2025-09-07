@@ -18,7 +18,7 @@ On iOS, expo-iap provides a native method to present Apple's code redemption she
 ### Usage
 
 ```typescript
-import { presentCodeRedemptionSheet } from 'expo-iap';
+import {presentCodeRedemptionSheet} from 'expo-iap';
 
 // Present the code redemption sheet
 try {
@@ -47,7 +47,7 @@ Google Play does not provide a direct API to redeem codes within the app. Instea
 ### Usage
 
 ```typescript
-import { openRedeemOfferCodeAndroid } from 'expo-iap';
+import {openRedeemOfferCodeAndroid} from 'expo-iap';
 
 // Open Google Play Store redemption page
 try {
@@ -63,7 +63,7 @@ try {
 You can also direct users to redeem codes via a custom deep link:
 
 ```typescript
-import { Linking } from 'react-native';
+import {Linking} from 'react-native';
 
 const redeemCode = async (code: string) => {
   const url = `https://play.google.com/redeem?code=${code}`;
@@ -76,11 +76,11 @@ const redeemCode = async (code: string) => {
 Here's a complete example that handles both platforms:
 
 ```typescript
-import { Platform } from 'react-native';
-import { 
+import {Platform} from 'react-native';
+import {
   presentCodeRedemptionSheet,
   openRedeemOfferCodeAndroid,
-  purchaseUpdatedListener 
+  purchaseUpdatedListener,
 } from 'expo-iap';
 
 const handleRedeemCode = async () => {
@@ -123,21 +123,25 @@ useEffect(() => {
 ## Testing
 
 ### iOS Testing
+
 - Offer codes can only be tested on real devices
 - Use TestFlight or App Store Connect to generate test codes
 - Sandbox environment supports offer code testing
 
 ### Android Testing
+
 - Test with promo codes generated in Google Play Console
 - Ensure your app is properly configured for in-app purchases
 
 ## Troubleshooting
 
 ### iOS Issues
+
 - **"Not available on simulator"**: Use a real device for testing
 - **Sheet doesn't appear**: Ensure StoreKit is properly configured
 - **User cancellation**: This is normal behavior and doesn't throw an error
 
 ### Android Issues
+
 - **Play Store doesn't open**: Check if Play Store is installed and updated
 - **Invalid code**: Verify the code format and validity in Play Console

@@ -17,7 +17,7 @@ import {
 
 /**
  * Offer Code Redemption Example
- * 
+ *
  * This example demonstrates how to implement offer code redemption
  * functionality for both iOS and Android platforms.
  */
@@ -76,7 +76,9 @@ export default function OfferCodeScreen() {
       console.error('Error redeeming code:', error);
       Alert.alert(
         'Error',
-        `Failed to redeem code: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to redeem code: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
       );
     } finally {
       setIsRedeeming(false);
@@ -87,7 +89,7 @@ export default function OfferCodeScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Offer Code Redemption</Text>
-        
+
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>How it works:</Text>
           <Text style={styles.infoText}>{platformContent.howItWorks}</Text>
@@ -105,14 +107,20 @@ export default function OfferCodeScreen() {
             <ActivityIndicator color="white" />
           ) : (
             <>
-              <Text style={styles.buttonText}>{platformContent.buttonText}</Text>
-              <Text style={styles.buttonSubtext}>{platformContent.buttonSubtext}</Text>
+              <Text style={styles.buttonText}>
+                {platformContent.buttonText}
+              </Text>
+              <Text style={styles.buttonSubtext}>
+                {platformContent.buttonSubtext}
+              </Text>
             </>
           )}
         </TouchableOpacity>
 
         <View style={styles.platformNote}>
-          <Text style={styles.noteTitle}>Platform: {isIOS ? 'ios' : 'android'}</Text>
+          <Text style={styles.noteTitle}>
+            Platform: {isIOS ? 'ios' : 'android'}
+          </Text>
           <Text style={styles.noteText}>{platformContent.platformNote}</Text>
         </View>
 

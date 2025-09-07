@@ -312,6 +312,7 @@ interface UseIAPOptions {
 #### Subscription helpers (hook)
 
 - `getActiveSubscriptions(subscriptionIds?) => Promise<ActiveSubscription[]>`
+
   - Returns active subscription info and also updates `activeSubscriptions` state.
   - Exception to the hook’s void-return design: this method returns data for convenience.
   - Example:

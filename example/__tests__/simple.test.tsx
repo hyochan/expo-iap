@@ -19,7 +19,7 @@ describe('Simple Tests', () => {
     const product = {
       id: 'com.example.product',
       price: 9.99,
-      platform: 'ios'
+      platform: 'ios',
     };
     expect(product.id).toBe('com.example.product');
     expect(product.price).toBeGreaterThan(0);

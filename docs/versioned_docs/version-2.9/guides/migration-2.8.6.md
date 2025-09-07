@@ -20,28 +20,28 @@ All platform-specific functions now have consistent suffixes:
 
 ### iOS Function Changes
 
-| Old Name | New Name |
-|----------|----------|
-| `buyPromotedProduct` | `requestPurchaseOnPromotedProductIOS` |
-| `sync` | `syncIOS` |
-| `isEligibleForIntroOffer` | `isEligibleForIntroOfferIOS` |
-| `subscriptionStatus` | `subscriptionStatusIOS` |
-| `currentEntitlement` | `currentEntitlementIOS` |
-| `latestTransaction` | `latestTransactionIOS` |
-| `showManageSubscriptions` | `showManageSubscriptionsIOS` |
-| `beginRefundRequest` | `beginRefundRequestIOS` |
-| `isTransactionVerified` | `isTransactionVerifiedIOS` |
-| `getTransactionJws` | `getTransactionJwsIOS` |
-| `getReceiptData` | `getReceiptIOS` |
-| `presentCodeRedemptionSheet` | `presentCodeRedemptionSheetIOS` |
-| `getAppTransaction` | `getAppTransactionIOS` |
+| Old Name                     | New Name                              |
+| ---------------------------- | ------------------------------------- |
+| `buyPromotedProduct`         | `requestPurchaseOnPromotedProductIOS` |
+| `sync`                       | `syncIOS`                             |
+| `isEligibleForIntroOffer`    | `isEligibleForIntroOfferIOS`          |
+| `subscriptionStatus`         | `subscriptionStatusIOS`               |
+| `currentEntitlement`         | `currentEntitlementIOS`               |
+| `latestTransaction`          | `latestTransactionIOS`                |
+| `showManageSubscriptions`    | `showManageSubscriptionsIOS`          |
+| `beginRefundRequest`         | `beginRefundRequestIOS`               |
+| `isTransactionVerified`      | `isTransactionVerifiedIOS`            |
+| `getTransactionJws`          | `getTransactionJwsIOS`                |
+| `getReceiptData`             | `getReceiptIOS`                       |
+| `presentCodeRedemptionSheet` | `presentCodeRedemptionSheetIOS`       |
+| `getAppTransaction`          | `getAppTransactionIOS`                |
 
 ### Android Function Changes
 
-| Old Name | New Name |
-|----------|----------|
+| Old Name              | New Name                     |
+| --------------------- | ---------------------------- |
 | `acknowledgePurchase` | `acknowledgePurchaseAndroid` |
-| `consumeProduct` | `consumeProductAndroid` |
+| `consumeProduct`      | `consumeProductAndroid`      |
 
 ### New Functions Added
 
@@ -53,6 +53,7 @@ All platform-specific functions now have consistent suffixes:
 The following functions are deprecated and will be removed in v2.9.0:
 
 ### `getPurchaseHistories()`
+
 - **Reason**: This function just calls `getAvailablePurchases()` internally
 - **Migration**: Use `getAvailablePurchases()` instead
 
@@ -65,6 +66,7 @@ const purchases = await getAvailablePurchases();
 ```
 
 ### `buyPromotedProductIOS()`
+
 - **Reason**: Renamed for consistency
 - **Migration**: Use `requestPurchaseOnPromotedProductIOS()` instead
 
@@ -77,6 +79,7 @@ await requestPurchaseOnPromotedProductIOS();
 ```
 
 ### `disable()`
+
 - **Reason**: Observer management is now automatic
 - **Migration**: Remove calls to this function - it's no longer needed
 
@@ -86,26 +89,20 @@ await requestPurchaseOnPromotedProductIOS();
 
 ```tsx
 // Before
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
 const MyComponent = () => {
-  const { 
-    buyPromotedProductIOS,
-    getPurchaseHistories 
-  } = useIAP();
-  
+  const {buyPromotedProductIOS, getPurchaseHistories} = useIAP();
+
   // ...
 };
 
 // After
-import { useIAP } from 'expo-iap';
+import {useIAP} from 'expo-iap';
 
 const MyComponent = () => {
-  const { 
-    requestPurchaseOnPromotedProductIOS,
-    getAvailablePurchases 
-  } = useIAP();
-  
+  const {requestPurchaseOnPromotedProductIOS, getAvailablePurchases} = useIAP();
+
   // ...
 };
 ```
@@ -114,28 +111,25 @@ const MyComponent = () => {
 
 ```tsx
 // Before
-import { 
+import {
   isEligibleForIntroOffer,
   acknowledgePurchase,
-  getPurchaseHistories 
+  getPurchaseHistories,
 } from 'expo-iap';
 
 // After
-import { 
+import {
   isEligibleForIntroOfferIOS,
   acknowledgePurchaseAndroid,
-  getAvailablePurchases 
+  getAvailablePurchases,
 } from 'expo-iap';
 ```
 
 ### Platform-Specific Code
 
 ```tsx
-import { Platform } from 'react-native';
-import { 
-  acknowledgePurchaseAndroid,
-  clearTransactionIOS 
-} from 'expo-iap';
+import {Platform} from 'react-native';
+import {acknowledgePurchaseAndroid, clearTransactionIOS} from 'expo-iap';
 
 const finishPurchase = async (purchase: Purchase) => {
   if (Platform.OS === 'ios') {
@@ -143,7 +137,7 @@ const finishPurchase = async (purchase: Purchase) => {
     await clearTransactionIOS();
   } else if (Platform.OS === 'android') {
     // Android-specific function with Android suffix
-    await acknowledgePurchaseAndroid({ token: purchase.purchaseToken });
+    await acknowledgePurchaseAndroid({token: purchase.purchaseToken});
   }
 };
 ```

@@ -16,7 +16,7 @@
 - Updated serializers for purchases/products to follow OpenIAP structure
 - Updated listener setup to use new OpenIAP methods (`purchaseUpdatedListener`, `purchaseErrorListener`)
 - Added unified `removeAllListeners()` for cleanup
- - `showManageSubscriptionsIOS()` now returns updated subscriptions array (not boolean)
+- `showManageSubscriptionsIOS()` now returns updated subscriptions array (not boolean)
 
 ### Fixed
 
@@ -33,7 +33,7 @@
 ### Added
 
 - Enhanced `ActiveSubscription` interface with backend validation fields:
-  - `transactionId` - Transaction identifier for backend validation  
+  - `transactionId` - Transaction identifier for backend validation
   - `purchaseToken` - JWT token (iOS) or purchase token (Android) for backend validation
   - `transactionDate` - Transaction timestamp
 - Return subscription changes from `showManageSubscriptionsIOS()` as Promise data

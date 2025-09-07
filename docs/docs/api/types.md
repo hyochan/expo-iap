@@ -187,7 +187,11 @@ enum OpenIapEvent {
 **Usage:**
 
 ```typescript
-import { purchaseUpdatedListener, purchaseErrorListener, OpenIapEvent } from 'expo-iap';
+import {
+  purchaseUpdatedListener,
+  purchaseErrorListener,
+  OpenIapEvent,
+} from 'expo-iap';
 
 // Using with event listeners
 const subscription = purchaseUpdatedListener((purchase) => {

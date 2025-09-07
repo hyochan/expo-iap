@@ -100,9 +100,7 @@ type UseIap = {
   requestPurchaseOnPromotedProductIOS: () => Promise<void>;
   /** @deprecated Use requestPurchaseOnPromotedProductIOS instead */
   buyPromotedProductIOS: () => Promise<void>;
-  getActiveSubscriptions: (
-    subscriptionIds?: string[],
-  ) => Promise<void>;
+  getActiveSubscriptions: (subscriptionIds?: string[]) => Promise<void>;
   hasActiveSubscriptions: (subscriptionIds?: string[]) => Promise<boolean>;
 };
 
@@ -225,7 +223,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }): Promise<void> => {
       try {
         const result = await fetchProducts(params);
-        
+
         if (params.type === 'subs') {
           setSubscriptions((prevSubscriptions) =>
             mergeWithDuplicateCheck(
@@ -404,7 +402,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     // CRITICAL: Register listeners BEFORE initConnection to avoid race condition
     // Events might fire immediately after initConnection, so listeners must be ready
     console.log('[useIAP] Setting up event listeners BEFORE initConnection...');
-    
+
     subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
       async (purchase: Purchase) => {
         console.log('[useIAP] Purchase success callback triggered:', purchase);
@@ -435,19 +433,22 @@ export function useIAP(options?: UseIAPOptions): UseIap {
 
     if (Platform.OS === 'ios') {
       // iOS promoted products listener
-      subscriptionsRef.current.promotedProductsIOS =
-        promotedProductListenerIOS((product: Product) => {
+      subscriptionsRef.current.promotedProductsIOS = promotedProductListenerIOS(
+        (product: Product) => {
           console.log('[useIAP] Promoted product callback triggered:', product);
           setPromotedProductIOS(product);
 
           if (optionsRef.current?.onPromotedProductIOS) {
             optionsRef.current.onPromotedProductIOS(product);
           }
-        });
+        },
+      );
     }
-    
-    console.log('[useIAP] Event listeners registered, now calling initConnection...');
-    
+
+    console.log(
+      '[useIAP] Event listeners registered, now calling initConnection...',
+    );
+
     // NOW call initConnection after listeners are ready
     const result = await initConnection();
     setConnected(result);

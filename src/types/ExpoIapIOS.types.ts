@@ -30,7 +30,7 @@ export type ProductIOS = ProductCommon & {
   displayNameIOS: string;
   isFamilyShareableIOS: boolean;
   jsonRepresentationIOS: string;
-  platform: "ios";
+  platform: 'ios';
   subscriptionInfoIOS?: SubscriptionInfo;
   /**
    * @deprecated Use `displayNameIOS` instead. This field will be removed in v2.9.0.
@@ -69,7 +69,7 @@ export type ProductSubscriptionIOS = ProductIOS & {
   introductoryPricePaymentModeIOS?: PaymentMode;
   introductoryPriceNumberOfPeriodsIOS?: string;
   introductoryPriceSubscriptionPeriodIOS?: SubscriptionIosPeriod;
-  platform: "ios";
+  platform: 'ios';
   subscriptionPeriodNumberIOS?: string;
   subscriptionPeriodUnitIOS?: SubscriptionIosPeriod;
   /**
@@ -140,7 +140,7 @@ export type ProductStatusIOS = {
 // Legacy naming for backward compatibility
 export type ProductPurchaseIOS = PurchaseCommon & {
   // iOS basic fields
-  platform: "ios";
+  platform: 'ios';
   quantityIOS?: number;
   originalTransactionDateIOS?: number;
   originalTransactionIdentifierIOS?: string;
@@ -178,7 +178,6 @@ export type ProductPurchaseIOS = PurchaseCommon & {
 
 // Preferred naming
 export type PurchaseIOS = ProductPurchaseIOS;
-
 
 export type AppTransactionIOS = {
   appTransactionId?: string; // Only available in iOS 18.4+
