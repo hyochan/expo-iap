@@ -102,7 +102,7 @@ type UseIap = {
   buyPromotedProductIOS: () => Promise<void>;
   getActiveSubscriptions: (
     subscriptionIds?: string[],
-  ) => Promise<ActiveSubscription[]>;
+  ) => Promise<void>;
   hasActiveSubscriptions: (subscriptionIds?: string[]) => Promise<boolean>;
 };
 
@@ -276,16 +276,13 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   }, []);
 
   const getActiveSubscriptionsInternal = useCallback(
-    async (subscriptionIds?: string[]): Promise<ActiveSubscription[]> => {
+    async (subscriptionIds?: string[]): Promise<void> => {
       try {
         const result = await getActiveSubscriptions(subscriptionIds);
         setActiveSubscriptions(result);
-        return result;
       } catch (error) {
         console.error('Error getting active subscriptions:', error);
-        // Don't clear existing activeSubscriptions on error - preserve current state
-        // This prevents the UI from showing empty state when there are temporary network issues
-        return [];
+        // Preserve existing state on error
       }
     },
     [],
@@ -454,9 +451,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     // NOW call initConnection after listeners are ready
     const result = await initConnection();
     setConnected(result);
-    
     console.log('[useIAP] initConnection result:', result);
-    
     if (!result) {
       // If connection failed, clean up listeners
       console.warn('[useIAP] Connection failed, cleaning up listeners...');

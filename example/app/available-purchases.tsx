@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import {useIAP} from '../../src';
+import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {Purchase, PurchaseError} from '../../src/ExpoIap.types';
 
@@ -51,7 +52,9 @@ export default function AvailablePurchases() {
     finishTransaction,
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      console.log('[AVAILABLE-PURCHASES] Purchase successful:', purchase);
+      // Avoid logging sensitive receipt; it's same as purchaseToken
+      const {transactionReceipt: _omit, ...safePurchase} = purchase as any;
+      console.log('[AVAILABLE-PURCHASES] Purchase successful:', safePurchase);
 
       // Finish transaction like in subscription-flow
       await finishTransaction({
@@ -80,8 +83,11 @@ export default function AvailablePurchases() {
     console.log('[AVAILABLE-PURCHASES] Checking subscription status...');
     setIsCheckingStatus(true);
     try {
-      const subs = await getActiveSubscriptions();
-      console.log('[AVAILABLE-PURCHASES] Active subscriptions result:', subs);
+      await getActiveSubscriptions();
+      console.log(
+        '[AVAILABLE-PURCHASES] Active subscriptions result (state):',
+        activeSubscriptions,
+      );
     } catch (error) {
       console.error(
         '[AVAILABLE-PURCHASES] Error checking subscription status:',
@@ -93,7 +99,12 @@ export default function AvailablePurchases() {
     } finally {
       setIsCheckingStatus(false);
     }
-  }, [connected, getActiveSubscriptions, isCheckingStatus]);
+  }, [
+    activeSubscriptions,
+    connected,
+    getActiveSubscriptions,
+    isCheckingStatus,
+  ]);
 
   const handleGetAvailablePurchases = async () => {
     if (!connected) return;
@@ -187,6 +198,11 @@ export default function AvailablePurchases() {
       subscriptions,
     );
   }, [subscriptions]);
+
+  // Show loading while disconnected
+  if (!connected) {
+    return <Loading message="Connecting to Store..." />;
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

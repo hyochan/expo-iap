@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import {requestPurchase, useIAP, showManageSubscriptionsIOS} from '../../src';
+import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {
   SubscriptionProduct,
@@ -35,7 +36,6 @@ import type {
  * - getActiveSubscriptions(['id1', 'id2']) - gets specific subscriptions
  * - activeSubscriptions state - automatically updated subscription list
  */
-
 
 export default function SubscriptionFlow() {
   // Deduplicate purchases by productId, keeping the most recent transaction
@@ -64,9 +64,12 @@ export default function SubscriptionFlow() {
   const [purchaseResult, setPurchaseResult] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [selectedSubscription, setSelectedSubscription] = useState<SubscriptionProduct | null>(null);
+  const [selectedSubscription, setSelectedSubscription] =
+    useState<SubscriptionProduct | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isHandlingPurchase, setIsHandlingPurchase] = useState(false);
+  const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
+  const [purchaseDetailsVisible, setPurchaseDetailsVisible] = useState(false);
 
   // Use the useIAP hook for managing subscriptions with built-in subscription status
   const {
@@ -80,7 +83,10 @@ export default function SubscriptionFlow() {
     activeSubscriptions,
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      console.log('Subscription successful:', purchase);
+      // Avoid logging sensitive receipt; it's same as purchaseToken
+      const {transactionReceipt: _omit, ...safePurchase} = purchase as any;
+      console.log('Subscription successful:', safePurchase);
+      setLastPurchase(purchase);
 
       // Prevent duplicate handling of the same purchase
       if (isHandlingPurchase) {
@@ -158,11 +164,12 @@ export default function SubscriptionFlow() {
         // This is a subscription restoration (existing subscription reactivated)
         setPurchaseResult(
           `ℹ️ Subscription restored (${purchase.platform})\n` +
-          `Product: ${purchase.productId}\n` +
-          `Original Transaction: ${
-            (purchase as PurchaseIOS).originalTransactionIdentifierIOS || 'N/A'
-          }\n` +
-          `No additional charge - existing subscription confirmed`
+            `Product: ${purchase.productId}\n` +
+            `Original Transaction: ${
+              (purchase as PurchaseIOS).originalTransactionIdentifierIOS ||
+              'N/A'
+            }\n` +
+            `No additional charge - existing subscription confirmed`,
         );
 
         // IMPORTANT: Server-side receipt validation should be performed here
@@ -207,13 +214,11 @@ export default function SubscriptionFlow() {
       }
 
       // Handle new subscription purchase
-      const receiptSnippet = purchase.transactionReceipt?.substring(0, 10) || '';
       setPurchaseResult(
         `✅ New subscription activated (${purchase.platform})\n` +
-        `Product: ${purchase.productId}\n` +
-        `Transaction ID: ${purchase.transactionId || 'N/A'}\n` +
-        `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}\n` +
-        `Receipt: ${receiptSnippet}${receiptSnippet ? '...' : 'N/A'}`
+          `Product: ${purchase.productId}\n` +
+          `Transaction ID: ${purchase.id || 'N/A'}\n` +
+          `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}`,
       );
 
       // IMPORTANT: Server-side receipt validation should be performed here
@@ -277,8 +282,8 @@ export default function SubscriptionFlow() {
     setIsCheckingStatus(true);
     try {
       // No need to pass subscriptionIds - it will check all active subscriptions
-      const subs = await getActiveSubscriptions();
-      console.log('Active subscriptions result:', subs);
+      await getActiveSubscriptions();
+      console.log('Active subscriptions result (state):', activeSubscriptions);
     } catch (error) {
       console.error('Error checking subscription status:', error);
       // Don't show alert for every error - user might be offline or have temporary issues
@@ -288,23 +293,20 @@ export default function SubscriptionFlow() {
     } finally {
       setIsCheckingStatus(false);
     }
-  }, [connected, isCheckingStatus, getActiveSubscriptions]);
+  }, [
+    connected,
+    isCheckingStatus,
+    getActiveSubscriptions,
+    activeSubscriptions,
+  ]);
 
-  // Load subscriptions immediately on component mount
-  useEffect(() => {
-    const subscriptionIds = SUBSCRIPTION_PRODUCT_IDS;
-    console.log('Component mounted, immediately loading subscription products...');
-    console.log('Subscription IDs to fetch:', subscriptionIds);
-    
-    // Fetch subscription products
-    console.log('Fetching as subscriptions (type: subs)...');
-    fetchProducts({skus: subscriptionIds, type: 'subs'});
-  }, [fetchProducts]);
+  // Note: Do NOT fetch on mount before connection is ready.
+  // Fetching happens in the connected effect below.
 
   // Load subscriptions and check status when connected
   useEffect(() => {
     const subscriptionIds = SUBSCRIPTION_PRODUCT_IDS;
-    
+
     if (connected) {
       console.log('Connected to store, loading subscription products...');
       // requestProducts is event-based, not promise-based
@@ -319,6 +321,8 @@ export default function SubscriptionFlow() {
       });
     }
   }, [connected, getAvailablePurchases, fetchProducts]);
+
+  // Defer loading guard until after all hooks are declared
 
   // Check subscription status when connected
   useEffect(() => {
@@ -351,9 +355,12 @@ export default function SubscriptionFlow() {
       subscriptions.length,
       subscriptions.map((s) => ({id: s.id, title: s.title, type: s.type})),
     );
-    
+
     if (subscriptions.length > 0) {
-      console.log('Full subscription details:', JSON.stringify(subscriptions, null, 2));
+      console.log(
+        'Full subscription details:',
+        JSON.stringify(subscriptions, null, 2),
+      );
     }
   }, [subscriptions]);
 
@@ -563,6 +570,11 @@ export default function SubscriptionFlow() {
       </View>
     );
   };
+
+  // Show loading screen while disconnected
+  if (!connected) {
+    return <Loading message="Connecting to Store..." />;
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -872,6 +884,27 @@ export default function SubscriptionFlow() {
           <Text style={styles.sectionTitle}>Result</Text>
           <View style={styles.resultCard}>
             <Text style={styles.resultText}>{purchaseResult}</Text>
+            <View style={styles.resultActionsRow}>
+              <TouchableOpacity
+                style={styles.resultCopyButton}
+                onPress={async () => {
+                  if (purchaseResult) {
+                    await Clipboard.setStringAsync(purchaseResult);
+                    Alert.alert('Copied', 'Purchase result copied to clipboard');
+                  }
+                }}
+              >
+                <Text style={styles.resultCopyButtonText}>📋 Copy Result</Text>
+              </TouchableOpacity>
+              {lastPurchase ? (
+                <TouchableOpacity
+                  style={[styles.detailsButton, styles.resultDetailsButton]}
+                  onPress={() => setPurchaseDetailsVisible(true)}
+                >
+                  <Text style={styles.detailsButtonText}>Details</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
           </View>
         </View>
       ) : null}
@@ -896,6 +929,60 @@ export default function SubscriptionFlow() {
               </TouchableOpacity>
             </View>
             {renderSubscriptionDetails()}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Purchase Details Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={purchaseDetailsVisible}
+        onRequestClose={() => setPurchaseDetailsVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Purchase Details</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setPurchaseDetailsVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalContent}>
+              {lastPurchase && (
+                <View style={{gap: 6}}>
+                  <Text style={styles.detailLabel}>Transaction ID</Text>
+                  <Text style={styles.detailValue}>{lastPurchase.id}</Text>
+
+                  <Text style={styles.detailLabel}>Product ID</Text>
+                  <Text style={styles.detailValue}>
+                    {lastPurchase.productId}
+                  </Text>
+
+                  <Text style={styles.detailLabel}>Platform</Text>
+                  <Text style={styles.detailValue}>
+                    {lastPurchase.platform}
+                  </Text>
+
+                  <Text style={styles.detailLabel}>Date</Text>
+                  <Text style={styles.detailValue}>
+                    {new Date(lastPurchase.transactionDate).toLocaleString()}
+                  </Text>
+
+                  {lastPurchase.purchaseToken ? (
+                    <>
+                      <Text style={styles.detailLabel}>Purchase Token</Text>
+                      <Text style={styles.detailValue}>
+                        {lastPurchase.purchaseToken}
+                      </Text>
+                    </>
+                  ) : null}
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1059,6 +1146,30 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#28a745',
   },
+  resultActionsRow: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  resultCopyButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#28a745',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  resultCopyButtonText: {
+    color: '#28a745',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  resultDetailsButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
   resultText: {
     fontSize: 14,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
@@ -1081,6 +1192,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0066cc',
     lineHeight: 20,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 5,
+  },
+  detailsButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    alignItems: 'center',
+  },
+  detailsButtonText: {
+    color: '#007AFF',
+    fontWeight: '600',
+    fontSize: 14,
   },
   offerBadge: {
     backgroundColor: '#e7f3ff',

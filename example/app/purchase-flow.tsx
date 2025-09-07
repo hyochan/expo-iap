@@ -5,9 +5,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
-  ScrollView,
   Platform,
   Modal,
+  ScrollView,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import {
@@ -16,6 +16,7 @@ import {
   getAppTransactionIOS,
   isProductIOS,
 } from '../../src';
+import Loading from '../src/components/Loading';
 import {PRODUCT_IDS} from '../../src/utils/constants';
 import type {Product, Purchase, PurchaseError} from '../../src/ExpoIap.types';
 
@@ -36,20 +37,24 @@ export default function PurchaseFlow() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
+  const [purchaseDetailsVisible, setPurchaseDetailsVisible] = useState(false);
 
   // Use the useIAP hook for managing purchases
   const {connected, products, fetchProducts, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
-      console.log('Purchase successful:', purchase);
+      // Avoid logging sensitive receipt; it's same as purchaseToken
+      const {transactionReceipt: _omit, ...safePurchase} = purchase as any;
+      console.log('Purchase successful:', safePurchase);
+      setLastPurchase(purchase);
       setIsProcessing(false);
 
       // Handle successful purchase
       setPurchaseResult(
         `✅ Purchase successful (${purchase.platform})\n` +
           `Product: ${purchase.productId}\n` +
-          `Transaction ID: ${purchase.transactionId || 'N/A'}\n` +
-          `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}\n` +
-          `Receipt: ${purchase.transactionReceipt?.substring(0, 10)}...`,
+          `Transaction ID: ${purchase.id || 'N/A'}\n` +
+          `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}`,
       );
 
       // IMPORTANT: Server-side receipt validation should be performed here
@@ -100,6 +105,8 @@ export default function PurchaseFlow() {
       console.log('[PurchaseFlow] Not fetching products - not connected');
     }
   }, [connected, fetchProducts]);
+
+  // Defer loading guard until after all hooks are declared
 
   const handlePurchase = async (itemId: string) => {
     try {
@@ -186,6 +193,11 @@ export default function PurchaseFlow() {
     setModalVisible(true);
   };
 
+  // Show loading screen while disconnected
+  if (!connected) {
+    return <Loading message="Connecting to Store..." />;
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -265,12 +277,22 @@ export default function PurchaseFlow() {
           <View style={styles.resultContainer}>
             <Text style={styles.resultTitle}>Purchase Result:</Text>
             <Text style={styles.resultText}>{purchaseResult}</Text>
-            <TouchableOpacity
-              style={styles.copyButton}
-              onPress={handleCopyResult}
-            >
-              <Text style={styles.copyButtonText}>📋 Copy Result</Text>
-            </TouchableOpacity>
+            <View style={styles.resultActionsRow}>
+              <TouchableOpacity
+                style={styles.copyButton}
+                onPress={handleCopyResult}
+              >
+                <Text style={styles.copyButtonText}>📋 Copy Result</Text>
+              </TouchableOpacity>
+              {lastPurchase ? (
+                <TouchableOpacity
+                  style={[styles.detailsButton, styles.resultDetailsButton]}
+                  onPress={() => setPurchaseDetailsVisible(true)}
+                >
+                  <Text style={styles.detailsButtonText}>Details</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
           </View>
         ) : null}
 
@@ -361,6 +383,58 @@ export default function PurchaseFlow() {
             >
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Purchase Details Modal */}
+      <Modal
+        visible={purchaseDetailsVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setPurchaseDetailsVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Purchase Details</Text>
+              <TouchableOpacity
+                onPress={() => setPurchaseDetailsVisible(false)}
+                style={styles.modalCloseIconButton}
+              >
+                <Text style={styles.modalCloseIconText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView>
+              {lastPurchase && (
+                <>
+                  <Text style={styles.modalLabel}>Transaction ID</Text>
+                  <Text style={styles.modalValue}>{lastPurchase.id}</Text>
+
+                  <Text style={styles.modalLabel}>Product ID</Text>
+                  <Text style={styles.modalValue}>
+                    {lastPurchase.productId}
+                  </Text>
+
+                  <Text style={styles.modalLabel}>Platform</Text>
+                  <Text style={styles.modalValue}>{lastPurchase.platform}</Text>
+
+                  <Text style={styles.modalLabel}>Date</Text>
+                  <Text style={styles.modalValue}>
+                    {new Date(lastPurchase.transactionDate).toLocaleString()}
+                  </Text>
+
+                  {lastPurchase.purchaseToken ? (
+                    <>
+                      <Text style={styles.modalLabel}>Purchase Token</Text>
+                      <Text style={styles.modalValue}>
+                        {lastPurchase.purchaseToken}
+                      </Text>
+                    </>
+                  ) : null}
+                </>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -509,18 +583,30 @@ const styles = StyleSheet.create({
     color: '#333',
     fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
   },
+  resultActionsRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   copyButton: {
-    marginTop: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     backgroundColor: '#4CAF50',
     borderRadius: 6,
-    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   copyButtonText: {
     color: 'white',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
+  },
+  resultDetailsButton: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   appTransactionButton: {
     backgroundColor: '#FF9800',
@@ -568,6 +654,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  modalCloseIconButton: {
+    padding: 4,
+  },
+  modalCloseIconText: {
+    fontSize: 22,
+    color: '#666',
   },
   modalLabel: {
     fontSize: 12,
