@@ -3,7 +3,6 @@ import StoreKit
 import OpenIAP
 import OSLog
 
-// Helper: unified logger for this module (filterable via Console.app)
 private let iapLogger = Logger(subsystem: "dev.hyo.expo-iap", category: "ExpoIapModule")
 private func logDebug(_ message: String) {
     // Use OSLog/Logger so logs are structured and filterable
@@ -389,7 +388,7 @@ public class ExpoIapModule: Module {
         }
     }
     
-    // MARK: - Store Setup
+    // MARK: - Listeners Setup
     
     @MainActor
     private func setupStore() {
@@ -439,5 +438,3 @@ public class ExpoIapModule: Module {
     }
     
 }
-
-// Error mapping is provided by OpenIapSerialization.errorCodes()
