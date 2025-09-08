@@ -403,6 +403,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     // Events might fire immediately after initConnection, so listeners must be ready
     console.log('[useIAP] Setting up event listeners BEFORE initConnection...');
 
+    // Register purchase update listener BEFORE initConnection to avoid race conditions.
     subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
       async (purchase: Purchase) => {
         console.log('[useIAP] Purchase success callback triggered:', purchase);
@@ -419,17 +420,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       },
     );
 
-    subscriptionsRef.current.purchaseError = purchaseErrorListener(
-      (error: PurchaseError) => {
-        console.log('[useIAP] Purchase error callback triggered:', error);
-        setCurrentPurchase(undefined);
-        setCurrentPurchaseError(error);
-
-        if (optionsRef.current?.onPurchaseError) {
-          optionsRef.current.onPurchaseError(error);
-        }
-      },
-    );
+    // IMPORTANT: Do NOT register the purchase error listener until after initConnection succeeds.
+    // Some platforms may emit an initialization error event (E_INIT_CONNECTION) during startup.
+    // Delaying registration prevents noisy, misleading errors before the connection is ready.
 
     if (Platform.OS === 'ios') {
       // iOS promoted products listener
@@ -457,12 +450,25 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       // If connection failed, clean up listeners
       console.warn('[useIAP] Connection failed, cleaning up listeners...');
       subscriptionsRef.current.purchaseUpdate?.remove();
-      subscriptionsRef.current.purchaseError?.remove();
       subscriptionsRef.current.promotedProductsIOS?.remove();
       subscriptionsRef.current.purchaseUpdate = undefined;
-      subscriptionsRef.current.purchaseError = undefined;
       subscriptionsRef.current.promotedProductsIOS = undefined;
+      // Do not register error listener when connection fails
+      return;
     }
+
+    // Now that the connection is established, register the purchase error listener.
+    subscriptionsRef.current.purchaseError = purchaseErrorListener(
+      (error: PurchaseError) => {
+        console.log('[useIAP] Purchase error callback triggered:', error);
+        setCurrentPurchase(undefined);
+        setCurrentPurchaseError(error);
+
+        if (optionsRef.current?.onPurchaseError) {
+          optionsRef.current.onPurchaseError(error);
+        }
+      },
+    );
   }, [refreshSubscriptionStatus]);
 
   useEffect(() => {

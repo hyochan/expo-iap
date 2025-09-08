@@ -726,7 +726,7 @@ export default function SubscriptionFlow() {
           ) : null}
         </View>
         {!connected ? (
-          <Text style={styles.loadingText}>Connecting to store...</Text>
+          <Loading message="Connecting to store..." />
         ) : subscriptions.length > 0 ? (
           subscriptions.map((subscription) => (
             <View key={subscription.id} style={styles.subscriptionCard}>
