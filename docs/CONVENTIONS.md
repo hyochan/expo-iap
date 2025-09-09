@@ -543,3 +543,29 @@ Following these conventions provides:
 5. **Platform Safety**: Prevents platform-specific bugs
 6. **Developer Experience**: Easier onboarding and collaboration
 7. **No Platform Checks**: New API eliminates Platform.OS branching
+## Error construction style
+
+When creating a `PurchaseError` with 2 or more properties, prefer the object-style constructor for clarity and forward compatibility.
+
+Examples:
+
+```ts
+// Preferred (object style)
+throw new PurchaseError({
+  message: 'No SKUs provided',
+  code: ErrorCode.E_EMPTY_SKU_LIST,
+});
+
+// Also valid for richer context
+return Promise.reject(
+  new PurchaseError({
+    message: 'Purchase token is required to finish transaction',
+    code: ErrorCode.E_DEVELOPER_ERROR,
+    productId: sku,
+    platform: 'android',
+  }),
+);
+
+// Legacy positional args are still supported for backward compatibility,
+// but should be avoided in new code.
+```

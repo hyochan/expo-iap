@@ -144,13 +144,10 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
   );
   if (!skus?.length) {
     return Promise.reject(
-      new PurchaseError(
-        '',
-        'No SKUs provided',
-        undefined,
-        undefined,
-        ErrorCode.E_EMPTY_SKU_LIST,
-      ),
+      new PurchaseError({
+        message: 'No SKUs provided',
+        code: ErrorCode.E_EMPTY_SKU_LIST,
+      }),
     );
   }
 
@@ -186,13 +183,10 @@ export const getSubscriptions = async (
   );
   if (!skus?.length) {
     return Promise.reject(
-      new PurchaseError(
-        '',
-        'No SKUs provided',
-        undefined,
-        undefined,
-        ErrorCode.E_EMPTY_SKU_LIST,
-      ),
+      new PurchaseError({
+        message: 'No SKUs provided',
+        code: ErrorCode.E_EMPTY_SKU_LIST,
+      }),
     );
   }
 
@@ -261,13 +255,10 @@ export const fetchProducts = async ({
   type?: 'inapp' | 'subs';
 }): Promise<Product[] | SubscriptionProduct[]> => {
   if (!skus?.length) {
-    throw new PurchaseError(
-      '',
-      'No SKUs provided',
-      undefined,
-      undefined,
-      ErrorCode.E_EMPTY_SKU_LIST,
-    );
+    throw new PurchaseError({
+      message: 'No SKUs provided',
+      code: ErrorCode.E_EMPTY_SKU_LIST,
+    });
   }
 
   if (Platform.OS === 'ios') {
@@ -640,15 +631,12 @@ export const finishTransaction = ({
 
         if (!token) {
           return Promise.reject(
-            new PurchaseError(
-              '[expo-iap]: PurchaseError',
-              'Purchase token is required to finish transaction',
-              undefined,
-              undefined,
-              'E_DEVELOPER_ERROR' as ErrorCode,
-              androidPurchase.productId,
-              'android',
-            ),
+            new PurchaseError({
+              message: 'Purchase token is required to finish transaction',
+              code: 'E_DEVELOPER_ERROR' as ErrorCode,
+              productId: androidPurchase.productId,
+              platform: 'android',
+            }),
           );
         }
 

@@ -194,23 +194,47 @@ export const ErrorCodeMapping = {
   },
 } as const;
 
+export type PurchaseErrorProps = {
+  message: string;
+  responseCode?: number;
+  debugMessage?: string;
+  code?: ErrorCode;
+  productId?: string;
+  platform?: 'ios' | 'android';
+};
+
 export class PurchaseError implements Error {
-  constructor(
-    public name: string,
-    public message: string,
-    public responseCode?: number,
-    public debugMessage?: string,
-    public code?: ErrorCode,
-    public productId?: string,
-    public platform?: 'ios' | 'android',
-  ) {
+  public name: string;
+  public message: string;
+  public responseCode?: number;
+  public debugMessage?: string;
+  public code?: ErrorCode;
+  public productId?: string;
+  public platform?: 'ios' | 'android';
+
+  // Backwards-compatible constructor: accepts either props object or legacy positional args
+  constructor(messageOrProps: string | PurchaseErrorProps, ...rest: any[]) {
     this.name = '[expo-iap]: PurchaseError';
-    this.message = message;
-    this.responseCode = responseCode;
-    this.debugMessage = debugMessage;
-    this.code = code;
-    this.productId = productId;
-    this.platform = platform;
+
+    if (typeof messageOrProps === 'string') {
+      // Legacy signature: (name, message, responseCode?, debugMessage?, code?, productId?, platform?)
+      // The first legacy argument was a name which we always override, so treat it as message here
+      const message = messageOrProps;
+      this.message = message;
+      this.responseCode = rest[0];
+      this.debugMessage = rest[1];
+      this.code = rest[2];
+      this.productId = rest[3];
+      this.platform = rest[4];
+    } else {
+      const props = messageOrProps;
+      this.message = props.message;
+      this.responseCode = props.responseCode;
+      this.debugMessage = props.debugMessage;
+      this.code = props.code;
+      this.productId = props.productId;
+      this.platform = props.platform;
+    }
   }
 
   /**
@@ -227,15 +251,14 @@ export class PurchaseError implements Error {
       ? ErrorCodeUtils.fromPlatformCode(errorData.code, platform)
       : ErrorCode.E_UNKNOWN;
 
-    return new PurchaseError(
-      '[expo-iap]: PurchaseError',
-      errorData.message || 'Unknown error occurred',
-      errorData.responseCode,
-      errorData.debugMessage,
-      errorCode,
-      errorData.productId,
+    return new PurchaseError({
+      message: errorData.message || 'Unknown error occurred',
+      responseCode: errorData.responseCode,
+      debugMessage: errorData.debugMessage,
+      code: errorCode,
+      productId: errorData.productId,
       platform,
-    );
+    });
   }
 
   /**
