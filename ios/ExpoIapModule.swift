@@ -360,9 +360,27 @@ public class ExpoIapModule: Module {
                     ]
 
                     if let info = status.renewalInfo {
+                        // Convert autoRenewStatus to a proper boolean for willAutoRenew
+                        let willAutoRenew: Bool = {
+                            // Try boolean first
+                            if let b = info.autoRenewStatus as? Bool { return b }
+                            // Fallback to string normalization
+                            let normalized = String(describing: info.autoRenewStatus).lowercased()
+                            let truthy = Set([
+                                "willrenew",
+                                "will_autorenew",
+                                "will-auto-renew",
+                                "auto_renew_on",
+                                "true",
+                                "1",
+                                "on",
+                                "yes",
+                            ])
+                            return truthy.contains(normalized)
+                        }()
+
                         let renewalInfo: [String: Any?] = [
-                            // Map willAutoRenew from underlying field (autoRenewStatus)
-                            "willAutoRenew": info.autoRenewStatus,
+                            "willAutoRenew": willAutoRenew,
                             "autoRenewPreference": info.autoRenewPreference
                         ]
                         dict["renewalInfo"] = renewalInfo
