@@ -35,6 +35,11 @@ import {
   RequestPurchaseProps,
   RequestSubscriptionProps,
 } from './ExpoIap.types';
+import {
+  getUserFriendlyErrorMessage,
+  isUserCancelledError,
+  isRecoverableError,
+} from './utils/errorMapping';
 
 type UseIap = {
   connected: boolean;
@@ -109,7 +114,7 @@ export interface UseIAPOptions {
 
 /**
  * React Hook for managing In-App Purchases.
- * See documentation at https://expo-iap.hyo.dev/docs/hooks/useIAP
+ * See documentation at https://hyochan.github.io/expo-iap/docs/hooks/useIAP
  */
 export function useIAP(options?: UseIAPOptions): UseIap {
   const [connected, setConnected] = useState<boolean>(false);
@@ -449,7 +454,15 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     // Now that the connection is established, register the purchase error listener.
     subscriptionsRef.current.purchaseError = purchaseErrorListener(
       (error: PurchaseError) => {
+        const friendly = getUserFriendlyErrorMessage(error);
         console.log('[useIAP] Purchase error callback triggered:', error);
+        if (isUserCancelledError(error)) {
+          console.log('[useIAP] User cancelled purchase');
+        } else if (isRecoverableError(error)) {
+          console.log('[useIAP] Recoverable purchase error:', friendly);
+        } else {
+          console.warn('[useIAP] Purchase error:', friendly);
+        }
         setCurrentPurchase(undefined);
         setCurrentPurchaseError(error);
 

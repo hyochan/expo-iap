@@ -95,7 +95,7 @@ export type RequestPurchaseIosProps = {
   withOffer?: PaymentDiscount;
 };
 
-type SubscriptionStatus =
+type SubscriptionState =
   | 'expired'
   | 'inBillingRetryPeriod'
   | 'inGracePeriod'
@@ -108,8 +108,8 @@ type RenewalInfo = {
   autoRenewPreference?: string;
 };
 
-export type ProductStatusIOS = {
-  state: SubscriptionStatus;
+export type SubscriptionStatusIOS = {
+  state: SubscriptionState;
   renewalInfo?: RenewalInfo;
 };
 

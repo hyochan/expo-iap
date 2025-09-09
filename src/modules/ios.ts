@@ -9,7 +9,7 @@ import type {
   Product,
   Purchase,
   PurchaseError,
-  ProductStatusIOS,
+  SubscriptionStatusIOS,
   AppTransactionIOS,
 } from '../ExpoIap.types';
 import {Linking} from 'react-native';
@@ -122,7 +122,7 @@ export const isEligibleForIntroOfferIOS = (
  */
 export const subscriptionStatusIOS = (
   sku: string,
-): Promise<ProductStatusIOS[]> => {
+): Promise<SubscriptionStatusIOS[]> => {
   return ExpoIapModule.subscriptionStatusIOS(sku);
 };
 
@@ -369,7 +369,7 @@ export const isEligibleForIntroOffer = (groupId: string): Promise<boolean> => {
  */
 export const subscriptionStatus = (
   sku: string,
-): Promise<ProductStatusIOS[]> => {
+): Promise<SubscriptionStatusIOS[]> => {
   console.warn(
     '`subscriptionStatus` is deprecated. Use `subscriptionStatusIOS` instead. This function will be removed in version 3.0.0.',
   );

@@ -32,6 +32,8 @@ export function isNetworkError(error: any): boolean {
     ErrorCode.E_NETWORK_ERROR,
     ErrorCode.E_REMOTE_ERROR,
     ErrorCode.E_SERVICE_ERROR,
+    ErrorCode.E_SERVICE_DISCONNECTED,
+    ErrorCode.E_BILLING_UNAVAILABLE,
   ];
 
   const errorCode = typeof error === 'string' ? error : error?.code;
@@ -49,6 +51,10 @@ export function isRecoverableError(error: any): boolean {
     ErrorCode.E_REMOTE_ERROR,
     ErrorCode.E_SERVICE_ERROR,
     ErrorCode.E_INTERRUPTED,
+    ErrorCode.E_SERVICE_DISCONNECTED,
+    ErrorCode.E_BILLING_UNAVAILABLE,
+    ErrorCode.E_QUERY_PRODUCT,
+    ErrorCode.E_INIT_CONNECTION,
   ];
 
   const errorCode = typeof error === 'string' ? error : error?.code;
@@ -68,20 +74,38 @@ export function getUserFriendlyErrorMessage(error: any): string {
       return 'Purchase was cancelled by user';
     case ErrorCode.E_NETWORK_ERROR:
       return 'Network connection error. Please check your internet connection and try again.';
+    case ErrorCode.E_SERVICE_DISCONNECTED:
+      return 'Billing service disconnected. Please try again.';
+    case ErrorCode.E_BILLING_UNAVAILABLE:
+      return 'Billing is unavailable on this device or account.';
     case ErrorCode.E_ITEM_UNAVAILABLE:
       return 'This item is not available for purchase';
+    case ErrorCode.E_ITEM_NOT_OWNED:
+      return "You don't own this item";
     case ErrorCode.E_ALREADY_OWNED:
       return 'You already own this item';
+    case ErrorCode.E_SKU_NOT_FOUND:
+      return 'Requested product could not be found';
+    case ErrorCode.E_SKU_OFFER_MISMATCH:
+      return 'Selected offer does not match the SKU';
     case ErrorCode.E_DEFERRED_PAYMENT:
       return 'Payment is pending approval';
     case ErrorCode.E_NOT_PREPARED:
       return 'In-app purchase is not ready. Please try again later.';
     case ErrorCode.E_SERVICE_ERROR:
       return 'Store service error. Please try again later.';
+    case ErrorCode.E_FEATURE_NOT_SUPPORTED:
+      return 'This feature is not supported on this device.';
     case ErrorCode.E_TRANSACTION_VALIDATION_FAILED:
       return 'Transaction could not be verified';
     case ErrorCode.E_RECEIPT_FAILED:
       return 'Receipt processing failed';
+    case ErrorCode.E_EMPTY_SKU_LIST:
+      return 'No product IDs provided';
+    case ErrorCode.E_INIT_CONNECTION:
+      return 'Failed to initialize billing connection';
+    case ErrorCode.E_QUERY_PRODUCT:
+      return 'Failed to query products. Please try again later.';
     default:
       return error?.message || 'An unexpected error occurred';
   }

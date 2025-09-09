@@ -143,7 +143,15 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
     "`getProducts` is deprecated. Use `fetchProducts({ skus, type: 'inapp' })` instead. This function will be removed in version 3.0.0.",
   );
   if (!skus?.length) {
-    return Promise.reject(new Error('"skus" is required'));
+    return Promise.reject(
+      new PurchaseError(
+        '[expo-iap]: PurchaseError',
+        'No SKUs provided',
+        undefined,
+        undefined,
+        ErrorCode.E_EMPTY_SKU_LIST,
+      ),
+    );
   }
 
   return Platform.select({
@@ -177,7 +185,15 @@ export const getSubscriptions = async (
     "`getSubscriptions` is deprecated. Use `fetchProducts({ skus, type: 'subs' })` instead. This function will be removed in version 3.0.0.",
   );
   if (!skus?.length) {
-    return Promise.reject(new Error('"skus" is required'));
+    return Promise.reject(
+      new PurchaseError(
+        '[expo-iap]: PurchaseError',
+        'No SKUs provided',
+        undefined,
+        undefined,
+        ErrorCode.E_EMPTY_SKU_LIST,
+      ),
+    );
   }
 
   return Platform.select({
@@ -245,7 +261,13 @@ export const fetchProducts = async ({
   type?: 'inapp' | 'subs';
 }): Promise<Product[] | SubscriptionProduct[]> => {
   if (!skus?.length) {
-    throw new Error('No SKUs provided');
+    throw new PurchaseError(
+      '[expo-iap]: PurchaseError',
+      'No SKUs provided',
+      undefined,
+      undefined,
+      ErrorCode.E_EMPTY_SKU_LIST,
+    );
   }
 
   if (Platform.OS === 'ios') {
