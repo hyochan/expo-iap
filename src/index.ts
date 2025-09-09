@@ -145,7 +145,7 @@ export const getProducts = async (skus: string[]): Promise<Product[]> => {
   if (!skus?.length) {
     return Promise.reject(
       new PurchaseError(
-        '[expo-iap]: PurchaseError',
+        '',
         'No SKUs provided',
         undefined,
         undefined,
@@ -187,7 +187,7 @@ export const getSubscriptions = async (
   if (!skus?.length) {
     return Promise.reject(
       new PurchaseError(
-        '[expo-iap]: PurchaseError',
+        '',
         'No SKUs provided',
         undefined,
         undefined,
@@ -262,7 +262,7 @@ export const fetchProducts = async ({
 }): Promise<Product[] | SubscriptionProduct[]> => {
   if (!skus?.length) {
     throw new PurchaseError(
-      '[expo-iap]: PurchaseError',
+      '',
       'No SKUs provided',
       undefined,
       undefined,
