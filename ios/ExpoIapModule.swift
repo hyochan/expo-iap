@@ -415,7 +415,7 @@ public class ExpoIapModule: Module {
                 let errorData: [String: Any?] = [
                     "code": event.code,
                     "message": event.message,
-                    "productId": event.productId,
+                    "productId": event.productId
                 ]
                 self.sendEvent(OpenIapEvent.PurchaseError, errorData)
             }

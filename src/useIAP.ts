@@ -34,6 +34,7 @@ import {
   SubscriptionProduct,
   RequestPurchaseProps,
   RequestSubscriptionProps,
+  ErrorCode,
 } from './ExpoIap.types';
 import {
   getUserFriendlyErrorMessage,
@@ -133,6 +134,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   >([]);
 
   const optionsRef = useRef<UseIAPOptions | undefined>(options);
+  const connectedRef = useRef<boolean>(false);
 
   // Helper function to merge arrays with duplicate checking
   const mergeWithDuplicateCheck = useCallback(
@@ -158,6 +160,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   useEffect(() => {
     optionsRef.current = options;
   }, [options]);
+
+  useEffect(() => {
+    connectedRef.current = connected;
+  }, [connected]);
 
   const subscriptionsRef = useRef<{
     purchaseUpdate?: EventSubscription;
@@ -414,9 +420,29 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       },
     );
 
-    // IMPORTANT: Do NOT register the purchase error listener until after initConnection succeeds.
-    // Some platforms may emit an initialization error event (E_INIT_CONNECTION) during startup.
-    // Delaying registration prevents noisy, misleading errors before the connection is ready.
+    // Register purchase error listener EARLY. Ignore init-related errors until connected.
+    subscriptionsRef.current.purchaseError = purchaseErrorListener(
+      (error: PurchaseError) => {
+        if (!connectedRef.current && error.code === ErrorCode.E_INIT_CONNECTION) {
+          return; // Ignore initialization error before connected
+        }
+        const friendly = getUserFriendlyErrorMessage(error);
+        console.log('[useIAP] Purchase error callback triggered:', error);
+        if (isUserCancelledError(error)) {
+          console.log('[useIAP] User cancelled purchase');
+        } else if (isRecoverableError(error)) {
+          console.log('[useIAP] Recoverable purchase error:', friendly);
+        } else {
+          console.warn('[useIAP] Purchase error:', friendly);
+        }
+        setCurrentPurchase(undefined);
+        setCurrentPurchaseError(error);
+
+        if (optionsRef.current?.onPurchaseError) {
+          optionsRef.current.onPurchaseError(error);
+        }
+      },
+    );
 
     if (Platform.OS === 'ios') {
       // iOS promoted products listener
@@ -447,30 +473,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       subscriptionsRef.current.promotedProductsIOS?.remove();
       subscriptionsRef.current.purchaseUpdate = undefined;
       subscriptionsRef.current.promotedProductsIOS = undefined;
-      // Do not register error listener when connection fails
+      // Keep purchaseError listener registered to capture subsequent retries
       return;
     }
-
-    // Now that the connection is established, register the purchase error listener.
-    subscriptionsRef.current.purchaseError = purchaseErrorListener(
-      (error: PurchaseError) => {
-        const friendly = getUserFriendlyErrorMessage(error);
-        console.log('[useIAP] Purchase error callback triggered:', error);
-        if (isUserCancelledError(error)) {
-          console.log('[useIAP] User cancelled purchase');
-        } else if (isRecoverableError(error)) {
-          console.log('[useIAP] Recoverable purchase error:', friendly);
-        } else {
-          console.warn('[useIAP] Purchase error:', friendly);
-        }
-        setCurrentPurchase(undefined);
-        setCurrentPurchaseError(error);
-
-        if (optionsRef.current?.onPurchaseError) {
-          optionsRef.current.onPurchaseError(error);
-        }
-      },
-    );
   }, [refreshSubscriptionStatus]);
 
   useEffect(() => {
