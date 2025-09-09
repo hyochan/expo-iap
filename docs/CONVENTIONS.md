@@ -543,6 +543,7 @@ Following these conventions provides:
 5. **Platform Safety**: Prevents platform-specific bugs
 6. **Developer Experience**: Easier onboarding and collaboration
 7. **No Platform Checks**: New API eliminates Platform.OS branching
+
 ## Error construction style
 
 When creating a `PurchaseError` with 2 or more properties, prefer the object-style constructor for clarity and forward compatibility.

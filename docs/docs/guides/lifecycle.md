@@ -213,7 +213,7 @@ export default function StoreComponent() {
 
 ## Best Practices
 
-### ✅ Do:
+### ✅ Do
 
 1. **Use useIAP hook**: Simplifies lifecycle management
 2. **Initialize early**: Connect to store as early as possible in app lifecycle
@@ -235,7 +235,7 @@ function MyApp() {
 }
 ```
 
-### ❌ Don't:
+### ❌ Don't
 
 1. **Initialize and end repeatedly**: Don't call initConnection/endConnection for every operation
 2. **Ignore connection state**: Don't attempt store operations when disconnected
