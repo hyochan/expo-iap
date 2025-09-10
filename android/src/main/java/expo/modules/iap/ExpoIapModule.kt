@@ -584,7 +584,6 @@ class ExpoIapModule :
                         return@AsyncFunction
                     }
             }
-            }
 
             AsyncFunction("acknowledgePurchaseAndroid") {
                     token: String,
