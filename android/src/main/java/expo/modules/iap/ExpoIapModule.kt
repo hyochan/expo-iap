@@ -155,268 +155,266 @@ class ExpoIapModule :
             }
 
             AsyncFunction("fetchProducts") { type: String, skuArr: Array<String>, promise: Promise ->
-                ensureConnection(promise) { billingClient ->
-                    val skuList =
-                        skuArr.map { sku ->
-                            QueryProductDetailsParams.Product
-                                .newBuilder()
-                                .setProductId(sku)
-                                .setProductType(type)
-                                .build()
-                        }
+                val billingClient = getBillingClientOrReject(promise) ?: return@AsyncFunction
 
-                    if (skuList.isEmpty()) {
-                        promise.reject(IapErrorCode.E_EMPTY_SKU_LIST, "The SKU list is empty.", null)
-                        return@ensureConnection
+                val skuList =
+                    skuArr.map { sku ->
+                        QueryProductDetailsParams.Product
+                            .newBuilder()
+                            .setProductId(sku)
+                            .setProductType(type)
+                            .build()
                     }
 
-                    val params =
-                        QueryProductDetailsParams
-                            .newBuilder()
-                            .setProductList(skuList)
-                            .build()
+                if (skuList.isEmpty()) {
+                    promise.reject(IapErrorCode.E_EMPTY_SKU_LIST, "The SKU list is empty.", null)
+                    return@AsyncFunction
+                }
 
-                    billingClient.queryProductDetailsAsync(params) { billingResult: BillingResult, productDetailsResult: QueryProductDetailsResult ->
-                        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                            promise.reject(
-                                IapErrorCode.E_QUERY_PRODUCT,
-                                "Error querying product details: ${billingResult.debugMessage}",
-                                null,
-                            )
-                            return@queryProductDetailsAsync
-                        }
+                val params =
+                    QueryProductDetailsParams
+                        .newBuilder()
+                        .setProductList(skuList)
+                        .build()
 
-                        val productDetailsList = productDetailsResult.productDetailsList ?: emptyList()
-                        
-                        val items =
-                            productDetailsList.map { productDetails ->
-                                skus[productDetails.productId] = productDetails
+                billingClient.queryProductDetailsAsync(params) { billingResult: BillingResult, productDetailsResult: QueryProductDetailsResult ->
+                    if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                        promise.reject(
+                            IapErrorCode.E_QUERY_PRODUCT,
+                            "Error querying product details: ${billingResult.debugMessage}",
+                            null,
+                        )
+                        return@queryProductDetailsAsync
+                    }
 
-                                val currency = productDetails.oneTimePurchaseOfferDetails?.priceCurrencyCode
-                                    ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.priceCurrencyCode
-                                    ?: "Unknown"
-                                val displayPrice = productDetails.oneTimePurchaseOfferDetails?.formattedPrice
-                                    ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
-                                    ?: "N/A"
+                    val productDetailsList = productDetailsResult.productDetailsList ?: emptyList()
+                    
+                    val items =
+                        productDetailsList.map { productDetails ->
+                            skus[productDetails.productId] = productDetails
 
-                                // Prepare reusable data
-                                val oneTimePurchaseData = productDetails.oneTimePurchaseOfferDetails?.let {
-                                    mapOf(
-                                        "priceCurrencyCode" to it.priceCurrencyCode,
-                                        "formattedPrice" to it.formattedPrice,
-                                        "priceAmountMicros" to it.priceAmountMicros.toString(),
-                                    )
-                                }
-                                
-                                val subscriptionOfferData = productDetails.subscriptionOfferDetails?.map { subscriptionOfferDetailsItem ->
-                                    mapOf(
-                                        "basePlanId" to subscriptionOfferDetailsItem.basePlanId,
-                                        "offerId" to subscriptionOfferDetailsItem.offerId,
-                                        "offerToken" to subscriptionOfferDetailsItem.offerToken,
-                                        "offerTags" to subscriptionOfferDetailsItem.offerTags,
-                                        "pricingPhases" to
-                                            mapOf(
-                                                "pricingPhaseList" to
-                                                    subscriptionOfferDetailsItem.pricingPhases.pricingPhaseList.map
-                                                        { pricingPhaseItem ->
-                                                            mapOf(
-                                                                "formattedPrice" to pricingPhaseItem.formattedPrice,
-                                                                "priceCurrencyCode" to pricingPhaseItem.priceCurrencyCode,
-                                                                "billingPeriod" to pricingPhaseItem.billingPeriod,
-                                                                "billingCycleCount" to pricingPhaseItem.billingCycleCount,
-                                                                "priceAmountMicros" to
-                                                                    pricingPhaseItem.priceAmountMicros.toString(),
-                                                                "recurrenceMode" to pricingPhaseItem.recurrenceMode,
-                                                            )
-                                                        },
-                                            ),
-                                    )
-                                }
+                            val currency = productDetails.oneTimePurchaseOfferDetails?.priceCurrencyCode
+                                ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.priceCurrencyCode
+                                ?: "Unknown"
+                            val displayPrice = productDetails.oneTimePurchaseOfferDetails?.formattedPrice
+                                ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
+                                ?: "N/A"
 
-                                // Convert Android productType to our expected 'inapp' or 'subs'
-                                val productType = if (productDetails.productType == BillingClient.ProductType.SUBS) "subs" else "inapp"
-                                
+                            // Prepare reusable data
+                            val oneTimePurchaseData = productDetails.oneTimePurchaseOfferDetails?.let {
                                 mapOf(
-                                    "id" to productDetails.productId,
-                                    "title" to productDetails.title,
-                                    "description" to productDetails.description,
-                                    "type" to productType,
-                                    // New field names with Android suffix
-                                    "nameAndroid" to productDetails.name,
-                                    "oneTimePurchaseOfferDetailsAndroid" to oneTimePurchaseData,
-                                    "subscriptionOfferDetailsAndroid" to subscriptionOfferData,
-                                    "platform" to "android",
-                                    "currency" to currency,
-                                    "displayPrice" to displayPrice,
-                                    // START: Deprecated - will be removed in v2.9.0
-                                    // Use nameAndroid instead of displayName
-                                    "displayName" to productDetails.name,
-                                    // Use nameAndroid instead of name
-                                    "name" to productDetails.name,
-                                    // Use oneTimePurchaseOfferDetailsAndroid instead of oneTimePurchaseOfferDetails
-                                    "oneTimePurchaseOfferDetails" to oneTimePurchaseData,
-                                    // Use subscriptionOfferDetailsAndroid instead of subscriptionOfferDetails
-                                    "subscriptionOfferDetails" to subscriptionOfferData,
-                                    // END: Deprecated - will be removed in v2.9.0
+                                    "priceCurrencyCode" to it.priceCurrencyCode,
+                                    "formattedPrice" to it.formattedPrice,
+                                    "priceAmountMicros" to it.priceAmountMicros.toString(),
                                 )
                             }
-                        promise.resolve(items)
-                    }
+                            
+                            val subscriptionOfferData = productDetails.subscriptionOfferDetails?.map { subscriptionOfferDetailsItem ->
+                                mapOf(
+                                    "basePlanId" to subscriptionOfferDetailsItem.basePlanId,
+                                    "offerId" to subscriptionOfferDetailsItem.offerId,
+                                    "offerToken" to subscriptionOfferDetailsItem.offerToken,
+                                    "offerTags" to subscriptionOfferDetailsItem.offerTags,
+                                    "pricingPhases" to
+                                        mapOf(
+                                            "pricingPhaseList" to
+                                                subscriptionOfferDetailsItem.pricingPhases.pricingPhaseList.map
+                                                    { pricingPhaseItem ->
+                                                        mapOf(
+                                                            "formattedPrice" to pricingPhaseItem.formattedPrice,
+                                                            "priceCurrencyCode" to pricingPhaseItem.priceCurrencyCode,
+                                                            "billingPeriod" to pricingPhaseItem.billingPeriod,
+                                                            "billingCycleCount" to pricingPhaseItem.billingCycleCount,
+                                                            "priceAmountMicros" to
+                                                                pricingPhaseItem.priceAmountMicros.toString(),
+                                                            "recurrenceMode" to pricingPhaseItem.recurrenceMode,
+                                                        )
+                                                    },
+                                        ),
+                                )
+                            }
+
+                            // Convert Android productType to our expected 'inapp' or 'subs'
+                            val productType = if (productDetails.productType == BillingClient.ProductType.SUBS) "subs" else "inapp"
+                            
+                            mapOf(
+                                "id" to productDetails.productId,
+                                "title" to productDetails.title,
+                                "description" to productDetails.description,
+                                "type" to productType,
+                                // New field names with Android suffix
+                                "nameAndroid" to productDetails.name,
+                                "oneTimePurchaseOfferDetailsAndroid" to oneTimePurchaseData,
+                                "subscriptionOfferDetailsAndroid" to subscriptionOfferData,
+                                "platform" to "android",
+                                "currency" to currency,
+                                "displayPrice" to displayPrice,
+                                // START: Deprecated - will be removed in v2.9.0
+                                // Use nameAndroid instead of displayName
+                                "displayName" to productDetails.name,
+                                // Use nameAndroid instead of name
+                                "name" to productDetails.name,
+                                // Use oneTimePurchaseOfferDetailsAndroid instead of oneTimePurchaseOfferDetails
+                                "oneTimePurchaseOfferDetails" to oneTimePurchaseData,
+                                // Use subscriptionOfferDetailsAndroid instead of subscriptionOfferDetails
+                                "subscriptionOfferDetails" to subscriptionOfferData,
+                                // END: Deprecated - will be removed in v2.9.0
+                            )
+                        }
+                    promise.resolve(items)
                 }
             }
 
             AsyncFunction("requestProducts") { type: String, skuArr: Array<String>, promise: Promise ->
                 Log.w("ExpoIap", "WARNING: requestProducts is deprecated. Use fetchProducts instead. The 'request' prefix should only be used for event-based operations. This method will be removed in version 3.0.0.")
-                
-                ensureConnection(promise) { billingClient ->
-                    val skuList =
-                        skuArr.map { sku ->
-                            QueryProductDetailsParams.Product
-                                .newBuilder()
-                                .setProductId(sku)
-                                .setProductType(type)
-                                .build()
-                        }
+                val billingClient = getBillingClientOrReject(promise) ?: return@AsyncFunction
 
-                    if (skuList.isEmpty()) {
-                        promise.reject(IapErrorCode.E_EMPTY_SKU_LIST, "The SKU list is empty.", null)
-                        return@ensureConnection
+                val skuList =
+                    skuArr.map { sku ->
+                        QueryProductDetailsParams.Product
+                            .newBuilder()
+                            .setProductId(sku)
+                            .setProductType(type)
+                            .build()
                     }
 
-                    val params =
-                        QueryProductDetailsParams
-                            .newBuilder()
-                            .setProductList(skuList)
-                            .build()
+                if (skuList.isEmpty()) {
+                    promise.reject(IapErrorCode.E_EMPTY_SKU_LIST, "The SKU list is empty.", null)
+                    return@AsyncFunction
+                }
 
-                    billingClient.queryProductDetailsAsync(params) { billingResult: BillingResult, productDetailsResult: QueryProductDetailsResult ->
-                        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                            promise.reject(
-                                IapErrorCode.E_QUERY_PRODUCT,
-                                "Error querying product details: ${billingResult.debugMessage}",
-                                null,
-                            )
-                            return@queryProductDetailsAsync
-                        }
+                val params =
+                    QueryProductDetailsParams
+                        .newBuilder()
+                        .setProductList(skuList)
+                        .build()
 
-                        val productDetailsList = productDetailsResult.productDetailsList ?: emptyList()
-                        
-                        val items =
-                            productDetailsList.map { productDetails ->
-                                skus[productDetails.productId] = productDetails
+                billingClient.queryProductDetailsAsync(params) { billingResult: BillingResult, productDetailsResult: QueryProductDetailsResult ->
+                    if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                        promise.reject(
+                            IapErrorCode.E_QUERY_PRODUCT,
+                            "Error querying product details: ${billingResult.debugMessage}",
+                            null,
+                        )
+                        return@queryProductDetailsAsync
+                    }
 
-                                val currency = productDetails.oneTimePurchaseOfferDetails?.priceCurrencyCode
-                                    ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.priceCurrencyCode
-                                    ?: "Unknown"
-                                val displayPrice = productDetails.oneTimePurchaseOfferDetails?.formattedPrice
-                                    ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
-                                    ?: "N/A"
+                    val productDetailsList = productDetailsResult.productDetailsList ?: emptyList()
+                    
+                    val items =
+                        productDetailsList.map { productDetails ->
+                            skus[productDetails.productId] = productDetails
 
-                                // Prepare reusable data
-                                val oneTimePurchaseData = productDetails.oneTimePurchaseOfferDetails?.let {
-                                    mapOf(
-                                        "priceCurrencyCode" to it.priceCurrencyCode,
-                                        "formattedPrice" to it.formattedPrice,
-                                        "priceAmountMicros" to it.priceAmountMicros.toString(),
-                                    )
-                                }
-                                
-                                val subscriptionOfferData = productDetails.subscriptionOfferDetails?.map { subscriptionOfferDetailsItem ->
-                                    mapOf(
-                                        "basePlanId" to subscriptionOfferDetailsItem.basePlanId,
-                                        "offerId" to subscriptionOfferDetailsItem.offerId,
-                                        "offerToken" to subscriptionOfferDetailsItem.offerToken,
-                                        "offerTags" to subscriptionOfferDetailsItem.offerTags,
-                                        "pricingPhases" to
-                                            mapOf(
-                                                "pricingPhaseList" to
-                                                    subscriptionOfferDetailsItem.pricingPhases.pricingPhaseList.map
-                                                        { pricingPhaseItem ->
-                                                            mapOf(
-                                                                "formattedPrice" to pricingPhaseItem.formattedPrice,
-                                                                "priceCurrencyCode" to pricingPhaseItem.priceCurrencyCode,
-                                                                "billingPeriod" to pricingPhaseItem.billingPeriod,
-                                                                "billingCycleCount" to pricingPhaseItem.billingCycleCount,
-                                                                "priceAmountMicros" to
-                                                                    pricingPhaseItem.priceAmountMicros.toString(),
-                                                                "recurrenceMode" to pricingPhaseItem.recurrenceMode,
-                                                            )
-                                                        },
-                                            ),
-                                    )
-                                }
+                            val currency = productDetails.oneTimePurchaseOfferDetails?.priceCurrencyCode
+                                ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.priceCurrencyCode
+                                ?: "Unknown"
+                            val displayPrice = productDetails.oneTimePurchaseOfferDetails?.formattedPrice
+                                ?: productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
+                                ?: "N/A"
 
-                                // Convert Android productType to our expected 'inapp' or 'subs'
-                                val productType = if (productDetails.productType == BillingClient.ProductType.SUBS) "subs" else "inapp"
-                                
+                            // Prepare reusable data
+                            val oneTimePurchaseData = productDetails.oneTimePurchaseOfferDetails?.let {
                                 mapOf(
-                                    "id" to productDetails.productId,
-                                    "title" to productDetails.title,
-                                    "description" to productDetails.description,
-                                    "type" to productType,
-                                    // New field names with Android suffix
-                                    "nameAndroid" to productDetails.name,
-                                    "oneTimePurchaseOfferDetailsAndroid" to oneTimePurchaseData,
-                                    "subscriptionOfferDetailsAndroid" to subscriptionOfferData,
-                                    "platform" to "android",
-                                    "currency" to currency,
-                                    "displayPrice" to displayPrice,
-                                    // START: Deprecated - will be removed in v2.9.0
-                                    // Use nameAndroid instead of displayName
-                                    "displayName" to productDetails.name,
-                                    // Use nameAndroid instead of name
-                                    "name" to productDetails.name,
-                                    // Use oneTimePurchaseOfferDetailsAndroid instead of oneTimePurchaseOfferDetails
-                                    "oneTimePurchaseOfferDetails" to oneTimePurchaseData,
-                                    // Use subscriptionOfferDetailsAndroid instead of subscriptionOfferDetails
-                                    "subscriptionOfferDetails" to subscriptionOfferData,
-                                    // END: Deprecated - will be removed in v2.9.0
+                                    "priceCurrencyCode" to it.priceCurrencyCode,
+                                    "formattedPrice" to it.formattedPrice,
+                                    "priceAmountMicros" to it.priceAmountMicros.toString(),
                                 )
                             }
-                        promise.resolve(items)
-                    }
+                            
+                            val subscriptionOfferData = productDetails.subscriptionOfferDetails?.map { subscriptionOfferDetailsItem ->
+                                mapOf(
+                                    "basePlanId" to subscriptionOfferDetailsItem.basePlanId,
+                                    "offerId" to subscriptionOfferDetailsItem.offerId,
+                                    "offerToken" to subscriptionOfferDetailsItem.offerToken,
+                                    "offerTags" to subscriptionOfferDetailsItem.offerTags,
+                                    "pricingPhases" to
+                                        mapOf(
+                                            "pricingPhaseList" to
+                                                subscriptionOfferDetailsItem.pricingPhases.pricingPhaseList.map
+                                                    { pricingPhaseItem ->
+                                                        mapOf(
+                                                            "formattedPrice" to pricingPhaseItem.formattedPrice,
+                                                            "priceCurrencyCode" to pricingPhaseItem.priceCurrencyCode,
+                                                            "billingPeriod" to pricingPhaseItem.billingPeriod,
+                                                            "billingCycleCount" to pricingPhaseItem.billingCycleCount,
+                                                            "priceAmountMicros" to
+                                                                pricingPhaseItem.priceAmountMicros.toString(),
+                                                            "recurrenceMode" to pricingPhaseItem.recurrenceMode,
+                                                        )
+                                                    },
+                                        ),
+                                )
+                            }
+
+                            // Convert Android productType to our expected 'inapp' or 'subs'
+                            val productType = if (productDetails.productType == BillingClient.ProductType.SUBS) "subs" else "inapp"
+                            
+                            mapOf(
+                                "id" to productDetails.productId,
+                                "title" to productDetails.title,
+                                "description" to productDetails.description,
+                                "type" to productType,
+                                // New field names with Android suffix
+                                "nameAndroid" to productDetails.name,
+                                "oneTimePurchaseOfferDetailsAndroid" to oneTimePurchaseData,
+                                "subscriptionOfferDetailsAndroid" to subscriptionOfferData,
+                                "platform" to "android",
+                                "currency" to currency,
+                                "displayPrice" to displayPrice,
+                                // START: Deprecated - will be removed in v2.9.0
+                                // Use nameAndroid instead of displayName
+                                "displayName" to productDetails.name,
+                                // Use nameAndroid instead of name
+                                "name" to productDetails.name,
+                                // Use oneTimePurchaseOfferDetailsAndroid instead of oneTimePurchaseOfferDetails
+                                "oneTimePurchaseOfferDetails" to oneTimePurchaseData,
+                                // Use subscriptionOfferDetailsAndroid instead of subscriptionOfferDetails
+                                "subscriptionOfferDetails" to subscriptionOfferData,
+                                // END: Deprecated - will be removed in v2.9.0
+                            )
+                        }
+                    promise.resolve(items)
                 }
             }
 
             AsyncFunction("getAvailableItemsByType") { type: String, promise: Promise ->
-                ensureConnection(promise) { billingClient ->
-                    val items = mutableListOf<Map<String, Any?>>()
-                    billingClient.queryPurchasesAsync(
-                        QueryPurchasesParams
-                            .newBuilder()
-                            .setProductType(
-                                if (type == "subs") BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP,
-                            ).build(),
-                    ) { billingResult: BillingResult, purchases: List<Purchase>? ->
-                        if (!isValidResult(billingResult, promise)) return@queryPurchasesAsync
-                        purchases?.forEach { purchase ->
-                            val item =
-                                mutableMapOf<String, Any?>(
-                                    "id" to purchase.orderId,
-                                    "productId" to purchase.products.firstOrNull() as Any?,
-                                    "ids" to purchase.products,
-                                    "transactionId" to purchase.orderId, // @deprecated - use id instead
-                                    "transactionDate" to purchase.purchaseTime.toDouble(),
-                                    "transactionReceipt" to purchase.originalJson,
-                                    "orderId" to purchase.orderId,
-                                    "purchaseTokenAndroid" to purchase.purchaseToken,
-                                    "purchaseToken" to purchase.purchaseToken,
-                                    "developerPayloadAndroid" to purchase.developerPayload,
-                                    "signatureAndroid" to purchase.signature,
-                                    "purchaseStateAndroid" to purchase.purchaseState,
-                                    "isAcknowledgedAndroid" to purchase.isAcknowledged,
-                                    "packageNameAndroid" to purchase.packageName,
-                                    "obfuscatedAccountIdAndroid" to purchase.accountIdentifiers?.obfuscatedAccountId,
-                                    "obfuscatedProfileIdAndroid" to purchase.accountIdentifiers?.obfuscatedProfileId,
-                                    "platform" to "android",
-                                )
-                            if (type == BillingClient.ProductType.SUBS) {
-                                item["autoRenewingAndroid"] = purchase.isAutoRenewing
-                            }
-                            items.add(item)
+                val billingClient = getBillingClientOrReject(promise) ?: return@AsyncFunction
+                val items = mutableListOf<Map<String, Any?>>()
+                billingClient.queryPurchasesAsync(
+                    QueryPurchasesParams
+                        .newBuilder()
+                        .setProductType(
+                            if (type == "subs") BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP,
+                        ).build(),
+                ) { billingResult: BillingResult, purchases: List<Purchase>? ->
+                    if (!isValidResult(billingResult, promise)) return@queryPurchasesAsync
+                    purchases?.forEach { purchase ->
+                        val item =
+                            mutableMapOf<String, Any?>(
+                                "id" to purchase.orderId,
+                                "productId" to purchase.products.firstOrNull() as Any?,
+                                "ids" to purchase.products,
+                                "transactionId" to purchase.orderId, // @deprecated - use id instead
+                                "transactionDate" to purchase.purchaseTime.toDouble(),
+                                "transactionReceipt" to purchase.originalJson,
+                                "orderId" to purchase.orderId,
+                                "purchaseTokenAndroid" to purchase.purchaseToken,
+                                "purchaseToken" to purchase.purchaseToken,
+                                "developerPayloadAndroid" to purchase.developerPayload,
+                                "signatureAndroid" to purchase.signature,
+                                "purchaseStateAndroid" to purchase.purchaseState,
+                                "isAcknowledgedAndroid" to purchase.isAcknowledged,
+                                "packageNameAndroid" to purchase.packageName,
+                                "obfuscatedAccountIdAndroid" to purchase.accountIdentifiers?.obfuscatedAccountId,
+                                "obfuscatedProfileIdAndroid" to purchase.accountIdentifiers?.obfuscatedProfileId,
+                                "platform" to "android",
+                            )
+                        if (type == BillingClient.ProductType.SUBS) {
+                            item["autoRenewingAndroid"] = purchase.isAutoRenewing
                         }
-                        promise.resolve(items)
+                        items.add(item)
                     }
+                    promise.resolve(items)
                 }
             }
 
@@ -443,7 +441,7 @@ class ExpoIapModule :
                     return@AsyncFunction
                 }
 
-                ensureConnection(promise) { billingClient ->
+                val billingClient = getBillingClientOrReject(promise) ?: return@AsyncFunction
                     PromiseUtils.addPromiseForKey(IapConstants.PROMISE_BUY_ITEM, promise)
 
                     if (type == BillingClient.ProductType.SUBS && skuArr.size != offerTokenArr.size) {
@@ -461,7 +459,7 @@ class ExpoIapModule :
                             Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
                         }
                         promise.reject(IapErrorCode.E_SKU_OFFER_MISMATCH, debugMessage, null)
-                        return@ensureConnection
+                        return@AsyncFunction
                     }
 
                     val productParamsList =
@@ -484,7 +482,7 @@ class ExpoIapModule :
                                     Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
                                 }
                                 promise.reject(IapErrorCode.E_SKU_NOT_FOUND, debugMessage, null)
-                                return@ensureConnection
+                                return@AsyncFunction
                             }
 
                             val productDetailParams =
@@ -583,17 +581,16 @@ class ExpoIapModule :
                         }
                         
                         promise.reject(errorData.code, errorMessage, null)
-                        return@ensureConnection
+                        return@AsyncFunction
                     }
-                }
+            }
             }
 
             AsyncFunction("acknowledgePurchaseAndroid") {
                     token: String,
                     promise: Promise,
                 ->
-
-                ensureConnection(promise) { billingClient ->
+                val billingClient = getBillingClientOrReject(promise) ?: return@AsyncFunction
                     val acknowledgePurchaseParams =
                         AcknowledgePurchaseParams
                             .newBuilder()
@@ -617,7 +614,6 @@ class ExpoIapModule :
                         map["message"] = errorData.message
                         promise.resolve(map)
                     }
-                }
             }
 
             AsyncFunction("consumeProductAndroid") {
@@ -627,25 +623,24 @@ class ExpoIapModule :
 
                 val params = ConsumeParams.newBuilder().setPurchaseToken(token).build()
 
-                ensureConnection(promise) { billingClient ->
-                    billingClient.consumeAsync(params) { billingResult: BillingResult, purchaseToken: String? ->
-                        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                            PlayUtils.rejectPromiseWithBillingError(
-                                promise,
-                                billingResult.responseCode,
-                            )
-                            return@consumeAsync
-                        }
-
-                        val map = mutableMapOf<String, Any?>()
-                        map["responseCode"] = billingResult.responseCode
-                        map["debugMessage"] = billingResult.debugMessage
-                        val errorData = PlayUtils.getBillingResponseData(billingResult.responseCode)
-                        map["code"] = errorData.code
-                        map["message"] = errorData.message
-                        map["purchaseTokenAndroid"] = purchaseToken
-                        promise.resolve(map)
+                val billingClient = getBillingClientOrReject(promise) ?: return@AsyncFunction
+                billingClient.consumeAsync(params) { billingResult: BillingResult, purchaseToken: String? ->
+                    if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                        PlayUtils.rejectPromiseWithBillingError(
+                            promise,
+                            billingResult.responseCode,
+                        )
+                        return@consumeAsync
                     }
+
+                    val map = mutableMapOf<String, Any?>()
+                    map["responseCode"] = billingResult.responseCode
+                    map["debugMessage"] = billingResult.debugMessage
+                    val errorData = PlayUtils.getBillingResponseData(billingResult.responseCode)
+                    map["code"] = errorData.code
+                    map["message"] = errorData.message
+                    map["purchaseTokenAndroid"] = purchaseToken
+                    promise.resolve(map)
                 }
             }
 
@@ -653,19 +648,18 @@ class ExpoIapModule :
             AsyncFunction("getStorefront") {
                     promise: Promise,
                 ->
-                ensureConnection(promise) { billingClient ->
-                    billingClient.getBillingConfigAsync(
-                        GetBillingConfigParams.newBuilder().build(),
-                        BillingConfigResponseListener { result: BillingResult, config: BillingConfig? ->
-                            if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                                promise.safeResolve(config?.countryCode.orEmpty())
-                            } else {
-                                val debugMessage = result.debugMessage.orEmpty()
-                                promise.safeReject(result.responseCode.toString(), debugMessage)
-                            }
-                        },
-                    )
-                }
+                val billingClient = getBillingClientOrReject(promise) ?: return@AsyncFunction
+                billingClient.getBillingConfigAsync(
+                    GetBillingConfigParams.newBuilder().build(),
+                    BillingConfigResponseListener { result: BillingResult, config: BillingConfig? ->
+                        if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                            promise.safeResolve(config?.countryCode.orEmpty())
+                        } else {
+                            val debugMessage = result.debugMessage.orEmpty()
+                            promise.safeReject(result.responseCode.toString(), debugMessage)
+                        }
+                    },
+                )
             }
         }
 
@@ -684,18 +678,17 @@ class ExpoIapModule :
         return true
     }
 
-    private fun ensureConnection(
-        promise: Promise,
-        callback: (billingClient: BillingClient) -> Unit,
-    ) {
-        // With auto-reconnection enabled, we only need to check if billing client exists
-        // The service will automatically reconnect when needed
-        if (billingClientCache != null) {
-            callback(billingClientCache!!)
-            return
+    private fun getBillingClientOrReject(promise: Promise): BillingClient? {
+        val client = billingClientCache
+        if (client == null) {
+            promise.reject(
+                IapErrorCode.E_INIT_CONNECTION,
+                "Connection not initialized. Call initConnection() first.",
+                null,
+            )
+            return null
         }
-
-        initBillingClient(promise, callback)
+        return client
     }
 
     private fun initBillingClient(

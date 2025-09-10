@@ -22,6 +22,8 @@ struct OpenIapEvent {
 @available(iOS 15.0, tvOS 15.0, *)
 @MainActor
 public class ExpoIapModule: Module {
+    // Connection state for local validation parity with RN module
+    private var isInitialized: Bool = false
     // Subscriptions for OpenIapModule event listeners
     private var purchaseUpdatedSub: Subscription?
     private var purchaseErrorSub: Subscription?
@@ -65,6 +67,8 @@ public class ExpoIapModule: Module {
         AsyncFunction("initConnection") { () async throws -> Bool in
             logDebug("initConnection called")
             let isConnected = try await OpenIapModule.shared.initConnection()
+            // Track initialization locally for ensureConnection()
+            await MainActor.run { self.isInitialized = isConnected }
             logDebug("Connection initialized: \(isConnected)")
             return isConnected
         }
@@ -74,6 +78,7 @@ public class ExpoIapModule: Module {
             let _ = try await OpenIapModule.shared.endConnection()
             
             logDebug("Connection ended")
+            await MainActor.run { self.isInitialized = false }
             return true
         }
         
@@ -367,9 +372,8 @@ public class ExpoIapModule: Module {
                     if let info = status.renewalInfo {
                         // Convert autoRenewStatus to a proper boolean for willAutoRenew
                         let willAutoRenew: Bool = {
-                            // Try boolean first
-                            if let b = info.autoRenewStatus as? Bool { return b }
-                            // Fallback to string normalization
+                            // Handle both Bool and string-like values without redundant casting warnings
+                            if let value = info.autoRenewStatus as? Bool { return value }
                             let normalized = String(describing: info.autoRenewStatus).lowercased()
                             let truthy = Set([
                                 "willrenew",
@@ -468,4 +472,15 @@ public class ExpoIapModule: Module {
         _ = try? await OpenIapModule.shared.endConnection()
     }
     
+    // MARK: - Private Helper Methods
+    
+    private func ensureConnection() throws {
+        guard isInitialized else {
+            throw OpenIapError.make(
+                code: OpenIapError.E_INIT_CONNECTION,
+                message: "Connection not initialized. Call initConnection() first."
+            )
+        }
+    }
+
 }
