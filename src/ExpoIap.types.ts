@@ -125,6 +125,11 @@ export enum ErrorCode {
   E_EMPTY_SKU_LIST = 'E_EMPTY_SKU_LIST',
 }
 
+// Fast lookup set for validating standardized error code strings
+const OPENIAP_ERROR_CODE_SET: Set<string> = new Set(
+  Object.values(ErrorCode) as string[],
+);
+
 /**
  * Platform-specific error code mappings
  * Maps ErrorCode enum values to platform-specific integer codes
@@ -297,7 +302,7 @@ export const ErrorCodeUtils = {
   ): ErrorCode => {
     // If native sent standardized string code, accept it directly
     if (typeof platformCode === 'string' && platformCode.startsWith('E_')) {
-      if ((Object.values(ErrorCode) as string[]).includes(platformCode)) {
+      if (OPENIAP_ERROR_CODE_SET.has(platformCode)) {
         return platformCode as ErrorCode;
       }
     }
