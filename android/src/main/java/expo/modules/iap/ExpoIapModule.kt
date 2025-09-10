@@ -669,6 +669,14 @@ class ExpoIapModule :
             )
             return null
         }
+        if (!client.isReady) {
+            promise.reject(
+                IapErrorCode.E_INIT_CONNECTION,
+                "BillingClient not ready. Wait for initConnection() to complete.",
+                null,
+            )
+            return null
+        }
         return client
     }
 
