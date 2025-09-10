@@ -74,6 +74,8 @@ export function getUserFriendlyErrorMessage(error: any): string {
       return 'Purchase was cancelled by user';
     case ErrorCode.E_NETWORK_ERROR:
       return 'Network connection error. Please check your internet connection and try again.';
+    case ErrorCode.E_RECEIPT_FINISHED:
+      return 'Receipt already finished';
     case ErrorCode.E_SERVICE_DISCONNECTED:
       return 'Billing service disconnected. Please try again.';
     case ErrorCode.E_BILLING_UNAVAILABLE:

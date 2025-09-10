@@ -96,6 +96,7 @@ export enum ErrorCode {
   E_NETWORK_ERROR = 'E_NETWORK_ERROR',
   E_SERVICE_ERROR = 'E_SERVICE_ERROR',
   E_RECEIPT_FAILED = 'E_RECEIPT_FAILED',
+  E_RECEIPT_FINISHED = 'E_RECEIPT_FINISHED',
   E_RECEIPT_FINISHED_FAILED = 'E_RECEIPT_FINISHED_FAILED',
   E_NOT_PREPARED = 'E_NOT_PREPARED',
   E_NOT_ENDED = 'E_NOT_ENDED',
@@ -294,6 +295,12 @@ export const ErrorCodeUtils = {
     platformCode: string | number,
     platform: 'ios' | 'android',
   ): ErrorCode => {
+    // If native sent standardized string code, accept it directly
+    if (typeof platformCode === 'string' && platformCode.startsWith('E_')) {
+      if ((Object.values(ErrorCode) as string[]).includes(platformCode)) {
+        return platformCode as ErrorCode;
+      }
+    }
     // Prefer dynamic native mapping for iOS to avoid drift
     if (platform === 'ios') {
       for (const [key, value] of Object.entries(NATIVE_ERROR_CODES || {})) {

@@ -107,7 +107,7 @@ public class ExpoIapModule: Module {
             // Validate SKUs
             guard !skus.isEmpty else {
                 logDebug("ERROR: Empty SKUs array!")
-                throw OpenIapFailure.purchaseFailed(reason: "Empty SKU list provided")
+                throw OpenIapError.emptySkuList()
             }
             
             // Convert string to OpenIapRequestProductType enum
@@ -146,7 +146,7 @@ public class ExpoIapModule: Module {
         AsyncFunction("requestPurchase") { (params: [String: Any]) async throws in
             // Extract and validate required fields
             guard let sku = params["sku"] as? String, !sku.isEmpty else {
-                throw OpenIapFailure.purchaseFailed(reason: "Missing required 'sku'")
+                throw OpenIapError.make(code: OpenIapError.E_PURCHASE_ERROR, message: "Missing required 'sku'")
             }
 
             // Optional fields
@@ -197,7 +197,10 @@ public class ExpoIapModule: Module {
                 logDebug("Purchase request completed successfully")
             } catch {
                 logDebug("Purchase request failed with error: \(error)")
-                throw OpenIapFailure.storeKitError(error: error)
+                if let openIapError = error as? OpenIapError {
+                    throw openIapError
+                }
+                throw OpenIapError.make(code: OpenIapError.E_PURCHASE_ERROR, message: error.localizedDescription)
             }
         }
         
@@ -276,7 +279,7 @@ public class ExpoIapModule: Module {
                     "latestTransaction": result.latestTransaction.map { OpenIapSerialization.purchase($0) },
                 ]
             } catch {
-                throw OpenIapFailure.invalidReceipt
+                throw OpenIapError.make(code: OpenIapError.E_RECEIPT_FAILED)
             }
         }
         
@@ -402,7 +405,7 @@ public class ExpoIapModule: Module {
                 }
                 return nil
             } catch {
-                throw OpenIapFailure.productNotFound(id: sku)
+                throw OpenIapError.make(code: OpenIapError.E_SKU_NOT_FOUND, productId: sku)
             }
         }
         
@@ -414,7 +417,7 @@ public class ExpoIapModule: Module {
                 }
                 return nil
             } catch {
-                throw OpenIapFailure.productNotFound(id: sku)
+                throw OpenIapError.make(code: OpenIapError.E_SKU_NOT_FOUND, productId: sku)
             }
         }
     }
