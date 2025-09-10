@@ -249,16 +249,7 @@ class ExpoIapModule :
                                 "platform" to "android",
                                 "currency" to currency,
                                 "displayPrice" to displayPrice,
-                                // START: Deprecated - will be removed in v2.9.0
-                                // Use nameAndroid instead of displayName
-                                "displayName" to productDetails.name,
-                                // Use nameAndroid instead of name
-                                "name" to productDetails.name,
-                                // Use oneTimePurchaseOfferDetailsAndroid instead of oneTimePurchaseOfferDetails
-                                "oneTimePurchaseOfferDetails" to oneTimePurchaseData,
-                                // Use subscriptionOfferDetailsAndroid instead of subscriptionOfferDetails
-                                "subscriptionOfferDetails" to subscriptionOfferData,
-                                // END: Deprecated - will be removed in v2.9.0
+                                    
                             )
                         }
                     promise.resolve(items)
@@ -361,16 +352,7 @@ class ExpoIapModule :
                                 "platform" to "android",
                                 "currency" to currency,
                                 "displayPrice" to displayPrice,
-                                // START: Deprecated - will be removed in v2.9.0
-                                // Use nameAndroid instead of displayName
-                                "displayName" to productDetails.name,
-                                // Use nameAndroid instead of name
-                                "name" to productDetails.name,
-                                // Use oneTimePurchaseOfferDetailsAndroid instead of oneTimePurchaseOfferDetails
-                                "oneTimePurchaseOfferDetails" to oneTimePurchaseData,
-                                // Use subscriptionOfferDetailsAndroid instead of subscriptionOfferDetails
-                                "subscriptionOfferDetails" to subscriptionOfferData,
-                                // END: Deprecated - will be removed in v2.9.0
+                                    
                             )
                         }
                     promise.resolve(items)
