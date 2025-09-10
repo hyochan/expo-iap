@@ -136,31 +136,42 @@ const OPENIAP_ERROR_CODE_SET: Set<string> = new Set(
  */
 export const ErrorCodeMapping = {
   ios: {
-    [ErrorCode.E_UNKNOWN]: 0,
-    [ErrorCode.E_SERVICE_ERROR]: 1,
-    [ErrorCode.E_USER_CANCELLED]: 2,
-    [ErrorCode.E_USER_ERROR]: 3,
-    [ErrorCode.E_ITEM_UNAVAILABLE]: 4,
-    [ErrorCode.E_REMOTE_ERROR]: 5,
-    [ErrorCode.E_NETWORK_ERROR]: 6,
-    [ErrorCode.E_RECEIPT_FAILED]: 7,
-    [ErrorCode.E_RECEIPT_FINISHED]: 24,
-    [ErrorCode.E_RECEIPT_FINISHED_FAILED]: 8,
-    [ErrorCode.E_DEVELOPER_ERROR]: 9,
-    [ErrorCode.E_PURCHASE_ERROR]: 10,
-    [ErrorCode.E_SYNC_ERROR]: 11,
-    [ErrorCode.E_DEFERRED_PAYMENT]: 12,
-    [ErrorCode.E_TRANSACTION_VALIDATION_FAILED]: 13,
-    [ErrorCode.E_NOT_PREPARED]: 14,
-    [ErrorCode.E_NOT_ENDED]: 15,
-    [ErrorCode.E_ALREADY_OWNED]: 16,
-    [ErrorCode.E_BILLING_RESPONSE_JSON_PARSE_ERROR]: 17,
-    [ErrorCode.E_INTERRUPTED]: 18,
-    [ErrorCode.E_IAP_NOT_AVAILABLE]: 19,
-    [ErrorCode.E_ACTIVITY_UNAVAILABLE]: 20,
-    [ErrorCode.E_ALREADY_PREPARED]: 21,
-    [ErrorCode.E_PENDING]: 22,
-    [ErrorCode.E_CONNECTION_CLOSED]: 23,
+    [ErrorCode.E_UNKNOWN]: 'E_UNKNOWN',
+    [ErrorCode.E_USER_CANCELLED]: 'E_USER_CANCELLED',
+    [ErrorCode.E_USER_ERROR]: 'E_USER_ERROR',
+    [ErrorCode.E_ITEM_UNAVAILABLE]: 'E_ITEM_UNAVAILABLE',
+    [ErrorCode.E_REMOTE_ERROR]: 'E_REMOTE_ERROR',
+    [ErrorCode.E_NETWORK_ERROR]: 'E_NETWORK_ERROR',
+    [ErrorCode.E_SERVICE_ERROR]: 'E_SERVICE_ERROR',
+    [ErrorCode.E_RECEIPT_FAILED]: 'E_RECEIPT_FAILED',
+    [ErrorCode.E_RECEIPT_FINISHED]: 'E_RECEIPT_FINISHED',
+    [ErrorCode.E_RECEIPT_FINISHED_FAILED]: 'E_RECEIPT_FINISHED_FAILED',
+    [ErrorCode.E_NOT_PREPARED]: 'E_NOT_PREPARED',
+    [ErrorCode.E_NOT_ENDED]: 'E_NOT_ENDED',
+    [ErrorCode.E_ALREADY_OWNED]: 'E_ALREADY_OWNED',
+    [ErrorCode.E_DEVELOPER_ERROR]: 'E_DEVELOPER_ERROR',
+    [ErrorCode.E_BILLING_RESPONSE_JSON_PARSE_ERROR]:
+      'E_BILLING_RESPONSE_JSON_PARSE_ERROR',
+    [ErrorCode.E_DEFERRED_PAYMENT]: 'E_DEFERRED_PAYMENT',
+    [ErrorCode.E_INTERRUPTED]: 'E_INTERRUPTED',
+    [ErrorCode.E_IAP_NOT_AVAILABLE]: 'E_IAP_NOT_AVAILABLE',
+    [ErrorCode.E_PURCHASE_ERROR]: 'E_PURCHASE_ERROR',
+    [ErrorCode.E_SYNC_ERROR]: 'E_SYNC_ERROR',
+    [ErrorCode.E_TRANSACTION_VALIDATION_FAILED]:
+      'E_TRANSACTION_VALIDATION_FAILED',
+    [ErrorCode.E_ACTIVITY_UNAVAILABLE]: 'E_ACTIVITY_UNAVAILABLE',
+    [ErrorCode.E_ALREADY_PREPARED]: 'E_ALREADY_PREPARED',
+    [ErrorCode.E_PENDING]: 'E_PENDING',
+    [ErrorCode.E_CONNECTION_CLOSED]: 'E_CONNECTION_CLOSED',
+    [ErrorCode.E_INIT_CONNECTION]: 'E_INIT_CONNECTION',
+    [ErrorCode.E_SERVICE_DISCONNECTED]: 'E_SERVICE_DISCONNECTED',
+    [ErrorCode.E_QUERY_PRODUCT]: 'E_QUERY_PRODUCT',
+    [ErrorCode.E_SKU_NOT_FOUND]: 'E_SKU_NOT_FOUND',
+    [ErrorCode.E_SKU_OFFER_MISMATCH]: 'E_SKU_OFFER_MISMATCH',
+    [ErrorCode.E_ITEM_NOT_OWNED]: 'E_ITEM_NOT_OWNED',
+    [ErrorCode.E_BILLING_UNAVAILABLE]: 'E_BILLING_UNAVAILABLE',
+    [ErrorCode.E_FEATURE_NOT_SUPPORTED]: 'E_FEATURE_NOT_SUPPORTED',
+    [ErrorCode.E_EMPTY_SKU_LIST]: 'E_EMPTY_SKU_LIST',
   },
   android: {
     [ErrorCode.E_UNKNOWN]: 'E_UNKNOWN',
@@ -310,9 +321,12 @@ export const ErrorCodeUtils = {
     }
     // Prefer dynamic native mapping for iOS to avoid drift
     if (platform === 'ios') {
-      for (const [key, value] of Object.entries(NATIVE_ERROR_CODES || {})) {
+      for (const [, value] of Object.entries(NATIVE_ERROR_CODES || {})) {
         if (value === platformCode) {
-          return key as ErrorCode;
+          // Native maps friendly keys to standardized 'E_*' codes
+          if (typeof value === 'string' && OPENIAP_ERROR_CODE_SET.has(value)) {
+            return value as ErrorCode;
+          }
         }
       }
     }
@@ -338,14 +352,14 @@ export const ErrorCodeUtils = {
     platform: 'ios' | 'android',
   ): string | number => {
     if (platform === 'ios') {
-      const native = NATIVE_ERROR_CODES?.[errorCode];
+      const native = (NATIVE_ERROR_CODES as any)?.[errorCode];
       if (native !== undefined) return native;
     }
     const mapping = ErrorCodeMapping[platform] as Record<
       ErrorCode,
       string | number
     >;
-    return mapping[errorCode] ?? (platform === 'ios' ? 0 : 'E_UNKNOWN');
+    return mapping[errorCode] ?? 'E_UNKNOWN';
   },
 
   /**
