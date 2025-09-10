@@ -188,7 +188,7 @@ class ExpoIapModule :
                     }
 
                     val productDetailsList = productDetailsResult.productDetailsList ?: emptyList()
-                    
+
                     val items =
                         productDetailsList.map { productDetails ->
                             skus[productDetails.productId] = productDetails
@@ -208,7 +208,7 @@ class ExpoIapModule :
                                     "priceAmountMicros" to it.priceAmountMicros.toString(),
                                 )
                             }
-                            
+
                             val subscriptionOfferData = productDetails.subscriptionOfferDetails?.map { subscriptionOfferDetailsItem ->
                                 mapOf(
                                     "basePlanId" to subscriptionOfferDetailsItem.basePlanId,
@@ -236,7 +236,7 @@ class ExpoIapModule :
 
                             // Convert Android productType to our expected 'inapp' or 'subs'
                             val productType = if (productDetails.productType == BillingClient.ProductType.SUBS) "subs" else "inapp"
-                            
+
                             mapOf(
                                 "id" to productDetails.productId,
                                 "title" to productDetails.title,
@@ -249,7 +249,7 @@ class ExpoIapModule :
                                 "platform" to "android",
                                 "currency" to currency,
                                 "displayPrice" to displayPrice,
-                                    
+
                             )
                         }
                     promise.resolve(items)
@@ -291,7 +291,7 @@ class ExpoIapModule :
                     }
 
                     val productDetailsList = productDetailsResult.productDetailsList ?: emptyList()
-                    
+
                     val items =
                         productDetailsList.map { productDetails ->
                             skus[productDetails.productId] = productDetails
@@ -311,7 +311,7 @@ class ExpoIapModule :
                                     "priceAmountMicros" to it.priceAmountMicros.toString(),
                                 )
                             }
-                            
+
                             val subscriptionOfferData = productDetails.subscriptionOfferDetails?.map { subscriptionOfferDetailsItem ->
                                 mapOf(
                                     "basePlanId" to subscriptionOfferDetailsItem.basePlanId,
@@ -339,7 +339,7 @@ class ExpoIapModule :
 
                             // Convert Android productType to our expected 'inapp' or 'subs'
                             val productType = if (productDetails.productType == BillingClient.ProductType.SUBS) "subs" else "inapp"
-                            
+
                             mapOf(
                                 "id" to productDetails.productId,
                                 "title" to productDetails.title,
@@ -352,7 +352,7 @@ class ExpoIapModule :
                                 "platform" to "android",
                                 "currency" to currency,
                                 "displayPrice" to displayPrice,
-                                    
+
                             )
                         }
                     promise.resolve(items)
@@ -521,7 +521,7 @@ class ExpoIapModule :
                         val errorData = PlayUtils.getBillingResponseData(billingResult.responseCode)
                         var errorMessage = billingResult.debugMessage ?: errorData.message
                         var subResponseCode: Int? = null
-                        
+
                         // Check for sub-response codes (v8.0.0+)
                         try {
                             subResponseCode = billingResult.javaClass.getMethod("getSubResponseCode").invoke(billingResult) as? Int
@@ -535,7 +535,7 @@ class ExpoIapModule :
                         } catch (e: Exception) {
                             // Method doesn't exist in older versions, ignore
                         }
-                        
+
                         // Send error event to match iOS behavior
                         val errorMap = mutableMapOf<String, Any?>(
                             "responseCode" to billingResult.responseCode,
@@ -543,25 +543,25 @@ class ExpoIapModule :
                             "code" to errorData.code,
                             "message" to errorMessage
                         )
-                        
+
                         // Add product ID if available
                         if (skuArr.isNotEmpty()) {
                             errorMap["productId"] = skuArr.first()
                         }
-                        
+
                         // Add sub-response code if available
                         subResponseCode?.let {
                             if (it != 0) {
                                 errorMap["subResponseCode"] = it
                             }
                         }
-                        
+
                         try {
                             sendEvent(OpenIapEvent.PURCHASE_ERROR, errorMap.toMap())
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to send PURCHASE_ERROR event: ${e.message}")
                         }
-                        
+
                         promise.reject(errorData.code, errorMessage, null)
                         return@AsyncFunction
                     }

@@ -85,6 +85,7 @@ public class ExpoIapModule: Module {
         // MARK: - Product Management
         
         AsyncFunction("fetchProducts") { (params: [String: Any]) async throws -> [[String: Any?]] in
+            try ensureConnection()
             logDebug("fetchProducts raw params: \(params)")
             
             // Handle both object format {skus: [...], type: "..."} and array format
@@ -153,6 +154,7 @@ public class ExpoIapModule: Module {
             guard let sku = params["sku"] as? String, !sku.isEmpty else {
                 throw OpenIapError.make(code: OpenIapError.E_PURCHASE_ERROR, message: "Missing required 'sku'")
             }
+            try ensureConnection()
 
             // Optional fields
             let andFinish = (params["andDangerouslyFinishTransactionAutomatically"] as? Bool) ?? false
@@ -210,6 +212,7 @@ public class ExpoIapModule: Module {
         }
         
         AsyncFunction("finishTransaction") { (transactionId: String) async throws -> Bool in
+            try ensureConnection()
             logDebug("finishTransaction called with id: \(transactionId)")
             let result = try await OpenIapModule.shared.finishTransaction(transactionIdentifier: transactionId)
             return result
@@ -218,6 +221,7 @@ public class ExpoIapModule: Module {
         // MARK: - Purchase History
         
         AsyncFunction("getAvailablePurchases") { (options: [String: Any?]?) async throws -> [[String: Any?]] in
+            try ensureConnection()
             logDebug("getAvailablePurchases called")
             
             // Build options and get purchases directly from OpenIapModule
@@ -233,6 +237,7 @@ public class ExpoIapModule: Module {
         
         // Legacy function for backward compatibility
         AsyncFunction("getAvailableItems") { (alsoPublishToEventListener: Bool, onlyIncludeActiveItems: Bool) async throws -> [[String: Any?]] in
+            try ensureConnection()
             logDebug("getAvailableItems called (legacy)")
             
             let purchaseOptions = OpenIapGetAvailablePurchasesProps(
@@ -244,6 +249,7 @@ public class ExpoIapModule: Module {
         }
         
         AsyncFunction("getPendingTransactionsIOS") { () async throws -> [[String: Any?]] in
+            try ensureConnection()
             logDebug("getPendingTransactionsIOS called")
             
             let pendingTransactions = try await OpenIapModule.shared.getPendingTransactionsIOS()
@@ -251,6 +257,7 @@ public class ExpoIapModule: Module {
         }
         
         AsyncFunction("clearTransactionIOS") { () async throws -> Bool in
+            try ensureConnection()
             logDebug("clearTransactionIOS called")
             try await OpenIapModule.shared.clearTransactionIOS()
             return true
@@ -259,17 +266,20 @@ public class ExpoIapModule: Module {
         // MARK: - Receipt & Validation
         
         AsyncFunction("getReceiptIOS") { () async throws -> String in
+            try ensureConnection()
             logDebug("getReceiptIOS called")
             return try await OpenIapModule.shared.getReceiptDataIOS() ?? ""
         }
         
         AsyncFunction("requestReceiptRefreshIOS") { () async throws -> String in
+            try ensureConnection()
             logDebug("requestReceiptRefreshIOS called")
             // Receipt refresh is handled automatically by StoreKit 2
             return try await OpenIapModule.shared.getReceiptDataIOS() ?? ""
         }
         
         AsyncFunction("validateReceiptIOS") { (sku: String) async throws -> [String: Any?] in
+            try ensureConnection()
             logDebug("validateReceiptIOS called for sku: \(sku)")
             do {
                 // Use OpenIapReceiptValidationProps to keep naming parity with OpenIAP
@@ -291,12 +301,14 @@ public class ExpoIapModule: Module {
         // MARK: - iOS Specific Features
         
         AsyncFunction("presentCodeRedemptionSheetIOS") { () async throws -> Bool in
+            try ensureConnection()
             logDebug("presentCodeRedemptionSheetIOS called")
             let _ = try await OpenIapModule.shared.presentCodeRedemptionSheetIOS()
             return true
         }
         
         AsyncFunction("showManageSubscriptionsIOS") { () async throws -> Bool in
+            try ensureConnection()
             logDebug("showManageSubscriptionsIOS called")
             let _ = try await OpenIapModule.shared.showManageSubscriptionsIOS()
             return true
@@ -315,11 +327,13 @@ public class ExpoIapModule: Module {
         }
         
         AsyncFunction("beginRefundRequestIOS") { (sku: String) async throws -> String? in
+            try ensureConnection()
             logDebug("beginRefundRequestIOS called for sku: \(sku)")
             return try await OpenIapModule.shared.beginRefundRequestIOS(sku: sku)
         }
         
         AsyncFunction("getPromotedProductIOS") { () async throws -> [String: Any?]? in
+            try ensureConnection()
             logDebug("getPromotedProductIOS called")
             
             if let promoted = try await OpenIapModule.shared.getPromotedProductIOS() {
@@ -332,11 +346,13 @@ public class ExpoIapModule: Module {
             return nil
         }
         AsyncFunction("getStorefrontIOS") { () async throws -> String in
+            try ensureConnection()
             logDebug("getStorefrontIOS called")
             return try await OpenIapModule.shared.getStorefrontIOS()
         }
         
         AsyncFunction("syncIOS") { () async throws -> Bool in
+            try ensureConnection()
             logDebug("syncIOS called")
             return try await OpenIapModule.shared.syncIOS()
         }
@@ -344,21 +360,25 @@ public class ExpoIapModule: Module {
         // MARK: - Additional iOS Methods
         
         AsyncFunction("isTransactionVerifiedIOS") { (sku: String) async throws -> Bool in
+            try ensureConnection()
             logDebug("isTransactionVerifiedIOS called for sku: \(sku)")
             return await OpenIapModule.shared.isTransactionVerifiedIOS(sku: sku)
         }
         
         AsyncFunction("getTransactionJwsIOS") { (sku: String) async throws -> String? in
+            try ensureConnection()
             logDebug("getTransactionJwsIOS called for sku: \(sku)")
             return try await OpenIapModule.shared.getTransactionJwsIOS(sku: sku)
         }
         
         AsyncFunction("isEligibleForIntroOfferIOS") { (groupID: String) async throws -> Bool in
+            try ensureConnection()
             logDebug("isEligibleForIntroOfferIOS called for groupID: \(groupID)")
             return await OpenIapModule.shared.isEligibleForIntroOfferIOS(groupID: groupID)
         }
         
         AsyncFunction("subscriptionStatusIOS") { (sku: String) async throws -> [[String: Any?]]? in
+            try ensureConnection()
             logDebug("subscriptionStatusIOS called for sku: \(sku)")
             
             if let statuses = try await OpenIapModule.shared.subscriptionStatusIOS(sku: sku) {
@@ -402,6 +422,7 @@ public class ExpoIapModule: Module {
         }
         
         AsyncFunction("currentEntitlementIOS") { (sku: String) async throws -> [String: Any?]? in
+            try ensureConnection()
             logDebug("currentEntitlementIOS called for sku: \(sku)")
             do {
                 if let entitlement = try await OpenIapModule.shared.currentEntitlementIOS(sku: sku) {
@@ -414,6 +435,7 @@ public class ExpoIapModule: Module {
         }
         
         AsyncFunction("latestTransactionIOS") { (sku: String) async throws -> [String: Any?]? in
+            try ensureConnection()
             logDebug("latestTransactionIOS called for sku: \(sku)")
             do {
                 if let transaction = try await OpenIapModule.shared.latestTransactionIOS(sku: sku) {
