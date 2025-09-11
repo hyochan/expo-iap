@@ -32,36 +32,50 @@ const addLineToGradle = (
   const lines = content.split('\n');
   const index = lines.findIndex((line) => line.match(anchor));
   if (index === -1) {
-    console.warn(
-      `Anchor "${anchor}" not found in build.gradle. Appending to end.`,
+    WarningAggregator.addWarningAndroid(
+      'expo-iap',
+      `dependencies { ... } block not found; skipping injection: ${lineToAdd.trim()}`,
     );
-    lines.push(lineToAdd);
+    return content;
   } else {
     lines.splice(index + offset, 0, lineToAdd);
   }
   return lines.join('\n');
 };
 
-const modifyAppBuildGradle = (gradle: string): string => {
+const modifyAppBuildGradle = (
+  gradle: string,
+  language: 'groovy' | 'kotlin',
+): string => {
   let modified = gradle;
 
-  // Add billing library dependencies to app-level build.gradle
-  const billingDep = `    implementation "com.android.billingclient:billing-ktx:8.0.0"`;
-  const gmsDep = `    implementation "com.google.android.gms:play-services-base:18.1.0"`;
+  // Add billing library dependencies to app-level build.gradle(.kts)
+  const impl = (ga: string, v: string) =>
+    language === 'kotlin'
+      ? `    implementation("${ga}:${v}")`
+      : `    implementation "${ga}:${v}"`;
+  const billingDep = impl('com.android.billingclient:billing-ktx', '8.0.0');
+  const gmsDep = impl('com.google.android.gms:play-services-base', '18.1.0');
   // Pin OpenIAP Google library to 1.0.1
-  const openiapDep = `    implementation "io.github.hyochan.openiap:openiap-google:1.0.1"`;
+  const openiapDep = impl('io.github.hyochan.openiap:openiap-google', '1.0.1');
+
+  const hasGA = (ga: string) =>
+    new RegExp(
+      String.raw`\b(?:implementation|api)\s*\(?["']${ga}:`,
+      'm',
+    ).test(modified);
 
   let hasAddedDependency = false;
 
-  if (!modified.includes(billingDep)) {
+  if (!hasGA('com.android.billingclient:billing-ktx')) {
     modified = addLineToGradle(modified, /dependencies\s*{/, billingDep);
     hasAddedDependency = true;
   }
-  if (!modified.includes(gmsDep)) {
+  if (!hasGA('com.google.android.gms:play-services-base')) {
     modified = addLineToGradle(modified, /dependencies\s*{/, gmsDep, 1);
     hasAddedDependency = true;
   }
-  if (!modified.includes(openiapDep)) {
+  if (!hasGA('io.github.hyochan.openiap:openiap-google')) {
     modified = addLineToGradle(modified, /dependencies\s*{/, openiapDep, 2);
     hasAddedDependency = true;
   }
@@ -81,8 +95,11 @@ const withIapAndroid: ConfigPlugin<{ addDeps?: boolean } | void> = (
 
   if (addDeps) {
     config = withAppBuildGradle(config, (config) => {
+      // language provided by config-plugins: 'groovy' | 'kotlin'
+      const language = (config.modResults as any).language || 'groovy';
       config.modResults.contents = modifyAppBuildGradle(
         config.modResults.contents,
+        language,
       );
       return config;
     });
