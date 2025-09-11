@@ -59,10 +59,10 @@ describe('Android Module Functions', () => {
   describe('validateReceiptAndroid', () => {
     const originalFetch = (globalThis as any).fetch;
     beforeEach(() => {
-      ;(globalThis as any).fetch = jest.fn();
+      (globalThis as any).fetch = jest.fn();
     });
     afterEach(() => {
-      ;(globalThis as any).fetch = originalFetch as any;
+      (globalThis as any).fetch = originalFetch as any;
     });
 
     it('returns JSON on success', async () => {

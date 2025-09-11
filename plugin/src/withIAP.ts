@@ -58,10 +58,9 @@ const modifyAppBuildGradle = (
   const openiapDep = impl('io.github.hyochan.openiap:openiap-google', '1.0.1');
 
   const hasGA = (ga: string) =>
-    new RegExp(
-      String.raw`\b(?:implementation|api)\s*\(?["']${ga}:`,
-      'm',
-    ).test(modified);
+    new RegExp(String.raw`\b(?:implementation|api)\s*\(?["']${ga}:`, 'm').test(
+      modified,
+    );
 
   let hasAddedDependency = false;
 
@@ -77,7 +76,7 @@ const modifyAppBuildGradle = (
   return modified;
 };
 
-const withIapAndroid: ConfigPlugin<{ addDeps?: boolean } | void> = (
+const withIapAndroid: ConfigPlugin<{addDeps?: boolean} | void> = (
   config,
   props,
 ) => {
@@ -176,7 +175,7 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
   try {
     const isLocalDev = !!(options?.enableLocalDev || options?.localPath);
     // Apply Android modifications (skip adding deps when linking local module)
-    let result = withIapAndroid(config, { addDeps: !isLocalDev });
+    let result = withIapAndroid(config, {addDeps: !isLocalDev});
 
     // iOS: choose one path to avoid overlap
     if (options?.enableLocalDev || options?.localPath) {
@@ -198,7 +197,9 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
         const preview =
           typeof resolved === 'string'
             ? resolved
-            : `ios=${resolved.ios ?? 'auto'}, android=${resolved.android ?? 'auto'}`;
+            : `ios=${resolved.ios ?? 'auto'}, android=${
+                resolved.android ?? 'auto'
+              }`;
         logOnce(`🔧 [expo-iap] Enabling local OpenIAP: ${preview}`);
         result = withLocalOpenIAP(result, {localPath: resolved});
       }

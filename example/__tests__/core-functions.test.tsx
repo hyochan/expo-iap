@@ -42,7 +42,6 @@ describe('Core Functions Tests', () => {
       expect(typeof ExpoIap.finishTransaction).toBe('function');
     });
 
-
     it('should export getAvailablePurchases function', () => {
       expect(ExpoIap.getAvailablePurchases).toBeDefined();
       expect(typeof ExpoIap.getAvailablePurchases).toBe('function');

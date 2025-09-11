@@ -21,7 +21,11 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
   const resolveAndroidModulePath = (p?: string): string | null => {
     if (!p) return null;
     // Prefer the module directory if it exists
-    const candidates = [path.join(p, 'openiap-google'), path.join(p, 'openiap'), p];
+    const candidates = [
+      path.join(p, 'openiap-google'),
+      path.join(p, 'openiap'),
+      p,
+    ];
     for (const c of candidates) {
       if (
         fs.existsSync(path.join(c, 'build.gradle')) ||
@@ -103,44 +107,69 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
     // 1) settings.gradle: include and map projectDir
     const settings = config.modResults;
     const includeLine = "include ':openiap-google'";
-    const projectDirLine = `project(':openiap-google').projectDir = new File('${androidModulePath.replace(/\\/g, '/')}')`;
+    const projectDirLine = `project(':openiap-google').projectDir = new File('${androidModulePath.replace(
+      /\\/g,
+      '/',
+    )}')`;
     let contents = settings.contents ?? '';
 
     // Ensure pluginManagement has plugin mappings required by the included module
     const injectPluginManagement = () => {
       const header = 'pluginManagement {';
-      const needsVannik = !/id\s*\(\s*["']com\.vanniktech\.maven\.publish["']/.test(contents);
-      const needsKotlinAndroid = !/id\s*\(\s*["']org\.jetbrains\.kotlin\.android["']/.test(contents);
-      const needsCompose = !/id\s*\(\s*["']org\.jetbrains\.kotlin\.plugin\.compose["']/.test(contents);
-      const needsRepos = !/pluginManagement[\s\S]*?repositories\s*\{/.test(contents);
+      const needsVannik =
+        !/id\s*\(\s*["']com\.vanniktech\.maven\.publish["']/.test(contents);
+      const needsKotlinAndroid =
+        !/id\s*\(\s*["']org\.jetbrains\.kotlin\.android["']/.test(contents);
+      const needsCompose =
+        !/id\s*\(\s*["']org\.jetbrains\.kotlin\.plugin\.compose["']/.test(
+          contents,
+        );
+      const needsRepos = !/pluginManagement[\s\S]*?repositories\s*\{/.test(
+        contents,
+      );
 
       const pluginLines: string[] = [];
-      if (needsVannik) pluginLines.push(`  id("com.vanniktech.maven.publish") version "0.29.0"`);
-      if (needsKotlinAndroid) pluginLines.push(`  id("org.jetbrains.kotlin.android") version "2.0.21"`);
-      if (needsCompose) pluginLines.push(`  id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"`);
+      if (needsVannik)
+        pluginLines.push(
+          `  id("com.vanniktech.maven.publish") version "0.29.0"`,
+        );
+      if (needsKotlinAndroid)
+        pluginLines.push(
+          `  id("org.jetbrains.kotlin.android") version "2.0.21"`,
+        );
+      if (needsCompose)
+        pluginLines.push(
+          `  id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"`,
+        );
 
       // If everything already present, skip
       if (pluginLines.length === 0 && !needsRepos) return;
 
-      const pluginsBlock = pluginLines.length ? `plugins {\n${pluginLines.join('\n')}\n}` : '';
+      const pluginsBlock = pluginLines.length
+        ? `plugins {\n${pluginLines.join('\n')}\n}`
+        : '';
       const reposBlock = `repositories { gradlePluginPortal(); google(); mavenCentral() }`;
 
       if (contents.includes(header)) {
         contents = contents.replace(/pluginManagement\s*\{/, (m) => {
-          let injection = m + `\n  // Added by expo-iap (local openiap-google)\n`;
+          let injection =
+            m + `\n  // Added by expo-iap (local openiap-google)\n`;
           if (pluginsBlock) injection += `  ${pluginsBlock}\n`;
           if (needsRepos) injection += `  ${reposBlock}\n`;
           return injection;
         });
       } else {
-        contents = `pluginManagement {\n  // Added by expo-iap (local openiap-google)\n` +
+        contents =
+          `pluginManagement {\n  // Added by expo-iap (local openiap-google)\n` +
           (pluginsBlock ? `  ${pluginsBlock}\n` : '') +
           `  ${reposBlock}\n}\n\n${contents}`;
       }
     };
 
-    if (!/com\.vanniktech\.maven\.publish/.test(contents) ||
-        !/org\.jetbrains\.kotlin\.android/.test(contents)) {
+    if (
+      !/com\.vanniktech\.maven\.publish/.test(contents) ||
+      !/org\.jetbrains\.kotlin\.android/.test(contents)
+    ) {
       injectPluginManagement();
     }
     if (!contents.includes(includeLine)) contents += `\n${includeLine}\n`;
@@ -182,7 +211,9 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
     }
     if (removedAny) {
       gradle.contents = contents;
-      console.log('🧹 Removed external Play Billing/GMS deps to use local :openiap-google');
+      console.log(
+        '🧹 Removed external Play Billing/GMS deps to use local :openiap-google',
+      );
     }
     if (!gradle.contents.includes(dependencyLine)) {
       const anchor = /dependencies\s*\{/m;
@@ -205,7 +236,11 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
     async (config) => {
       try {
         const {platformProjectRoot} = config.modRequest as any;
-        const appBuildGradle = path.join(platformProjectRoot, 'app', 'build.gradle');
+        const appBuildGradle = path.join(
+          platformProjectRoot,
+          'app',
+          'build.gradle',
+        );
         if (fs.existsSync(appBuildGradle)) {
           let contents = fs.readFileSync(appBuildGradle, 'utf8');
           const patterns = [
@@ -221,7 +256,9 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
           }
           if (changed) {
             fs.writeFileSync(appBuildGradle, contents);
-            console.log('🧹 expo-iap: Cleaned app/build.gradle billing/gms deps for local :openiap-google');
+            console.log(
+              '🧹 expo-iap: Cleaned app/build.gradle billing/gms deps for local :openiap-google',
+            );
           }
         }
       } catch (e) {

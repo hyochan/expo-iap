@@ -32,7 +32,7 @@ assignees: ''
 **Latest Version Check**
 
 - [ ] I confirmed this issue reproduces on the latest version of expo-iap.
-  <!-- The library continuously fixes past issues; please try the latest release before filing. -->
+<!-- The library continuously fixes past issues; please try the latest release before filing. -->
 
 **To Reproduce** Steps to reproduce the behavior:
 

@@ -26,9 +26,14 @@ describe('errorMapping utils', () => {
   });
 
   it('returns user friendly messages', () => {
-    expect(getUserFriendlyErrorMessage({code: ErrorCode.E_USER_CANCELLED})).toMatch(/cancelled/i);
-    expect(getUserFriendlyErrorMessage({code: ErrorCode.E_EMPTY_SKU_LIST})).toMatch(/No product IDs/i);
-    expect(getUserFriendlyErrorMessage({code: 'UNKNOWN'} as any)).toBe('An unexpected error occurred');
+    expect(
+      getUserFriendlyErrorMessage({code: ErrorCode.E_USER_CANCELLED}),
+    ).toMatch(/cancelled/i);
+    expect(
+      getUserFriendlyErrorMessage({code: ErrorCode.E_EMPTY_SKU_LIST}),
+    ).toMatch(/No product IDs/i);
+    expect(getUserFriendlyErrorMessage({code: 'UNKNOWN'} as any)).toBe(
+      'An unexpected error occurred',
+    );
   });
 });
-

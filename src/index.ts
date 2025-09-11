@@ -421,10 +421,12 @@ export const getAvailablePurchases = ({
  * @param options.onlyIncludeActiveItemsIOS - iOS only: whether to only include active items
  * @returns Promise resolving to the list of available/restored purchases
  */
-export const restorePurchases = async (options: {
-  alsoPublishToEventListenerIOS?: boolean;
-  onlyIncludeActiveItemsIOS?: boolean;
-} = {}): Promise<Purchase[]> => {
+export const restorePurchases = async (
+  options: {
+    alsoPublishToEventListenerIOS?: boolean;
+    onlyIncludeActiveItemsIOS?: boolean;
+  } = {},
+): Promise<Purchase[]> => {
   if (Platform.OS === 'ios') {
     // Perform best-effort sync on iOS and ignore sync errors to avoid blocking restore flow
     await syncIOS().catch(() => undefined);

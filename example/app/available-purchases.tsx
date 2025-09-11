@@ -156,8 +156,9 @@ export default function AvailablePurchases() {
         // Example app package name
         const pkg = 'dev.hyo.martie';
         await deepLinkToSubscriptions(
-          sku ? { skuAndroid: sku, packageNameAndroid: pkg }
-              : { packageNameAndroid: pkg },
+          sku
+            ? {skuAndroid: sku, packageNameAndroid: pkg}
+            : {packageNameAndroid: pkg},
         );
       } else {
         await deepLinkToSubscriptions({});
@@ -248,7 +249,9 @@ export default function AvailablePurchases() {
           Store Connection: {connected ? '✅ Connected' : '❌ Disconnected'}
         </Text>
         {!!storefront && (
-          <Text style={[styles.statusText, { marginTop: 6 }]}>Storefront: {storefront}</Text>
+          <Text style={[styles.statusText, {marginTop: 6}]}>
+            Storefront: {storefront}
+          </Text>
         )}
       </View>
 
@@ -427,12 +430,15 @@ export default function AvailablePurchases() {
       </TouchableOpacity>
 
       {/* Tools */}
-      <View style={[styles.section, { gap: 12 }]}>
+      <View style={[styles.section, {gap: 12}]}>
         <Text style={styles.sectionTitle}>🛠️ Tools</Text>
         <TouchableOpacity style={styles.button} onPress={handleGetStorefront}>
           <Text style={styles.buttonText}>🌐 Get Storefront</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleOpenSubscriptions}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleOpenSubscriptions}
+        >
           <Text style={styles.buttonText}>🔗 Manage Subscriptions</Text>
         </TouchableOpacity>
       </View>
@@ -488,7 +494,8 @@ export default function AvailablePurchases() {
                     ).toLocaleString()}
                   </Text>
                 </View>
-                {typeof selectedSubscription.autoRenewingAndroid === 'boolean' && (
+                {typeof selectedSubscription.autoRenewingAndroid ===
+                  'boolean' && (
                   <View style={styles.purchaseRow}>
                     <Text style={styles.label}>Auto Renew</Text>
                     <Text style={styles.value}>

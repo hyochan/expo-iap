@@ -83,7 +83,7 @@ export function getUserFriendlyErrorMessage(error: any): string {
     case ErrorCode.E_ITEM_UNAVAILABLE:
       return 'This item is not available for purchase';
     case ErrorCode.E_ITEM_NOT_OWNED:
-      return 'You don\'t own this item';
+      return "You don't own this item";
     case ErrorCode.E_ALREADY_OWNED:
       return 'You already own this item';
     case ErrorCode.E_SKU_NOT_FOUND:

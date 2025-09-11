@@ -1,13 +1,14 @@
 package expo.modules.iap
 
 import android.util.Log
-import expo.modules.kotlin.Promise
 import dev.hyo.openiap.OpenIapError
+import expo.modules.kotlin.Promise
 
 object PromiseUtils {
     private val promises = java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.CopyOnWriteArrayList<Promise>>()
 
     const val TAG = "PromiseUtils"
+
     // React Native specific promise key used by JS bridge
     const val PROMISE_BUY_ITEM = "PROMISE_BUY_ITEM"
 

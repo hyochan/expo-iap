@@ -81,7 +81,10 @@ export const getActiveSubscriptions = async (
     const seen = new Set<string>();
     const dedupedPurchases = filteredPurchases.filter((p) => {
       const key = String(
-        (p as any).purchaseToken || p.transactionId || (p as any).id || p.productId,
+        (p as any).purchaseToken ||
+          p.transactionId ||
+          (p as any).id ||
+          p.productId,
       );
       if (seen.has(key)) return false;
       seen.add(key);

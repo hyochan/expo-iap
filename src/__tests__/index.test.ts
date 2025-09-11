@@ -159,18 +159,18 @@ describe('Public API (index.ts)', () => {
     it('getSubscriptions Android branch filters correctly', async () => {
       (Platform as any).OS = 'android';
       (Platform as any).select = (obj: any) => obj.android;
-      (ExpoIapModule.fetchProducts as jest.Mock) = jest
-        .fn()
-        .mockResolvedValue([
-          {platform: 'android', id: 's1'},
-          {platform: 'ios', id: 's1'},
-        ]);
+      (ExpoIapModule.fetchProducts as jest.Mock) = jest.fn().mockResolvedValue([
+        {platform: 'android', id: 's1'},
+        {platform: 'ios', id: 's1'},
+      ]);
       const res = await getSubscriptions(['s1']);
       expect(res).toEqual([{platform: 'android', id: 's1'}]);
     });
 
     it('fetchProducts rejects on empty skus', async () => {
-      await expect(fetchProducts({skus: [], type: 'inapp'})).rejects.toMatchObject({
+      await expect(
+        fetchProducts({skus: [], type: 'inapp'}),
+      ).rejects.toMatchObject({
         code: 'E_EMPTY_SKU_LIST',
       } as any);
     });
@@ -266,7 +266,10 @@ describe('Public API (index.ts)', () => {
     it('Android invalid type throws', () => {
       (Platform as any).OS = 'android';
       expect(() =>
-        requestPurchase({request: {android: {skus: ['x']}} as any, type: 'other' as any}),
+        requestPurchase({
+          request: {android: {skus: ['x']}} as any,
+          type: 'other' as any,
+        }),
       ).toThrow(/Invalid request for Android/);
     });
 
@@ -399,11 +402,13 @@ describe('Public API (index.ts)', () => {
       expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith(true, false);
       warnSpy.mockRestore();
     });
-    
+
     it('getSubscriptions default branch rejects on unsupported platform', async () => {
       (Platform as any).OS = 'web';
       (Platform as any).select = (obj: any) => obj.default;
-      await expect(getSubscriptions(['x'])).rejects.toThrow(/Unsupported Platform/);
+      await expect(getSubscriptions(['x'])).rejects.toThrow(
+        /Unsupported Platform/,
+      );
     });
   });
 
@@ -526,7 +531,9 @@ describe('Public API (index.ts)', () => {
 
     it('validateReceipt throws on unsupported platform', async () => {
       (Platform as any).OS = 'web';
-      await expect(validateReceipt('sku')).rejects.toThrow(/Platform not supported/);
+      await expect(validateReceipt('sku')).rejects.toThrow(
+        /Platform not supported/,
+      );
     });
 
     it('deepLinkToSubscriptions iOS delegates, Android validates', async () => {
@@ -559,10 +566,13 @@ describe('Public API (index.ts)', () => {
     it('deepLinkToSubscriptions rejects on unsupported platform', async () => {
       (Platform as any).OS = 'web';
       await expect(
-        deepLinkToSubscriptions({skuAndroid: 's', packageNameAndroid: 'com.app'}),
+        deepLinkToSubscriptions({
+          skuAndroid: 's',
+          packageNameAndroid: 'com.app',
+        }),
       ).rejects.toThrow(/Unsupported platform: web/);
     });
-    
+
     it('requestPurchase returns resolved promise on unsupported platform', async () => {
       (Platform as any).OS = 'web';
       const res = await requestPurchase({request: {} as any} as any);

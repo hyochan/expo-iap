@@ -343,7 +343,9 @@ describe('iOS Module Functions', () => {
       );
       const res = await isTransactionVerified('sku');
       expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.isTransactionVerifiedIOS).toHaveBeenCalledWith('sku');
+      expect(ExpoIapModule.isTransactionVerifiedIOS).toHaveBeenCalledWith(
+        'sku',
+      );
       expect(res).toBe(true);
     });
 
@@ -358,9 +360,9 @@ describe('iOS Module Functions', () => {
     });
 
     it('presentCodeRedemptionSheet -> presentCodeRedemptionSheetIOS', async () => {
-      (ExpoIapModule.presentCodeRedemptionSheetIOS as jest.Mock).mockResolvedValue(
-        true,
-      );
+      (
+        ExpoIapModule.presentCodeRedemptionSheetIOS as jest.Mock
+      ).mockResolvedValue(true);
       const res = await presentCodeRedemptionSheet();
       expect(warnSpy).toHaveBeenCalled();
       expect(ExpoIapModule.presentCodeRedemptionSheetIOS).toHaveBeenCalled();
