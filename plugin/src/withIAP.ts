@@ -49,13 +49,11 @@ const modifyAppBuildGradle = (
 ): string => {
   let modified = gradle;
 
-  // Add billing library dependencies to app-level build.gradle(.kts)
+  // Add OpenIAP dependency to app-level build.gradle(.kts)
   const impl = (ga: string, v: string) =>
     language === 'kotlin'
       ? `    implementation("${ga}:${v}")`
       : `    implementation "${ga}:${v}"`;
-  const billingDep = impl('com.android.billingclient:billing-ktx', '8.0.0');
-  const gmsDep = impl('com.google.android.gms:play-services-base', '18.1.0');
   // Pin OpenIAP Google library to 1.0.1
   const openiapDep = impl('io.github.hyochan.openiap:openiap-google', '1.0.1');
 
@@ -67,22 +65,14 @@ const modifyAppBuildGradle = (
 
   let hasAddedDependency = false;
 
-  if (!hasGA('com.android.billingclient:billing-ktx')) {
-    modified = addLineToGradle(modified, /dependencies\s*{/, billingDep);
-    hasAddedDependency = true;
-  }
-  if (!hasGA('com.google.android.gms:play-services-base')) {
-    modified = addLineToGradle(modified, /dependencies\s*{/, gmsDep, 1);
-    hasAddedDependency = true;
-  }
   if (!hasGA('io.github.hyochan.openiap:openiap-google')) {
-    modified = addLineToGradle(modified, /dependencies\s*{/, openiapDep, 2);
+    modified = addLineToGradle(modified, /dependencies\s*{/, openiapDep, 0);
     hasAddedDependency = true;
   }
 
   // Log only once and only if we actually added dependencies
   if (hasAddedDependency)
-    logOnce('🛠️ expo-iap: Added billing dependencies to build.gradle');
+    logOnce('🛠️ expo-iap: Added OpenIAP dependency to build.gradle');
 
   return modified;
 };

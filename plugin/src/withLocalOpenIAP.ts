@@ -3,7 +3,6 @@ import {
   withDangerousMod,
   withSettingsGradle,
   withAppBuildGradle,
-  withProjectBuildGradle,
 } from 'expo/config-plugins';
 import * as fs from 'fs';
 import * as path from 'path';

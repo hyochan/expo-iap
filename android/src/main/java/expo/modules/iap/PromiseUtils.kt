@@ -59,7 +59,7 @@ fun Promise.safeResolve(value: Any?) {
     }
 }
 
-fun Promise.safeReject(message: String) = this.safeReject(message, null, null)
+fun Promise.safeReject(message: String) = this.safeReject("E_UNKNOWN", message, null)
 
 fun Promise.safeReject(
     code: String,
