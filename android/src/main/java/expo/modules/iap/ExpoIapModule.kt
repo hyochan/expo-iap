@@ -202,7 +202,13 @@ class ExpoIapModule : Module() {
           } catch (ex: Exception) {
             Log.e(TAG, "Failed to send PURCHASE_ERROR event (requestPurchase)", ex)
           }
-          promise.reject(OpenIapError.E_PURCHASE_ERROR, e.message, null)
+          // Reject and clear any pending promises for this purchase flow
+          PromiseUtils.rejectPromisesForKey(
+            PromiseUtils.PROMISE_BUY_ITEM,
+            OpenIapError.E_PURCHASE_ERROR,
+            e.message,
+            null
+          )
         }
       }
     }

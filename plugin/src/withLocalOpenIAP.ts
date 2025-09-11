@@ -109,19 +109,33 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
     // Ensure pluginManagement has plugin mappings required by the included module
     const injectPluginManagement = () => {
       const header = 'pluginManagement {';
-      const block =
-        `plugins {\n` +
-        `  id(\"com.vanniktech.maven.publish\") version \"0.29.0\"\n` +
-        `  id(\"org.jetbrains.kotlin.android\") version \"2.0.21\"\n` +
-        `  id(\"org.jetbrains.kotlin.plugin.compose\") version \"2.0.21\"\n` +
-        `}\n` +
-        `repositories { gradlePluginPortal(); google(); mavenCentral() }`;
+      const needsVannik = !/id\s*\(\s*["']com\.vanniktech\.maven\.publish["']/.test(contents);
+      const needsKotlinAndroid = !/id\s*\(\s*["']org\.jetbrains\.kotlin\.android["']/.test(contents);
+      const needsCompose = !/id\s*\(\s*["']org\.jetbrains\.kotlin\.plugin\.compose["']/.test(contents);
+      const needsRepos = !/pluginManagement[\s\S]*?repositories\s*\{/.test(contents);
+
+      const pluginLines: string[] = [];
+      if (needsVannik) pluginLines.push(`  id("com.vanniktech.maven.publish") version "0.29.0"`);
+      if (needsKotlinAndroid) pluginLines.push(`  id("org.jetbrains.kotlin.android") version "2.0.21"`);
+      if (needsCompose) pluginLines.push(`  id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"`);
+
+      // If everything already present, skip
+      if (pluginLines.length === 0 && !needsRepos) return;
+
+      const pluginsBlock = pluginLines.length ? `plugins {\n${pluginLines.join('\n')}\n}` : '';
+      const reposBlock = `repositories { gradlePluginPortal(); google(); mavenCentral() }`;
 
       if (contents.includes(header)) {
-        // Add plugins and repositories if missing
-        contents = contents.replace(/pluginManagement\s*\{/, (m) => `${m}\n  // Added by expo-iap (local openiap-google)\n  ${block}\n`);
+        contents = contents.replace(/pluginManagement\s*\{/, (m) => {
+          let injection = m + `\n  // Added by expo-iap (local openiap-google)\n`;
+          if (pluginsBlock) injection += `  ${pluginsBlock}\n`;
+          if (needsRepos) injection += `  ${reposBlock}\n`;
+          return injection;
+        });
       } else {
-        contents = `pluginManagement {\n  // Added by expo-iap (local openiap-google)\n  ${block}\n}\n\n${contents}`;
+        contents = `pluginManagement {\n  // Added by expo-iap (local openiap-google)\n` +
+          (pluginsBlock ? `  ${pluginsBlock}\n` : '') +
+          `  ${reposBlock}\n}\n\n${contents}`;
       }
     };
 
