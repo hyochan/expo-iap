@@ -132,11 +132,11 @@ class ExpoIapModule : Module() {
 
     // Deep link to Manage Subscriptions screen (Android)
     AsyncFunction("deepLinkToSubscriptionsAndroid") { params: Map<String, Any?>, promise: Promise ->
-      val skuAndroid = params["skuAndroid"] as? String
-      val packageNameAndroid = params["packageNameAndroid"] as? String
+      val sku = (params["sku"] ?: params["skuAndroid"]) as? String
+      val packageName = (params["packageName"] ?: params["packageNameAndroid"]) as? String
       scope.launch {
         try {
-          openIap.deepLinkToSubscriptions(DeepLinkOptions(skuAndroid, packageNameAndroid))
+          openIap.deepLinkToSubscriptions(DeepLinkOptions(sku, packageName))
           promise.resolve(null)
         } catch (e: Exception) {
           promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
