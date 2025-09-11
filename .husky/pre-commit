@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run tests with coverage before committing to reduce CI failures
+echo "Running test coverage (pre-commit)..."
+bun run test:coverage || {
+  echo "Tests failed. Aborting commit." >&2
+  exit 1
+}
+

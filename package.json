@@ -14,7 +14,7 @@
     "lint:ci": "bun run lint:tsc && bun run lint:eslint && bun run lint:prettier",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "prepare": "expo-module prepare",
+    "prepare": "expo-module prepare && husky install",
     "expo-module": "expo-module",
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android",
@@ -42,6 +42,7 @@
   "license": "MIT",
   "homepage": "https://github.com/hyochan/expo-iap#readme",
   "devDependencies": {
+    "husky": "^9.0.11",
     "@jest/globals": "^30.0.5",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.1.7",

@@ -357,22 +357,14 @@ describe('Public API (index.ts)', () => {
       });
       expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith(true, false);
 
-      // Android path
+      // Android path (unified getAvailableItems)
       (Platform as any).OS = 'android';
       (Platform as any).select = (obj: any) => obj.android;
-      (ExpoIapModule.getAvailableItemsByType as jest.Mock) = jest
+      (ExpoIapModule.getAvailableItems as jest.Mock) = jest
         .fn()
-        .mockResolvedValueOnce([{id: 'p1'}])
-        .mockResolvedValueOnce([{id: 's1'}]);
+        .mockResolvedValueOnce([{id: 'p1'}, {id: 's1'}]);
       const res = await getAvailablePurchases();
-      expect(ExpoIapModule.getAvailableItemsByType).toHaveBeenNthCalledWith(
-        1,
-        'inapp',
-      );
-      expect(ExpoIapModule.getAvailableItemsByType).toHaveBeenNthCalledWith(
-        2,
-        'subs',
-      );
+      expect(ExpoIapModule.getAvailableItems).toHaveBeenCalled();
       expect(res).toHaveLength(2);
     });
 
@@ -434,7 +426,7 @@ describe('Public API (index.ts)', () => {
     it('Android consume vs acknowledge flows', async () => {
       (Platform as any).OS = 'android';
       (Platform as any).select = (obj: any) => obj.android;
-      (ExpoIapModule.consumeProductAndroid as jest.Mock) = jest
+      (ExpoIapModule.consumePurchaseAndroid as jest.Mock) = jest
         .fn()
         .mockResolvedValue({responseCode: 0});
       (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock) = jest
@@ -445,7 +437,7 @@ describe('Public API (index.ts)', () => {
         purchase: {productId: 'p', purchaseToken: 't'} as any,
         isConsumable: true,
       });
-      expect(ExpoIapModule.consumeProductAndroid).toHaveBeenCalledWith('t');
+      expect(ExpoIapModule.consumePurchaseAndroid).toHaveBeenCalledWith('t');
 
       await finishTransaction({
         purchase: {productId: 'p', purchaseToken: 't'} as any,
@@ -456,13 +448,13 @@ describe('Public API (index.ts)', () => {
       );
 
       // Reset call counts for negative-path assertion
-      (ExpoIapModule.consumeProductAndroid as jest.Mock).mockClear();
+      (ExpoIapModule.consumePurchaseAndroid as jest.Mock).mockClear();
       (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockClear();
       const p = finishTransaction({purchase: {productId: 'p'} as any});
       await expect(p).rejects.toMatchObject({
         message: expect.stringMatching(/Purchase token/i),
       });
-      expect(ExpoIapModule.consumeProductAndroid).not.toHaveBeenCalled();
+      expect(ExpoIapModule.consumePurchaseAndroid).not.toHaveBeenCalled();
       expect(ExpoIapModule.acknowledgePurchaseAndroid).not.toHaveBeenCalled();
     });
 
@@ -486,16 +478,20 @@ describe('Public API (index.ts)', () => {
       warnSpy.mockRestore();
     });
 
-    it('getStorefront calls getStorefrontIOS and warns', async () => {
+    it('getStorefront calls platform storefront implementation', async () => {
       (Platform as any).OS = 'ios';
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       (ExpoIapModule.getStorefrontIOS as jest.Mock) = jest
         .fn()
         .mockResolvedValue('US');
       const res = await getStorefront();
       expect(res).toBe('US');
-      expect(warnSpy).toHaveBeenCalled();
-      warnSpy.mockRestore();
+
+      (Platform as any).OS = 'android';
+      (ExpoIapModule as any).getStorefrontAndroid = jest
+        .fn()
+        .mockResolvedValue('KR');
+      const resA = await getStorefront();
+      expect(resA).toBe('KR');
     });
   });
 

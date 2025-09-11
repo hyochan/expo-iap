@@ -48,8 +48,8 @@ const modifyAppBuildGradle = (gradle: string): string => {
   // Add billing library dependencies to app-level build.gradle
   const billingDep = `    implementation "com.android.billingclient:billing-ktx:8.0.0"`;
   const gmsDep = `    implementation "com.google.android.gms:play-services-base:18.1.0"`;
-  // Pin OpenIAP Google library to 1.0.0
-  const openiapDep = `    implementation "io.github.hyochan.openiap:openiap-google:1.0.0"`;
+  // Pin OpenIAP Google library to 1.0.1
+  const openiapDep = `    implementation "io.github.hyochan.openiap:openiap-google:1.0.1"`;
 
   let hasAddedDependency = false;
 
