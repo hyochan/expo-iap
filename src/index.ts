@@ -391,7 +391,19 @@ export const getAvailablePurchases = ({
         ),
       android: async () => {
         // Android now exposes unified getAvailableItems like iOS
-        return ExpoIapModule.getAvailableItems();
+        if (typeof (ExpoIapModule as any).getAvailableItems === 'function') {
+          return (ExpoIapModule as any).getAvailableItems();
+        }
+        // Back-compat: try per-type if provided by native
+        const perType = (ExpoIapModule as any).getAvailableItemsByType;
+        if (typeof perType === 'function') {
+          const [inapp, subs] = await Promise.all([
+            perType('inapp').catch(() => []),
+            perType('subs').catch(() => []),
+          ]);
+          return [...inapp, ...subs];
+        }
+        return [];
       },
     }) || (() => Promise.resolve([]))
   )();
@@ -703,7 +715,11 @@ export const getStorefrontIOS = (): Promise<string> => {
 };
 
 /**
- * @deprecated Use `getStorefrontIOS` instead. This function will be removed in version 3.0.0.
+ * Gets the storefront country code from the underlying native store.
+ * Returns a two-letter country code such as 'US', 'KR', or empty string on failure.
+ *
+ * @platform ios
+ * @platform android
  */
 export const getStorefront = (): Promise<string> => {
   // Cross-platform storefront

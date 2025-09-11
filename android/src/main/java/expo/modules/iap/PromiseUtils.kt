@@ -5,7 +5,7 @@ import expo.modules.kotlin.Promise
 import dev.hyo.openiap.OpenIapError
 
 object PromiseUtils {
-    private val promises = HashMap<String, MutableList<Promise>>()
+    private val promises = java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.CopyOnWriteArrayList<Promise>>()
 
     const val TAG = "PromiseUtils"
     // React Native specific promise key used by JS bridge
@@ -15,7 +15,7 @@ object PromiseUtils {
         key: String,
         promise: Promise,
     ) {
-        promises.getOrPut(key) { mutableListOf() }.add(promise)
+        promises.computeIfAbsent(key) { java.util.concurrent.CopyOnWriteArrayList() }.add(promise)
     }
 
     fun resolvePromisesForKey(
@@ -29,7 +29,8 @@ object PromiseUtils {
     }
 
     fun rejectAllPendingPromises() {
-        promises.flatMap { it.value }.forEach { promise ->
+        // Snapshot to avoid concurrent modification
+        promises.values.flatMap { it.toList() }.forEach { promise ->
             promise.safeReject(OpenIapError.E_CONNECTION_CLOSED, "Connection has been closed", null)
         }
         promises.clear()

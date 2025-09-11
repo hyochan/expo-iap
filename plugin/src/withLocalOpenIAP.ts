@@ -22,7 +22,7 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
   const resolveAndroidModulePath = (p?: string): string | null => {
     if (!p) return null;
     // Prefer the module directory if it exists
-    const candidates = [path.join(p, 'openiap'), p];
+    const candidates = [path.join(p, 'openiap-google'), path.join(p, 'openiap'), p];
     for (const c of candidates) {
       if (
         fs.existsSync(path.join(c, 'build.gradle')) ||
@@ -218,62 +218,7 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
     },
   ]);
 
-  // 3) Root build.gradle: align Kotlin JVM target across subprojects to 17
-  config = withProjectBuildGradle(config, (config) => {
-    const gradle = config.modResults;
-    const marker = 'org.jetbrains.kotlin.gradle.tasks.KotlinCompile';
-    // Ensure compose-compiler plugin is on the buildscript classpath
-    const classpathLine = 'org.jetbrains.kotlin:compose-compiler-gradle-plugin:';
-    if (!gradle.contents.includes(classpathLine)) {
-      gradle.contents = gradle.contents.replace(
-        /dependencies\s*\{[\s\S]*?\}/m,
-        (block) => {
-          if (block.includes('kotlin-gradle-plugin')) {
-            return block.replace(
-              /\n\s*}\s*$/,
-              `\n        classpath("org.jetbrains.kotlin:compose-compiler-gradle-plugin:$kotlinVersion")\n    }`,
-            );
-          }
-          return block;
-        },
-      );
-    }
-    const injectBlock = `
-// Added by expo-iap to align Kotlin JVM target for local modules
-subprojects {
-    // Ensure Compose Gradle plugin is applied where Kotlin Android plugin is present (Kotlin 2.0+)
-    plugins.withId("org.jetbrains.kotlin.android") {
-        apply plugin: "org.jetbrains.kotlin.plugin.compose"
-    }
-
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions { jvmTarget = "17" }
-    }
-}
-`;
-    if (!gradle.contents.includes(marker)) {
-      gradle.contents += `\n${injectBlock}`;
-    }
-    return config;
-  });
-
-  // 4) Ensure Compose plugin apply snippet exists even if JVM marker already present
-  config = withProjectBuildGradle(config, (config) => {
-    const gradle = config.modResults;
-    const hasComposeApply = /org\.jetbrains\.kotlin\.plugin\.compose/.test(gradle.contents) || /apply plugin:\s*["']org\.jetbrains\.kotlin\.plugin\.compose["']/.test(gradle.contents);
-    if (!hasComposeApply) {
-      const snippet = `
-// expo-iap: ensure compose plugin applied for Kotlin 2.x
-subprojects {
-  plugins.withId("org.jetbrains.kotlin.android") {
-    apply plugin: "org.jetbrains.kotlin.plugin.compose"
-  }
-}
-`;
-      gradle.contents += snippet;
-    }
-    return config;
-  });
+  // (removed) Avoid global root build.gradle mutations; included module should manage its plugins
 
   return config;
 };

@@ -56,9 +56,11 @@ export const deepLinkToSubscriptionsAndroid = async ({
   }
 
   // Fallback to Linking if native method unavailable
-  return Linking.openURL(
-    `https://play.google.com/store/account/subscriptions?package=${packageName}&sku=${sku}`,
-  );
+  const base = `https://play.google.com/store/account/subscriptions?package=${encodeURIComponent(
+    packageName,
+  )}`;
+  const url = sku ? `${base}&sku=${encodeURIComponent(sku)}` : base;
+  return Linking.openURL(url);
 };
 
 /**

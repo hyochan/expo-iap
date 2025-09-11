@@ -25,11 +25,12 @@ class ExpoIapModule : Module() {
     private const val EVENT_PURCHASE_ERROR = "purchase-error"
   }
 
-  private val scope = CoroutineScope(Dispatchers.Main + Job())
+  private val job = Job()
+  private val scope = CoroutineScope(Dispatchers.Main + job)
   private val context: Context
     get() = appContext.reactContext ?: throw Exceptions.ReactContextLost()
   private val currentActivity
-    get() = appContext.activityProvider?.currentActivity ?: throw MissingCurrentActivityException()
+    get() = appContext.activityProvider?.currentActivity ?: throw Exceptions.MissingActivity()
 
   private val openIap: OpenIapModule by lazy { OpenIapModule(context) }
   private var listenersAttached = false
@@ -52,10 +53,18 @@ class ExpoIapModule : Module() {
           if (!listenersAttached) {
             listenersAttached = true
             openIap.addPurchaseUpdateListener { p ->
-              try { sendEvent(EVENT_PURCHASE_UPDATED, p.toJSON()) } catch (_: Exception) {}
+              try {
+                sendEvent(EVENT_PURCHASE_UPDATED, p.toJSON())
+              } catch (ex: Exception) {
+                Log.e(TAG, "Failed to send PURCHASE_UPDATED event", ex)
+              }
             }
             openIap.addPurchaseErrorListener { e ->
-              try { sendEvent(EVENT_PURCHASE_ERROR, e.toJSON()) } catch (_: Exception) {}
+              try {
+                sendEvent(EVENT_PURCHASE_ERROR, e.toJSON())
+              } catch (ex: Exception) {
+                Log.e(TAG, "Failed to send PURCHASE_ERROR event", ex)
+              }
             }
           }
           val ok = openIap.initConnection()
@@ -152,9 +161,14 @@ class ExpoIapModule : Module() {
 
     AsyncFunction("requestPurchase") { params: Map<String, Any?>, promise: Promise ->
       val type = params["type"] as String
-      val skuArr = (params["skuArr"] as? List<*>)?.filterIsInstance<String>()?.toTypedArray() ?: emptyArray()
-      val obfuscatedAccountId = params["obfuscatedAccountId"] as? String
-      val obfuscatedProfileId = params["obfuscatedProfileId"] as? String
+      val skus: List<String> =
+        (params["skus"] as? List<*>)?.filterIsInstance<String>()
+          ?: (params["skuArr"] as? List<*>)?.filterIsInstance<String>()
+          ?: emptyList()
+      val obfuscatedAccountId =
+        (params["obfuscatedAccountIdAndroid"] ?: params["obfuscatedAccountId"]) as? String
+      val obfuscatedProfileId =
+        (params["obfuscatedProfileIdAndroid"] ?: params["obfuscatedProfileId"]) as? String
       val isOfferPersonalized = params["isOfferPersonalized"] as? Boolean ?: false
 
       PromiseUtils.addPromiseForKey(PromiseUtils.PROMISE_BUY_ITEM, promise)
@@ -164,7 +178,7 @@ class ExpoIapModule : Module() {
           val reqType = ProductRequest.ProductRequestType.fromString(type)
           val result = openIap.requestPurchase(
             RequestPurchaseAndroidProps(
-              skus = skuArr.toList(),
+              skus = skus,
               obfuscatedAccountIdAndroid = obfuscatedAccountId,
               obfuscatedProfileIdAndroid = obfuscatedProfileId,
               isOfferPersonalized = isOfferPersonalized
@@ -172,7 +186,11 @@ class ExpoIapModule : Module() {
             reqType
           )
           result.forEach { p ->
-            try { sendEvent(EVENT_PURCHASE_UPDATED, p.toJSON()) } catch (_: Exception) {}
+            try {
+              sendEvent(EVENT_PURCHASE_UPDATED, p.toJSON())
+            } catch (ex: Exception) {
+              Log.e(TAG, "Failed to send PURCHASE_UPDATED event (requestPurchase)", ex)
+            }
           }
           PromiseUtils.resolvePromisesForKey(PromiseUtils.PROMISE_BUY_ITEM, result.map { it.toJSON() })
         } catch (e: Exception) {
@@ -181,7 +199,11 @@ class ExpoIapModule : Module() {
             "message" to (e.message ?: "Purchase failed"),
             "platform" to "android",
           )
-          try { sendEvent(EVENT_PURCHASE_ERROR, errorMap) } catch (_: Exception) {}
+          try {
+            sendEvent(EVENT_PURCHASE_ERROR, errorMap)
+          } catch (ex: Exception) {
+            Log.e(TAG, "Failed to send PURCHASE_ERROR event (requestPurchase)", ex)
+          }
           promise.reject(OpenIapError.E_PURCHASE_ERROR, e.message, null)
         }
       }
@@ -189,17 +211,29 @@ class ExpoIapModule : Module() {
 
     AsyncFunction("acknowledgePurchaseAndroid") { token: String, promise: Promise ->
       scope.launch {
-        runCatching { openIap.acknowledgePurchaseAndroid(token) }
-        promise.resolve(mapOf("responseCode" to 0))
+        try {
+          openIap.acknowledgePurchaseAndroid(token)
+          promise.resolve(mapOf("responseCode" to 0))
+        } catch (e: Exception) {
+          promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
+        }
       }
     }
 
     // New name: consumePurchaseAndroid
     AsyncFunction("consumePurchaseAndroid") { token: String, promise: Promise ->
       scope.launch {
-        runCatching { openIap.consumePurchaseAndroid(token) }
-        promise.resolve(mapOf("responseCode" to 0, "purchaseTokenAndroid" to token))
+        try {
+          openIap.consumePurchaseAndroid(token)
+          promise.resolve(mapOf("responseCode" to 0, "purchaseTokenAndroid" to token))
+        } catch (e: Exception) {
+          promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
+        }
       }
+    }
+
+    OnDestroy {
+      job.cancel()
     }
 
   }
