@@ -801,23 +801,9 @@ export const deepLinkToSubscriptions = (options: {
   }
 
   if (Platform.OS === 'android') {
-    if (!options.skuAndroid) {
-      return Promise.reject(
-        new Error(
-          'skuAndroid is required to locate subscription in Android Store',
-        ),
-      );
-    }
-    if (!options.packageNameAndroid) {
-      return Promise.reject(
-        new Error(
-          'packageNameAndroid is required to identify your app in Android Store',
-        ),
-      );
-    }
     return deepLinkToSubscriptionsAndroid({
-      sku: options.skuAndroid,
-      packageName: options.packageNameAndroid,
+      sku: options?.skuAndroid,
+      packageName: options?.packageNameAndroid,
     });
   }
 

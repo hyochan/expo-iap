@@ -4,11 +4,9 @@ import android.content.Context
 import android.util.Log
 import dev.hyo.openiap.OpenIapError
 import dev.hyo.openiap.OpenIapModule
-import dev.hyo.openiap.models.OpenIapProduct
-import dev.hyo.openiap.models.OpenIapPurchase
+import dev.hyo.openiap.models.DeepLinkOptions
 import dev.hyo.openiap.models.ProductRequest
 import dev.hyo.openiap.models.RequestPurchaseAndroidProps
-import dev.hyo.openiap.models.DeepLinkOptions
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
@@ -19,68 +17,68 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class ExpoIapModule : Module() {
-  companion object {
-    const val TAG = "ExpoIapModule"
-    private const val EVENT_PURCHASE_UPDATED = "purchase-updated"
-    private const val EVENT_PURCHASE_ERROR = "purchase-error"
-  }
+    companion object {
+        const val TAG = "ExpoIapModule"
+        private const val EVENT_PURCHASE_UPDATED = "purchase-updated"
+        private const val EVENT_PURCHASE_ERROR = "purchase-error"
+    }
 
-  private val job = Job()
-  private val scope = CoroutineScope(Dispatchers.Main + job)
-  private val context: Context
-    get() = appContext.reactContext ?: throw Exceptions.ReactContextLost()
-  private val currentActivity
-    get() = appContext.activityProvider?.currentActivity ?: throw Exceptions.MissingActivity()
+    private val job = Job()
+    private val scope = CoroutineScope(Dispatchers.Main + job)
+    private val context: Context
+        get() = appContext.reactContext ?: throw Exceptions.ReactContextLost()
+    private val currentActivity
+        get() = appContext.activityProvider?.currentActivity ?: throw Exceptions.MissingActivity()
 
-  private val openIap: OpenIapModule by lazy { OpenIapModule(context) }
-  private var listenersAttached = false
+    private val openIap: OpenIapModule by lazy { OpenIapModule(context) }
+    private var listenersAttached = false
 
-  // Mapping helpers now provided by openiap-google (toMap extensions)
+    // Mapping helpers now provided by openiap-google (toJSON helpers)
 
-  override fun definition() = ModuleDefinition {
-    Name("ExpoIap")
+    override fun definition() = ModuleDefinition {
+        Name("ExpoIap")
 
-    Constants(
-      "ERROR_CODES" to OpenIapError.getAllErrorCodes()
-    )
+        Constants(
+            "ERROR_CODES" to OpenIapError.getAllErrorCodes()
+        )
 
-    Events(EVENT_PURCHASE_UPDATED, EVENT_PURCHASE_ERROR)
+        Events(EVENT_PURCHASE_UPDATED, EVENT_PURCHASE_ERROR)
 
-    AsyncFunction("initConnection") { promise: Promise ->
-      scope.launch {
-        try {
-          runCatching { openIap.setActivity(currentActivity) }
-          if (!listenersAttached) {
-            listenersAttached = true
-            openIap.addPurchaseUpdateListener { p ->
-              try {
-                sendEvent(EVENT_PURCHASE_UPDATED, p.toJSON())
-              } catch (ex: Exception) {
-                Log.e(TAG, "Failed to send PURCHASE_UPDATED event", ex)
-              }
+        AsyncFunction("initConnection") { promise: Promise ->
+            scope.launch {
+                try {
+                    runCatching { openIap.setActivity(currentActivity) }
+                    if (!listenersAttached) {
+                        listenersAttached = true
+                        openIap.addPurchaseUpdateListener { p ->
+                            try {
+                                sendEvent(EVENT_PURCHASE_UPDATED, p.toJSON())
+                            } catch (ex: Exception) {
+                                Log.e(TAG, "Failed to send PURCHASE_UPDATED event", ex)
+                            }
+                        }
+                        openIap.addPurchaseErrorListener { e ->
+                            try {
+                                sendEvent(EVENT_PURCHASE_ERROR, e.toJSON())
+                            } catch (ex: Exception) {
+                                Log.e(TAG, "Failed to send PURCHASE_ERROR event", ex)
+                            }
+                        }
+                    }
+                    val ok = openIap.initConnection()
+                    promise.resolve(ok)
+                } catch (e: Exception) {
+                    promise.reject(OpenIapError.E_INIT_CONNECTION, e.message, null)
+                }
             }
-            openIap.addPurchaseErrorListener { e ->
-              try {
-                sendEvent(EVENT_PURCHASE_ERROR, e.toJSON())
-              } catch (ex: Exception) {
-                Log.e(TAG, "Failed to send PURCHASE_ERROR event", ex)
-              }
-            }
-          }
-          val ok = openIap.initConnection()
-          promise.resolve(ok)
-        } catch (e: Exception) {
-          promise.reject(OpenIapError.E_INIT_CONNECTION, e.message, null)
         }
-      }
-    }
 
-    AsyncFunction("endConnection") { promise: Promise ->
-      scope.launch {
-        runCatching { openIap.endConnection() }
-        promise.resolve(true)
-      }
-    }
+        AsyncFunction("endConnection") { promise: Promise ->
+            scope.launch {
+                runCatching { openIap.endConnection() }
+                promise.resolve(true)
+            }
+        }
 
     AsyncFunction("fetchProducts") { type: String, skuArr: Array<String>, promise: Promise ->
       scope.launch {

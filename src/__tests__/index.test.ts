@@ -540,11 +540,11 @@ describe('Public API (index.ts)', () => {
 
       (Platform as any).OS = 'android';
       await expect(deepLinkToSubscriptions({} as any)).rejects.toThrow(
-        'skuAndroid is required',
+        'packageName is required',
       );
       await expect(
         deepLinkToSubscriptions({skuAndroid: 's'} as any),
-      ).rejects.toThrow('packageNameAndroid is required');
+      ).rejects.toThrow('packageName is required');
       const andSpy = jest
         .spyOn(androidMod as any, 'deepLinkToSubscriptionsAndroid')
         .mockResolvedValue(undefined as any);

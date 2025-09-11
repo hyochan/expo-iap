@@ -152,11 +152,13 @@ export default function AvailablePurchases() {
     try {
       if (Platform.OS === 'android') {
         // Use first known subscription id if available, else fall back to constant
-        const sku =
-          subscriptions[0]?.id || SUBSCRIPTION_PRODUCT_IDS[0] || undefined;
+        const sku = subscriptions[0]?.id ?? SUBSCRIPTION_PRODUCT_IDS[0];
         // Example app package name
         const pkg = 'dev.hyo.martie';
-        await deepLinkToSubscriptions({ skuAndroid: sku, packageNameAndroid: pkg });
+        await deepLinkToSubscriptions(
+          sku ? { skuAndroid: sku, packageNameAndroid: pkg }
+              : { packageNameAndroid: pkg },
+        );
       } else {
         await deepLinkToSubscriptions({});
       }
