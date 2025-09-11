@@ -1,4 +1,10 @@
-import {ConfigPlugin, withDangerousMod} from '@expo/config-plugins';
+import {
+  ConfigPlugin,
+  withDangerousMod,
+  withSettingsGradle,
+  withAppBuildGradle,
+  withProjectBuildGradle,
+} from 'expo/config-plugins';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -6,46 +12,56 @@ import * as path from 'path';
  * Plugin to add local OpenIAP pod dependency for development
  * This is only for local development with openiap-apple library
  */
-const withLocalOpenIAP: ConfigPlugin<{localPath?: string} | void> = (
+type LocalPathOption = string | {ios?: string; android?: string};
+
+const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
   config,
   props,
 ) => {
-  return withDangerousMod(config, [
+  // Helper to resolve Android module path
+  const resolveAndroidModulePath = (p?: string): string | null => {
+    if (!p) return null;
+    // Prefer the module directory if it exists
+    const candidates = [path.join(p, 'openiap'), p];
+    for (const c of candidates) {
+      if (
+        fs.existsSync(path.join(c, 'build.gradle')) ||
+        fs.existsSync(path.join(c, 'build.gradle.kts'))
+      ) {
+        return c;
+      }
+    }
+    return null;
+  };
+
+  // iOS: inject local pod path
+  config = withDangerousMod(config, [
     'ios',
     async (config) => {
-      const {platformProjectRoot} = config.modRequest;
+      const {platformProjectRoot, projectRoot} = config.modRequest as any;
+      const raw = props?.localPath;
+      const iosPath =
+        (typeof raw === 'string' ? raw : raw?.ios) ||
+        path.resolve(projectRoot, 'openiap-apple');
       const podfilePath = path.join(platformProjectRoot, 'Podfile');
 
-      // Default local path or use provided one
-      const localOpenIapPath =
-        props?.localPath ||
-        path.resolve(config.modRequest.projectRoot, 'openiap-apple');
-
-      // Check if local path exists
-      if (!fs.existsSync(localOpenIapPath)) {
-        console.warn(
-          `⚠️  Local openiap-apple path not found: ${localOpenIapPath}`,
-        );
-        console.warn(
-          '   Skipping local pod injection. Using default pod resolution.',
-        );
+      if (!fs.existsSync(iosPath)) {
+        console.warn(`⚠️  Local openiap-apple path not found: ${iosPath}`);
+        console.warn('   Skipping local pod injection.');
         return config;
       }
 
-      // Read Podfile
       if (!fs.existsSync(podfilePath)) {
         console.warn(`⚠️  Podfile not found at ${podfilePath}. Skipping.`);
         return config;
       }
       let podfileContent = fs.readFileSync(podfilePath, 'utf8');
 
-      // Check if already has the local pod reference
       if (podfileContent.includes("pod 'openiap',")) {
         console.log('✅ Local OpenIAP pod already configured');
         return config;
       }
 
-      // Find the target block and inject the local pod
       const targetRegex =
         /target\s+['"][\w]+['"]\s+do\s*\n\s*use_expo_modules!/;
 
@@ -54,12 +70,10 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: string} | void> = (
           return `${match}
   
   # Local OpenIAP pod for development (added by expo-iap plugin)
-  pod 'openiap', :path => '${localOpenIapPath}'`;
+  pod 'openiap', :path => '${iosPath}'`;
         });
-
-        // Write back to Podfile
         fs.writeFileSync(podfilePath, podfileContent);
-        console.log(`✅ Added local OpenIAP pod at: ${localOpenIapPath}`);
+        console.log(`✅ Added local OpenIAP pod at: ${iosPath}`);
       } else {
         console.warn('⚠️  Could not find target block in Podfile');
       }
@@ -67,6 +81,201 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: string} | void> = (
       return config;
     },
   ]);
+
+  // Android: include local module and add dependency if available
+  config = withSettingsGradle(config, (config) => {
+    const raw = props?.localPath;
+    const projectRoot = (config.modRequest as any).projectRoot as string;
+    const androidInput = typeof raw === 'string' ? undefined : raw?.android;
+    const androidModulePath =
+      resolveAndroidModulePath(androidInput) ||
+      resolveAndroidModulePath(path.resolve(projectRoot, 'openiap-google')) ||
+      null;
+
+    if (!androidModulePath || !fs.existsSync(androidModulePath)) {
+      if (androidInput) {
+        console.warn(
+          `⚠️  Could not resolve Android OpenIAP module at: ${androidInput}. Skipping local Android linkage.`,
+        );
+      }
+      return config;
+    }
+
+    // 1) settings.gradle: include and map projectDir
+    const settings = config.modResults;
+    const includeLine = "include ':openiap-google'";
+    const projectDirLine = `project(':openiap-google').projectDir = new File('${androidModulePath.replace(/\\/g, '/')}')`;
+    let contents = settings.contents ?? '';
+
+    // Ensure pluginManagement has plugin mappings required by the included module
+    const injectPluginManagement = () => {
+      const header = 'pluginManagement {';
+      const block =
+        `plugins {\n` +
+        `  id(\"com.vanniktech.maven.publish\") version \"0.29.0\"\n` +
+        `  id(\"org.jetbrains.kotlin.android\") version \"2.0.21\"\n` +
+        `  id(\"org.jetbrains.kotlin.plugin.compose\") version \"2.0.21\"\n` +
+        `}\n` +
+        `repositories { gradlePluginPortal(); google(); mavenCentral() }`;
+
+      if (contents.includes(header)) {
+        // Add plugins and repositories if missing
+        contents = contents.replace(/pluginManagement\s*\{/, (m) => `${m}\n  // Added by expo-iap (local openiap-google)\n  ${block}\n`);
+      } else {
+        contents = `pluginManagement {\n  // Added by expo-iap (local openiap-google)\n  ${block}\n}\n\n${contents}`;
+      }
+    };
+
+    if (!/com\.vanniktech\.maven\.publish/.test(contents) ||
+        !/org\.jetbrains\.kotlin\.android/.test(contents)) {
+      injectPluginManagement();
+    }
+    if (!contents.includes(includeLine)) contents += `\n${includeLine}\n`;
+    if (!contents.includes(projectDirLine)) contents += `${projectDirLine}\n`;
+    settings.contents = contents;
+    console.log(`✅ Linked local Android module at: ${androidModulePath}`);
+    return config;
+  });
+
+  // 2) app/build.gradle: add implementation project(':openiap-google')
+  config = withAppBuildGradle(config, (config) => {
+    const raw = props?.localPath;
+    const projectRoot = (config.modRequest as any).projectRoot as string;
+    const androidInput = typeof raw === 'string' ? undefined : raw?.android;
+    const androidModulePath =
+      resolveAndroidModulePath(androidInput) ||
+      resolveAndroidModulePath(path.resolve(projectRoot, 'openiap-google')) ||
+      null;
+
+    if (!androidModulePath || !fs.existsSync(androidModulePath)) {
+      return config;
+    }
+
+    const gradle = config.modResults;
+    const dependencyLine = `    implementation project(':openiap-google')`;
+
+    // Remove any previously injected external deps that can conflict with the local module
+    const removalPatterns = [
+      /\n\s*implementation\s+"com\.android\.billingclient:billing-ktx:[^"]+"\s*\n/g,
+      /\n\s*implementation\s+"com\.google\.android\.gms:play-services-base:[^"]+"\s*\n/g,
+    ];
+    let contents = gradle.contents;
+    let removedAny = false;
+    for (const pattern of removalPatterns) {
+      if (pattern.test(contents)) {
+        contents = contents.replace(pattern, '\n');
+        removedAny = true;
+      }
+    }
+    if (removedAny) {
+      gradle.contents = contents;
+      console.log('🧹 Removed external Play Billing/GMS deps to use local :openiap-google');
+    }
+    if (!gradle.contents.includes(dependencyLine)) {
+      const anchor = /dependencies\s*\{/m;
+      if (anchor.test(gradle.contents)) {
+        gradle.contents = gradle.contents.replace(
+          anchor,
+          (m) => `${m}\n${dependencyLine}`,
+        );
+      } else {
+        gradle.contents += `\n\ndependencies {\n${dependencyLine}\n}\n`;
+      }
+      console.log('🛠️ Added dependency on local :openiap-google project');
+    }
+    return config;
+  });
+
+  // 3) Ensure final cleanup in app/build.gradle after all mods are applied
+  config = withDangerousMod(config, [
+    'android',
+    async (config) => {
+      try {
+        const {platformProjectRoot} = config.modRequest as any;
+        const appBuildGradle = path.join(platformProjectRoot, 'app', 'build.gradle');
+        if (fs.existsSync(appBuildGradle)) {
+          let contents = fs.readFileSync(appBuildGradle, 'utf8');
+          const patterns = [
+            /\n\s*implementation\s+"com\.android\.billingclient:billing-ktx:[^"]+"\s*\n/g,
+            /\n\s*implementation\s+"com\.google\.android\.gms:play-services-base:[^"]+"\s*\n/g,
+          ];
+          let changed = false;
+          for (const p of patterns) {
+            if (p.test(contents)) {
+              contents = contents.replace(p, '\n');
+              changed = true;
+            }
+          }
+          if (changed) {
+            fs.writeFileSync(appBuildGradle, contents);
+            console.log('🧹 expo-iap: Cleaned app/build.gradle billing/gms deps for local :openiap-google');
+          }
+        }
+      } catch (e) {
+        console.warn('expo-iap: cleanup step failed:', e);
+      }
+      return config;
+    },
+  ]);
+
+  // 3) Root build.gradle: align Kotlin JVM target across subprojects to 17
+  config = withProjectBuildGradle(config, (config) => {
+    const gradle = config.modResults;
+    const marker = 'org.jetbrains.kotlin.gradle.tasks.KotlinCompile';
+    // Ensure compose-compiler plugin is on the buildscript classpath
+    const classpathLine = 'org.jetbrains.kotlin:compose-compiler-gradle-plugin:';
+    if (!gradle.contents.includes(classpathLine)) {
+      gradle.contents = gradle.contents.replace(
+        /dependencies\s*\{[\s\S]*?\}/m,
+        (block) => {
+          if (block.includes('kotlin-gradle-plugin')) {
+            return block.replace(
+              /\n\s*}\s*$/,
+              `\n        classpath("org.jetbrains.kotlin:compose-compiler-gradle-plugin:$kotlinVersion")\n    }`,
+            );
+          }
+          return block;
+        },
+      );
+    }
+    const injectBlock = `
+// Added by expo-iap to align Kotlin JVM target for local modules
+subprojects {
+    // Ensure Compose Gradle plugin is applied where Kotlin Android plugin is present (Kotlin 2.0+)
+    plugins.withId("org.jetbrains.kotlin.android") {
+        apply plugin: "org.jetbrains.kotlin.plugin.compose"
+    }
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions { jvmTarget = "17" }
+    }
+}
+`;
+    if (!gradle.contents.includes(marker)) {
+      gradle.contents += `\n${injectBlock}`;
+    }
+    return config;
+  });
+
+  // 4) Ensure Compose plugin apply snippet exists even if JVM marker already present
+  config = withProjectBuildGradle(config, (config) => {
+    const gradle = config.modResults;
+    const hasComposeApply = /org\.jetbrains\.kotlin\.plugin\.compose/.test(gradle.contents) || /apply plugin:\s*["']org\.jetbrains\.kotlin\.plugin\.compose["']/.test(gradle.contents);
+    if (!hasComposeApply) {
+      const snippet = `
+// expo-iap: ensure compose plugin applied for Kotlin 2.x
+subprojects {
+  plugins.withId("org.jetbrains.kotlin.android") {
+    apply plugin: "org.jetbrains.kotlin.plugin.compose"
+  }
+}
+`;
+      gradle.contents += snippet;
+    }
+    return config;
+  });
+
+  return config;
 };
 
 export default withLocalOpenIAP;

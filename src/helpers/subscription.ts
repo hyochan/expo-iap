@@ -77,8 +77,19 @@ export const getActiveSubscriptions = async (
       return false;
     });
 
+    // Deduplicate by a stable unique key (prefer purchaseToken, then transactionId, then id)
+    const seen = new Set<string>();
+    const dedupedPurchases = filteredPurchases.filter((p) => {
+      const key = String(
+        (p as any).purchaseToken || p.transactionId || (p as any).id || p.productId,
+      );
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     // Convert to ActiveSubscription format
-    for (const purchase of filteredPurchases) {
+    for (const purchase of dedupedPurchases) {
       const subscription: ActiveSubscription = {
         productId: purchase.productId,
         isActive: true,

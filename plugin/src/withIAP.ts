@@ -48,6 +48,8 @@ const modifyAppBuildGradle = (gradle: string): string => {
   // Add billing library dependencies to app-level build.gradle
   const billingDep = `    implementation "com.android.billingclient:billing-ktx:8.0.0"`;
   const gmsDep = `    implementation "com.google.android.gms:play-services-base:18.1.0"`;
+  // Pin OpenIAP Google library to 1.0.0
+  const openiapDep = `    implementation "io.github.hyochan.openiap:openiap-google:1.0.0"`;
 
   let hasAddedDependency = false;
 
@@ -59,6 +61,10 @@ const modifyAppBuildGradle = (gradle: string): string => {
     modified = addLineToGradle(modified, /dependencies\s*{/, gmsDep, 1);
     hasAddedDependency = true;
   }
+  if (!modified.includes(openiapDep)) {
+    modified = addLineToGradle(modified, /dependencies\s*{/, openiapDep, 2);
+    hasAddedDependency = true;
+  }
 
   // Log only once and only if we actually added dependencies
   if (hasAddedDependency)
@@ -67,14 +73,20 @@ const modifyAppBuildGradle = (gradle: string): string => {
   return modified;
 };
 
-const withIapAndroid: ConfigPlugin = (config) => {
-  // Add IAP dependencies to app build.gradle
-  config = withAppBuildGradle(config, (config) => {
-    config.modResults.contents = modifyAppBuildGradle(
-      config.modResults.contents,
-    );
-    return config;
-  });
+const withIapAndroid: ConfigPlugin<{ addDeps?: boolean } | void> = (
+  config,
+  props,
+) => {
+  const addDeps = props?.addDeps ?? true;
+
+  if (addDeps) {
+    config = withAppBuildGradle(config, (config) => {
+      config.modResults.contents = modifyAppBuildGradle(
+        config.modResults.contents,
+      );
+      return config;
+    });
+  }
 
   config = withAndroidManifest(config, (config) => {
     const manifest = config.modResults;
@@ -140,7 +152,12 @@ const withIapIOS: ConfigPlugin = (config) => {
 
 export interface ExpoIapPluginOptions {
   /** Local development path for OpenIAP library */
-  localPath?: string;
+  localPath?:
+    | string
+    | {
+        ios?: string;
+        android?: string;
+      };
   /** Enable local development mode */
   enableLocalDev?: boolean;
 }
@@ -150,8 +167,9 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
   options,
 ) => {
   try {
-    // Apply Android modifications
-    let result = withIapAndroid(config);
+    const isLocalDev = !!(options?.enableLocalDev || options?.localPath);
+    // Apply Android modifications (skip adding deps when linking local module)
+    let result = withIapAndroid(config, { addDeps: !isLocalDev });
 
     // iOS: choose one path to avoid overlap
     if (options?.enableLocalDev || options?.localPath) {
@@ -161,11 +179,21 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
           'enableLocalDev is true but no localPath provided. Skipping local OpenIAP integration.',
         );
       } else {
-        const localPath = path.resolve(options.localPath);
-        logOnce(
-          `🔧 [expo-iap] Enabling local OpenIAP development at: ${localPath}`,
-        );
-        result = withLocalOpenIAP(result, {localPath});
+        const raw = options.localPath;
+        const resolved =
+          typeof raw === 'string'
+            ? path.resolve(raw)
+            : {
+                ios: raw.ios ? path.resolve(raw.ios) : undefined,
+                android: raw.android ? path.resolve(raw.android) : undefined,
+              };
+
+        const preview =
+          typeof resolved === 'string'
+            ? resolved
+            : `ios=${resolved.ios ?? 'auto'}, android=${resolved.android ?? 'auto'}`;
+        logOnce(`🔧 [expo-iap] Enabling local OpenIAP: ${preview}`);
+        result = withLocalOpenIAP(result, {localPath: resolved});
       }
     } else {
       // Ensure iOS Podfile is set up to resolve public CocoaPods specs

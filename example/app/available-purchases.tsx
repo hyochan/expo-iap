@@ -8,8 +8,10 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
-import {useIAP} from '../../src';
+import {useIAP, getStorefront, deepLinkToSubscriptions} from '../../src';
+import type {ActiveSubscription} from '../../src';
 import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {Purchase, PurchaseError} from '../../src/ExpoIap.types';
@@ -17,6 +19,10 @@ import type {Purchase, PurchaseError} from '../../src/ExpoIap.types';
 export default function AvailablePurchases() {
   const [loading, setLoading] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] =
+    useState<ActiveSubscription | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [storefront, setStorefront] = useState<string>('');
 
   // Deduplicate purchases by productId, keeping the most recent transaction
   const deduplicatePurchases = (purchases: Purchase[]): Purchase[] => {
@@ -130,6 +136,35 @@ export default function AvailablePurchases() {
     }
   };
 
+  // Example helpers: storefront + subscription management
+  const handleGetStorefront = async () => {
+    try {
+      const code = await getStorefront();
+      setStorefront(code || '');
+      Alert.alert('Storefront', code || '(empty)');
+    } catch (e: any) {
+      console.warn('Failed to get storefront:', e?.message);
+      Alert.alert('Storefront', 'Failed to get storefront');
+    }
+  };
+
+  const handleOpenSubscriptions = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        // Use first known subscription id if available, else fall back to constant
+        const sku =
+          subscriptions[0]?.id || SUBSCRIPTION_PRODUCT_IDS[0] || undefined;
+        // Example app package name
+        const pkg = 'dev.hyo.martie';
+        await deepLinkToSubscriptions({ skuAndroid: sku, packageNameAndroid: pkg });
+      } else {
+        await deepLinkToSubscriptions({});
+      }
+    } catch (e: any) {
+      Alert.alert('Deep Link Error', e?.message || 'Failed to open');
+    }
+  };
+
   // Load products and available purchases when connected - follow subscription-flow pattern
   useEffect(() => {
     if (connected) {
@@ -210,6 +245,9 @@ export default function AvailablePurchases() {
         <Text style={styles.statusText}>
           Store Connection: {connected ? '✅ Connected' : '❌ Disconnected'}
         </Text>
+        {!!storefront && (
+          <Text style={[styles.statusText, { marginTop: 6 }]}>Storefront: {storefront}</Text>
+        )}
       </View>
 
       {/* Active Subscriptions Section */}
@@ -221,9 +259,14 @@ export default function AvailablePurchases() {
           </Text>
 
           {activeSubscriptions.map((subscription, index) => (
-            <View
+            <TouchableOpacity
               key={subscription.productId + index}
               style={[styles.purchaseItem, styles.activeSubscriptionItem]}
+              activeOpacity={0.7}
+              onPress={() => {
+                setSelectedSubscription(subscription);
+                setModalVisible(true);
+              }}
             >
               <View style={styles.purchaseHeader}>
                 <Text style={styles.productId}>{subscription.productId}</Text>
@@ -274,7 +317,7 @@ export default function AvailablePurchases() {
                   </View>
                 )}
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       )}
@@ -380,6 +423,108 @@ export default function AvailablePurchases() {
           <Text style={styles.buttonText}>🔄 Refresh Purchases</Text>
         )}
       </TouchableOpacity>
+
+      {/* Tools */}
+      <View style={[styles.section, { gap: 12 }]}>
+        <Text style={styles.sectionTitle}>🛠️ Tools</Text>
+        <TouchableOpacity style={styles.button} onPress={handleGetStorefront}>
+          <Text style={styles.buttonText}>🌐 Get Storefront</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleOpenSubscriptions}>
+          <Text style={styles.buttonText}>🔗 Manage Subscriptions</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Subscription Details Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Subscription Details</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {!!selectedSubscription && (
+              <View style={styles.modalContent}>
+                <View style={styles.purchaseRow}>
+                  <Text style={styles.label}>Product ID</Text>
+                  <Text style={styles.value}>
+                    {selectedSubscription.productId}
+                  </Text>
+                </View>
+                <View style={styles.purchaseRow}>
+                  <Text style={styles.label}>Transaction ID</Text>
+                  <Text style={styles.value}>
+                    {selectedSubscription.transactionId}
+                  </Text>
+                </View>
+                {selectedSubscription.purchaseToken && (
+                  <View style={styles.purchaseRow}>
+                    <Text style={styles.label}>Purchase Token</Text>
+                    <Text style={styles.value}>
+                      {selectedSubscription.purchaseToken}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.purchaseRow}>
+                  <Text style={styles.label}>Active</Text>
+                  <Text style={styles.value}>
+                    {selectedSubscription.isActive ? 'Yes' : 'No'}
+                  </Text>
+                </View>
+                <View style={styles.purchaseRow}>
+                  <Text style={styles.label}>Date</Text>
+                  <Text style={styles.value}>
+                    {new Date(
+                      selectedSubscription.transactionDate,
+                    ).toLocaleString()}
+                  </Text>
+                </View>
+                {typeof selectedSubscription.autoRenewingAndroid === 'boolean' && (
+                  <View style={styles.purchaseRow}>
+                    <Text style={styles.label}>Auto Renew</Text>
+                    <Text style={styles.value}>
+                      {selectedSubscription.autoRenewingAndroid ? 'Yes' : 'No'}
+                    </Text>
+                  </View>
+                )}
+                {typeof selectedSubscription.willExpireSoon === 'boolean' && (
+                  <View style={styles.purchaseRow}>
+                    <Text style={styles.label}>Will Expire Soon</Text>
+                    <Text style={styles.value}>
+                      {selectedSubscription.willExpireSoon ? 'Yes' : 'No'}
+                    </Text>
+                  </View>
+                )}
+                {selectedSubscription.environmentIOS && (
+                  <View style={styles.purchaseRow}>
+                    <Text style={styles.label}>Environment</Text>
+                    <Text style={styles.value}>
+                      {selectedSubscription.environmentIOS}
+                    </Text>
+                  </View>
+                )}
+                {selectedSubscription.expirationDateIOS && (
+                  <View style={styles.purchaseRow}>
+                    <Text style={styles.label}>Expires</Text>
+                    <Text style={styles.value}>
+                      {new Date(
+                        selectedSubscription.expirationDateIOS,
+                      ).toLocaleString()}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -536,5 +681,34 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '90%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  modalCloseText: {
+    fontSize: 18,
+  },
+  modalContent: {
+    maxHeight: 360,
   },
 });

@@ -47,6 +47,15 @@ export const deepLinkToSubscriptionsAndroid = async ({
     );
   }
 
+  // Prefer native deep link implementation via OpenIAP module
+  if (ExpoIapModule?.deepLinkToSubscriptionsAndroid) {
+    return ExpoIapModule.deepLinkToSubscriptionsAndroid({
+      skuAndroid: sku,
+      packageNameAndroid: packageName,
+    });
+  }
+
+  // Fallback to Linking if native method unavailable
   return Linking.openURL(
     `https://play.google.com/store/account/subscriptions?package=${packageName}&sku=${sku}`,
   );

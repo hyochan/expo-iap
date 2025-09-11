@@ -24,7 +24,10 @@
         "../app.plugin.js",
         {
           "enableLocalDev": true,
-          "localPath": "/Users/crossplatformkorea/Github/hyodotdev/openiap-apple"
+          "localPath": {
+            "ios": "/Users/crossplatformkorea/Github/hyodotdev/openiap-apple",
+            "android": "/Users/crossplatformkorea/Github/hyodotdev/openiap-google"
+          }
         }
       ],
       "expo-router",

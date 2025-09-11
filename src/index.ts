@@ -390,11 +390,8 @@ export const getAvailablePurchases = ({
           onlyIncludeActiveItemsIOS ?? onlyIncludeActiveItems,
         ),
       android: async () => {
-        const products = await ExpoIapModule.getAvailableItemsByType('inapp');
-        const subscriptions = await ExpoIapModule.getAvailableItemsByType(
-          'subs',
-        );
-        return products.concat(subscriptions);
+        // Android now exposes unified getAvailableItems like iOS
+        return ExpoIapModule.getAvailableItems();
       },
     }) || (() => Promise.resolve([]))
   )();
@@ -674,7 +671,7 @@ export const finishTransaction = ({
         }
 
         if (isConsumable) {
-          return ExpoIapModule.consumeProductAndroid(token);
+          return ExpoIapModule.consumePurchaseAndroid(token);
         }
 
         return ExpoIapModule.acknowledgePurchaseAndroid(token);
@@ -709,9 +706,13 @@ export const getStorefrontIOS = (): Promise<string> => {
  * @deprecated Use `getStorefrontIOS` instead. This function will be removed in version 3.0.0.
  */
 export const getStorefront = (): Promise<string> => {
-  console.warn(
-    '`getStorefront` is deprecated. Use `getStorefrontIOS` instead. This function will be removed in version 3.0.0.',
-  );
+  // Cross-platform storefront
+  if (Platform.OS === 'android') {
+    if (typeof (ExpoIapModule as any).getStorefrontAndroid === 'function') {
+      return (ExpoIapModule as any).getStorefrontAndroid();
+    }
+    return Promise.resolve('');
+  }
   return getStorefrontIOS();
 };
 
