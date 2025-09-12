@@ -137,7 +137,6 @@ export function initConnection(): Promise<boolean> {
   return Promise.resolve(result);
 }
 
-
 export async function endConnection(): Promise<boolean> {
   return ExpoIapModule.endConnection();
 }
@@ -219,7 +218,6 @@ export const fetchProducts = async ({
 
   throw new Error('Unsupported platform');
 };
-
 
 /**
  * @deprecated Use `getPurchaseHistories` instead. This function will be removed in version 3.0.0.
@@ -450,7 +448,6 @@ export const requestPurchase = (
 
   return Promise.resolve(); // Fallback for unsupported platforms
 };
-
 
 export const finishTransaction = ({
   purchase,

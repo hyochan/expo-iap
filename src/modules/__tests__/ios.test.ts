@@ -37,7 +37,7 @@ describe('iOS Module Functions', () => {
     jest.clearAllMocks();
   });
 
-// Removed in v3: transactionUpdatedIOS wrapper no longer exists
+  // Removed in v3: transactionUpdatedIOS wrapper no longer exists
 
   describe('isEligibleForIntroOfferIOS', () => {
     it('should call native module with correct groupId parameter', async () => {
