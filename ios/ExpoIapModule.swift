@@ -271,6 +271,13 @@ public class ExpoIapModule: Module {
             return try await OpenIapModule.shared.getReceiptDataIOS() ?? ""
         }
         
+        // Backward-compatible alias expected by JS layer/tests
+        AsyncFunction("getReceiptDataIOS") { () async throws -> String in
+            try await ensureConnection()
+            logDebug("getReceiptDataIOS called (alias of getReceiptIOS)")
+            return try await OpenIapModule.shared.getReceiptDataIOS() ?? ""
+        }
+        
         AsyncFunction("requestReceiptRefreshIOS") { () async throws -> String in
             try await ensureConnection()
             logDebug("requestReceiptRefreshIOS called")
@@ -307,11 +314,11 @@ public class ExpoIapModule: Module {
             return true
         }
         
-        AsyncFunction("showManageSubscriptionsIOS") { () async throws -> Bool in
+        AsyncFunction("showManageSubscriptionsIOS") { () async throws -> [[String: Any?]] in
             try await ensureConnection()
             logDebug("showManageSubscriptionsIOS called")
-            let _ = try await OpenIapModule.shared.showManageSubscriptionsIOS()
-            return true
+            let purchases = try await OpenIapModule.shared.showManageSubscriptionsIOS()
+            return OpenIapSerialization.purchases(purchases)
         }
         
         AsyncFunction("deepLinkToSubscriptionsIOS") { () async throws in
