@@ -41,7 +41,10 @@ class ExpoIapModule : Module() {
     private val connectionReady = AtomicBoolean(false)
     private val connectionMutex = Mutex()
 
-    private fun emitOrQueue(name: String, payload: Map<String, Any?>) {
+    private fun emitOrQueue(
+        name: String,
+        payload: Map<String, Any?>,
+    ) {
         if (connectionReady.get()) {
             // Ensure event emission occurs on the main dispatcher
             scope.launch { sendEvent(name, payload) }
@@ -106,12 +109,12 @@ class ExpoIapModule : Module() {
 
                             // Mark ready then flush any buffered events
                             connectionReady.set(true)
-                        while (true) {
-                            val ev = pendingEvents.poll() ?: break
-                            // Already on main dispatcher here; emit directly
-                            runCatching { sendEvent(ev.first, ev.second) }
-                                .onFailure { Log.e(TAG, "Failed to flush buffered event: ${ev.first}", it) }
-                        }
+                            while (true) {
+                                val ev = pendingEvents.poll() ?: break
+                                // Already on main dispatcher here; emit directly
+                                runCatching { sendEvent(ev.first, ev.second) }
+                                    .onFailure { Log.e(TAG, "Failed to flush buffered event: ${ev.first}", it) }
+                            }
 
                             promise.resolve(true)
                         } catch (e: Exception) {
@@ -120,7 +123,6 @@ class ExpoIapModule : Module() {
                     }
                 }
             }
-
 
             AsyncFunction("endConnection") { promise: Promise ->
                 scope.launch {
