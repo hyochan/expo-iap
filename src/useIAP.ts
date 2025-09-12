@@ -361,7 +361,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         console.log('[useIAP] Purchase success callback triggered:', purchase);
 
         // Guard against duplicate emissions for the same transaction
-        const dedupeKey = (purchase as any).id || (purchase as any).purchaseToken;
+        const dedupeKey = purchase.id;
         if (dedupeKey && handledPurchaseIds.has(dedupeKey)) {
           console.log('[useIAP] Duplicate purchase event ignored:', dedupeKey);
           return;
