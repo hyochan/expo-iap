@@ -42,6 +42,10 @@ import {
   isRecoverableError,
 } from './utils/errorMapping';
 
+// Deduplicate purchase success events across re-mounts (dev StrictMode, nav returns)
+// Keep minimal in-memory state; safe for subscriptions since renewals use new ids
+const handledPurchaseIds = new Set<string>();
+
 type UseIap = {
   connected: boolean;
   products: Product[];
@@ -355,6 +359,15 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
       async (purchase: Purchase) => {
         console.log('[useIAP] Purchase success callback triggered:', purchase);
+
+        // Guard against duplicate emissions for the same transaction
+        const dedupeKey = (purchase as any).id || (purchase as any).purchaseToken;
+        if (dedupeKey && handledPurchaseIds.has(dedupeKey)) {
+          console.log('[useIAP] Duplicate purchase event ignored:', dedupeKey);
+          return;
+        }
+        if (dedupeKey) handledPurchaseIds.add(dedupeKey);
+
         setCurrentPurchaseError(undefined);
         setCurrentPurchase(purchase);
 
@@ -440,6 +453,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       currentSubscriptions.promotedProductIOS?.remove();
       endConnection();
       setConnected(false);
+      handledPurchaseIds.clear();
     };
   }, [initIapWithSubscriptions]);
 
