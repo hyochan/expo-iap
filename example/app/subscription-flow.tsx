@@ -303,11 +303,13 @@ export default function SubscriptionFlow() {
   // Note: Do NOT fetch on mount before connection is ready.
   // Fetching happens in the connected effect below.
 
-  // Load subscriptions and check status when connected
+  // Load subscriptions and check status when connected (guard against dev double-invoke)
+  const didFetchSubsRef = React.useRef(false);
   useEffect(() => {
     const subscriptionIds = SUBSCRIPTION_PRODUCT_IDS;
 
-    if (connected) {
+    if (connected && !didFetchSubsRef.current) {
+      didFetchSubsRef.current = true;
       console.log('Connected to store, loading subscription products...');
       // requestProducts is event-based, not promise-based
       // Results will be available through the useIAP hook's subscriptions state
@@ -319,6 +321,8 @@ export default function SubscriptionFlow() {
       getAvailablePurchases([]).catch((error) => {
         console.warn('Failed to load available purchases:', error);
       });
+    } else if (!connected) {
+      didFetchSubsRef.current = false; // reset when disconnected
     }
   }, [connected, fetchProducts, getAvailablePurchases]);
 

@@ -88,11 +88,13 @@ export default function PurchaseFlow() {
     },
   });
 
-  // Load products when component mounts
+  // Load products when component mounts (guard against dev double-invoke)
+  const didFetchRef = React.useRef(false);
   useEffect(() => {
     console.log('[PurchaseFlow] useEffect - connected:', connected);
     console.log('[PurchaseFlow] PRODUCT_IDS:', PRODUCT_IDS);
-    if (connected) {
+    if (connected && !didFetchRef.current) {
+      didFetchRef.current = true;
       console.log('[PurchaseFlow] Calling fetchProducts with:', PRODUCT_IDS);
       fetchProducts({skus: PRODUCT_IDS, type: 'inapp'})
         .then(() => {
@@ -101,7 +103,8 @@ export default function PurchaseFlow() {
         .catch((error) => {
           console.error('[PurchaseFlow] fetchProducts error:', error);
         });
-    } else {
+    } else if (!connected) {
+      didFetchRef.current = false; // reset when disconnected
       console.log('[PurchaseFlow] Not fetching products - not connected');
     }
   }, [connected, fetchProducts]);
