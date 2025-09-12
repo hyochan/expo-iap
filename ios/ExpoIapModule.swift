@@ -12,6 +12,19 @@ private func logDebug(_ message: String) {
     #endif
 }
 
+// MARK: - Swift helpers for optional dictionary compaction
+private extension Sequence where Element == [String: Any?] {
+    func compactingValues() -> [[String: Any]] {
+        return self.map { $0.compactMapValues { $0 } }
+    }
+}
+
+private extension Dictionary where Key == String, Value == Any? {
+    func compactingValues() -> [String: Any] {
+        return self.compactMapValues { $0 }
+    }
+}
+
 // Event names
 struct OpenIapEvent {
     static let PurchaseUpdated = "purchase-updated"
@@ -145,7 +158,7 @@ public class ExpoIapModule: Module {
                 logDebug("Product: \(product.id) - \(product.title) - \(product.displayPrice)")
             }
             // Ensure non-optional values for Expo bridge
-            return OpenIapSerialization.products(products).map { $0.compactMapValues { $0 } }
+            return OpenIapSerialization.products(products).compactingValues()
         }
         
         // MARK: - Purchase Operations
@@ -233,7 +246,7 @@ public class ExpoIapModule: Module {
                 )
             }
             let purchases = try await OpenIapModule.shared.getAvailablePurchases(purchaseOptions)
-            return OpenIapSerialization.purchases(purchases).map { $0.compactMapValues { $0 } }
+            return OpenIapSerialization.purchases(purchases).compactingValues()
         }
         
         // Legacy function for backward compatibility
@@ -246,7 +259,7 @@ public class ExpoIapModule: Module {
                 onlyIncludeActiveItemsIOS: onlyIncludeActiveItems
             )
             let purchases = try await OpenIapModule.shared.getAvailablePurchases(purchaseOptions)
-            return OpenIapSerialization.purchases(purchases).map { $0.compactMapValues { $0 } }
+            return OpenIapSerialization.purchases(purchases).compactingValues()
         }
         
         AsyncFunction("getPendingTransactionsIOS") { () async throws -> [[String: Any]] in
@@ -254,7 +267,7 @@ public class ExpoIapModule: Module {
             logDebug("getPendingTransactionsIOS called")
             
             let pendingTransactions = try await OpenIapModule.shared.getPendingTransactionsIOS()
-            return OpenIapSerialization.purchases(pendingTransactions).map { $0.compactMapValues { $0 } }
+            return OpenIapSerialization.purchases(pendingTransactions).compactingValues()
         }
         
         AsyncFunction("clearTransactionIOS") { () async throws -> Bool in
@@ -299,9 +312,9 @@ public class ExpoIapModule: Module {
                     "jwsRepresentation": result.jwsRepresentation,
                     // Populate unified purchaseToken for iOS as alias of JWS
                     "purchaseToken": result.jwsRepresentation,
-                    "latestTransaction": result.latestTransaction.map { OpenIapSerialization.purchase($0).compactMapValues { $0 } },
+                    "latestTransaction": result.latestTransaction.map { OpenIapSerialization.purchase($0).compactingValues() },
                 ]
-                return dict.compactMapValues { $0 }
+                return dict.compactingValues()
             } catch {
                 throw OpenIapError.make(code: OpenIapError.E_RECEIPT_FAILED)
             }
@@ -321,7 +334,7 @@ public class ExpoIapModule: Module {
             logDebug("showManageSubscriptionsIOS called")
             // OpenIAP 1.1.9 returns already-serialized dictionaries here.
             let purchases = try await OpenIapModule.shared.showManageSubscriptionsIOS()
-            return purchases.map { $0.compactMapValues { $0 } }
+            return purchases.compactingValues()
         }
         
         AsyncFunction("deepLinkToSubscriptionsIOS") { () async throws in
@@ -350,7 +363,7 @@ public class ExpoIapModule: Module {
                 // Fetch full product info by SKU to conform to OpenIapProduct
                 let request = OpenIapProductRequest(skus: [promoted.productIdentifier], type: .all)
                 let products = try await OpenIapModule.shared.fetchProducts(request)
-                let serialized = OpenIapSerialization.products(products).map { $0.compactMapValues { $0 } }
+                let serialized = OpenIapSerialization.products(products).compactingValues()
                 return serialized.first
             }
             return nil
@@ -408,7 +421,7 @@ public class ExpoIapModule: Module {
                         dict["renewalInfo"] = renewalInfo
                     }
 
-                    return dict.compactMapValues { $0 }
+                    return dict.compactingValues()
                 }
             }
             return nil
@@ -419,7 +432,7 @@ public class ExpoIapModule: Module {
             logDebug("currentEntitlementIOS called for sku: \(sku)")
             do {
                 if let entitlement = try await OpenIapModule.shared.currentEntitlementIOS(sku: sku) {
-                    return OpenIapSerialization.purchase(entitlement).compactMapValues { $0 }
+                    return OpenIapSerialization.purchase(entitlement).compactingValues()
                 }
                 return nil
             } catch {
@@ -432,7 +445,7 @@ public class ExpoIapModule: Module {
             logDebug("latestTransactionIOS called for sku: \(sku)")
             do {
                 if let transaction = try await OpenIapModule.shared.latestTransactionIOS(sku: sku) {
-                    return OpenIapSerialization.purchase(transaction).compactMapValues { $0 }
+                    return OpenIapSerialization.purchase(transaction).compactingValues()
                 }
                 return nil
             } catch {

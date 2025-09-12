@@ -364,7 +364,7 @@ export default function SubscriptionFlow() {
     }
   }, [subscriptions]);
 
-  const handleSubscription = async (itemId: string) => {
+  const handleSubscription = (itemId: string) => {
     // Check if already subscribed to this product
     const isAlreadySubscribed = activeSubscriptions.some(
       (sub) => sub.productId === itemId,

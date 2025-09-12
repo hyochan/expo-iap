@@ -108,7 +108,7 @@ export default function PurchaseFlow() {
 
   // Defer loading guard until after all hooks are declared
 
-  const handlePurchase = async (itemId: string) => {
+  const handlePurchase = (itemId: string) => {
     setIsProcessing(true);
     setPurchaseResult('Processing purchase...');
 
