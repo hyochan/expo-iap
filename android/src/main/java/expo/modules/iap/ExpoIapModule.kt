@@ -64,7 +64,10 @@ class ExpoIapModule : Module() {
                 scope.launch {
                     connectionMutex.withLock {
                         try {
-                            openIap.setActivity(currentActivity)
+                            // Activity may be unavailable in headless/background scenarios.
+                            // Attempt to set it, but do not fail init if missing.
+                            runCatching { openIap.setActivity(currentActivity) }
+                                .onFailure { Log.w(TAG, "initConnection: Activity missing; proceeding headless", it) }
 
                             // If already connected, short-circuit
                             if (connectionReady.get()) {
