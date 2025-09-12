@@ -3,14 +3,24 @@
 
 # Lint TypeScript/JS (and Kotlin if available)
 echo "Linting (tsc/eslint/prettier/kt)…"
-bun run lint:ci || {
-  echo "Lint failed. Aborting commit." >&2
-  exit 1
-}
+if command -v bun >/dev/null 2>&1; then
+  bun run lint:ci || { echo "Lint failed. Aborting commit." >&2; exit 1; }
+elif command -v pnpm >/dev/null 2>&1; then
+  pnpm run lint:ci || { echo "Lint failed. Aborting commit." >&2; exit 1; }
+elif command -v yarn >/dev/null 2>&1; then
+  yarn lint:ci || { echo "Lint failed. Aborting commit." >&2; exit 1; }
+else
+  npm run lint:ci || { echo "Lint failed. Aborting commit." >&2; exit 1; }
+fi
 
 # Run tests with coverage before committing to reduce CI failures
 echo "Running test coverage (pre-commit)…"
-bun run test:coverage || {
-  echo "Tests failed. Aborting commit." >&2
-  exit 1
-}
+if command -v bun >/dev/null 2>&1; then
+  bun run test:coverage || { echo "Tests failed. Aborting commit." >&2; exit 1; }
+elif command -v pnpm >/dev/null 2>&1; then
+  pnpm run test:coverage || { echo "Tests failed. Aborting commit." >&2; exit 1; }
+elif command -v yarn >/dev/null 2>&1; then
+  yarn test:coverage || { echo "Tests failed. Aborting commit." >&2; exit 1; }
+else
+  npm run test:coverage || { echo "Tests failed. Aborting commit." >&2; exit 1; }
+fi
