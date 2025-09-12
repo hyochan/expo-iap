@@ -25,6 +25,7 @@ class ExpoIapModule : Module() {
         const val TAG = "ExpoIapModule"
         private const val EVENT_PURCHASE_UPDATED = "purchase-updated"
         private const val EVENT_PURCHASE_ERROR = "purchase-error"
+        private const val MAX_BUFFERED_EVENTS = 200
     }
 
     private val job = Job()
@@ -42,10 +43,16 @@ class ExpoIapModule : Module() {
 
     private fun emitOrQueue(name: String, payload: Map<String, Any?>) {
         if (connectionReady.get()) {
-            sendEvent(name, payload)
-        } else {
-            pendingEvents.add(name to payload)
+            // Ensure event emission occurs on the main dispatcher
+            scope.launch { sendEvent(name, payload) }
+            return
         }
+        // Bound the buffer to prevent unbounded growth if init stalls
+        if (pendingEvents.size >= MAX_BUFFERED_EVENTS) {
+            pendingEvents.poll()
+            Log.w(TAG, "pendingEvents overflow; dropping oldest")
+        }
+        pendingEvents.add(name to payload)
     }
 
     // Mapping helpers now provided by openiap-google (toJSON helpers)
@@ -99,11 +106,12 @@ class ExpoIapModule : Module() {
 
                             // Mark ready then flush any buffered events
                             connectionReady.set(true)
-                            while (true) {
-                                val ev = pendingEvents.poll() ?: break
-                                runCatching { sendEvent(ev.first, ev.second) }
-                                    .onFailure { Log.e(TAG, "Failed to flush buffered event: ${ev.first}", it) }
-                            }
+                        while (true) {
+                            val ev = pendingEvents.poll() ?: break
+                            // Already on main dispatcher here; emit directly
+                            runCatching { sendEvent(ev.first, ev.second) }
+                                .onFailure { Log.e(TAG, "Failed to flush buffered event: ${ev.first}", it) }
+                        }
 
                             promise.resolve(true)
                         } catch (e: Exception) {
