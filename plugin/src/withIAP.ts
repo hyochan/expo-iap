@@ -54,8 +54,8 @@ const modifyAppBuildGradle = (
     language === 'kotlin'
       ? `    implementation("${ga}:${v}")`
       : `    implementation "${ga}:${v}"`;
-  // Pin OpenIAP Google library to 1.0.1
-  const openiapDep = impl('io.github.hyochan.openiap:openiap-google', '1.0.1');
+  // Pin OpenIAP Google library to 1.0.2
+  const openiapDep = impl('io.github.hyochan.openiap:openiap-google', '1.0.2');
 
   const hasGA = (ga: string) =>
     new RegExp(String.raw`\b(?:implementation|api)\s*\(?["']${ga}:`, 'm').test(
