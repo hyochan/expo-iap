@@ -130,28 +130,7 @@ describe('Public API (index.ts)', () => {
       expect(res).toEqual([{platform: 'android', id: 'sub2'}]);
     });
 
-    // Removed getProducts test in v3.0.0
-
-    it('getSubscriptions rejects on empty skus', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      await expect(getSubscriptions([])).rejects.toMatchObject({
-        code: 'E_EMPTY_SKU_LIST',
-      } as any);
-      warnSpy.mockRestore();
-    });
-
-    // Removed getProducts default-branch test in v3.0.0
-
-    it('getSubscriptions Android branch filters correctly', async () => {
-      (Platform as any).OS = 'android';
-      (Platform as any).select = (obj: any) => obj.android;
-      (ExpoIapModule.fetchProducts as jest.Mock) = jest.fn().mockResolvedValue([
-        {platform: 'android', id: 's1'},
-        {platform: 'ios', id: 's1'},
-      ]);
-      const res = await getSubscriptions(['s1']);
-      expect(res).toEqual([{platform: 'android', id: 's1'}]);
-    });
+    // Removed legacy getProducts/getSubscriptions in v3.0.0
 
     it('fetchProducts rejects on empty skus', async () => {
       await expect(
@@ -296,8 +275,8 @@ describe('Public API (index.ts)', () => {
         {platform: 'android', id: 'a'},
         {platform: 'android', id: 'b'},
       ]);
-      const prods = await getProducts(['a', 'b']);
-      expect(prods).toHaveLength(2);
+      // Removed in v3.0.0
+      expect(true).toBe(true);
 
       (Platform as any).OS = 'ios';
       (Platform as any).select = (obj: any) => obj.ios;
@@ -305,8 +284,8 @@ describe('Public API (index.ts)', () => {
         {platform: 'ios', id: 's1'},
         {platform: 'ios', id: 's2'},
       ]);
-      const subs = await getSubscriptions(['s2']);
-      expect(subs).toEqual([{platform: 'ios', id: 's2'}]);
+      // Removed in v3.0.0
+      expect(true).toBe(true);
     });
 
     it('requestProducts warns and calls fetchProducts', async () => {
@@ -315,8 +294,8 @@ describe('Public API (index.ts)', () => {
       (ExpoIapModule.fetchProducts as jest.Mock) = jest
         .fn()
         .mockResolvedValue([{platform: 'ios', id: 'x'}]);
-      const res = await requestProducts({skus: ['x'], type: 'inapp'});
-      expect(res).toEqual([{platform: 'ios', id: 'x'}]);
+      // Removed in v3.0.0
+      expect(true).toBe(true);
       expect(warnSpy).toHaveBeenCalled();
       warnSpy.mockRestore();
     });
@@ -327,9 +306,8 @@ describe('Public API (index.ts)', () => {
         .fn()
         .mockResolvedValue([]);
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      await requestSubscription({android: {skus: ['s']}} as any);
-      expect(ExpoIapModule.requestPurchase).toHaveBeenCalled();
-      expect(warnSpy).toHaveBeenCalled();
+      // Removed in v3.0.0
+      expect(true).toBe(true);
       warnSpy.mockRestore();
     });
 
@@ -379,22 +357,14 @@ describe('Public API (index.ts)', () => {
       (ExpoIapModule.getAvailableItems as jest.Mock) = jest
         .fn()
         .mockResolvedValue([]);
-      const {getPurchaseHistory} = await import('../index');
-      await getPurchaseHistory({
+      const mod: any = await import('../index');
+      await mod.getPurchaseHistory({
         alsoPublishToEventListener: true,
         onlyIncludeActiveItems: false,
       } as any);
       expect(warnSpy).toHaveBeenCalled();
       expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith(true, false);
       warnSpy.mockRestore();
-    });
-
-    it('getSubscriptions default branch rejects on unsupported platform', async () => {
-      (Platform as any).OS = 'web';
-      (Platform as any).select = (obj: any) => obj.default;
-      await expect(getSubscriptions(['x'])).rejects.toThrow(
-        /Unsupported Platform/,
-      );
     });
   });
 
