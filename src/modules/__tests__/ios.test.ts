@@ -29,20 +29,6 @@ import {
   requestPurchaseOnPromotedProductIOS,
   deepLinkToSubscriptionsIOS,
   isProductIOS,
-  // Deprecated wrappers
-  sync,
-  isEligibleForIntroOffer,
-  subscriptionStatus,
-  currentEntitlement,
-  latestTransaction,
-  beginRefundRequest,
-  showManageSubscriptions,
-  isTransactionVerified,
-  getTransactionJws,
-  presentCodeRedemptionSheet,
-  getAppTransaction,
-  // Listener wrapper
-  transactionUpdatedIOS,
 } from '../ios';
 import * as indexMod from '../../index';
 /* eslint-enable import/first */
@@ -71,8 +57,6 @@ describe('iOS Module Functions', () => {
           return {remove: jest.fn()} as any;
         });
 
-      const sub = transactionUpdatedIOS(userListener);
-      expect(typeof sub.remove).toBe('function');
       expect(userListener).toHaveBeenCalledWith({transaction: purchase});
       puSpy.mockRestore();
     });
@@ -266,115 +250,6 @@ describe('iOS Module Functions', () => {
     });
     afterEach(() => {
       warnSpy.mockRestore();
-    });
-
-    it('sync -> syncIOS', async () => {
-      (ExpoIapModule.syncIOS as jest.Mock).mockResolvedValue(null);
-      const res = await sync();
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.syncIOS).toHaveBeenCalled();
-      expect(res).toBeNull();
-    });
-
-    it('isEligibleForIntroOffer -> isEligibleForIntroOfferIOS', async () => {
-      (ExpoIapModule.isEligibleForIntroOfferIOS as jest.Mock).mockResolvedValue(
-        true,
-      );
-      const ok = await isEligibleForIntroOffer('group');
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.isEligibleForIntroOfferIOS).toHaveBeenCalledWith(
-        'group',
-      );
-      expect(ok).toBe(true);
-    });
-
-    it('subscriptionStatus -> subscriptionStatusIOS', async () => {
-      const status = [{state: 'subscribed'}] as any;
-      (ExpoIapModule.subscriptionStatusIOS as jest.Mock).mockResolvedValue(
-        status,
-      );
-      const res = await subscriptionStatus('sku');
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.subscriptionStatusIOS).toHaveBeenCalledWith('sku');
-      expect(res).toBe(status);
-    });
-
-    it('currentEntitlement -> currentEntitlementIOS', async () => {
-      const ent = {id: 'sku'} as any;
-      (ExpoIapModule.currentEntitlementIOS as jest.Mock).mockResolvedValue(ent);
-      const res = await currentEntitlement('sku');
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.currentEntitlementIOS).toHaveBeenCalledWith('sku');
-      expect(res).toBe(ent);
-    });
-
-    it('latestTransaction -> latestTransactionIOS', async () => {
-      const tx = {id: 'sku', transactionId: 'tid'} as any;
-      (ExpoIapModule.latestTransactionIOS as jest.Mock).mockResolvedValue(tx);
-      const res = await latestTransaction('sku');
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.latestTransactionIOS).toHaveBeenCalledWith('sku');
-      expect(res).toBe(tx);
-    });
-
-    it('beginRefundRequest -> beginRefundRequestIOS', async () => {
-      (ExpoIapModule.beginRefundRequestIOS as jest.Mock).mockResolvedValue(
-        'success',
-      );
-      const res = await beginRefundRequest('sku');
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.beginRefundRequestIOS).toHaveBeenCalledWith('sku');
-      expect(res).toBe('success');
-    });
-
-    it('showManageSubscriptions -> showManageSubscriptionsIOS', async () => {
-      (ExpoIapModule.showManageSubscriptionsIOS as jest.Mock).mockResolvedValue(
-        [],
-      );
-      const res = await showManageSubscriptions();
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.showManageSubscriptionsIOS).toHaveBeenCalled();
-      expect(res).toEqual([]);
-    });
-
-    it('isTransactionVerified -> isTransactionVerifiedIOS', async () => {
-      (ExpoIapModule.isTransactionVerifiedIOS as jest.Mock).mockResolvedValue(
-        true,
-      );
-      const res = await isTransactionVerified('sku');
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.isTransactionVerifiedIOS).toHaveBeenCalledWith(
-        'sku',
-      );
-      expect(res).toBe(true);
-    });
-
-    it('getTransactionJws -> getTransactionJwsIOS', async () => {
-      (ExpoIapModule.getTransactionJwsIOS as jest.Mock).mockResolvedValue(
-        'jws',
-      );
-      const res = await getTransactionJws('sku');
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.getTransactionJwsIOS).toHaveBeenCalledWith('sku');
-      expect(res).toBe('jws');
-    });
-
-    it('presentCodeRedemptionSheet -> presentCodeRedemptionSheetIOS', async () => {
-      (
-        ExpoIapModule.presentCodeRedemptionSheetIOS as jest.Mock
-      ).mockResolvedValue(true);
-      const res = await presentCodeRedemptionSheet();
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.presentCodeRedemptionSheetIOS).toHaveBeenCalled();
-      expect(res).toBe(true);
-    });
-
-    it('getAppTransaction -> getAppTransactionIOS', async () => {
-      (ExpoIapModule.getAppTransactionIOS as jest.Mock).mockResolvedValue(null);
-      const res = await getAppTransaction();
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.getAppTransactionIOS).toHaveBeenCalled();
-      expect(res).toBeNull();
     });
   });
 

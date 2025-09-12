@@ -37,7 +37,6 @@ export type PurchaseCommon = {
   id: string; // Transaction identifier - used by finishTransaction
   productId: string; // Product identifier - which product was purchased
   ids?: string[]; // Product identifiers for purchases that include multiple products
-  transactionId?: string; // @deprecated - use id instead
   transactionDate: number;
   transactionReceipt: string;
   purchaseToken?: string; // Unified purchase token (jwsRepresentation for iOS, purchaseToken for Android)
@@ -77,10 +76,6 @@ export type PurchaseResult = {
   debugMessage?: string;
   code?: string;
   message?: string;
-  /**
-   * @deprecated Use `purchaseToken` instead. This field will be removed in a future version.
-   */
-  purchaseTokenAndroid?: string;
   purchaseToken?: string;
 };
 /**
@@ -399,7 +394,6 @@ export interface RequestPurchaseAndroidProps {
  */
 export interface RequestSubscriptionAndroidProps
   extends RequestPurchaseAndroidProps {
-  readonly purchaseTokenAndroid?: string;
   readonly replacementModeAndroid?: number;
   readonly subscriptionOffers: {
     sku: string;

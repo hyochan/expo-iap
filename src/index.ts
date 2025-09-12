@@ -49,8 +49,6 @@ export const PI = ExpoIapModule.PI;
 export enum OpenIapEvent {
   PurchaseUpdated = 'purchase-updated',
   PurchaseError = 'purchase-error',
-  /** @deprecated Use PurchaseUpdated instead. This will be removed in a future version. */
-  TransactionIapUpdated = 'iap-transaction-updated',
   PromotedProductIOS = 'promoted-product-ios',
 }
 
@@ -139,88 +137,6 @@ export function initConnection(): Promise<boolean> {
   return Promise.resolve(result);
 }
 
-export const getProducts = async (skus: string[]): Promise<Product[]> => {
-  console.warn(
-    "`getProducts` is deprecated. Use `fetchProducts({ skus, type: 'inapp' })` instead. This function will be removed in version 3.0.0.",
-  );
-  if (!skus?.length) {
-    return Promise.reject(
-      new PurchaseError({
-        message: 'No SKUs provided',
-        code: ErrorCode.E_EMPTY_SKU_LIST,
-      }),
-    );
-  }
-
-  return Platform.select({
-    ios: async () => {
-      const rawItems = await ExpoIapModule.fetchProducts(skus);
-      return rawItems.filter((item: unknown) => {
-        if (!isProductIOS(item)) return false;
-        return (
-          typeof item === 'object' &&
-          item !== null &&
-          'id' in item &&
-          typeof item.id === 'string' &&
-          skus.includes(item.id)
-        );
-      }) as Product[];
-    },
-    android: async () => {
-      const products = await ExpoIapModule.fetchProducts('inapp', skus);
-      return products.filter((product: unknown) =>
-        isProductAndroid<Product>(product),
-      );
-    },
-    default: () => Promise.reject(new Error('Unsupported Platform')),
-  })();
-};
-
-export const getSubscriptions = async (
-  skus: string[],
-): Promise<SubscriptionProduct[]> => {
-  console.warn(
-    "`getSubscriptions` is deprecated. Use `fetchProducts({ skus, type: 'subs' })` instead. This function will be removed in version 3.0.0.",
-  );
-  if (!skus?.length) {
-    return Promise.reject(
-      new PurchaseError({
-        message: 'No SKUs provided',
-        code: ErrorCode.E_EMPTY_SKU_LIST,
-      }),
-    );
-  }
-
-  return Platform.select({
-    ios: async () => {
-      const rawItems = await ExpoIapModule.fetchProducts(skus);
-      return rawItems.filter((item: unknown) => {
-        if (!isProductIOS(item)) return false;
-        return (
-          typeof item === 'object' &&
-          item !== null &&
-          'id' in item &&
-          typeof item.id === 'string' &&
-          skus.includes(item.id)
-        );
-      }) as SubscriptionProduct[];
-    },
-    android: async () => {
-      const rawItems = await ExpoIapModule.fetchProducts('subs', skus);
-      return rawItems.filter((item: unknown) => {
-        if (!isProductAndroid(item)) return false;
-        return (
-          typeof item === 'object' &&
-          item !== null &&
-          'id' in item &&
-          typeof item.id === 'string' &&
-          skus.includes(item.id)
-        );
-      }) as SubscriptionProduct[];
-    },
-    default: () => Promise.reject(new Error('Unsupported Platform')),
-  })();
-};
 
 export async function endConnection(): Promise<boolean> {
   return ExpoIapModule.endConnection();
@@ -304,68 +220,10 @@ export const fetchProducts = async ({
   throw new Error('Unsupported platform');
 };
 
-/**
- * @deprecated Use `fetchProducts` instead. This method will be removed in version 3.0.0.
- *
- * The 'request' prefix should only be used for event-based operations that trigger
- * purchase flows. Since this function simply fetches product information, it has been
- * renamed to `fetchProducts` to follow OpenIAP terminology guidelines.
- *
- * @example
- * ```typescript
- * // Old way (deprecated)
- * const products = await requestProducts({
- *   skus: ['com.example.product1'],
- *   type: 'inapp'
- * });
- *
- * // New way (recommended)
- * const products = await fetchProducts({
- *   skus: ['com.example.product1'],
- *   type: 'inapp'
- * });
- * ```
- */
-export const requestProducts = async ({
-  skus,
-  type = 'inapp',
-}: {
-  skus: string[];
-  type?: 'inapp' | 'subs';
-}): Promise<Product[] | SubscriptionProduct[]> => {
-  console.warn(
-    "`requestProducts` is deprecated. Use `fetchProducts` instead. The 'request' prefix should only be used for event-based operations. This method will be removed in version 3.0.0.",
-  );
-  return fetchProducts({skus, type});
-};
 
 /**
  * @deprecated Use `getPurchaseHistories` instead. This function will be removed in version 3.0.0.
  */
-export const getPurchaseHistory = ({
-  alsoPublishToEventListener = false,
-  onlyIncludeActiveItems = false,
-  alsoPublishToEventListenerIOS,
-  onlyIncludeActiveItemsIOS,
-}: {
-  /** @deprecated Use alsoPublishToEventListenerIOS instead */
-  alsoPublishToEventListener?: boolean;
-  /** @deprecated Use onlyIncludeActiveItemsIOS instead */
-  onlyIncludeActiveItems?: boolean;
-  alsoPublishToEventListenerIOS?: boolean;
-  onlyIncludeActiveItemsIOS?: boolean;
-} = {}): Promise<Purchase[]> => {
-  console.warn(
-    '`getPurchaseHistory` is deprecated. Use `getPurchaseHistories` instead. This function will be removed in version 3.0.0.',
-  );
-  // Use available purchases as a best-effort replacement
-  return getAvailablePurchases({
-    alsoPublishToEventListenerIOS:
-      alsoPublishToEventListenerIOS ?? alsoPublishToEventListener,
-    onlyIncludeActiveItemsIOS:
-      onlyIncludeActiveItemsIOS ?? onlyIncludeActiveItems,
-  });
-};
 
 // NOTE: `getPurchaseHistories` removed in v2.9.0. Use `getAvailablePurchases` instead.
 
@@ -568,7 +426,6 @@ export const requestPurchase = (
         isOfferPersonalized,
         subscriptionOffers = [],
         replacementModeAndroid = -1,
-        purchaseTokenAndroid,
         purchaseToken,
       } = normalizedRequest;
 
@@ -576,7 +433,7 @@ export const requestPurchase = (
         return ExpoIapModule.requestPurchase({
           type: 'subs',
           skuArr: skus,
-          purchaseToken: purchaseTokenAndroid || purchaseToken,
+          purchaseToken,
           replacementMode: replacementModeAndroid,
           obfuscatedAccountId: obfuscatedAccountIdAndroid,
           obfuscatedProfileId: obfuscatedProfileIdAndroid,
@@ -594,43 +451,6 @@ export const requestPurchase = (
   return Promise.resolve(); // Fallback for unsupported platforms
 };
 
-/**
- * @deprecated Use `requestPurchase({ request, type: 'subs' })` instead. This method will be removed in version 3.0.0.
- *
- * @example
- * ```typescript
- * // Old way (deprecated)
- * await requestSubscription({
- *   sku: subscriptionId,
- *   // or for Android
- *   skus: [subscriptionId],
- * });
- *
- * // New way (recommended)
- * await requestPurchase({
- *   request: {
- *     ios: { sku: subscriptionId },
- *     android: {
- *       skus: [subscriptionId],
- *       subscriptionOffers: [{ sku: subscriptionId, offerToken: 'token' }]
- *     }
- *   },
- *   type: 'subs'
- * });
- * ```
- */
-export const requestSubscription = async (
-  request: RequestSubscriptionProps,
-): Promise<Purchase | Purchase[] | null | void> => {
-  console.warn(
-    "`requestSubscription` is deprecated and will be removed in version 3.0.0. Use `requestPurchase({ request, type: 'subs' })` instead.",
-  );
-  return (await requestPurchase({request, type: 'subs'})) as
-    | Purchase
-    | Purchase[]
-    | null
-    | void;
-};
 
 export const finishTransaction = ({
   purchase,
@@ -655,8 +475,7 @@ export const finishTransaction = ({
         const androidPurchase = purchase as PurchaseAndroid;
 
         // Use purchaseToken if available, fallback to purchaseTokenAndroid for backward compatibility
-        const token =
-          androidPurchase.purchaseToken || androidPurchase.purchaseTokenAndroid;
+        const token = androidPurchase.purchaseToken;
 
         if (!token) {
           return Promise.reject(

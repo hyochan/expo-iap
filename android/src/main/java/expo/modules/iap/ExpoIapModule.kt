@@ -259,7 +259,7 @@ class ExpoIapModule : Module() {
                 scope.launch {
                     try {
                         openIap.consumePurchaseAndroid(token)
-                        promise.resolve(mapOf("responseCode" to 0, "purchaseTokenAndroid" to token))
+                        promise.resolve(mapOf("responseCode" to 0, "purchaseToken" to token))
                     } catch (e: Exception) {
                         promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
                     }

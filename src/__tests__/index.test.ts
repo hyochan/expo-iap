@@ -19,10 +19,6 @@ import {
   requestPurchase,
   initConnection,
   endConnection,
-  getProducts,
-  getSubscriptions,
-  requestProducts,
-  requestSubscription,
   finishTransaction,
   getStorefrontIOS,
   getStorefront,
@@ -134,13 +130,7 @@ describe('Public API (index.ts)', () => {
       expect(res).toEqual([{platform: 'android', id: 'sub2'}]);
     });
 
-    it('getProducts rejects on empty skus', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      await expect(getProducts([])).rejects.toMatchObject({
-        code: 'E_EMPTY_SKU_LIST',
-      } as any);
-      warnSpy.mockRestore();
-    });
+    // Removed getProducts test in v3.0.0
 
     it('getSubscriptions rejects on empty skus', async () => {
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -150,11 +140,7 @@ describe('Public API (index.ts)', () => {
       warnSpy.mockRestore();
     });
 
-    it('getProducts default branch rejects on unsupported platform', async () => {
-      (Platform as any).OS = 'web';
-      (Platform as any).select = (obj: any) => obj.default;
-      await expect(getProducts(['x'])).rejects.toThrow(/Unsupported Platform/);
-    });
+    // Removed getProducts default-branch test in v3.0.0
 
     it('getSubscriptions Android branch filters correctly', async () => {
       (Platform as any).OS = 'android';
