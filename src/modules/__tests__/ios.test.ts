@@ -37,7 +37,7 @@ describe('iOS Module Functions', () => {
     jest.clearAllMocks();
   });
 
-  // Removed in v3: transactionUpdatedIOS wrapper no longer exists
+  // v3: transactionUpdatedIOS wrapper removed
 
   describe('isEligibleForIntroOfferIOS', () => {
     it('should call native module with correct groupId parameter', async () => {
@@ -220,20 +220,7 @@ describe('iOS Module Functions', () => {
     });
   });
 
-  describe.skip('Deprecated wrappers delegate and warn', () => {
-    let warnSpy: jest.SpyInstance;
-    beforeEach(() => {
-      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    });
-    afterEach(() => {
-      warnSpy.mockRestore();
-    });
-    // Placeholder to satisfy Jest: this block intentionally contains
-    // no active tests as the deprecated APIs were removed in v3.
-    it.skip('deprecated APIs removed in v3', () => {
-      expect(true).toBe(true);
-    });
-  });
+  // Removed: deprecated wrappers were dropped in v3
 
   describe('Deep Link Functions', () => {
     it('should open subscriptions management URL', async () => {

@@ -67,24 +67,7 @@ type UseIap = {
     skus: string[];
     type?: 'inapp' | 'subs';
   }) => Promise<void>;
-  /**
-   * @deprecated Use fetchProducts({ skus, type: 'inapp' | 'subs' }) instead. This method will be removed in version 3.0.0.
-   * The 'request' prefix should only be used for event-based operations.
-   */
-  requestProducts: (params: {
-    skus: string[];
-    type?: 'inapp' | 'subs';
-  }) => Promise<void>;
-  /**
-   * @deprecated Use fetchProducts({ skus, type: 'inapp' }) instead. This method will be removed in version 3.0.0.
-   * Note: This method internally uses fetchProducts, so no deprecation warning is shown.
-   */
-  getProducts: (skus: string[]) => Promise<void>;
-  /**
-   * @deprecated Use fetchProducts({ skus, type: 'subs' }) instead. This method will be removed in version 3.0.0.
-   * Note: This method internally uses fetchProducts, so no deprecation warning is shown.
-   */
-  getSubscriptions: (skus: string[]) => Promise<void>;
+  // Legacy helpers removed in v3: requestProducts/getProducts/getSubscriptions
   requestPurchase: (params: {
     request: RequestPurchaseProps | RequestSubscriptionProps;
     type?: 'inapp' | 'subs';
@@ -186,23 +169,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     setCurrentPurchaseError(undefined);
   }, []);
 
-  const getProductsInternal = useCallback(
-    async (skus: string[]): Promise<void> => {
-      try {
-        const result = await fetchProducts({skus, type: 'inapp'});
-        setProducts((prevProducts) =>
-          mergeWithDuplicateCheck(
-            prevProducts,
-            result as Product[],
-            (product) => product.id,
-          ),
-        );
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    },
-    [mergeWithDuplicateCheck],
-  );
+  // Removed v3: explicit getProductsInternal helper
 
   const getSubscriptionsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
@@ -254,18 +221,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     [mergeWithDuplicateCheck],
   );
 
-  const requestProductsInternal = useCallback(
-    async (params: {
-      skus: string[];
-      type?: 'inapp' | 'subs';
-    }): Promise<void> => {
-      console.warn(
-        "`requestProducts` is deprecated in useIAP hook. Use the new `fetchProducts` method instead. The 'request' prefix should only be used for event-based operations.",
-      );
-      return fetchProductsInternal(params);
-    },
-    [fetchProductsInternal],
-  );
+  // Removed in v3: requestProducts helper
 
   const getAvailablePurchasesInternal = useCallback(async (): Promise<void> => {
     try {
@@ -509,12 +465,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     clearCurrentPurchaseError,
     getAvailablePurchases: getAvailablePurchasesInternal,
     fetchProducts: fetchProductsInternal,
-    requestProducts: requestProductsInternal,
     requestPurchase: requestPurchaseWithReset,
     validateReceipt,
     restorePurchases: restorePurchasesInternal,
-    getProducts: getProductsInternal,
-    getSubscriptions: getSubscriptionsInternal,
+    // internal getters kept for hook state management
     getPromotedProductIOS,
     requestPurchaseOnPromotedProductIOS,
     getActiveSubscriptions: getActiveSubscriptionsInternal,

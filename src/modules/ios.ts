@@ -20,19 +20,6 @@ export type TransactionEvent = {
 };
 
 // Listeners
-/**
- * @deprecated Use `purchaseUpdatedListener` instead. This function will be removed in a future version.
- *
- * The `transactionUpdatedIos` function is redundant as it simply wraps `purchaseUpdatedListener`.
- * You can achieve the same functionality by using `purchaseUpdatedListener` directly.
- *
- * @example
- * // Instead of:
- * // transactionUpdatedIos((event) => { ... });
- *
- * // Use:
- * // purchaseUpdatedListener((purchase) => { ... });
- */
 // transactionUpdatedIOS removed in v3.0.0. Use purchaseUpdatedListener directly.
 
 // Type guards
@@ -306,4 +293,4 @@ export const clearTransactionIOS = (): Promise<void> => {
 export const deepLinkToSubscriptionsIOS = (): Promise<void> =>
   Linking.openURL('https://apps.apple.com/account/subscriptions');
 
-// Deprecated iOS aliases removed in v3.0.0
+// iOS-specific APIs only; cross-platform wrappers live in src/index.ts

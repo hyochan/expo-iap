@@ -12,10 +12,6 @@ describe('iOS Functions Tests', () => {
       expect(typeof ExpoIap.validateReceiptIOS).toBe('function');
     });
 
-    it('should export deprecated getAppTransaction function', () => {
-      expect(ExpoIap.getAppTransaction).toBeDefined();
-      expect(typeof ExpoIap.getAppTransaction).toBe('function');
-    });
 
     // Note: validateReceiptIOS is not deprecated, but there might be deprecated
     // aliases for backward compatibility
@@ -103,32 +99,7 @@ describe('iOS Functions Tests', () => {
       );
     });
 
-    it('should handle deprecated getAppTransaction function', async () => {
-      const mockTransaction: ExpoIap.AppTransactionIOS = {
-        appTransactionId: 'deprecated-test',
-        bundleId: 'com.example.app',
-        appVersion: '1.0.0',
-        originalAppVersion: '1.0.0',
-        originalPurchaseDate: Date.now(),
-        deviceVerification: 'verification',
-        deviceVerificationNonce: 'nonce',
-        environment: 'Sandbox',
-        signedDate: Date.now(),
-        appId: 123456,
-        appVersionId: 789012,
-        originalPlatform: 'iOS',
-      };
-
-      (ExpoIap.getAppTransaction as jest.Mock).mockResolvedValue(
-        mockTransaction,
-      );
-
-      const result = await ExpoIap.getAppTransaction();
-
-      expect(ExpoIap.getAppTransaction).toHaveBeenCalledTimes(1);
-      expect(result).toEqual(mockTransaction);
-      expect(result?.environment).toBe('Sandbox');
-    });
+    // v3: legacy getAppTransaction alias removed
   });
 
   describe('Type Exports', () => {
@@ -170,19 +141,6 @@ describe('iOS Functions Tests', () => {
       expect(ExpoIap.presentCodeRedemptionSheetIOS).toBeDefined();
     });
 
-    it('should export deprecated iOS functions', () => {
-      // Deprecated functions without IOS suffix
-      expect(ExpoIap.sync).toBeDefined();
-      expect(ExpoIap.isEligibleForIntroOffer).toBeDefined();
-      expect(ExpoIap.subscriptionStatus).toBeDefined();
-      expect(ExpoIap.currentEntitlement).toBeDefined();
-      expect(ExpoIap.latestTransaction).toBeDefined();
-      expect(ExpoIap.beginRefundRequest).toBeDefined();
-      expect(ExpoIap.showManageSubscriptions).toBeDefined();
-      expect(ExpoIap.getReceiptIOS).toBeDefined();
-      expect(ExpoIap.isTransactionVerified).toBeDefined();
-      expect(ExpoIap.getTransactionJws).toBeDefined();
-      expect(ExpoIap.presentCodeRedemptionSheet).toBeDefined();
-    });
+    // v3: non‑suffixed iOS aliases removed
   });
 });

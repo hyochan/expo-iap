@@ -58,7 +58,6 @@ const createMockAndroidSubscription = () => ({
 const mockUseIAP = jest.fn();
 jest.mock('../../src', () => ({
   initConnection: mockInitConnection,
-  requestProducts: jest.fn(),
   requestPurchase: mockRequestPurchase,
   useIAP: () => mockUseIAP(),
 }));

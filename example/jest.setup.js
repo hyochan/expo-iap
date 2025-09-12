@@ -38,10 +38,8 @@ jest.mock('expo-iap', () => {
     // Core functions
     initConnection: jest.fn(),
     endConnection: jest.fn(),
-    getProducts: mockGetProducts,
-    getSubscriptions: mockGetSubscriptions,
     fetchProducts: mockFetchProducts,
-    requestProducts: jest.fn(),
+    // v3: legacy helpers removed
     requestPurchase: mockRequestPurchase,
     finishTransaction: mockFinishTransaction,
     // getPurchaseHistories removed in v2.9.0
@@ -63,21 +61,8 @@ jest.mock('expo-iap', () => {
     getAppTransactionIOS: jest.fn(),
     validateReceiptIOS: jest.fn(),
 
-    // Deprecated iOS functions
+    // Cross-platform storefront helper
     getStorefront: jest.fn(),
-    sync: jest.fn(),
-    isEligibleForIntroOffer: jest.fn(),
-    subscriptionStatus: jest.fn(),
-    currentEntitlement: jest.fn(),
-    latestTransaction: jest.fn(),
-    beginRefundRequest: jest.fn(),
-    showManageSubscriptions: jest.fn(),
-    getReceiptIOS: jest.fn(),
-    isTransactionVerified: jest.fn(),
-    getTransactionJws: jest.fn(),
-    presentCodeRedemptionSheet: jest.fn(),
-    getAppTransaction: jest.fn(),
-    validateReceiptIOS: jest.fn(),
 
     // Android functions
     deepLinkToSubscriptionsAndroid: jest.fn(),
@@ -98,8 +83,7 @@ jest.mock('expo-iap', () => {
       currentPurchase: null,
       currentPurchaseError: null,
       fetchProducts: mockFetchProducts,
-      getProducts: mockGetProducts,
-      getSubscriptions: mockGetSubscriptions,
+      // v3: legacy helpers removed from hook
       requestPurchase: mockRequestPurchase,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,

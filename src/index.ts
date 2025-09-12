@@ -219,22 +219,10 @@ export const fetchProducts = async ({
   throw new Error('Unsupported platform');
 };
 
-/**
- * @deprecated Use `getPurchaseHistories` instead. This function will be removed in version 3.0.0.
- */
-
-// NOTE: `getPurchaseHistories` removed in v2.9.0. Use `getAvailablePurchases` instead.
-
 export const getAvailablePurchases = ({
-  alsoPublishToEventListener = false,
-  onlyIncludeActiveItems = true,
-  alsoPublishToEventListenerIOS,
-  onlyIncludeActiveItemsIOS,
+  alsoPublishToEventListenerIOS = false,
+  onlyIncludeActiveItemsIOS = true,
 }: {
-  /** @deprecated Use alsoPublishToEventListenerIOS instead */
-  alsoPublishToEventListener?: boolean;
-  /** @deprecated Use onlyIncludeActiveItemsIOS instead */
-  onlyIncludeActiveItems?: boolean;
   alsoPublishToEventListenerIOS?: boolean;
   onlyIncludeActiveItemsIOS?: boolean;
 } = {}): Promise<Purchase[]> =>
@@ -242,8 +230,8 @@ export const getAvailablePurchases = ({
     Platform.select({
       ios: () =>
         ExpoIapModule.getAvailableItems(
-          alsoPublishToEventListenerIOS ?? alsoPublishToEventListener,
-          onlyIncludeActiveItemsIOS ?? onlyIncludeActiveItems,
+          alsoPublishToEventListenerIOS,
+          onlyIncludeActiveItemsIOS,
         ),
       android: () => ExpoIapModule.getAvailableItems(),
     }) || (() => Promise.resolve([]))

@@ -17,20 +17,7 @@ describe('Core Functions Tests', () => {
       expect(typeof ExpoIap.fetchProducts).toBe('function');
     });
 
-    it('should export deprecated requestProducts function', () => {
-      expect(ExpoIap.requestProducts).toBeDefined();
-      expect(typeof ExpoIap.requestProducts).toBe('function');
-    });
-
-    it('should export deprecated getProducts function', () => {
-      expect(ExpoIap.getProducts).toBeDefined();
-      expect(typeof ExpoIap.getProducts).toBe('function');
-    });
-
-    it('should export deprecated getSubscriptions function', () => {
-      expect(ExpoIap.getSubscriptions).toBeDefined();
-      expect(typeof ExpoIap.getSubscriptions).toBe('function');
-    });
+    // v3: legacy helpers removed (requestProducts/getProducts/getSubscriptions)
 
     it('should export requestPurchase function', () => {
       expect(ExpoIap.requestPurchase).toBeDefined();
@@ -52,7 +39,7 @@ describe('Core Functions Tests', () => {
       expect(typeof ExpoIap.getStorefrontIOS).toBe('function');
     });
 
-    it('should export deprecated getStorefront function', () => {
+    it('should export getStorefront function', () => {
       expect(ExpoIap.getStorefront).toBeDefined();
       expect(typeof ExpoIap.getStorefront).toBe('function');
     });
