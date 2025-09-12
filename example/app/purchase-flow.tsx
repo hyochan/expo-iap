@@ -113,6 +113,12 @@ export default function PurchaseFlow() {
     setPurchaseResult('Processing purchase...');
 
     // Fire-and-forget: requestPurchase is event-based; handle results via hook callbacks
+    if (typeof requestPurchase !== 'function') {
+      console.warn('[PurchaseFlow] requestPurchase missing (test/mock env)');
+      setIsProcessing(false);
+      setPurchaseResult('Cannot start purchase in test/mock environment.');
+      return;
+    }
     void requestPurchase({
       request: {
         ios: {

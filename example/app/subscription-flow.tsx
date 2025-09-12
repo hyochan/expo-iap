@@ -386,11 +386,17 @@ export default function SubscriptionFlow() {
     const subscription = subscriptions.find((sub) => sub.id === itemId);
 
     // Fire-and-forget: requestPurchase is event-based; handle results via hook callbacks
+    if (typeof requestPurchase !== 'function') {
+      console.warn('[SubscriptionFlow] requestPurchase missing (test/mock env)');
+      setIsProcessing(false);
+      setPurchaseResult('Cannot start purchase in test/mock environment.');
+      return;
+    }
     void requestPurchase({
       request: {
         ios: {
           sku: itemId,
-          appAccountToken: 'user-123',
+          // appAccountToken can be provided in real apps if needed
         },
         android: {
           skus: [itemId],
