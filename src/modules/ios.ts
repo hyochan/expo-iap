@@ -20,7 +20,6 @@ export type TransactionEvent = {
 };
 
 // Listeners
-// transactionUpdatedIOS removed in v3.0.0. Use purchaseUpdatedListener directly.
 
 // Type guards
 export function isProductIOS<T extends {platform?: string}>(
@@ -261,8 +260,6 @@ export const getPromotedProductIOS = (): Promise<Product | null> => {
 export const requestPurchaseOnPromotedProductIOS = (): Promise<void> => {
   return ExpoIapModule.requestPurchaseOnPromotedProductIOS();
 };
-
-// NOTE: buyPromotedProductIOS removed in v2.9.0. Use requestPurchaseOnPromotedProductIOS.
 
 /**
  * Get pending transactions that haven't been finished yet (iOS only).

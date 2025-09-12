@@ -67,7 +67,7 @@ type UseIap = {
     skus: string[];
     type?: 'inapp' | 'subs';
   }) => Promise<void>;
-  // Legacy helpers removed in v3: requestProducts/getProducts/getSubscriptions
+
   requestPurchase: (params: {
     request: RequestPurchaseProps | RequestSubscriptionProps;
     type?: 'inapp' | 'subs';
@@ -105,7 +105,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const [products, setProducts] = useState<Product[]>([]);
   const [promotedProductsIOS] = useState<Purchase[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionProduct[]>([]);
-  // Removed in v2.9.0: purchaseHistories state and related API
+
   const [availablePurchases, setAvailablePurchases] = useState<Purchase[]>([]);
   const [currentPurchase, setCurrentPurchase] = useState<Purchase>();
   const [promotedProductIOS, setPromotedProductIOS] = useState<Product>();
@@ -169,8 +169,6 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     setCurrentPurchaseError(undefined);
   }, []);
 
-  // Removed v3: explicit getProductsInternal helper
-
   const getSubscriptionsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
       try {
@@ -221,8 +219,6 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     [mergeWithDuplicateCheck],
   );
 
-  // Removed in v3: requestProducts helper
-
   const getAvailablePurchasesInternal = useCallback(async (): Promise<void> => {
     try {
       const result = await getAvailablePurchases({
@@ -259,8 +255,6 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     },
     [],
   );
-
-  // NOTE: getPurchaseHistories removed in v2.9.0. Use getAvailablePurchases instead.
 
   const finishTransaction = useCallback(
     async ({

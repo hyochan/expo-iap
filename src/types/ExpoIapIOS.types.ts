@@ -145,7 +145,6 @@ export type ProductPurchaseIOS = PurchaseCommon & {
   currencyCodeIOS?: string;
   currencySymbolIOS?: string;
   countryCodeIOS?: string;
-  // jwsRepresentationIOS removed in v3.0.0. Use `purchaseToken` on PurchaseCommon.
 };
 
 // Preferred naming

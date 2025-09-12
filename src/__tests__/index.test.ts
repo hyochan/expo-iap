@@ -275,7 +275,6 @@ describe('Public API (index.ts)', () => {
         {platform: 'android', id: 'a'},
         {platform: 'android', id: 'b'},
       ]);
-      // Removed in v3.0.0
       expect(true).toBe(true);
 
       (Platform as any).OS = 'ios';
@@ -284,11 +283,10 @@ describe('Public API (index.ts)', () => {
         {platform: 'ios', id: 's1'},
         {platform: 'ios', id: 's2'},
       ]);
-      // Removed in v3.0.0
       expect(true).toBe(true);
     });
 
-    it('requestProducts removed in v3.0.0', async () => {
+    it('requestProducts placeholder (removed in v3)', async () => {
       // Removed legacy API in v3; keeping placeholder to maintain suite structure
       expect(true).toBe(true);
     });
@@ -299,7 +297,6 @@ describe('Public API (index.ts)', () => {
         .fn()
         .mockResolvedValue([]);
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      // Removed in v3.0.0
       expect(true).toBe(true);
       warnSpy.mockRestore();
     });
@@ -343,7 +340,7 @@ describe('Public API (index.ts)', () => {
       expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith(false, true);
     });
 
-    it('getPurchaseHistory removed in v3.0.0', () => {
+    it('getPurchaseHistory placeholder (removed in v3)', () => {
       // Removed legacy API in v3; keeping placeholder to maintain suite structure
       expect(true).toBe(true);
     });

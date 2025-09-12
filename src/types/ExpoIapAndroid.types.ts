@@ -117,7 +117,6 @@ export enum PurchaseAndroidState {
 }
 
 // Legacy naming for backward compatibility
-// Removed legacy alias `PurchaseStateAndroid` in v2.9.0
 
 // Legacy naming for backward compatibility
 export type ProductPurchaseAndroid = PurchaseCommon & {
@@ -135,5 +134,3 @@ export type ProductPurchaseAndroid = PurchaseCommon & {
 
 // Preferred naming
 export type PurchaseAndroid = ProductPurchaseAndroid;
-
-// Removed legacy Android alias types in v2.9.0

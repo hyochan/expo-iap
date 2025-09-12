@@ -77,10 +77,10 @@ export const getActiveSubscriptions = async (
       return false;
     });
 
-    // Deduplicate by a stable unique key (prefer purchaseToken, then id, then productId)
+    // Deduplicate by transaction identifier (id)
     const seen = new Set<string>();
     const dedupedPurchases = filteredPurchases.filter((p) => {
-      const key = String(p.purchaseToken || p.id || p.productId);
+      const key = String(p.id);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;

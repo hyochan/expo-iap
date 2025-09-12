@@ -32,17 +32,16 @@ jest.mock('expo-iap', () => {
   const mockGetProducts = jest.fn();
   const mockGetSubscriptions = jest.fn();
   const mockRequestPurchase = jest.fn();
-  // Removed in v2.9.0
 
   return {
     // Core functions
     initConnection: jest.fn(),
     endConnection: jest.fn(),
     fetchProducts: mockFetchProducts,
-    // v3: legacy helpers removed
+
     requestPurchase: mockRequestPurchase,
     finishTransaction: mockFinishTransaction,
-    // getPurchaseHistories removed in v2.9.0
+
     getAvailablePurchases: mockGetAvailablePurchases,
 
     // iOS functions with IOS suffix
@@ -83,7 +82,7 @@ jest.mock('expo-iap', () => {
       currentPurchase: null,
       currentPurchaseError: null,
       fetchProducts: mockFetchProducts,
-      // v3: legacy helpers removed from hook
+
       requestPurchase: mockRequestPurchase,
       getAvailablePurchases: mockGetAvailablePurchases,
       finishTransaction: mockFinishTransaction,

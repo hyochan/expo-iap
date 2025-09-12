@@ -69,8 +69,6 @@ export type Purchase =
   | (PurchaseAndroid & AndroidPlatform)
   | (PurchaseIOS & IosPlatform);
 
-// Removed legacy type aliases `ProductPurchase` and `SubscriptionPurchase` in v2.9.0
-
 export type PurchaseResult = {
   responseCode?: number;
   debugMessage?: string;

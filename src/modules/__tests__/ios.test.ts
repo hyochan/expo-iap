@@ -37,8 +37,6 @@ describe('iOS Module Functions', () => {
     jest.clearAllMocks();
   });
 
-  // v3: transactionUpdatedIOS wrapper removed
-
   describe('isEligibleForIntroOfferIOS', () => {
     it('should call native module with correct groupId parameter', async () => {
       const mockGroupId = 'test-subscription-group';
@@ -219,8 +217,6 @@ describe('iOS Module Functions', () => {
       });
     });
   });
-
-  // Removed: deprecated wrappers were dropped in v3
 
   describe('Deep Link Functions', () => {
     it('should open subscriptions management URL', async () => {

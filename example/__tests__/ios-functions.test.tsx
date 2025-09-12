@@ -12,7 +12,6 @@ describe('iOS Functions Tests', () => {
       expect(typeof ExpoIap.validateReceiptIOS).toBe('function');
     });
 
-
     // Note: validateReceiptIOS is not deprecated, but there might be deprecated
     // aliases for backward compatibility
   });
@@ -98,8 +97,6 @@ describe('iOS Functions Tests', () => {
         'getAppTransaction requires Xcode 15.0+ with iOS 16.0 SDK for compilation',
       );
     });
-
-    // v3: legacy getAppTransaction alias removed
   });
 
   describe('Type Exports', () => {
@@ -140,7 +137,5 @@ describe('iOS Functions Tests', () => {
       expect(ExpoIap.getTransactionJwsIOS).toBeDefined();
       expect(ExpoIap.presentCodeRedemptionSheetIOS).toBeDefined();
     });
-
-    // v3: non‑suffixed iOS aliases removed
   });
 });
