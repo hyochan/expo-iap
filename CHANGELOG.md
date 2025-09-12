@@ -1,9 +1,10 @@
 # CHANGELOG
 
-## 3.0.1 - 2025-09-13
+## 3.0.2 - 2025-09-13
 
 - Android: Ensure `openiap-google:1.1.0` is added inside `dependencies {}` and replace/dedupe existing entries. In local dev, remove the Maven line and rely on `project(':openiap-google')`. Library fallback bumped to 1.1.0.
 - iOS: Honor `enableLocalDev: false` even when `localPath` is set. Ensure CocoaPods CDN in Podfile and remove any stale local `pod 'openiap', :path => ...` lines.
+- iOS: Fix build error "cannot convert value of type '[[String : Any?]]'" by returning non-optional dictionaries from bridge methods.
 - Misc: Drop legacy Billing/GMS cleanup patterns, simplify prebuild logs, and add a short release blog post.
 
 ## 3.0.0 - 2025-09-13
