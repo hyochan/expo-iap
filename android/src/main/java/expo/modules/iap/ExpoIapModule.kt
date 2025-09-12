@@ -15,6 +15,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -36,6 +38,7 @@ class ExpoIapModule : Module() {
     private var listenersAttached = false
     private val pendingEvents = ConcurrentLinkedQueue<Pair<String, Map<String, Any?>>>()
     private val connectionReady = AtomicBoolean(false)
+    private val connectionMutex = Mutex()
 
     private fun emitOrQueue(name: String, payload: Map<String, Any?>) {
         if (connectionReady.get()) {
@@ -59,55 +62,50 @@ class ExpoIapModule : Module() {
 
             AsyncFunction("initConnection") { promise: Promise ->
                 scope.launch {
-                    try {
-                        openIap.setActivity(currentActivity)
+                    connectionMutex.withLock {
+                        try {
+                            openIap.setActivity(currentActivity)
 
-                        // If already connected, short-circuit
-                        if (connectionReady.get()) {
+                            // If already connected, short-circuit
+                            if (connectionReady.get()) {
+                                promise.resolve(true)
+                                return@withLock
+                            }
+
+                            // Attach listeners early to avoid races during init
+                            if (!listenersAttached) {
+                                listenersAttached = true
+                                openIap.addPurchaseUpdateListener { p ->
+                                    runCatching { emitOrQueue(EVENT_PURCHASE_UPDATED, p.toJSON()) }
+                                        .onFailure { Log.e(TAG, "Failed to buffer/send PURCHASE_UPDATED", it) }
+                                }
+                                openIap.addPurchaseErrorListener { e ->
+                                    runCatching { emitOrQueue(EVENT_PURCHASE_ERROR, e.toJSON()) }
+                                        .onFailure { Log.e(TAG, "Failed to buffer/send PURCHASE_ERROR", it) }
+                                }
+                            }
+
+                            val ok = openIap.initConnection()
+
+                            if (!ok) {
+                                // Clear any buffered events from a failed init
+                                pendingEvents.clear()
+                                promise.reject(OpenIapError.E_INIT_CONNECTION, "Failed to initialize connection", null)
+                                return@withLock
+                            }
+
+                            // Mark ready then flush any buffered events
+                            connectionReady.set(true)
+                            while (true) {
+                                val ev = pendingEvents.poll() ?: break
+                                runCatching { sendEvent(ev.first, ev.second) }
+                                    .onFailure { Log.e(TAG, "Failed to flush buffered event: ${ev.first}", it) }
+                            }
+
                             promise.resolve(true)
-                            return@launch
+                        } catch (e: Exception) {
+                            promise.reject(OpenIapError.E_INIT_CONNECTION, e.message, e)
                         }
-
-                        // Attach listeners early to avoid races during init
-                        if (!listenersAttached) {
-                            listenersAttached = true
-                            openIap.addPurchaseUpdateListener { p ->
-                                runCatching {
-                                    emitOrQueue(EVENT_PURCHASE_UPDATED, p.toJSON())
-                                }.onFailure {
-                                    Log.e(TAG, "Failed to buffer/send PURCHASE_UPDATED", it)
-                                }
-                            }
-                            openIap.addPurchaseErrorListener { e ->
-                                runCatching {
-                                    emitOrQueue(EVENT_PURCHASE_ERROR, e.toJSON())
-                                }.onFailure {
-                                    Log.e(TAG, "Failed to buffer/send PURCHASE_ERROR", it)
-                                }
-                            }
-                        }
-
-                        val ok = openIap.initConnection()
-
-                        if (!ok) {
-                            // Clear any buffered events from a failed init
-                            pendingEvents.clear()
-                            promise.reject(OpenIapError.E_INIT_CONNECTION, "Failed to initialize connection", null)
-                            return@launch
-                        }
-
-                        // Mark ready then flush any buffered events
-                        connectionReady.set(true)
-                        while (true) {
-                            val ev = pendingEvents.poll() ?: break
-                            runCatching { sendEvent(ev.first, ev.second) }
-                                .onFailure { Log.e(TAG, "Failed to flush buffered event: ${ev.first}", it) }
-                        }
-
-                        promise.resolve(true)
-
-                    } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_INIT_CONNECTION, e.message, e)
                     }
                 }
             }
@@ -115,11 +113,13 @@ class ExpoIapModule : Module() {
 
             AsyncFunction("endConnection") { promise: Promise ->
                 scope.launch {
-                    runCatching { openIap.endConnection() }
-                    // Reset connection state and clear any buffered events
-                    connectionReady.set(false)
-                    pendingEvents.clear()
-                    promise.resolve(true)
+                    connectionMutex.withLock {
+                        runCatching { openIap.endConnection() }
+                        // Reset connection state and clear any buffered events
+                        connectionReady.set(false)
+                        pendingEvents.clear()
+                        promise.resolve(true)
+                    }
                 }
             }
 
@@ -167,7 +167,7 @@ class ExpoIapModule : Module() {
                         val code = openIap.getStorefront()
                         promise.resolve(code)
                     } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
+                        promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, e)
                     }
                 }
             }
