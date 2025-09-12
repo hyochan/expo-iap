@@ -30,7 +30,6 @@ import {
   deepLinkToSubscriptionsIOS,
   isProductIOS,
 } from '../ios';
-import * as indexMod from '../../index';
 /* eslint-enable import/first */
 
 describe('iOS Module Functions', () => {
@@ -38,29 +37,7 @@ describe('iOS Module Functions', () => {
     jest.clearAllMocks();
   });
 
-  describe.skip('transactionUpdatedIOS wrapper', () => {
-    it('maps Purchase to TransactionEvent and forwards to listener', () => {
-      const purchase: any = {
-        id: 'tid',
-        productId: 'sku',
-        transactionId: 'tid',
-        transactionDate: Date.now(),
-        platform: 'ios',
-        transactionReceipt: 'base64',
-      };
-
-      const userListener = jest.fn();
-      const puSpy = jest
-        .spyOn(indexMod, 'purchaseUpdatedListener')
-        .mockImplementation((cb: any) => {
-          cb(purchase);
-          return {remove: jest.fn()} as any;
-        });
-
-      expect(userListener).toHaveBeenCalledWith({transaction: purchase});
-      puSpy.mockRestore();
-    });
-  });
+// Removed in v3: transactionUpdatedIOS wrapper no longer exists
 
   describe('isEligibleForIntroOfferIOS', () => {
     it('should call native module with correct groupId parameter', async () => {
