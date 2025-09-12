@@ -389,22 +389,7 @@ export const getAvailablePurchases = ({
           alsoPublishToEventListenerIOS ?? alsoPublishToEventListener,
           onlyIncludeActiveItemsIOS ?? onlyIncludeActiveItems,
         ),
-      android: async () => {
-        // Android now exposes unified getAvailableItems like iOS
-        if (typeof (ExpoIapModule as any).getAvailableItems === 'function') {
-          return (ExpoIapModule as any).getAvailableItems();
-        }
-        // Back-compat: try per-type if provided by native
-        const perType = (ExpoIapModule as any).getAvailableItemsByType;
-        if (typeof perType === 'function') {
-          const [inapp, subs] = await Promise.all([
-            perType('inapp').catch(() => []),
-            perType('subs').catch(() => []),
-          ]);
-          return [...inapp, ...subs];
-        }
-        return [];
-      },
+      android: () => ExpoIapModule.getAvailableItems(),
     }) || (() => Promise.resolve([]))
   )();
 

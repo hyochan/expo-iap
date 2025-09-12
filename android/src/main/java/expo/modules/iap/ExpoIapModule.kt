@@ -15,6 +15,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ExpoIapModule : Module() {
     companion object {
@@ -32,6 +34,16 @@ class ExpoIapModule : Module() {
 
     private val openIap: OpenIapModule by lazy { OpenIapModule(context) }
     private var listenersAttached = false
+    private val pendingEvents = ConcurrentLinkedQueue<Pair<String, Map<String, Any?>>>()
+    private val connectionReady = AtomicBoolean(false)
+
+    private fun emitOrQueue(name: String, payload: Map<String, Any?>) {
+        if (connectionReady.get()) {
+            sendEvent(name, payload)
+        } else {
+            pendingEvents.add(name to payload)
+        }
+    }
 
     // Mapping helpers now provided by openiap-google (toJSON helpers)
 
@@ -48,35 +60,65 @@ class ExpoIapModule : Module() {
             AsyncFunction("initConnection") { promise: Promise ->
                 scope.launch {
                     try {
-                        runCatching { openIap.setActivity(currentActivity) }
+                        openIap.setActivity(currentActivity)
+
+                        // If already connected, short-circuit
+                        if (connectionReady.get()) {
+                            promise.resolve(true)
+                            return@launch
+                        }
+
+                        // Attach listeners early to avoid races during init
                         if (!listenersAttached) {
                             listenersAttached = true
                             openIap.addPurchaseUpdateListener { p ->
-                                try {
-                                    sendEvent(EVENT_PURCHASE_UPDATED, p.toJSON())
-                                } catch (ex: Exception) {
-                                    Log.e(TAG, "Failed to send PURCHASE_UPDATED event", ex)
+                                runCatching {
+                                    emitOrQueue(EVENT_PURCHASE_UPDATED, p.toJSON())
+                                }.onFailure {
+                                    Log.e(TAG, "Failed to buffer/send PURCHASE_UPDATED", it)
                                 }
                             }
                             openIap.addPurchaseErrorListener { e ->
-                                try {
-                                    sendEvent(EVENT_PURCHASE_ERROR, e.toJSON())
-                                } catch (ex: Exception) {
-                                    Log.e(TAG, "Failed to send PURCHASE_ERROR event", ex)
+                                runCatching {
+                                    emitOrQueue(EVENT_PURCHASE_ERROR, e.toJSON())
+                                }.onFailure {
+                                    Log.e(TAG, "Failed to buffer/send PURCHASE_ERROR", it)
                                 }
                             }
                         }
+
                         val ok = openIap.initConnection()
-                        promise.resolve(ok)
+
+                        if (!ok) {
+                            // Clear any buffered events from a failed init
+                            pendingEvents.clear()
+                            promise.reject(OpenIapError.E_INIT_CONNECTION, "Failed to initialize connection", null)
+                            return@launch
+                        }
+
+                        // Mark ready then flush any buffered events
+                        connectionReady.set(true)
+                        while (true) {
+                            val ev = pendingEvents.poll() ?: break
+                            runCatching { sendEvent(ev.first, ev.second) }
+                                .onFailure { Log.e(TAG, "Failed to flush buffered event: ${ev.first}", it) }
+                        }
+
+                        promise.resolve(true)
+
                     } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_INIT_CONNECTION, e.message, null)
+                        promise.reject(OpenIapError.E_INIT_CONNECTION, e.message, e)
                     }
                 }
             }
 
+
             AsyncFunction("endConnection") { promise: Promise ->
                 scope.launch {
                     runCatching { openIap.endConnection() }
+                    // Reset connection state and clear any buffered events
+                    connectionReady.set(false)
+                    pendingEvents.clear()
                     promise.resolve(true)
                 }
             }
@@ -93,34 +135,7 @@ class ExpoIapModule : Module() {
                 }
             }
 
-            AsyncFunction("requestProducts") { type: String, skuArr: Array<String>, promise: Promise ->
-                Log.w(TAG, "WARNING: requestProducts is deprecated. Use fetchProducts instead.")
-                scope.launch {
-                    try {
-                        val reqType = ProductRequest.ProductRequestType.fromString(type)
-                        val products = openIap.fetchProducts(ProductRequest(skuArr.toList(), reqType))
-                        promise.resolve(products.map { it.toJSON() })
-                    } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_QUERY_PRODUCT, e.message, null)
-                    }
-                }
-            }
-
-            // Unified available items API (align with iOS)
             AsyncFunction("getAvailableItems") { promise: Promise ->
-                scope.launch {
-                    try {
-                        val purchases = openIap.getAvailablePurchases(null)
-                        promise.resolve(purchases.map { it.toJSON() })
-                    } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
-                    }
-                }
-            }
-
-            // Back-compat: keep old name but ignore type and warn
-            AsyncFunction("getAvailableItemsByType") { _: String, promise: Promise ->
-                Log.w(TAG, "getAvailableItemsByType is deprecated. Use getAvailableItems().")
                 scope.launch {
                     try {
                         val purchases = openIap.getAvailablePurchases(null)
@@ -151,9 +166,8 @@ class ExpoIapModule : Module() {
                     try {
                         val code = openIap.getStorefront()
                         promise.resolve(code)
-                    } catch (_: Exception) {
-                        // Follow OpenIAP behavior: resolve empty string on failure
-                        promise.resolve("")
+                    } catch (e: Exception) {
+                        promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
                     }
                 }
             }
@@ -187,7 +201,7 @@ class ExpoIapModule : Module() {
                             )
                         result.forEach { p ->
                             try {
-                                sendEvent(EVENT_PURCHASE_UPDATED, p.toJSON())
+                                emitOrQueue(EVENT_PURCHASE_UPDATED, p.toJSON())
                             } catch (ex: Exception) {
                                 Log.e(TAG, "Failed to send PURCHASE_UPDATED event (requestPurchase)", ex)
                             }
@@ -201,7 +215,7 @@ class ExpoIapModule : Module() {
                                 "platform" to "android",
                             )
                         try {
-                            sendEvent(EVENT_PURCHASE_ERROR, errorMap)
+                            emitOrQueue(EVENT_PURCHASE_ERROR, errorMap)
                         } catch (ex: Exception) {
                             Log.e(TAG, "Failed to send PURCHASE_ERROR event (requestPurchase)", ex)
                         }
