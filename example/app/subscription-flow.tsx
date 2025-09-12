@@ -365,57 +365,48 @@ export default function SubscriptionFlow() {
   }, [subscriptions]);
 
   const handleSubscription = async (itemId: string) => {
-    try {
-      // Check if already subscribed to this product
-      const isAlreadySubscribed = activeSubscriptions.some(
-        (sub) => sub.productId === itemId,
+    // Check if already subscribed to this product
+    const isAlreadySubscribed = activeSubscriptions.some(
+      (sub) => sub.productId === itemId,
+    );
+
+    if (isAlreadySubscribed) {
+      Alert.alert(
+        'Already Subscribed',
+        'You already have an active subscription to this product.',
+        [{text: 'OK', style: 'default'}],
       );
-
-      if (isAlreadySubscribed) {
-        Alert.alert(
-          'Already Subscribed',
-          'You already have an active subscription to this product.',
-          [{text: 'OK', style: 'default'}],
-        );
-        return;
-      }
-
-      setIsProcessing(true);
-      setPurchaseResult('Processing subscription...');
-
-      // Find the subscription to get offer details for Android
-      const subscription = subscriptions.find((sub) => sub.id === itemId);
-
-      // New platform-specific API (v2.7.0+) - no Platform.OS branching needed
-      // requestPurchase is event-based - results come through onPurchaseSuccess/onPurchaseError
-      await requestPurchase({
-        request: {
-          ios: {
-            sku: itemId,
-            appAccountToken: 'user-123',
-          },
-          android: {
-            skus: [itemId],
-            subscriptionOffers:
-              subscription &&
-              'subscriptionOfferDetailsAndroid' in subscription &&
-              subscription.subscriptionOfferDetailsAndroid
-                ? subscription.subscriptionOfferDetailsAndroid.map((offer) => ({
-                    sku: itemId,
-                    offerToken: offer.offerToken,
-                  }))
-                : [],
-          },
-        },
-        type: 'subs',
-      });
-    } catch (error) {
-      setIsProcessing(false);
-      const errorMessage =
-        error instanceof Error ? error.message : 'Subscription failed';
-      setPurchaseResult(`❌ Subscription failed: ${errorMessage}`);
-      Alert.alert('Subscription Failed', errorMessage);
+      return;
     }
+
+    setIsProcessing(true);
+    setPurchaseResult('Processing subscription...');
+
+    // Find the subscription to get offer details for Android
+    const subscription = subscriptions.find((sub) => sub.id === itemId);
+
+    // Fire-and-forget: requestPurchase is event-based; handle results via hook callbacks
+    void requestPurchase({
+      request: {
+        ios: {
+          sku: itemId,
+          appAccountToken: 'user-123',
+        },
+        android: {
+          skus: [itemId],
+          subscriptionOffers:
+            subscription &&
+            'subscriptionOfferDetailsAndroid' in subscription &&
+            subscription.subscriptionOfferDetailsAndroid
+              ? subscription.subscriptionOfferDetailsAndroid.map((offer) => ({
+                  sku: itemId,
+                  offerToken: offer.offerToken,
+                }))
+              : [],
+        },
+      },
+      type: 'subs',
+    });
   };
 
   const retryLoadSubscriptions = () => {

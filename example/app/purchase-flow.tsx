@@ -109,29 +109,22 @@ export default function PurchaseFlow() {
   // Defer loading guard until after all hooks are declared
 
   const handlePurchase = async (itemId: string) => {
-    try {
-      setIsProcessing(true);
-      setPurchaseResult('Processing purchase...');
+    setIsProcessing(true);
+    setPurchaseResult('Processing purchase...');
 
-      // New platform-specific API (v2.7.0+) - no Platform.OS branching needed
-      await requestPurchase({
-        request: {
-          ios: {
-            sku: itemId,
-            quantity: 1,
-          },
-          android: {
-            skus: [itemId],
-          },
+    // Fire-and-forget: requestPurchase is event-based; handle results via hook callbacks
+    void requestPurchase({
+      request: {
+        ios: {
+          sku: itemId,
+          quantity: 1,
         },
-        type: 'inapp',
-      });
-    } catch (error) {
-      setIsProcessing(false);
-      const errorMessage =
-        error instanceof Error ? error.message : 'Purchase failed';
-      setPurchaseResult(`❌ Purchase failed: ${errorMessage}`);
-    }
+        android: {
+          skus: [itemId],
+        },
+      },
+      type: 'inapp',
+    });
   };
 
   // Monitor products changes
