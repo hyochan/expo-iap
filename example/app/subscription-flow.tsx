@@ -109,9 +109,7 @@ export default function SubscriptionFlow() {
         const hasValidToken = !!(
           purchase.purchaseToken && purchase.purchaseToken.length > 0
         );
-        const hasValidTransactionId = !!(
-          purchase.transactionId && purchase.transactionId.length > 0
-        );
+        const hasValidTransactionId = !!(purchase.id && purchase.id.length > 0);
 
         isPurchased = hasValidToken || hasValidTransactionId;
 
@@ -119,8 +117,7 @@ export default function SubscriptionFlow() {
         // A restoration typically has originalTransactionIdentifierIOS different from transactionId
         isRestoration = Boolean(
           iosPurchase.originalTransactionIdentifierIOS &&
-            iosPurchase.originalTransactionIdentifierIOS !==
-              purchase.transactionId &&
+            iosPurchase.originalTransactionIdentifierIOS !== purchase.id &&
             iosPurchase.transactionReasonIOS &&
             iosPurchase.transactionReasonIOS !== 'PURCHASE',
         );
@@ -134,7 +131,7 @@ export default function SubscriptionFlow() {
           '  originalTransactionId:',
           iosPurchase.originalTransactionIdentifierIOS,
         );
-        console.log('  currentTransactionId:', purchase.transactionId);
+        console.log('  currentTransactionId:', purchase.id);
         console.log('  transactionReason:', iosPurchase.transactionReasonIOS);
       } else if (Platform.OS === 'android' && purchase.platform === 'android') {
         // For Android, consider it purchased if we received the purchase callback
@@ -391,7 +388,9 @@ export default function SubscriptionFlow() {
 
     // Fire-and-forget: requestPurchase is event-based; handle results via hook callbacks
     if (typeof requestPurchase !== 'function') {
-      console.warn('[SubscriptionFlow] requestPurchase missing (test/mock env)');
+      console.warn(
+        '[SubscriptionFlow] requestPurchase missing (test/mock env)',
+      );
       setIsProcessing(false);
       setPurchaseResult('Cannot start purchase in test/mock environment.');
       return;
