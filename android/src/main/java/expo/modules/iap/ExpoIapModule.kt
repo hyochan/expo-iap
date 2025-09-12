@@ -187,7 +187,7 @@ class ExpoIapModule : Module() {
                 PromiseUtils.addPromiseForKey(PromiseUtils.PROMISE_BUY_ITEM, promise)
                 scope.launch {
                     try {
-                        runCatching { openIap.setActivity(currentActivity) }
+                        openIap.setActivity(currentActivity)
                         val reqType = ProductRequest.ProductRequestType.fromString(type)
                         val result =
                             openIap.requestPurchase(
