@@ -288,16 +288,9 @@ describe('Public API (index.ts)', () => {
       expect(true).toBe(true);
     });
 
-    it('requestProducts warns and calls fetchProducts', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      (Platform as any).OS = 'ios';
-      (ExpoIapModule.fetchProducts as jest.Mock) = jest
-        .fn()
-        .mockResolvedValue([{platform: 'ios', id: 'x'}]);
-      // Removed in v3.0.0
+    it('requestProducts removed in v3.0.0', async () => {
+      // Removed legacy API in v3; keeping placeholder to maintain suite structure
       expect(true).toBe(true);
-      expect(warnSpy).toHaveBeenCalled();
-      warnSpy.mockRestore();
     });
 
     it('requestSubscription warns and calls purchase with subs', async () => {
@@ -350,21 +343,9 @@ describe('Public API (index.ts)', () => {
       expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith(false, true);
     });
 
-    it('getPurchaseHistory warns and maps flags to iOS getAvailableItems', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      (Platform as any).OS = 'ios';
-      (Platform as any).select = (obj: any) => obj.ios;
-      (ExpoIapModule.getAvailableItems as jest.Mock) = jest
-        .fn()
-        .mockResolvedValue([]);
-      const mod: any = await import('../index');
-      await mod.getPurchaseHistory({
-        alsoPublishToEventListener: true,
-        onlyIncludeActiveItems: false,
-      } as any);
-      expect(warnSpy).toHaveBeenCalled();
-      expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith(true, false);
-      warnSpy.mockRestore();
+    it('getPurchaseHistory removed in v3.0.0', () => {
+      // Removed legacy API in v3; keeping placeholder to maintain suite structure
+      expect(true).toBe(true);
     });
   });
 

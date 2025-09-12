@@ -38,7 +38,7 @@ describe('iOS Module Functions', () => {
     jest.clearAllMocks();
   });
 
-describe.skip('transactionUpdatedIOS wrapper', () => {
+  describe.skip('transactionUpdatedIOS wrapper', () => {
     it('maps Purchase to TransactionEvent and forwards to listener', () => {
       const purchase: any = {
         id: 'tid',
@@ -250,6 +250,11 @@ describe.skip('transactionUpdatedIOS wrapper', () => {
     });
     afterEach(() => {
       warnSpy.mockRestore();
+    });
+    // Placeholder to satisfy Jest: this block intentionally contains
+    // no active tests as the deprecated APIs were removed in v3.
+    it.skip('deprecated APIs removed in v3', () => {
+      expect(true).toBe(true);
     });
   });
 
