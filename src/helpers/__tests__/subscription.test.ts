@@ -6,7 +6,6 @@ jest.mock('../../index', () => ({
 /* eslint-disable import/first */
 import {getActiveSubscriptions, hasActiveSubscriptions} from '../subscription';
 import type {Purchase} from '../../types';
-import {Platform as PurchasePlatform, PurchaseState as GeneratedPurchaseState} from '../../types';
 import {Platform as ReactNativePlatform} from 'react-native';
 import {getAvailablePurchases} from '../../index';
 /* eslint-enable import/first */
@@ -19,11 +18,6 @@ const mockPlatform = (os: 'ios' | 'android') => {
   });
 };
 
-const IOS_PLATFORM: Purchase['platform'] = PurchasePlatform.Ios;
-const ANDROID_PLATFORM: Purchase['platform'] = PurchasePlatform.Android;
-const PURCHASE_STATE_PURCHASED: Purchase['purchaseState'] =
-  GeneratedPurchaseState.Purchased;
-
 describe('Subscription Helper Functions', () => {
   const currentTime = Date.now();
   const oneDayMs = 24 * 60 * 60 * 1000;
@@ -33,9 +27,9 @@ describe('Subscription Helper Functions', () => {
       id: 'trans-123',
       productId: 'test.subscription',
       transactionDate: currentTime,
-      platform: IOS_PLATFORM,
+      platform: 'ios',
       isAutoRenewing: true,
-      purchaseState: PURCHASE_STATE_PURCHASED,
+      purchaseState: 'purchased',
       purchaseToken: 'test-token',
       quantity: 1,
       ...overrides,
@@ -64,7 +58,7 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             expirationDateIOS: currentTime + 7 * oneDayMs,
             environmentIOS: 'Production',
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
         ];
 
@@ -88,7 +82,7 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             transactionDate: currentTime - 10 * oneDayMs,
             expirationDateIOS: currentTime - oneDayMs,
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
         ];
 
@@ -104,7 +98,7 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             transactionDate: currentTime - 12 * 60 * 60 * 1000,
             environmentIOS: 'Sandbox',
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
         ];
 
@@ -123,13 +117,13 @@ describe('Subscription Helper Functions', () => {
             id: 'trans-123',
             productId: 'sub1',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
           createPurchase({
             id: 'trans-456',
             productId: 'sub2',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
         ];
 
@@ -145,7 +139,7 @@ describe('Subscription Helper Functions', () => {
         const mockPurchases: Purchase[] = [
           createPurchase({
             expirationDateIOS: currentTime + 5 * oneDayMs,
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
         ];
 
@@ -162,7 +156,7 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             purchaseToken: 'jwt-token-example',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
         ];
 
@@ -177,7 +171,7 @@ describe('Subscription Helper Functions', () => {
         const mockPurchases: Purchase[] = [
           createPurchase({
             expirationDateIOS: currentTime + 10 * oneDayMs,
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
         ];
 
@@ -198,7 +192,7 @@ describe('Subscription Helper Functions', () => {
       it('should return active subscriptions', async () => {
         const mockPurchases: Purchase[] = [
           createPurchase({
-            platform: ANDROID_PLATFORM,
+            platform: 'android',
             autoRenewingAndroid: true,
           }),
         ];
@@ -219,7 +213,7 @@ describe('Subscription Helper Functions', () => {
       it('should mark cancelled subscriptions as expiring soon', async () => {
         const mockPurchases: Purchase[] = [
           createPurchase({
-            platform: ANDROID_PLATFORM,
+            platform: 'android',
             autoRenewingAndroid: false,
           }),
         ];
@@ -238,13 +232,13 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             id: 'trans-123',
             productId: 'sub1',
-            platform: ANDROID_PLATFORM,
+            platform: 'android',
             autoRenewingAndroid: true,
           }),
           createPurchase({
             id: 'trans-456',
             productId: 'sub2',
-            platform: ANDROID_PLATFORM,
+            platform: 'android',
             autoRenewingAndroid: true,
           }),
         ];
@@ -264,7 +258,7 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             id: 'trans-123',
             productId: 'regular.product',
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
         ];
 
@@ -292,13 +286,13 @@ describe('Subscription Helper Functions', () => {
             id: 'trans-123',
             productId: 'sub1',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
           createPurchase({
             id: 'trans-456',
             productId: 'sub2',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-            platform: IOS_PLATFORM,
+            platform: 'ios',
           }),
         ];
 
@@ -327,7 +321,7 @@ describe('Subscription Helper Functions', () => {
           id: 'trans-123',
           productId: 'test.subscription',
           expirationDateIOS: currentTime + 7 * oneDayMs,
-          platform: IOS_PLATFORM,
+          platform: 'ios',
         }),
       ];
 
@@ -353,7 +347,7 @@ describe('Subscription Helper Functions', () => {
           id: 'trans-123',
           productId: 'sub1',
           expirationDateIOS: currentTime + 7 * oneDayMs,
-          platform: IOS_PLATFORM,
+          platform: 'ios',
         }),
       ];
 

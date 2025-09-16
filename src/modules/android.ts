@@ -6,18 +6,16 @@ import ExpoIapModule from '../ExpoIapModule';
 
 // Types
 import type {ReceiptValidationResultAndroid, VoidResult} from '../types';
-import {Platform as PurchasePlatform} from '../types';
 
 // Type guards
-export function isProductAndroid<
-  T extends {platform?: string | PurchasePlatform},
->(item: unknown): item is T & {platform: 'android' | PurchasePlatform} {
+export function isProductAndroid<T extends {platform?: string}>(
+  item: unknown,
+): item is T & {platform: 'android'} {
   return (
     item != null &&
     typeof item === 'object' &&
     'platform' in item &&
-    ((item as any).platform === 'android' ||
-      (item as any).platform === PurchasePlatform.Android)
+    (item as any).platform === 'android'
   );
 }
 
