@@ -190,7 +190,7 @@ Platform-specific types:
 
 - `ProductIOS`, `ProductAndroid`
 - `PurchaseErrorIOS`, `PurchaseErrorAndroid`
-- `AppTransactionIOS`, `SubscriptionOfferAndroid`
+- `AppTransaction`, `SubscriptionOfferAndroid`
 
 Cross-platform types:
 

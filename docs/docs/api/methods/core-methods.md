@@ -271,7 +271,7 @@ const completePurchase = async (purchase) => {
   - `purchase` (Purchase): The purchase object to finish
   - `isConsumable?` (boolean): Whether the product is consumable (Android)
 
-**Returns:** `Promise<PurchaseResult | boolean>`
+**Returns:** `Promise<VoidResult | boolean>`
 
 ## getAvailablePurchases()
 
@@ -707,10 +707,10 @@ const fetchAppTransaction = async () => {
 };
 ```
 
-**Returns:** `Promise<AppTransactionIOS | null>`
+**Returns:** `Promise<AppTransaction | null>`
 
 ```ts
-interface AppTransactionIOS {
+interface AppTransaction {
   appTransactionId?: string; // iOS 18.4+
   originalPlatform?: string; // iOS 18.4+
   bundleId: string;

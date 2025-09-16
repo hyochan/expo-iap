@@ -53,10 +53,7 @@ function RedeemOrRefresh() {
       // Open Play redeem (web/Store)
       await Linking.openURL('https://play.google.com/redeem');
       // After redeeming, have users come back and refresh
-      await Promise.all([
-        getAvailablePurchases([]),
-        getActiveSubscriptions(),
-      ]);
+      await Promise.all([getAvailablePurchases([]), getActiveSubscriptions()]);
     }
   };
 

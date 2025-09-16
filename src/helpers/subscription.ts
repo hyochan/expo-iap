@@ -1,18 +1,6 @@
 import {Platform} from 'react-native';
 import {getAvailablePurchases} from '../index';
-
-export interface ActiveSubscription {
-  productId: string;
-  isActive: boolean;
-  transactionId: string; // Transaction identifier for backend validation
-  purchaseToken?: string; // JWT token (iOS) or purchase token (Android) for backend validation
-  transactionDate: number; // Transaction timestamp
-  expirationDateIOS?: Date;
-  autoRenewingAndroid?: boolean;
-  environmentIOS?: string;
-  willExpireSoon?: boolean;
-  daysUntilExpirationIOS?: number;
-}
+import type {ActiveSubscription} from '../types';
 
 /**
  * Get all active subscriptions with detailed information
@@ -91,8 +79,7 @@ export const getActiveSubscriptions = async (
       const subscription: ActiveSubscription = {
         productId: purchase.productId,
         isActive: true,
-        // Use unified id as transaction identifier in v3
-        transactionId: purchase.id,
+        transactionId: String(purchase.id),
         purchaseToken: purchase.purchaseToken,
         transactionDate: purchase.transactionDate,
       };
@@ -100,8 +87,7 @@ export const getActiveSubscriptions = async (
       // Add platform-specific details
       if (Platform.OS === 'ios') {
         if ('expirationDateIOS' in purchase && purchase.expirationDateIOS) {
-          const expirationDate = new Date(purchase.expirationDateIOS);
-          subscription.expirationDateIOS = expirationDate;
+          subscription.expirationDateIOS = purchase.expirationDateIOS;
 
           // Calculate days until expiration (round to nearest day)
           const daysUntilExpiration = Math.round(
@@ -112,13 +98,19 @@ export const getActiveSubscriptions = async (
         }
 
         if ('environmentIOS' in purchase) {
-          subscription.environmentIOS = purchase.environmentIOS;
+          subscription.environmentIOS = purchase.environmentIOS ?? undefined;
         }
       } else if (Platform.OS === 'android') {
         if ('autoRenewingAndroid' in purchase) {
-          subscription.autoRenewingAndroid = purchase.autoRenewingAndroid;
+          if (typeof purchase.autoRenewingAndroid !== 'undefined') {
+            subscription.autoRenewingAndroid = purchase.autoRenewingAndroid;
+          }
           // If auto-renewing is false, subscription will expire soon
-          subscription.willExpireSoon = !purchase.autoRenewingAndroid;
+          if (purchase.autoRenewingAndroid === false) {
+            subscription.willExpireSoon = true;
+          } else if (purchase.autoRenewingAndroid === true) {
+            subscription.willExpireSoon = false;
+          }
         }
       }
 

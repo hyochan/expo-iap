@@ -33,23 +33,18 @@ const productIds = [
 ];
 
 function App() {
-  const {
-    connected,
-    products,
-    fetchProducts,
-    requestPurchase,
-    validateReceipt,
-  } = useIAP({
-    onPurchaseSuccess: (purchase) => {
-      console.log('Purchase successful:', purchase);
-      // Handle successful purchase
-      validatePurchase(purchase);
-    },
-    onPurchaseError: (error) => {
-      console.error('Purchase failed:', error);
-      // Handle purchase error
-    },
-  });
+  const {connected, products, fetchProducts, requestPurchase, validateReceipt} =
+    useIAP({
+      onPurchaseSuccess: (purchase) => {
+        console.log('Purchase successful:', purchase);
+        // Handle successful purchase
+        validatePurchase(purchase);
+      },
+      onPurchaseError: (error) => {
+        console.error('Purchase failed:', error);
+        // Handle purchase error
+      },
+    });
 
   React.useEffect(() => {
     if (connected) {

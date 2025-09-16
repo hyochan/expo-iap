@@ -5,14 +5,28 @@ jest.mock('../../index', () => ({
 
 /* eslint-disable import/first */
 import {getActiveSubscriptions, hasActiveSubscriptions} from '../subscription';
-import type {Purchase} from '../../ExpoIap.types';
-import {Platform} from 'react-native';
+import type {Purchase} from '../../types';
+import {PurchaseState, Platform as PurchasePlatform} from '../../types';
+import {Platform as ReactNativePlatform} from 'react-native';
 import {getAvailablePurchases} from '../../index';
 /* eslint-enable import/first */
 
 describe('Subscription Helper Functions', () => {
   const currentTime = Date.now();
   const oneDayMs = 24 * 60 * 60 * 1000;
+
+  const createPurchase = (overrides: Partial<Purchase>): Purchase =>
+    ({
+      id: 'trans-123',
+      productId: 'test.subscription',
+      transactionDate: currentTime,
+      platform: PurchasePlatform.Ios,
+      isAutoRenewing: true,
+      purchaseState: PurchaseState.Purchased,
+      purchaseToken: 'test-token',
+      quantity: 1,
+      ...overrides,
+    } as Purchase);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -21,20 +35,16 @@ describe('Subscription Helper Functions', () => {
   describe('getActiveSubscriptions', () => {
     describe('iOS', () => {
       beforeEach(() => {
-        Platform.OS = 'ios';
+        ReactNativePlatform.OS = 'ios';
       });
 
       it('should return active subscriptions with valid expiration date', async () => {
         const mockPurchases: Purchase[] = [
-          {
-            id: 'trans-123', // transaction ID
-            productId: 'test.subscription',
-            transactionId: 'trans-123',
-            transactionDate: currentTime,
-            platform: 'ios',
-            expirationDateIOS: currentTime + 7 * oneDayMs, // Expires in 7 days
+          createPurchase({
+            expirationDateIOS: currentTime + 7 * oneDayMs,
             environmentIOS: 'Production',
-          } as Purchase,
+            platform: PurchasePlatform.Ios,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -46,7 +56,7 @@ describe('Subscription Helper Functions', () => {
         expect(result[0].isActive).toBe(true);
         expect(result[0].transactionId).toBe('trans-123');
         expect(result[0].transactionDate).toBe(currentTime);
-        expect(result[0].expirationDateIOS).toBeInstanceOf(Date);
+        expect(typeof result[0].expirationDateIOS).toBe('number');
         expect(result[0].daysUntilExpirationIOS).toBe(7);
         expect(result[0].willExpireSoon).toBe(true); // <= 7 days
         expect(result[0].environmentIOS).toBe('Production');
@@ -54,14 +64,11 @@ describe('Subscription Helper Functions', () => {
 
       it('should filter expired subscriptions', async () => {
         const mockPurchases: Purchase[] = [
-          {
-            id: 'trans-123',
-            productId: 'test.subscription',
-            transactionId: 'trans-123',
+          createPurchase({
             transactionDate: currentTime - 10 * oneDayMs,
-            platform: 'ios',
-            expirationDateIOS: currentTime - oneDayMs, // Expired yesterday
-          } as Purchase,
+            expirationDateIOS: currentTime - oneDayMs,
+            platform: PurchasePlatform.Ios,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -73,14 +80,11 @@ describe('Subscription Helper Functions', () => {
 
       it('should handle sandbox subscriptions within 24 hours', async () => {
         const mockPurchases: Purchase[] = [
-          {
-            id: 'trans-123',
-            productId: 'test.subscription',
-            transactionId: 'trans-123',
-            transactionDate: currentTime - 12 * 60 * 60 * 1000, // 12 hours ago
-            platform: 'ios',
+          createPurchase({
+            transactionDate: currentTime - 12 * 60 * 60 * 1000,
             environmentIOS: 'Sandbox',
-          } as Purchase,
+            platform: PurchasePlatform.Ios,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -94,22 +98,18 @@ describe('Subscription Helper Functions', () => {
 
       it('should filter by subscription IDs when provided', async () => {
         const mockPurchases: Purchase[] = [
-          {
+          createPurchase({
             id: 'trans-123',
             productId: 'sub1',
-            transactionId: 'trans-123',
-            transactionDate: currentTime,
-            platform: 'ios',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-          } as Purchase,
-          {
+            platform: PurchasePlatform.Ios,
+          }),
+          createPurchase({
             id: 'trans-456',
             productId: 'sub2',
-            transactionId: 'trans-456',
-            transactionDate: currentTime,
-            platform: 'ios',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-          } as Purchase,
+            platform: PurchasePlatform.Ios,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -122,14 +122,10 @@ describe('Subscription Helper Functions', () => {
 
       it('should mark subscription as expiring soon if <= 7 days remaining', async () => {
         const mockPurchases: Purchase[] = [
-          {
-            id: 'trans-123',
-            productId: 'test.subscription',
-            transactionId: 'trans-123',
-            transactionDate: currentTime,
-            platform: 'ios',
-            expirationDateIOS: currentTime + 5 * oneDayMs, // 5 days remaining
-          } as Purchase,
+          createPurchase({
+            expirationDateIOS: currentTime + 5 * oneDayMs,
+            platform: PurchasePlatform.Ios,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -142,15 +138,11 @@ describe('Subscription Helper Functions', () => {
 
       it('should include purchaseToken when available', async () => {
         const mockPurchases: Purchase[] = [
-          {
-            id: 'trans-123',
-            productId: 'test.subscription',
-            transactionId: 'trans-123',
-            transactionDate: currentTime,
-            platform: 'ios',
+          createPurchase({
             purchaseToken: 'jwt-token-example',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-          } as Purchase,
+            platform: PurchasePlatform.Ios,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -162,14 +154,10 @@ describe('Subscription Helper Functions', () => {
 
       it('should not mark subscription as expiring soon if > 7 days remaining', async () => {
         const mockPurchases: Purchase[] = [
-          {
-            id: 'trans-123',
-            productId: 'test.subscription',
-            transactionId: 'trans-123',
-            transactionDate: currentTime,
-            platform: 'ios',
-            expirationDateIOS: currentTime + 10 * oneDayMs, // 10 days remaining
-          } as Purchase,
+          createPurchase({
+            expirationDateIOS: currentTime + 10 * oneDayMs,
+            platform: PurchasePlatform.Ios,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -183,19 +171,15 @@ describe('Subscription Helper Functions', () => {
 
     describe('Android', () => {
       beforeEach(() => {
-        Platform.OS = 'android';
+        ReactNativePlatform.OS = 'android';
       });
 
       it('should return active subscriptions', async () => {
         const mockPurchases: Purchase[] = [
-          {
-            id: 'trans-123',
-            productId: 'test.subscription',
-            transactionId: 'trans-123',
-            transactionDate: currentTime,
-            platform: 'android',
+          createPurchase({
+            platform: PurchasePlatform.Android,
             autoRenewingAndroid: true,
-          } as Purchase,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -213,14 +197,10 @@ describe('Subscription Helper Functions', () => {
 
       it('should mark cancelled subscriptions as expiring soon', async () => {
         const mockPurchases: Purchase[] = [
-          {
-            id: 'trans-123',
-            productId: 'test.subscription',
-            transactionId: 'trans-123',
-            transactionDate: currentTime,
-            platform: 'android',
+          createPurchase({
+            platform: PurchasePlatform.Android,
             autoRenewingAndroid: false,
-          } as Purchase,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -234,22 +214,18 @@ describe('Subscription Helper Functions', () => {
 
       it('should filter by subscription IDs when provided', async () => {
         const mockPurchases: Purchase[] = [
-          {
+          createPurchase({
             id: 'trans-123',
             productId: 'sub1',
-            transactionId: 'trans-123',
-            transactionDate: currentTime,
-            platform: 'android',
+            platform: PurchasePlatform.Android,
             autoRenewingAndroid: true,
-          } as Purchase,
-          {
+          }),
+          createPurchase({
             id: 'trans-456',
             productId: 'sub2',
-            transactionId: 'trans-456',
-            transactionDate: currentTime,
-            platform: 'android',
+            platform: PurchasePlatform.Android,
             autoRenewingAndroid: true,
-          } as Purchase,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -264,14 +240,11 @@ describe('Subscription Helper Functions', () => {
     describe('Edge cases', () => {
       it('should handle purchases without subscription fields', async () => {
         const mockPurchases: Purchase[] = [
-          {
+          createPurchase({
             id: 'trans-123',
             productId: 'regular.product',
-            transactionId: 'trans-123',
-            transactionDate: currentTime,
-            platform: 'ios',
-            // No subscription-specific fields
-          } as Purchase,
+            platform: PurchasePlatform.Ios,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -292,24 +265,20 @@ describe('Subscription Helper Functions', () => {
       });
 
       it('should return all active subscriptions when no IDs filter provided', async () => {
-        Platform.OS = 'ios';
+        ReactNativePlatform.OS = 'ios';
         const mockPurchases: Purchase[] = [
-          {
+          createPurchase({
             id: 'trans-123',
             productId: 'sub1',
-            transactionId: 'trans-123',
-            transactionDate: currentTime,
-            platform: 'ios',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-          } as Purchase,
-          {
+            platform: PurchasePlatform.Ios,
+          }),
+          createPurchase({
             id: 'trans-456',
             productId: 'sub2',
-            transactionId: 'trans-456',
-            transactionDate: currentTime,
-            platform: 'ios',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-          } as Purchase,
+            platform: PurchasePlatform.Ios,
+          }),
         ];
 
         (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -331,16 +300,14 @@ describe('Subscription Helper Functions', () => {
 
   describe('hasActiveSubscriptions', () => {
     it('should return true when active subscriptions exist', async () => {
-      Platform.OS = 'ios';
+      ReactNativePlatform.OS = 'ios';
       const mockPurchases: Purchase[] = [
-        {
+        createPurchase({
           id: 'trans-123',
           productId: 'test.subscription',
-          transactionId: 'trans-123',
-          transactionDate: currentTime,
-          platform: 'ios',
           expirationDateIOS: currentTime + 7 * oneDayMs,
-        } as Purchase,
+          platform: PurchasePlatform.Ios,
+        }),
       ];
 
       (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);
@@ -359,16 +326,14 @@ describe('Subscription Helper Functions', () => {
     });
 
     it('should check specific subscription IDs when provided', async () => {
-      Platform.OS = 'ios';
+      ReactNativePlatform.OS = 'ios';
       const mockPurchases: Purchase[] = [
-        {
+        createPurchase({
           id: 'trans-123',
           productId: 'sub1',
-          transactionId: 'trans-123',
-          transactionDate: currentTime,
-          platform: 'ios',
           expirationDateIOS: currentTime + 7 * oneDayMs,
-        } as Purchase,
+          platform: PurchasePlatform.Ios,
+        }),
       ];
 
       (getAvailablePurchases as jest.Mock).mockResolvedValue(mockPurchases);

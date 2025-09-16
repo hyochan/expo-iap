@@ -4,7 +4,7 @@ import {
   isRecoverableError,
   getUserFriendlyErrorMessage,
 } from '../errorMapping';
-import {ErrorCode} from '../../ExpoIap.types';
+import {ErrorCode} from '../../types';
 
 describe('errorMapping utils', () => {
   it('detects user cancelled errors from string or object', () => {
@@ -29,9 +29,9 @@ describe('errorMapping utils', () => {
     expect(
       getUserFriendlyErrorMessage({code: ErrorCode.UserCancelled}),
     ).toMatch(/cancelled/i);
-    expect(
-      getUserFriendlyErrorMessage({code: ErrorCode.EmptySkuList}),
-    ).toMatch(/No product IDs/i);
+    expect(getUserFriendlyErrorMessage({code: ErrorCode.EmptySkuList})).toMatch(
+      /No product IDs/i,
+    );
     expect(getUserFriendlyErrorMessage({code: 'UNKNOWN'} as any)).toBe(
       'An unexpected error occurred',
     );

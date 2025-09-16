@@ -5,17 +5,19 @@ import {Linking} from 'react-native';
 import ExpoIapModule from '../ExpoIapModule';
 
 // Types
-import type {PurchaseResult, ReceiptAndroid} from '../ExpoIap.types';
+import type {ReceiptValidationResultAndroid, VoidResult} from '../types';
+import {Platform as PurchasePlatform} from '../types';
 
 // Type guards
-export function isProductAndroid<T extends {platform?: string}>(
-  item: unknown,
-): item is T & {platform: 'android'} {
+export function isProductAndroid<
+  T extends {platform?: string | PurchasePlatform},
+>(item: unknown): item is T & {platform: PurchasePlatform.Android | 'android'} {
   return (
     item != null &&
     typeof item === 'object' &&
     'platform' in item &&
-    item.platform === 'android'
+    ((item as any).platform === 'android' ||
+      (item as any).platform === PurchasePlatform.Android)
   );
 }
 
@@ -86,7 +88,7 @@ export const validateReceiptAndroid = async ({
   productToken: string;
   accessToken: string;
   isSub?: boolean;
-}): Promise<ReceiptAndroid> => {
+}): Promise<ReceiptValidationResultAndroid> => {
   const type = isSub ? 'subscriptions' : 'products';
 
   const url =
@@ -115,13 +117,13 @@ export const validateReceiptAndroid = async ({
  * Acknowledge a product (on Android.) No-op on iOS.
  * @param {Object} params - The parameters object
  * @param {string} params.token - The product's token (on Android)
- * @returns {Promise<PurchaseResult | void>}
+ * @returns {Promise<VoidResult | void>}
  */
 export const acknowledgePurchaseAndroid = ({
   token,
 }: {
   token: string;
-}): Promise<PurchaseResult | boolean | void> => {
+}): Promise<VoidResult | boolean | void> => {
   return ExpoIapModule.acknowledgePurchaseAndroid(token);
 };
 

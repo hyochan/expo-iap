@@ -29,13 +29,13 @@ import {
 import {
   Product,
   Purchase,
-  PurchaseError,
-  PurchaseResult,
   ProductSubscription,
   RequestPurchaseProps,
-  RequestSubscriptionProps,
+  RequestSubscriptionPropsByPlatforms,
   ErrorCode,
-} from './ExpoIap.types';
+  VoidResult,
+} from './types';
+import {PurchaseError} from './PurchaseError';
 import {
   getUserFriendlyErrorMessage,
   isUserCancelledError,
@@ -65,7 +65,7 @@ type UseIap = {
   }: {
     purchase: Purchase;
     isConsumable?: boolean;
-  }) => Promise<PurchaseResult | boolean>;
+  }) => Promise<VoidResult | boolean>;
   getAvailablePurchases: (skus: string[]) => Promise<void>;
   fetchProducts: (params: {
     skus: string[];
@@ -73,7 +73,7 @@ type UseIap = {
   }) => Promise<void>;
 
   requestPurchase: (params: {
-    request: RequestPurchaseProps | RequestSubscriptionProps;
+    request: RequestPurchaseProps | RequestSubscriptionPropsByPlatforms;
     type?: 'inapp' | 'subs';
   }) => Promise<any>;
   validateReceipt: (
@@ -267,7 +267,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }: {
       purchase: Purchase;
       isConsumable?: boolean;
-    }): Promise<PurchaseResult | boolean> => {
+    }): Promise<VoidResult | boolean> => {
       try {
         return await finishTransactionInternal({
           purchase,
@@ -384,10 +384,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     // Register purchase error listener EARLY. Ignore init-related errors until connected.
     subscriptionsRef.current.purchaseError = purchaseErrorListener(
       (error: PurchaseError) => {
-        if (
-          !connectedRef.current &&
-          error.code === ErrorCode.InitConnection
-        ) {
+        if (!connectedRef.current && error.code === ErrorCode.InitConnection) {
           return; // Ignore initialization error before connected
         }
         const friendly = getUserFriendlyErrorMessage(error);

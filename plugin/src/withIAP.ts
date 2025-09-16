@@ -66,7 +66,11 @@ const modifyAppBuildGradle = (
   }
 
   // Ensure the desired dependency line is present
-  if (!new RegExp(String.raw`io\.github\.hyochan\.openiap:openiap-google:1\.1\.0`).test(modified)) {
+  if (
+    !new RegExp(
+      String.raw`io\.github\.hyochan\.openiap:openiap-google:1\.1\.0`,
+    ).test(modified)
+  ) {
     // Insert just after the opening `dependencies {` line
     modified = addLineToGradle(modified, /dependencies\s*{/, openiapDep, 1);
     logOnce(

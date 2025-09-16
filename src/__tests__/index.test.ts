@@ -63,7 +63,7 @@ describe('Public API (index.ts)', () => {
         expect.any(Function),
       );
       const passed = addListener.mock.calls[0][1];
-      const err = {message: 'm', code: 'E_UNKNOWN'} as any;
+      const err = {message: 'm', code: 'UNKNOWN'} as any;
       passed(err);
       expect(fn).toHaveBeenCalledWith(err);
     });
@@ -136,7 +136,7 @@ describe('Public API (index.ts)', () => {
       await expect(
         fetchProducts({skus: [], type: 'inapp'}),
       ).rejects.toMatchObject({
-        code: 'E_EMPTY_SKU_LIST',
+        code: 'EMPTY_SKU_LIST',
       } as any);
     });
 

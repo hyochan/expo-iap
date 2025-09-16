@@ -54,20 +54,32 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Core Methods',
-          link: { type: 'doc', id: 'api/methods/core-methods' },
+          link: {type: 'doc', id: 'api/methods/core-methods'},
           items: [
-            { type: 'link', label: 'Unified APIs', href: '/docs/api/methods/core-methods#unified-apis' },
+            {
+              type: 'link',
+              label: 'Unified APIs',
+              href: '/docs/api/methods/core-methods#unified-apis',
+            },
             // Nest the separate Listeners doc under Core Methods
             'api/methods/listeners',
-            { type: 'link', label: 'iOS Specific', href: '/docs/api/methods/core-methods#ios-specific' },
-            { type: 'link', label: 'Android Specific', href: '/docs/api/methods/core-methods#android-specific' },
+            {
+              type: 'link',
+              label: 'iOS Specific',
+              href: '/docs/api/methods/core-methods#ios-specific',
+            },
+            {
+              type: 'link',
+              label: 'Android Specific',
+              href: '/docs/api/methods/core-methods#android-specific',
+            },
           ],
         },
         'api/use-iap',
         {
           type: 'category',
           label: 'Error Handling',
-          link: { type: 'doc', id: 'api/error-handling' },
+          link: {type: 'doc', id: 'api/error-handling'},
           items: ['api/error-codes'],
         },
       ],

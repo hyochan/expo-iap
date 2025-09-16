@@ -213,7 +213,9 @@ const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
     }
     if (removedAny) {
       gradle.contents = contents;
-      console.log('🧹 Removed Maven openiap-google to use local :openiap-google');
+      console.log(
+        '🧹 Removed Maven openiap-google to use local :openiap-google',
+      );
     }
     if (!gradle.contents.includes(dependencyLine)) {
       const anchor = /dependencies\s*\{/m;

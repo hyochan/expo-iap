@@ -14,19 +14,17 @@
 
 **[📖 Visit our comprehensive documentation site →](https://hyochan.github.io/expo-iap)**
 
-
 ## Notice
 
-The `expo-iap` module has been migrated from [react-native-iap](https://github.com/dooboolab/react-native-iap). While we initially considered fully merging everything into `react-native-iap`, we ultimately decided to maintain the two libraries in parallel, each tailored to its own ecosystem.  
+The `expo-iap` module has been migrated from [react-native-iap](https://github.com/dooboolab/react-native-iap). While we initially considered fully merging everything into `react-native-iap`, we ultimately decided to maintain the two libraries in parallel, each tailored to its own ecosystem.
 
-- **`react-native-iap`** → a **Nitro Modules–based** implementation for React Native.  
-- **`expo-iap`** → an **Expo Module** with tighter integration and smoother compatibility in the Expo ecosystem.  
+- **`react-native-iap`** → a **Nitro Modules–based** implementation for React Native.
+- **`expo-iap`** → an **Expo Module** with tighter integration and smoother compatibility in the Expo ecosystem.
 
-Both libraries will continue to be maintained in parallel going forward.  
+Both libraries will continue to be maintained in parallel going forward.
 
 📖 See the [Future Roadmap and Discussion](https://github.com/dooboolab-community/react-native-iap/discussions/2754) for more details.  
 👉 Stay updated via the [Current Project Status comment](https://github.com/dooboolab-community/react-native-iap/discussions/2754#discussioncomment-10510249).
-
 
 ## Installation
 

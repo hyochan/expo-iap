@@ -263,10 +263,10 @@ Tip (dedupe in app logic):
 ```tsx
 const lastSuccessAtRef = useRef(0);
 
-const { finishTransaction } = useIAP({
+const {finishTransaction} = useIAP({
   onPurchaseSuccess: async (purchase) => {
     lastSuccessAtRef.current = Date.now();
-    await finishTransaction({ purchase, isConsumable: false });
+    await finishTransaction({purchase, isConsumable: false});
   },
   onPurchaseError: (error) => {
     if (error.code === 'E_USER_CANCELLED') return;
@@ -279,7 +279,7 @@ const { finishTransaction } = useIAP({
 });
 ```
 
-Because of this timing model, all request* APIs (e.g., `requestPurchase`) are event-driven, not promise-based:
+Because of this timing model, all request\* APIs (e.g., `requestPurchase`) are event-driven, not promise-based:
 
 - `requestPurchase()` does not resolve with a result. It triggers the native flow and you must handle outcomes via `onPurchaseSuccess`/`onPurchaseError` (when using `useIAP`) or `purchaseUpdatedListener`/`purchaseErrorListener`.
 - Avoid relying on `await requestPurchase(...)` for the final outcome; multiple events and inter-session completions are possible.

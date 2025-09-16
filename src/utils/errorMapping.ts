@@ -3,17 +3,38 @@
  * Provides helper functions for handling platform-specific errors
  */
 
-import {ErrorCode} from '../ExpoIap.types';
+import {ErrorCode} from '../types';
 
 type ErrorLike = string | {code?: ErrorCode | string; message?: string};
 
+const ERROR_CODES = new Set<string>(Object.values(ErrorCode));
+
+const normalizeErrorCode = (code?: string | null): string | undefined => {
+  if (!code) {
+    return undefined;
+  }
+
+  if (ERROR_CODES.has(code)) {
+    return code;
+  }
+
+  if (code.startsWith('E_')) {
+    const trimmed = code.substring(2);
+    if (ERROR_CODES.has(trimmed)) {
+      return trimmed;
+    }
+  }
+
+  return code;
+};
+
 function extractCode(error: unknown): string | undefined {
   if (typeof error === 'string') {
-    return error;
+    return normalizeErrorCode(error);
   }
 
   if (error && typeof error === 'object' && 'code' in error) {
-    return (error as {code?: string}).code;
+    return normalizeErrorCode((error as {code?: string}).code);
   }
 
   return undefined;
@@ -116,7 +137,10 @@ export function getUserFriendlyErrorMessage(error: ErrorLike): string {
       return 'Failed to query products. Please try again later.';
     default: {
       if (error && typeof error === 'object' && 'message' in error) {
-        return (error as {message?: string}).message ?? 'An unexpected error occurred';
+        return (
+          (error as {message?: string}).message ??
+          'An unexpected error occurred'
+        );
       }
       return 'An unexpected error occurred';
     }

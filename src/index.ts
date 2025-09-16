@@ -20,19 +20,20 @@ import {
 import {
   Product,
   Purchase,
-  PurchaseError,
   ErrorCode,
-  PurchaseResult,
-  RequestSubscriptionProps,
   RequestPurchaseProps,
+  RequestSubscriptionPropsByPlatforms,
   ProductSubscription,
-  // Bring platform types from the barrel to avoid deep imports
   PurchaseAndroid,
-  PaymentDiscount,
-} from './ExpoIap.types';
+  DiscountOfferInputIos,
+  VoidResult,
+  ReceiptValidationResult,
+} from './types';
+import {PurchaseError} from './PurchaseError';
 
 // Export all types
-export * from './ExpoIap.types';
+export * from './types';
+export {PurchaseError, ErrorCodeUtils, ErrorCodeMapping} from './PurchaseError';
 export * from './modules/android';
 export * from './modules/ios';
 
@@ -40,7 +41,6 @@ export * from './modules/ios';
 export {
   getActiveSubscriptions,
   hasActiveSubscriptions,
-  type ActiveSubscription,
 } from './helpers/subscription';
 
 // Get the native constant value
@@ -272,8 +272,8 @@ export const restorePurchases = async (
 };
 
 const offerToRecordIOS = (
-  offer: PaymentDiscount | undefined,
-): Record<keyof PaymentDiscount, string> | undefined => {
+  offer: DiscountOfferInputIos | undefined,
+): Record<keyof DiscountOfferInputIos, string> | undefined => {
   if (!offer) return undefined;
   return {
     identifier: offer.identifier,
@@ -291,7 +291,7 @@ type PurchaseRequest =
       type?: 'inapp';
     }
   | {
-      request: RequestSubscriptionProps;
+      request: RequestSubscriptionPropsByPlatforms;
       type: 'subs';
     };
 
@@ -299,7 +299,7 @@ type PurchaseRequest =
  * Helper to normalize request props to platform-specific format
  */
 const normalizeRequestProps = (
-  request: RequestPurchaseProps | RequestSubscriptionProps,
+  request: RequestPurchaseProps | RequestSubscriptionPropsByPlatforms,
   platform: 'ios' | 'android',
 ): any => {
   // Platform-specific format - directly return the appropriate platform data
@@ -443,7 +443,7 @@ export const finishTransaction = ({
 }: {
   purchase: Purchase;
   isConsumable?: boolean;
-}): Promise<PurchaseResult | boolean> => {
+}): Promise<VoidResult | boolean> => {
   return (
     Platform.select({
       ios: async () => {
@@ -539,7 +539,7 @@ export const validateReceipt = async (
     accessToken: string;
     isSub?: boolean;
   },
-): Promise<any> => {
+): Promise<ReceiptValidationResult> => {
   if (Platform.OS === 'ios') {
     return await validateReceiptIOS(sku);
   } else if (Platform.OS === 'android') {

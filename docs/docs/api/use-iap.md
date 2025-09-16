@@ -134,7 +134,7 @@ interface UseIAPOptions {
   ```tsx
   if (connected) {
     // Safe to make IAP calls
-    fetchProducts({ skus: ['product.id'], type: 'inapp' });
+    fetchProducts({skus: ['product.id'], type: 'inapp'});
   }
   ```
 
@@ -228,7 +228,7 @@ interface UseIAPOptions {
   useEffect(() => {
     if (!connected) return;
     // In hook: returns void, updates state
-  fetchProducts({
+    fetchProducts({
       skus: ['com.app.premium', 'com.app.coins_100'],
       type: 'inapp',
     });
@@ -239,10 +239,6 @@ interface UseIAPOptions {
   products.forEach((p) => console.log('product', p.id));
   subscriptions.forEach((s) => console.log('sub', s.id));
   ```
-
- 
-
- 
 
 #### requestPurchase
 
