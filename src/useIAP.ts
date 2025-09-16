@@ -31,7 +31,7 @@ import {
   Purchase,
   PurchaseError,
   PurchaseResult,
-  SubscriptionProduct,
+  ProductSubscription,
   RequestPurchaseProps,
   RequestSubscriptionProps,
   ErrorCode,
@@ -51,7 +51,7 @@ type UseIap = {
   products: Product[];
   promotedProductsIOS: Purchase[];
   promotedProductIdIOS?: string;
-  subscriptions: SubscriptionProduct[];
+  subscriptions: ProductSubscription[];
   availablePurchases: Purchase[];
   currentPurchase?: Purchase;
   currentPurchaseError?: PurchaseError;
@@ -108,7 +108,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const [connected, setConnected] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [promotedProductsIOS] = useState<Purchase[]>([]);
-  const [subscriptions, setSubscriptions] = useState<SubscriptionProduct[]>([]);
+  const [subscriptions, setSubscriptions] = useState<ProductSubscription[]>([]);
 
   const [availablePurchases, setAvailablePurchases] = useState<Purchase[]>([]);
   const [currentPurchase, setCurrentPurchase] = useState<Purchase>();
@@ -159,7 +159,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     promotedProductIOS?: EventSubscription;
   }>({});
 
-  const subscriptionsRefState = useRef<SubscriptionProduct[]>([]);
+  const subscriptionsRefState = useRef<ProductSubscription[]>([]);
 
   useEffect(() => {
     subscriptionsRefState.current = subscriptions;
@@ -180,7 +180,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         setSubscriptions((prevSubscriptions) =>
           mergeWithDuplicateCheck(
             prevSubscriptions,
-            result as SubscriptionProduct[],
+            result as ProductSubscription[],
             (subscription) => subscription.id,
           ),
         );
@@ -203,7 +203,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
           setSubscriptions((prevSubscriptions) =>
             mergeWithDuplicateCheck(
               prevSubscriptions,
-              result as SubscriptionProduct[],
+              result as ProductSubscription[],
               (subscription) => subscription.id,
             ),
           );
@@ -386,7 +386,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       (error: PurchaseError) => {
         if (
           !connectedRef.current &&
-          error.code === ErrorCode.E_INIT_CONNECTION
+          error.code === ErrorCode.InitConnection
         ) {
           return; // Ignore initialization error before connected
         }

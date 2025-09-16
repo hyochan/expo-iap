@@ -25,7 +25,7 @@ import {
   PurchaseResult,
   RequestSubscriptionProps,
   RequestPurchaseProps,
-  SubscriptionProduct,
+  ProductSubscription,
   // Bring platform types from the barrel to avoid deep imports
   PurchaseAndroid,
   PaymentDiscount,
@@ -169,11 +169,11 @@ export const fetchProducts = async ({
 }: {
   skus: string[];
   type?: 'inapp' | 'subs';
-}): Promise<Product[] | SubscriptionProduct[]> => {
+}): Promise<Product[] | ProductSubscription[]> => {
   if (!skus?.length) {
     throw new PurchaseError({
       message: 'No SKUs provided',
-      code: ErrorCode.E_EMPTY_SKU_LIST,
+      code: ErrorCode.EmptySkuList,
     });
   }
 
@@ -195,7 +195,7 @@ export const fetchProducts = async ({
 
     return type === 'inapp'
       ? (filteredItems as Product[])
-      : (filteredItems as SubscriptionProduct[]);
+      : (filteredItems as ProductSubscription[]);
   }
 
   if (Platform.OS === 'android') {
@@ -213,7 +213,7 @@ export const fetchProducts = async ({
 
     return type === 'inapp'
       ? (filteredItems as Product[])
-      : (filteredItems as SubscriptionProduct[]);
+      : (filteredItems as ProductSubscription[]);
   }
 
   throw new Error('Unsupported platform');

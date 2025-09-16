@@ -171,7 +171,7 @@ if (isValidReceipt) {
 
 ```tsx
 // Handle different error types appropriately
-if (currentPurchaseError.code === ErrorCode.E_USER_CANCELLED) {
+if (currentPurchaseError.code === ErrorCode.UserCancelled) {
   return; // Don't show error for user cancellation
 }
 

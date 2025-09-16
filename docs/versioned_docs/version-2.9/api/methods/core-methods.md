@@ -308,7 +308,7 @@ const subs = await fetchProducts({
 
 - `skus` (string[]): Array of subscription IDs to fetch
 
-**Returns:** `Promise<SubscriptionProduct[]>`
+**Returns:** `Promise<ProductSubscription[]>`
 
 ## requestPurchase()
 

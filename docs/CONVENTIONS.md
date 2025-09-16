@@ -554,14 +554,14 @@ Examples:
 // Preferred (object style)
 throw new PurchaseError({
   message: 'No SKUs provided',
-  code: ErrorCode.E_EMPTY_SKU_LIST,
+  code: ErrorCode.EmptySkuList,
 });
 
 // Also valid for richer context
 return Promise.reject(
   new PurchaseError({
     message: 'Purchase token is required to finish transaction',
-    code: ErrorCode.E_DEVELOPER_ERROR,
+    code: ErrorCode.DeveloperError,
     productId: sku,
     platform: 'android',
   }),

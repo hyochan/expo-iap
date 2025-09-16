@@ -12,11 +12,11 @@ import {ErrorCode} from '../ExpoIap.types';
  */
 export function isUserCancelledError(error: any): boolean {
   if (typeof error === 'string') {
-    return error === ErrorCode.E_USER_CANCELLED;
+    return error === ErrorCode.UserCancelled;
   }
 
   if (error && error.code) {
-    return error.code === ErrorCode.E_USER_CANCELLED;
+    return error.code === ErrorCode.UserCancelled;
   }
 
   return false;
@@ -29,11 +29,11 @@ export function isUserCancelledError(error: any): boolean {
  */
 export function isNetworkError(error: any): boolean {
   const networkErrors = [
-    ErrorCode.E_NETWORK_ERROR,
-    ErrorCode.E_REMOTE_ERROR,
-    ErrorCode.E_SERVICE_ERROR,
-    ErrorCode.E_SERVICE_DISCONNECTED,
-    ErrorCode.E_BILLING_UNAVAILABLE,
+    ErrorCode.NetworkError,
+    ErrorCode.RemoteError,
+    ErrorCode.ServiceError,
+    ErrorCode.ServiceDisconnected,
+    ErrorCode.BillingUnavailable,
   ];
 
   const errorCode = typeof error === 'string' ? error : error?.code;
@@ -47,14 +47,14 @@ export function isNetworkError(error: any): boolean {
  */
 export function isRecoverableError(error: any): boolean {
   const recoverableErrors = [
-    ErrorCode.E_NETWORK_ERROR,
-    ErrorCode.E_REMOTE_ERROR,
-    ErrorCode.E_SERVICE_ERROR,
-    ErrorCode.E_INTERRUPTED,
-    ErrorCode.E_SERVICE_DISCONNECTED,
-    ErrorCode.E_BILLING_UNAVAILABLE,
-    ErrorCode.E_QUERY_PRODUCT,
-    ErrorCode.E_INIT_CONNECTION,
+    ErrorCode.NetworkError,
+    ErrorCode.RemoteError,
+    ErrorCode.ServiceError,
+    ErrorCode.Interrupted,
+    ErrorCode.ServiceDisconnected,
+    ErrorCode.BillingUnavailable,
+    ErrorCode.QueryProduct,
+    ErrorCode.InitConnection,
   ];
 
   const errorCode = typeof error === 'string' ? error : error?.code;
@@ -70,43 +70,43 @@ export function getUserFriendlyErrorMessage(error: any): string {
   const errorCode = typeof error === 'string' ? error : error?.code;
 
   switch (errorCode) {
-    case ErrorCode.E_USER_CANCELLED:
+    case ErrorCode.UserCancelled:
       return 'Purchase was cancelled by user';
-    case ErrorCode.E_NETWORK_ERROR:
+    case ErrorCode.NetworkError:
       return 'Network connection error. Please check your internet connection and try again.';
-    case ErrorCode.E_RECEIPT_FINISHED:
+    case ErrorCode.ReceiptFinished:
       return 'Receipt already finished';
-    case ErrorCode.E_SERVICE_DISCONNECTED:
+    case ErrorCode.ServiceDisconnected:
       return 'Billing service disconnected. Please try again.';
-    case ErrorCode.E_BILLING_UNAVAILABLE:
+    case ErrorCode.BillingUnavailable:
       return 'Billing is unavailable on this device or account.';
-    case ErrorCode.E_ITEM_UNAVAILABLE:
+    case ErrorCode.ItemUnavailable:
       return 'This item is not available for purchase';
-    case ErrorCode.E_ITEM_NOT_OWNED:
+    case ErrorCode.ItemNotOwned:
       return "You don't own this item";
-    case ErrorCode.E_ALREADY_OWNED:
+    case ErrorCode.AlreadyOwned:
       return 'You already own this item';
-    case ErrorCode.E_SKU_NOT_FOUND:
+    case ErrorCode.SkuNotFound:
       return 'Requested product could not be found';
-    case ErrorCode.E_SKU_OFFER_MISMATCH:
+    case ErrorCode.SkuOfferMismatch:
       return 'Selected offer does not match the SKU';
-    case ErrorCode.E_DEFERRED_PAYMENT:
+    case ErrorCode.DeferredPayment:
       return 'Payment is pending approval';
-    case ErrorCode.E_NOT_PREPARED:
+    case ErrorCode.NotPrepared:
       return 'In-app purchase is not ready. Please try again later.';
-    case ErrorCode.E_SERVICE_ERROR:
+    case ErrorCode.ServiceError:
       return 'Store service error. Please try again later.';
-    case ErrorCode.E_FEATURE_NOT_SUPPORTED:
+    case ErrorCode.FeatureNotSupported:
       return 'This feature is not supported on this device.';
-    case ErrorCode.E_TRANSACTION_VALIDATION_FAILED:
+    case ErrorCode.TransactionValidationFailed:
       return 'Transaction could not be verified';
-    case ErrorCode.E_RECEIPT_FAILED:
+    case ErrorCode.ReceiptFailed:
       return 'Receipt processing failed';
-    case ErrorCode.E_EMPTY_SKU_LIST:
+    case ErrorCode.EmptySkuList:
       return 'No product IDs provided';
-    case ErrorCode.E_INIT_CONNECTION:
+    case ErrorCode.InitConnection:
       return 'Failed to initialize billing connection';
-    case ErrorCode.E_QUERY_PRODUCT:
+    case ErrorCode.QueryProduct:
       return 'Failed to query products. Please try again later.';
     default:
       return error?.message || 'An unexpected error occurred';

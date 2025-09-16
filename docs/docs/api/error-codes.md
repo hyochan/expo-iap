@@ -153,7 +153,7 @@ const error = PurchaseError.fromPlatformError(
   {code: 2, message: 'User cancelled'},
   'ios',
 );
-console.log(error.code); // ErrorCode.E_USER_CANCELLED
+console.log(error.code); // ErrorCode.UserCancelled
 ```
 
 ### Instance Methods
@@ -174,7 +174,7 @@ const error = new PurchaseError(
   'User cancelled',
   undefined,
   undefined,
-  ErrorCode.E_USER_CANCELLED,
+  ErrorCode.UserCancelled,
   'com.app.premium',
   'ios',
 );
@@ -198,7 +198,7 @@ ErrorCodeUtils.getNativeErrorCode(errorCode: ErrorCode): string
 
 ```tsx
 const nativeCode = ErrorCodeUtils.getNativeErrorCode(
-  ErrorCode.E_USER_CANCELLED,
+  ErrorCode.UserCancelled,
 );
 console.log(nativeCode); // Platform-specific code
 ```
@@ -219,14 +219,14 @@ ErrorCodeUtils.fromPlatformCode(
 ```tsx
 // iOS
 const errorCode = ErrorCodeUtils.fromPlatformCode(2, 'ios');
-console.log(errorCode); // ErrorCode.E_USER_CANCELLED
+console.log(errorCode); // ErrorCode.UserCancelled
 
 // Android
 const errorCode = ErrorCodeUtils.fromPlatformCode(
   'E_USER_CANCELLED',
   'android',
 );
-console.log(errorCode); // ErrorCode.E_USER_CANCELLED
+console.log(errorCode); // ErrorCode.UserCancelled
 ```
 
 ### toPlatformCode
@@ -245,14 +245,14 @@ ErrorCodeUtils.toPlatformCode(
 ```tsx
 // iOS
 const iosCode = ErrorCodeUtils.toPlatformCode(
-  ErrorCode.E_USER_CANCELLED,
+  ErrorCode.UserCancelled,
   'ios',
 );
 console.log(iosCode); // 2
 
 // Android
 const androidCode = ErrorCodeUtils.toPlatformCode(
-  ErrorCode.E_USER_CANCELLED,
+  ErrorCode.UserCancelled,
   'android',
 );
 console.log(androidCode); // 'E_USER_CANCELLED'
@@ -273,7 +273,7 @@ ErrorCodeUtils.isValidForPlatform(
 
 ```tsx
 const isValid = ErrorCodeUtils.isValidForPlatform(
-  ErrorCode.E_USER_CANCELLED,
+  ErrorCode.UserCancelled,
   'ios',
 );
 console.log(isValid); // true
@@ -318,13 +318,13 @@ const {requestPurchase} = useIAP({
     });
 
     switch (error.code) {
-      case ErrorCode.E_USER_CANCELLED:
+      case ErrorCode.UserCancelled:
         // Don't show error for user cancellation
         break;
-      case ErrorCode.E_NETWORK_ERROR:
+      case ErrorCode.NetworkError:
         Alert.alert('Network Error', 'Please check your internet connection');
         break;
-      case ErrorCode.E_ITEM_UNAVAILABLE:
+      case ErrorCode.ItemUnavailable:
         Alert.alert('Item Unavailable', 'This item is not available');
         break;
       default:
@@ -352,9 +352,9 @@ const handlePurchaseWithRetry = async (productId: string, retryCount = 0) => {
 
     // Determine if we should retry
     const retryableErrors = [
-      ErrorCode.E_NETWORK_ERROR,
-      ErrorCode.E_SERVICE_ERROR,
-      ErrorCode.E_INTERRUPTED,
+      ErrorCode.NetworkError,
+      ErrorCode.ServiceError,
+      ErrorCode.Interrupted,
     ];
 
     const shouldRetry =

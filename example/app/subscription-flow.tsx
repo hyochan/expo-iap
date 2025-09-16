@@ -15,7 +15,7 @@ import {requestPurchase, useIAP, showManageSubscriptionsIOS} from '../../src';
 import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {
-  SubscriptionProduct,
+  ProductSubscription,
   PurchaseError,
   PurchaseIOS,
   Purchase,
@@ -65,7 +65,7 @@ export default function SubscriptionFlow() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [selectedSubscription, setSelectedSubscription] =
-    useState<SubscriptionProduct | null>(null);
+    useState<ProductSubscription | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isHandlingPurchase, setIsHandlingPurchase] = useState(false);
   const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
@@ -423,7 +423,7 @@ export default function SubscriptionFlow() {
   };
 
   const getSubscriptionDisplayPrice = (
-    subscription: SubscriptionProduct,
+    subscription: ProductSubscription,
   ): string => {
     if (
       'subscriptionOfferDetailsAndroid' in subscription &&
@@ -469,7 +469,7 @@ export default function SubscriptionFlow() {
   };
 
   const getIntroductoryOffer = (
-    subscription: SubscriptionProduct,
+    subscription: ProductSubscription,
   ): string | null => {
     if (
       'subscriptionInfoIOS' in subscription &&
@@ -496,7 +496,7 @@ export default function SubscriptionFlow() {
     return null;
   };
 
-  const getSubscriptionPeriod = (subscription: SubscriptionProduct): string => {
+  const getSubscriptionPeriod = (subscription: ProductSubscription): string => {
     if (
       'subscriptionOfferDetailsAndroid' in subscription &&
       subscription.subscriptionOfferDetailsAndroid
@@ -520,7 +520,7 @@ export default function SubscriptionFlow() {
     return 'Unknown';
   };
 
-  const handleSubscriptionPress = (subscription: SubscriptionProduct) => {
+  const handleSubscriptionPress = (subscription: ProductSubscription) => {
     setSelectedSubscription(subscription);
     setModalVisible(true);
   };
