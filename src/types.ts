@@ -138,7 +138,6 @@ export enum IapEvent {
 }
 
 export interface Mutation {
-  _placeholder?: boolean | null;
   /** Acknowledge a non-consumable purchase or subscription */
   acknowledgePurchaseAndroid: Promise<VoidResult>;
   /** Initiate a refund request for a product (iOS 15+) */
@@ -160,11 +159,11 @@ export interface Mutation {
   /** Initiate a purchase flow; rely on events for final state */
   requestPurchase?: Promise<RequestPurchaseResult | null>;
   /** Purchase the promoted product surfaced by the App Store */
-  requestPurchaseOnPromotedProductIOS: Promise<PurchaseIos>;
+  requestPurchaseOnPromotedProductIOS: Promise<PurchaseIOS>;
   /** Restore completed purchases across platforms */
   restorePurchases: Promise<VoidResult>;
   /** Open subscription management UI and return changed purchases (iOS 15+) */
-  showManageSubscriptionsIOS: Promise<PurchaseIos[]>;
+  showManageSubscriptionsIOS: Promise<PurchaseIOS[]>;
   /** Force a StoreKit sync for transactions (iOS 15+) */
   syncIOS: Promise<VoidResult>;
   /** Validate purchase receipts with the configured providers */
@@ -225,7 +224,7 @@ export interface PricingPhasesAndroid {
   pricingPhaseList: PricingPhaseAndroid[];
 }
 
-export type Product = ProductAndroid | ProductIos;
+export type Product = ProductAndroid | ProductIOS;
 
 export interface ProductAndroid extends ProductCommon {
   currency: string;
@@ -264,7 +263,7 @@ export interface ProductCommon {
   type: ProductType;
 }
 
-export interface ProductIos extends ProductCommon {
+export interface ProductIOS extends ProductCommon {
   currency: string;
   debugDescription?: string | null;
   description: string;
@@ -295,7 +294,7 @@ export interface ProductRequest {
 
 export type ProductSubscription =
   | ProductSubscriptionAndroid
-  | ProductSubscriptionIos;
+  | ProductSubscriptionIOS;
 
 export interface ProductSubscriptionAndroid extends ProductCommon {
   currency: string;
@@ -321,7 +320,7 @@ export interface ProductSubscriptionAndroidOfferDetails {
   pricingPhases: PricingPhasesAndroid;
 }
 
-export interface ProductSubscriptionIos extends ProductCommon {
+export interface ProductSubscriptionIOS extends ProductCommon {
   currency: string;
   debugDescription?: string | null;
   description: string;
@@ -359,7 +358,7 @@ export enum ProductTypeIOS {
   NonRenewingSubscription = 'NON_RENEWING_SUBSCRIPTION',
 }
 
-export type Purchase = PurchaseAndroid | PurchaseIos;
+export type Purchase = PurchaseAndroid | PurchaseIOS;
 
 export interface PurchaseAndroid extends PurchaseCommon {
   autoRenewingAndroid?: boolean | null;
@@ -394,13 +393,13 @@ export interface PurchaseCommon {
   transactionDate: number;
 }
 
-export interface PurchaseErrorRecord {
+export interface PurchaseError {
   code: ErrorCode;
   message: string;
   productId?: string | null;
 }
 
-export interface PurchaseIos extends PurchaseCommon {
+export interface PurchaseIOS extends PurchaseCommon {
   appAccountToken?: string | null;
   appBundleIdIOS?: string | null;
   countryCodeIOS?: string | null;
@@ -477,7 +476,6 @@ export enum PurchaseState {
 }
 
 export interface Query {
-  _placeholder?: boolean | null;
   /** Get current StoreKit 2 entitlements (iOS 15+) */
   currentEntitlementIOS: Promise<EntitlementIOS[]>;
   /** Retrieve products or subscriptions from the store */
@@ -489,9 +487,9 @@ export interface Query {
   /** Get all available purchases for the current user */
   getAvailablePurchases: Promise<Purchase[]>;
   /** Retrieve all pending transactions in the StoreKit queue */
-  getPendingTransactionsIOS: Promise<PurchaseIos[]>;
+  getPendingTransactionsIOS: Promise<PurchaseIOS[]>;
   /** Get the currently promoted product (iOS 11+) */
-  getPromotedProductIOS?: Promise<ProductIos | null>;
+  getPromotedProductIOS?: Promise<ProductIOS | null>;
   /** Get base64-encoded receipt data for validation */
   getReceiptDataIOS: Promise<string>;
   /** Get the current App Store storefront country code */
@@ -505,7 +503,7 @@ export interface Query {
   /** Verify a StoreKit 2 transaction signature */
   isTransactionVerifiedIOS: Promise<boolean>;
   /** Get the latest transaction for a product using StoreKit 2 */
-  latestTransactionIOS?: Promise<PurchaseIos | null>;
+  latestTransactionIOS?: Promise<PurchaseIOS | null>;
   /** Get StoreKit 2 subscription status details (iOS 15+) */
   subscriptionStatusIOS: Promise<SubscriptionStatusIOS[]>;
 }
@@ -574,7 +572,7 @@ export interface ReceiptValidationResultAndroid {
   cancelDate?: number | null;
   cancelReason?: string | null;
   deferredDate?: number | null;
-  deferredSku?: number | null;
+  deferredSku?: string | null;
   freeTrialEndDate: number;
   gracePeriodEndDate: number;
   parentProductId: string;
@@ -687,11 +685,10 @@ export interface RequestSubscriptionPropsByPlatforms {
 }
 
 export interface Subscription {
-  _placeholder?: boolean | null;
   /** Fires when the App Store surfaces a promoted product (iOS only) */
   promotedProductIOS: string;
   /** Fires when a purchase fails or is cancelled */
-  purchaseError: PurchaseErrorRecord;
+  purchaseError: PurchaseError;
   /** Fires when a purchase completes successfully or a pending purchase resolves */
   purchaseUpdated: Purchase;
 }
