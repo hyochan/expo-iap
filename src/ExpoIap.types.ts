@@ -72,6 +72,9 @@ export type ProductSubscription =
   | (ProductSubscriptionAndroid & AndroidPlatform)
   | (ProductSubscriptionIOS & IosPlatform);
 
+// Legacy naming retained for backward compatibility
+export type SubscriptionProduct = ProductSubscription;
+
 // Re-export all platform-specific types to avoid deep imports
 export * from './types/ExpoIapAndroid.types';
 export * from './types/ExpoIapIOS.types';

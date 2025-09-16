@@ -1,10 +1,10 @@
 import {PurchaseCommon, ProductCommon} from '../ExpoIap.types';
 
 export enum ProductTypeIOS {
-  consumable = 'consumable',
-  nonConsumable = 'nonConsumable',
-  autoRenewableSubscription = 'autoRenewableSubscription',
-  nonRenewingSubscription = 'nonRenewingSubscription',
+  Consumable = 'consumable',
+  NonConsumable = 'nonConsumable',
+  AutoRenewableSubscription = 'autoRenewableSubscription',
+  NonRenewingSubscription = 'nonRenewingSubscription',
 }
 
 type SubscriptionIosPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | '';
