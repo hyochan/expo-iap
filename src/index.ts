@@ -68,8 +68,21 @@ export const emitter = (ExpoIapModule || NativeModulesProxy.ExpoIap) as {
   ) => void;
 };
 
-type ProductTypeInput = 'inapp' | 'in-app' | 'subs';
-type InAppTypeInput = Exclude<ProductTypeInput, 'subs'>;
+/**
+ * TODO(v3.1.0): Remove legacy 'inapp' alias once downstream apps migrate to 'in-app'.
+ */
+export type ProductTypeInput = 'inapp' | 'in-app' | 'subs';
+export type InAppTypeInput = Exclude<ProductTypeInput, 'subs'>;
+
+export type PurchaseRequest =
+  | {
+      request: RequestPurchaseProps;
+      type?: InAppTypeInput;
+    }
+  | {
+      request: RequestSubscriptionPropsByPlatforms;
+      type: 'subs';
+    };
 
 const normalizeProductType = (type?: ProductTypeInput) => {
   if (type === 'inapp') {
@@ -310,17 +323,6 @@ const offerToRecordIOS = (
     timestamp: offer.timestamp.toString(),
   };
 };
-
-// Define discriminated union with explicit type parameter
-type PurchaseRequest =
-  | {
-      request: RequestPurchaseProps;
-      type?: InAppTypeInput;
-    }
-  | {
-      request: RequestSubscriptionPropsByPlatforms;
-      type: 'subs';
-    };
 
 /**
  * Helper to normalize request props to platform-specific format

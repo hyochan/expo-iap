@@ -18,6 +18,8 @@ import {
   getActiveSubscriptions,
   hasActiveSubscriptions,
   type ActiveSubscription,
+  type ProductTypeInput,
+  type PurchaseRequest,
   restorePurchases,
 } from './index';
 import {
@@ -30,10 +32,9 @@ import {
   Product,
   Purchase,
   ProductSubscription,
-  RequestPurchaseProps,
-  RequestSubscriptionPropsByPlatforms,
   ErrorCode,
   VoidResult,
+  ReceiptValidationResult,
 } from './types';
 import {PurchaseError} from './purchase-error';
 import {
@@ -69,13 +70,12 @@ type UseIap = {
   getAvailablePurchases: () => Promise<void>;
   fetchProducts: (params: {
     skus: string[];
-    type?: 'in-app' | 'inapp' | 'subs';
+    type?: ProductTypeInput;
   }) => Promise<void>;
 
-  requestPurchase: (params: {
-    request: RequestPurchaseProps | RequestSubscriptionPropsByPlatforms;
-    type?: 'in-app' | 'inapp' | 'subs';
-  }) => Promise<any>;
+  requestPurchase: (
+    params: PurchaseRequest,
+  ) => ReturnType<typeof requestPurchaseInternal>;
   validateReceipt: (
     sku: string,
     androidOptions?: {
@@ -84,7 +84,7 @@ type UseIap = {
       accessToken: string;
       isSub?: boolean;
     },
-  ) => Promise<any>;
+  ) => Promise<ReceiptValidationResult>;
   restorePurchases: () => Promise<void>;
   getPromotedProductIOS: () => Promise<Product | null>;
   requestPurchaseOnPromotedProductIOS: () => Promise<void>;
@@ -194,7 +194,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const fetchProductsInternal = useCallback(
     async (params: {
       skus: string[];
-      type?: 'in-app' | 'inapp' | 'subs';
+      type?: ProductTypeInput;
     }): Promise<void> => {
       try {
         const result = await fetchProducts(params);
@@ -293,7 +293,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   );
 
   const requestPurchaseWithReset = useCallback(
-    async (requestObj: {request: any; type?: 'in-app' | 'inapp' | 'subs'}) => {
+    async (requestObj: PurchaseRequest) => {
       clearCurrentPurchase();
       clearCurrentPurchaseError();
 
