@@ -643,7 +643,7 @@ export default function SubscriptionFlow() {
                   <View style={styles.statusRow}>
                     <Text style={styles.statusLabel}>Expires:</Text>
                     <Text style={styles.statusValue}>
-                    {new Date(sub.expirationDateIOS).toLocaleDateString()}
+                      {new Date(sub.expirationDateIOS).toLocaleDateString()}
                     </Text>
                   </View>
                 ) : null}

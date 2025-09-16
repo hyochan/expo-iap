@@ -77,7 +77,9 @@ const COMMON_ERROR_CODE_MAP: Record<ErrorCode, string> = {
   [ErrorCode.SkuNotFound]: toStandardizedCode(ErrorCode.SkuNotFound),
   [ErrorCode.SkuOfferMismatch]: toStandardizedCode(ErrorCode.SkuOfferMismatch),
   [ErrorCode.ItemNotOwned]: toStandardizedCode(ErrorCode.ItemNotOwned),
-  [ErrorCode.BillingUnavailable]: toStandardizedCode(ErrorCode.BillingUnavailable),
+  [ErrorCode.BillingUnavailable]: toStandardizedCode(
+    ErrorCode.BillingUnavailable,
+  ),
   [ErrorCode.FeatureNotSupported]: toStandardizedCode(
     ErrorCode.FeatureNotSupported,
   ),
@@ -185,8 +187,9 @@ export const ErrorCodeUtils = {
   getNativeErrorCode: (errorCode: ErrorCode): string => {
     const standardized = toStandardizedCode(errorCode);
     return (
-      (NATIVE_ERROR_CODES as Record<string, string | undefined>)[standardized] ??
-      standardized
+      (NATIVE_ERROR_CODES as Record<string, string | undefined>)[
+        standardized
+      ] ?? standardized
     );
   },
   /**
@@ -210,7 +213,10 @@ export const ErrorCodeUtils = {
     for (const [standardized, nativeCode] of Object.entries(
       (NATIVE_ERROR_CODES || {}) as Record<string, string | number>,
     )) {
-      if (nativeCode === platformCode && OPENIAP_ERROR_CODE_SET.has(standardized)) {
+      if (
+        nativeCode === platformCode &&
+        OPENIAP_ERROR_CODE_SET.has(standardized)
+      ) {
         const match = Object.entries(COMMON_ERROR_CODE_MAP).find(
           ([, mappedCode]) => mappedCode === standardized,
         );
@@ -220,7 +226,9 @@ export const ErrorCodeUtils = {
       }
     }
 
-    for (const [errorCode, mappedCode] of Object.entries(COMMON_ERROR_CODE_MAP)) {
+    for (const [errorCode, mappedCode] of Object.entries(
+      COMMON_ERROR_CODE_MAP,
+    )) {
       if (mappedCode === platformCode) {
         return errorCode as ErrorCode;
       }
@@ -239,7 +247,7 @@ export const ErrorCodeUtils = {
     const native = (NATIVE_ERROR_CODES as Record<string, string | number>)[
       standardized
     ];
-    return native ?? (COMMON_ERROR_CODE_MAP[errorCode] ?? 'E_UNKNOWN');
+    return native ?? COMMON_ERROR_CODE_MAP[errorCode] ?? 'E_UNKNOWN';
   },
   /**
    * Determines whether the error code is supported on the given platform.
@@ -249,7 +257,10 @@ export const ErrorCodeUtils = {
     platform: PurchaseErrorPlatform,
   ): boolean => {
     const standardized = toStandardizedCode(errorCode);
-    if ((NATIVE_ERROR_CODES as Record<string, unknown>)[standardized] !== undefined) {
+    if (
+      (NATIVE_ERROR_CODES as Record<string, unknown>)[standardized] !==
+      undefined
+    ) {
       return true;
     }
     return standardized in ErrorCodeMapping[normalizePlatform(platform)];

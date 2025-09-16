@@ -33,7 +33,11 @@ import {PurchaseError} from './purchase-error';
 
 // Export all types
 export * from './types';
-export {PurchaseError, ErrorCodeUtils, ErrorCodeMapping} from './purchase-error';
+export {
+  PurchaseError,
+  ErrorCodeUtils,
+  ErrorCodeMapping,
+} from './purchase-error';
 export * from './modules/android';
 export * from './modules/ios';
 
