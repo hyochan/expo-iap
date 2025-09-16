@@ -131,12 +131,20 @@ export interface FetchProductsResult {
   subscriptions?: ProductSubscription[] | null;
 }
 
-export type IapEvent =
-  | 'promoted-product-ios'
-  | 'purchase-error'
-  | 'purchase-updated';
+export const IapEvent = {
+  PromotedProductIOS: 'promoted-product-ios',
+  PurchaseError: 'purchase-error',
+  PurchaseUpdated: 'purchase-updated',
+} as const;
+export type IapEvent = (typeof IapEvent)[keyof typeof IapEvent];
 
-export type IapPlatform = 'android' | 'ios';
+export const IapPlatform = {
+  Android: 'android',
+  IOS: 'ios',
+} as const;
+export type IapPlatform = (typeof IapPlatform)[keyof typeof IapPlatform];
+export const Platform = IapPlatform;
+export type Platform = IapPlatform;
 
 export interface Mutation {
   /** Acknowledge a non-consumable purchase or subscription */
@@ -200,11 +208,13 @@ export interface MutationValidateReceiptArgs {
   options: ReceiptValidationProps;
 }
 
-export type PaymentModeIOS =
-  | 'empty'
-  | 'free-trial'
-  | 'pay-as-you-go'
-  | 'pay-up-front';
+export const PaymentModeIOS = {
+  Empty: 'empty',
+  FreeTrial: 'free-trial',
+  PayAsYouGo: 'pay-as-you-go',
+  PayUpFront: 'pay-up-front',
+} as const;
+export type PaymentModeIOS = (typeof PaymentModeIOS)[keyof typeof PaymentModeIOS];
 
 export interface PricingPhaseAndroid {
   billingCycleCount: number;
@@ -276,7 +286,13 @@ export interface ProductIOS extends ProductCommon {
   typeIOS: ProductTypeIOS;
 }
 
-export type ProductQueryType = 'all' | 'in-app' | 'subs';
+export const ProductQueryType = {
+  All: 'all',
+  InApp: 'in-app',
+  Subs: 'subs',
+} as const;
+export type ProductQueryType =
+  (typeof ProductQueryType)[keyof typeof ProductQueryType];
 
 export interface ProductRequest {
   skus: string[];
@@ -337,13 +353,19 @@ export interface ProductSubscriptionIOS extends ProductCommon {
   typeIOS: ProductTypeIOS;
 }
 
-export type ProductType = 'in-app' | 'subs';
+export const ProductType = {
+  InApp: 'in-app',
+  Subs: 'subs',
+} as const;
+export type ProductType = (typeof ProductType)[keyof typeof ProductType];
 
-export type ProductTypeIOS =
-  | 'auto-renewable-subscription'
-  | 'consumable'
-  | 'non-consumable'
-  | 'non-renewing-subscription';
+export const ProductTypeIOS = {
+  AutoRenewableSubscription: 'auto-renewable-subscription',
+  Consumable: 'consumable',
+  NonConsumable: 'non-consumable',
+  NonRenewingSubscription: 'non-renewing-subscription',
+} as const;
+export type ProductTypeIOS = (typeof ProductTypeIOS)[keyof typeof ProductTypeIOS];
 
 export type Purchase = PurchaseAndroid | PurchaseIOS;
 
@@ -453,13 +475,15 @@ export interface PurchaseParams {
   type?: ProductQueryType | null;
 }
 
-export type PurchaseState =
-  | 'deferred'
-  | 'failed'
-  | 'pending'
-  | 'purchased'
-  | 'restored'
-  | 'unknown';
+export const PurchaseState = {
+  Deferred: 'deferred',
+  Failed: 'failed',
+  Pending: 'pending',
+  Purchased: 'purchased',
+  Restored: 'restored',
+  Unknown: 'unknown',
+} as const;
+export type PurchaseState = (typeof PurchaseState)[keyof typeof PurchaseState];
 
 export interface Query {
   /** Get current StoreKit 2 entitlements (iOS 15+) */
@@ -696,9 +720,22 @@ export interface SubscriptionOfferIOS {
   type: SubscriptionOfferTypeIOS;
 }
 
-export type SubscriptionOfferTypeIOS = 'introductory' | 'promotional';
+export const SubscriptionOfferTypeIOS = {
+  Introductory: 'introductory',
+  Promotional: 'promotional',
+} as const;
+export type SubscriptionOfferTypeIOS =
+  (typeof SubscriptionOfferTypeIOS)[keyof typeof SubscriptionOfferTypeIOS];
 
-export type SubscriptionPeriodIOS = 'day' | 'empty' | 'month' | 'week' | 'year';
+export const SubscriptionPeriodIOS = {
+  Day: 'day',
+  Empty: 'empty',
+  Month: 'month',
+  Week: 'week',
+  Year: 'year',
+} as const;
+export type SubscriptionPeriodIOS =
+  (typeof SubscriptionPeriodIOS)[keyof typeof SubscriptionPeriodIOS];
 
 export interface SubscriptionPeriodValueIOS {
   unit: SubscriptionPeriodIOS;

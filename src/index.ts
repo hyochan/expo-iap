@@ -72,6 +72,12 @@ type ProductTypeInput = 'inapp' | 'in-app' | 'subs';
 type InAppTypeInput = Exclude<ProductTypeInput, 'subs'>;
 
 const normalizeProductType = (type?: ProductTypeInput) => {
+  if (type === 'inapp') {
+    console.warn(
+      "expo-iap: 'inapp' product type is deprecated and will be removed in a future version. Use 'in-app' instead.",
+    );
+  }
+
   if (!type || type === 'inapp' || type === 'in-app') {
     return {
       canonical: 'in-app' as const,
