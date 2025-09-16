@@ -19,7 +19,7 @@ import {
   hasActiveSubscriptions,
   type ActiveSubscription,
   type ProductTypeInput,
-  type PurchaseRequest,
+  type PurchaseRequestInput,
   restorePurchases,
 } from './index';
 import {
@@ -74,7 +74,7 @@ type UseIap = {
   }) => Promise<void>;
 
   requestPurchase: (
-    params: PurchaseRequest,
+    params: PurchaseRequestInput,
   ) => ReturnType<typeof requestPurchaseInternal>;
   validateReceipt: (
     sku: string,
@@ -293,7 +293,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   );
 
   const requestPurchaseWithReset = useCallback(
-    async (requestObj: PurchaseRequest) => {
+    async (requestObj: PurchaseRequestInput) => {
       clearCurrentPurchase();
       clearCurrentPurchaseError();
 
