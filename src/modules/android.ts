@@ -119,12 +119,28 @@ export const validateReceiptAndroid = async ({
  * @param {string} params.token - The product's token (on Android)
  * @returns {Promise<VoidResult | void>}
  */
-export const acknowledgePurchaseAndroid = ({
+export const acknowledgePurchaseAndroid = async ({
   token,
 }: {
   token: string;
 }): Promise<VoidResult | boolean | void> => {
-  return ExpoIapModule.acknowledgePurchaseAndroid(token);
+  const result = await ExpoIapModule.acknowledgePurchaseAndroid(token);
+
+  if (typeof result === 'boolean' || typeof result === 'undefined') {
+    return result;
+  }
+
+  if (result && typeof result === 'object') {
+    const record = result as Record<string, unknown>;
+    if (typeof record.success === 'boolean') {
+      return {success: record.success};
+    }
+    if (typeof record.responseCode === 'number') {
+      return {success: record.responseCode === 0};
+    }
+  }
+
+  return {success: true};
 };
 
 /**

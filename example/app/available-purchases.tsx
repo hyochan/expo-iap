@@ -15,7 +15,7 @@ import type {ActiveSubscription} from '../../src';
 import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {Purchase} from '../../src/types';
-import type {PurchaseError} from '../../src/PurchaseError';
+import type {PurchaseError} from '../../src/purchase-error';
 
 export default function AvailablePurchases() {
   const [loading, setLoading] = useState(false);
@@ -124,7 +124,7 @@ export default function AvailablePurchases() {
 
       // Load available purchases and active subscriptions
       // getPurchaseHistories is deprecated on Android, so we use these instead
-      await Promise.all([getAvailablePurchases([]), getActiveSubscriptions()]);
+      await Promise.all([getAvailablePurchases(), getActiveSubscriptions()]);
 
       console.log(
         '[AVAILABLE-PURCHASES] Available purchases and active subscriptions loaded',
@@ -185,7 +185,7 @@ export default function AvailablePurchases() {
       console.log(
         '[AVAILABLE-PURCHASES] Loading available purchases and active subscriptions...',
       );
-      Promise.all([getAvailablePurchases([]), getActiveSubscriptions()]).catch(
+      Promise.all([getAvailablePurchases(), getActiveSubscriptions()]).catch(
         (error) => {
           console.warn(
             '[AVAILABLE-PURCHASES] Failed to load purchase data:',

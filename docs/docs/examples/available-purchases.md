@@ -19,7 +19,7 @@ View the full example source:
 ## Restore Flow
 
 - Ensure the store connection is active (handled by `useIAP`)
-- Call both `getAvailablePurchases([])` and `getActiveSubscriptions()`
+- Call both `getAvailablePurchases()` and `getActiveSubscriptions()`
 - Validate on your server and grant entitlements
 
 ```tsx
@@ -39,7 +39,7 @@ export default function AvailablePurchasesScreen() {
   const restore = async () => {
     if (!connected) return;
     const [purchases] = await Promise.all([
-      getAvailablePurchases([]),
+      getAvailablePurchases(),
       getActiveSubscriptions(),
     ]);
 
@@ -86,4 +86,4 @@ function ActiveSubscriptionsList() {
 - Only non‑consumables and subscriptions are returned; consumables are not restorable
 - Always perform server‑side validation before granting access
 - On iOS, you can optionally filter for active items using `onlyIncludeActiveItemsIOS`
-- Android tip: If users redeem a promo code in Google Play, open `https://play.google.com/redeem` with `Linking.openURL(...)` and then refresh with `getAvailablePurchases([])` and `getActiveSubscriptions()`
+- Android tip: If users redeem a promo code in Google Play, open `https://play.google.com/redeem` with `Linking.openURL(...)` and then refresh with `getAvailablePurchases()` and `getActiveSubscriptions()`

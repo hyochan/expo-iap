@@ -16,7 +16,7 @@ import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {ProductSubscription, PurchaseIos, Purchase} from '../../src/types';
 import {Platform as PurchasePlatform, PaymentModeIOS} from '../../src/types';
-import type {PurchaseError} from '../../src/PurchaseError';
+import type {PurchaseError} from '../../src/purchase-error';
 
 /**
  * Subscription Flow Example - Subscription Products
@@ -200,7 +200,7 @@ export default function SubscriptionFlow() {
 
         try {
           await getActiveSubscriptions();
-          await getAvailablePurchases([]);
+          await getAvailablePurchases();
         } catch (error) {
           console.warn('Failed to refresh status:', error);
         }
@@ -245,7 +245,7 @@ export default function SubscriptionFlow() {
 
       try {
         await getActiveSubscriptions();
-        await getAvailablePurchases([]);
+        await getAvailablePurchases();
       } catch (error) {
         console.warn('Failed to refresh status:', error);
       }
@@ -315,7 +315,7 @@ export default function SubscriptionFlow() {
 
       // Load available purchases to check subscription history
       console.log('Loading available purchases...');
-      getAvailablePurchases([]).catch((error) => {
+      getAvailablePurchases().catch((error) => {
         console.warn('Failed to load available purchases:', error);
       });
     } else if (!connected) {

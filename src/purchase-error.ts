@@ -1,8 +1,10 @@
 import {NATIVE_ERROR_CODES} from './ExpoIapModule';
 import {ErrorCode, Platform} from './types';
 
+/** Platform identifiers supported by {@link PurchaseError}. */
 export type PurchaseErrorPlatform = Platform | 'ios' | 'android';
 
+/** Properties used to construct a {@link PurchaseError}. */
 export interface PurchaseErrorProps {
   message: string;
   responseCode?: number;
@@ -12,21 +14,22 @@ export interface PurchaseErrorProps {
   platform?: PurchaseErrorPlatform;
 }
 
-const toStandardizedCode = (errorCode: ErrorCode): string => {
-  if (errorCode.startsWith('E_')) {
-    return errorCode;
-  }
-  return `E_${errorCode}`;
+/** Shape of raw platform error objects coming from native modules. */
+type PlatformErrorData = {
+  code?: string | number;
+  message?: string;
+  responseCode?: number;
+  debugMessage?: string;
+  productId?: string;
 };
+
+const toStandardizedCode = (errorCode: ErrorCode): string =>
+  errorCode.startsWith('E_') ? errorCode : `E_${errorCode}`;
 
 const normalizePlatform = (
   platform: PurchaseErrorPlatform,
-): 'ios' | 'android' => {
-  if (platform === Platform.Ios || platform === 'ios') {
-    return 'ios';
-  }
-  return 'android';
-};
+): 'ios' | 'android' =>
+  platform === Platform.Ios || platform === 'ios' ? 'ios' : 'android';
 
 const OPENIAP_ERROR_CODE_SET: Set<string> = new Set(
   Object.values(ErrorCode).map((code) => toStandardizedCode(code)),
@@ -74,70 +77,98 @@ const COMMON_ERROR_CODE_MAP: Record<ErrorCode, string> = {
   [ErrorCode.SkuNotFound]: toStandardizedCode(ErrorCode.SkuNotFound),
   [ErrorCode.SkuOfferMismatch]: toStandardizedCode(ErrorCode.SkuOfferMismatch),
   [ErrorCode.ItemNotOwned]: toStandardizedCode(ErrorCode.ItemNotOwned),
-  [ErrorCode.BillingUnavailable]: toStandardizedCode(
-    ErrorCode.BillingUnavailable,
-  ),
+  [ErrorCode.BillingUnavailable]: toStandardizedCode(ErrorCode.BillingUnavailable),
   [ErrorCode.FeatureNotSupported]: toStandardizedCode(
     ErrorCode.FeatureNotSupported,
   ),
   [ErrorCode.EmptySkuList]: toStandardizedCode(ErrorCode.EmptySkuList),
 };
 
+/**
+ * Mapping between platforms and their canonical error codes.
+ * Values are platform-native string identifiers.
+ */
 export const ErrorCodeMapping = {
   ios: COMMON_ERROR_CODE_MAP,
   android: COMMON_ERROR_CODE_MAP,
 } as const;
 
-export class PurchaseError implements Error {
-  public name: string;
-  public message: string;
+/**
+ * Error thrown by expo-iap when purchases fail.
+ */
+export class PurchaseError extends Error {
   public responseCode?: number;
   public debugMessage?: string;
   public code?: ErrorCode;
   public productId?: string;
   public platform?: PurchaseErrorPlatform;
 
-  constructor(messageOrProps: string | PurchaseErrorProps, ...rest: any[]) {
+  constructor(
+    message: string,
+    responseCode?: number,
+    debugMessage?: string,
+    code?: ErrorCode,
+    productId?: string,
+    platform?: PurchaseErrorPlatform,
+  );
+  constructor(props: PurchaseErrorProps);
+  constructor(
+    messageOrProps: string | PurchaseErrorProps,
+    responseCode?: number,
+    debugMessage?: string,
+    code?: ErrorCode,
+    productId?: string,
+    platform?: PurchaseErrorPlatform,
+  ) {
+    super(
+      typeof messageOrProps === 'string'
+        ? messageOrProps
+        : messageOrProps.message,
+    );
     this.name = '[expo-iap]: PurchaseError';
+    Object.setPrototypeOf(this, new.target.prototype);
 
     if (typeof messageOrProps === 'string') {
-      this.message = messageOrProps;
-      this.responseCode = rest[0];
-      this.debugMessage = rest[1];
-      this.code = rest[2];
-      this.productId = rest[3];
-      this.platform = rest[4];
+      this.responseCode = responseCode;
+      this.debugMessage = debugMessage;
+      this.code = code;
+      this.productId = productId;
+      this.platform = platform;
     } else {
-      const props = messageOrProps;
-      this.message = props.message;
-      this.responseCode = props.responseCode;
-      this.debugMessage = props.debugMessage;
-      this.code = props.code;
-      this.productId = props.productId;
-      this.platform = props.platform;
+      this.responseCode = messageOrProps.responseCode;
+      this.debugMessage = messageOrProps.debugMessage;
+      this.code = messageOrProps.code;
+      this.productId = messageOrProps.productId;
+      this.platform = messageOrProps.platform;
     }
   }
 
+  /**
+   * Create a {@link PurchaseError} from raw platform error data.
+   */
   static fromPlatformError(
-    errorData: any,
+    errorData: PlatformErrorData,
     platform: PurchaseErrorPlatform,
   ): PurchaseError {
     const normalizedPlatform = normalizePlatform(platform);
 
-    const errorCode = errorData?.code
+    const errorCode = errorData.code
       ? ErrorCodeUtils.fromPlatformCode(errorData.code, normalizedPlatform)
       : ErrorCode.Unknown;
 
     return new PurchaseError({
-      message: errorData?.message || 'Unknown error occurred',
-      responseCode: errorData?.responseCode,
-      debugMessage: errorData?.debugMessage,
+      message: errorData.message ?? 'Unknown error occurred',
+      responseCode: errorData.responseCode,
+      debugMessage: errorData.debugMessage,
       code: errorCode,
-      productId: errorData?.productId,
+      productId: errorData.productId,
       platform,
     });
   }
 
+  /**
+   * Returns the platform specific error code for this instance.
+   */
   getPlatformCode(): string | number | undefined {
     if (!this.code || !this.platform) {
       return undefined;
@@ -146,21 +177,25 @@ export class PurchaseError implements Error {
   }
 }
 
+/** Utility helpers for translating error codes between platforms. */
 export const ErrorCodeUtils = {
+  /**
+   * Returns the native error code for the provided {@link ErrorCode}.
+   */
   getNativeErrorCode: (errorCode: ErrorCode): string => {
     const standardized = toStandardizedCode(errorCode);
     return (
-      (NATIVE_ERROR_CODES as Record<string, string | undefined>)[
-        standardized
-      ] || standardized
+      (NATIVE_ERROR_CODES as Record<string, string | undefined>)[standardized] ??
+      standardized
     );
   },
+  /**
+   * Converts a platform-specific error code into a standardized {@link ErrorCode}.
+   */
   fromPlatformCode: (
     platformCode: string | number,
-    platform: PurchaseErrorPlatform,
+    _platform: PurchaseErrorPlatform,
   ): ErrorCode => {
-    const normalizedPlatform = normalizePlatform(platform);
-
     if (typeof platformCode === 'string' && platformCode.startsWith('E_')) {
       if (OPENIAP_ERROR_CODE_SET.has(platformCode)) {
         const match = Object.entries(COMMON_ERROR_CODE_MAP).find(
@@ -172,24 +207,20 @@ export const ErrorCodeUtils = {
       }
     }
 
-    if (normalizedPlatform === 'ios') {
-      for (const [key, value] of Object.entries(
-        (NATIVE_ERROR_CODES || {}) as Record<string, string | number>,
-      )) {
-        if (value === platformCode && OPENIAP_ERROR_CODE_SET.has(key)) {
-          const match = Object.entries(COMMON_ERROR_CODE_MAP).find(
-            ([, mappedCode]) => mappedCode === key,
-          );
-          if (match) {
-            return match[0] as ErrorCode;
-          }
+    for (const [standardized, nativeCode] of Object.entries(
+      (NATIVE_ERROR_CODES || {}) as Record<string, string | number>,
+    )) {
+      if (nativeCode === platformCode && OPENIAP_ERROR_CODE_SET.has(standardized)) {
+        const match = Object.entries(COMMON_ERROR_CODE_MAP).find(
+          ([, mappedCode]) => mappedCode === standardized,
+        );
+        if (match) {
+          return match[0] as ErrorCode;
         }
       }
     }
 
-    for (const [errorCode, mappedCode] of Object.entries(
-      COMMON_ERROR_CODE_MAP,
-    )) {
+    for (const [errorCode, mappedCode] of Object.entries(COMMON_ERROR_CODE_MAP)) {
       if (mappedCode === platformCode) {
         return errorCode as ErrorCode;
       }
@@ -197,38 +228,30 @@ export const ErrorCodeUtils = {
 
     return ErrorCode.Unknown;
   },
+  /**
+   * Converts a standardized {@link ErrorCode} into its platform-specific value.
+   */
   toPlatformCode: (
     errorCode: ErrorCode,
-    platform: PurchaseErrorPlatform,
+    _platform: PurchaseErrorPlatform,
   ): string | number => {
-    const normalizedPlatform = normalizePlatform(platform);
-
-    if (normalizedPlatform === 'ios') {
-      const standardized = toStandardizedCode(errorCode);
-      const native = (NATIVE_ERROR_CODES as Record<string, string | number>)[
-        standardized
-      ];
-      if (native !== undefined) {
-        return native;
-      }
-    }
-
-    return COMMON_ERROR_CODE_MAP[errorCode] ?? 'E_UNKNOWN';
+    const standardized = toStandardizedCode(errorCode);
+    const native = (NATIVE_ERROR_CODES as Record<string, string | number>)[
+      standardized
+    ];
+    return native ?? (COMMON_ERROR_CODE_MAP[errorCode] ?? 'E_UNKNOWN');
   },
+  /**
+   * Determines whether the error code is supported on the given platform.
+   */
   isValidForPlatform: (
     errorCode: ErrorCode,
     platform: PurchaseErrorPlatform,
   ): boolean => {
-    const normalizedPlatform = normalizePlatform(platform);
     const standardized = toStandardizedCode(errorCode);
-
-    if (normalizedPlatform === 'ios') {
-      return (
-        standardized in (NATIVE_ERROR_CODES as Record<string, unknown>) ||
-        errorCode in COMMON_ERROR_CODE_MAP
-      );
+    if ((NATIVE_ERROR_CODES as Record<string, unknown>)[standardized] !== undefined) {
+      return true;
     }
-
-    return errorCode in COMMON_ERROR_CODE_MAP;
+    return standardized in ErrorCodeMapping[normalizePlatform(platform)];
   },
 };

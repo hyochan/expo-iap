@@ -110,7 +110,7 @@ describe('Android Module Functions', () => {
       expect(ExpoIapModule.acknowledgePurchaseAndroid).toHaveBeenCalledWith(
         'tkn',
       );
-      expect(res).toEqual({responseCode: 0});
+      expect(res).toEqual({success: true});
     });
   });
 });

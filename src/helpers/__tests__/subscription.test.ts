@@ -11,6 +11,14 @@ import {Platform as ReactNativePlatform} from 'react-native';
 import {getAvailablePurchases} from '../../index';
 /* eslint-enable import/first */
 
+const originalPlatformOS = ReactNativePlatform.OS;
+const mockPlatform = (os: 'ios' | 'android') => {
+  Object.defineProperty(ReactNativePlatform, 'OS', {
+    configurable: true,
+    get: () => os,
+  });
+};
+
 describe('Subscription Helper Functions', () => {
   const currentTime = Date.now();
   const oneDayMs = 24 * 60 * 60 * 1000;
@@ -32,10 +40,18 @@ describe('Subscription Helper Functions', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    Object.defineProperty(ReactNativePlatform, 'OS', {
+      configurable: true,
+      get: () => originalPlatformOS,
+    });
+    jest.restoreAllMocks();
+  });
+
   describe('getActiveSubscriptions', () => {
     describe('iOS', () => {
       beforeEach(() => {
-        ReactNativePlatform.OS = 'ios';
+        mockPlatform('ios');
       });
 
       it('should return active subscriptions with valid expiration date', async () => {
@@ -171,7 +187,7 @@ describe('Subscription Helper Functions', () => {
 
     describe('Android', () => {
       beforeEach(() => {
-        ReactNativePlatform.OS = 'android';
+        mockPlatform('android');
       });
 
       it('should return active subscriptions', async () => {
@@ -265,7 +281,7 @@ describe('Subscription Helper Functions', () => {
       });
 
       it('should return all active subscriptions when no IDs filter provided', async () => {
-        ReactNativePlatform.OS = 'ios';
+        mockPlatform('ios');
         const mockPurchases: Purchase[] = [
           createPurchase({
             id: 'trans-123',
@@ -300,7 +316,7 @@ describe('Subscription Helper Functions', () => {
 
   describe('hasActiveSubscriptions', () => {
     it('should return true when active subscriptions exist', async () => {
-      ReactNativePlatform.OS = 'ios';
+      mockPlatform('ios');
       const mockPurchases: Purchase[] = [
         createPurchase({
           id: 'trans-123',
@@ -326,7 +342,7 @@ describe('Subscription Helper Functions', () => {
     });
 
     it('should check specific subscription IDs when provided', async () => {
-      ReactNativePlatform.OS = 'ios';
+      mockPlatform('ios');
       const mockPurchases: Purchase[] = [
         createPurchase({
           id: 'trans-123',

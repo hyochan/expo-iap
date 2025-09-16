@@ -14,7 +14,7 @@ import {requestPurchase, useIAP, getAppTransactionIOS} from '../../src';
 import Loading from '../src/components/Loading';
 import {PRODUCT_IDS} from '../../src/utils/constants';
 import type {Product, Purchase} from '../../src/types';
-import type {PurchaseError} from '../../src/PurchaseError';
+import type {PurchaseError} from '../../src/purchase-error';
 
 /**
  * Purchase Flow Example - In-App Products

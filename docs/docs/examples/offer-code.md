@@ -53,7 +53,7 @@ function RedeemOrRefresh() {
       // Open Play redeem (web/Store)
       await Linking.openURL('https://play.google.com/redeem');
       // After redeeming, have users come back and refresh
-      await Promise.all([getAvailablePurchases([]), getActiveSubscriptions()]);
+      await Promise.all([getAvailablePurchases(), getActiveSubscriptions()]);
     }
   };
 
@@ -66,4 +66,4 @@ function RedeemOrRefresh() {
 - Platform: iOS only; requires a real device (not supported on simulators)
 - App Store Connect: Offer codes must be configured for your subscription
 - See also: Core Methods → iOS Specific → `presentCodeRedemptionSheetIOS()`
-- Android: Use Google Play redeem flow via `Linking.openURL('https://play.google.com/redeem')` and then refresh with `getAvailablePurchases([])` and `getActiveSubscriptions()`
+- Android: Use Google Play redeem flow via `Linking.openURL('https://play.google.com/redeem')` and then refresh with `getAvailablePurchases()` and `getActiveSubscriptions()`

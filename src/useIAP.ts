@@ -35,7 +35,7 @@ import {
   ErrorCode,
   VoidResult,
 } from './types';
-import {PurchaseError} from './PurchaseError';
+import {PurchaseError} from './purchase-error';
 import {
   getUserFriendlyErrorMessage,
   isUserCancelledError,
@@ -66,7 +66,7 @@ type UseIap = {
     purchase: Purchase;
     isConsumable?: boolean;
   }) => Promise<VoidResult | boolean>;
-  getAvailablePurchases: (skus: string[]) => Promise<void>;
+  getAvailablePurchases: () => Promise<void>;
   fetchProducts: (params: {
     skus: string[];
     type?: 'inapp' | 'subs';

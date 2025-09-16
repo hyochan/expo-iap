@@ -12,7 +12,7 @@ import type {
   AppTransaction,
   ReceiptValidationResultIOS,
 } from '../types';
-import type {PurchaseError} from '../PurchaseError';
+import type {PurchaseError} from '../purchase-error';
 import {Platform as PurchasePlatform} from '../types';
 import {Linking} from 'react-native';
 
