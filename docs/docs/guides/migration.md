@@ -26,7 +26,7 @@ Quick mappings:
 
 ```ts
 // getProducts/getSubscriptions/requestProducts → fetchProducts
-await fetchProducts({skus: ['id1', 'id2'], type: 'inapp'});
+await fetchProducts({skus: ['id1', 'id2'], type: 'in-app'});
 
 // requestSubscription → requestPurchase with subs
 await requestPurchase({
@@ -323,10 +323,10 @@ purchaseUpdatedListener((purchase) => {
 
 ```tsx
 // ❌ Old (deprecated in v2.8.7)
-const products = await requestProducts({skus: ['product1'], type: 'inapp'});
+const products = await requestProducts({skus: ['product1'], type: 'in-app'});
 
 // ✅ New (v2.8.7+)
-const products = await fetchProducts({skus: ['product1'], type: 'inapp'});
+const products = await fetchProducts({skus: ['product1'], type: 'in-app'});
 ```
 
 ## API Changes
@@ -354,7 +354,7 @@ Most method signatures remain the same, but with improved TypeScript definitions
 
 ```tsx
 // Both libraries have the same signature
-await fetchProducts({skus: ['product1', 'product2'], type: 'inapp'});
+await fetchProducts({skus: ['product1', 'product2'], type: 'in-app'});
 await requestPurchase({request: {sku: 'product_id'}});
 await finishTransaction({purchase});
 await getPurchaseHistories(); // Note: plural form in expo-iap v2.6.0+
@@ -364,10 +364,10 @@ await getPurchaseHistories(); // Note: plural form in expo-iap v2.6.0+
 
 > **⚠️ Important:** The following methods are deprecated and will be removed in a future version:
 
-| Deprecated Method        | Replacement                              |
-| ------------------------ | ---------------------------------------- |
-| `getProducts(skus)`      | `fetchProducts({ skus, type: 'inapp' })` |
-| `getSubscriptions(skus)` | `fetchProducts({ skus, type: 'subs' })`  |
+| Deprecated Method        | Replacement                               |
+| ------------------------ | ----------------------------------------- |
+| `getProducts(skus)`      | `fetchProducts({ skus, type: 'in-app' })` |
+| `getSubscriptions(skus)` | `fetchProducts({ skus, type: 'subs' })`   |
 
 **Migration Examples:**
 
@@ -377,7 +377,7 @@ import {getProducts, getSubscriptions} from 'expo-iap';
 
 const products = await fetchProducts({
   skus: ['product1', 'product2'],
-  type: 'inapp',
+  type: 'in-app',
 });
 const subs = await fetchProducts({skus: ['sub1', 'sub2'], type: 'subs'});
 
@@ -386,7 +386,7 @@ import {fetchProducts} from 'expo-iap';
 
 const products = await fetchProducts({
   skus: ['product1', 'product2'],
-  type: 'inapp',
+  type: 'in-app',
 });
 
 const subs = await fetchProducts({skus: ['sub1', 'sub2'], type: 'subs'});
@@ -429,7 +429,7 @@ export default function MigrationTest() {
     if (connected) {
       console.log('✅ Connection successful');
 
-      fetchProducts({skus: ['test_product'], type: 'inapp'})
+      fetchProducts({skus: ['test_product'], type: 'in-app'})
         .then((products) => {
           console.log('✅ Products fetched:', products.length);
         })
@@ -458,7 +458,7 @@ const testPurchaseFlow = async () => {
     // 1. Fetch products
     const products = await fetchProducts({
       skus: ['test_product'],
-      type: 'inapp',
+      type: 'in-app',
     });
     console.log('✅ Products fetched');
 
@@ -480,7 +480,7 @@ Ensure error handling transitions properly:
 ```tsx
 const testErrorHandling = () => {
   // Test with invalid product ID
-  fetchProducts({skus: ['invalid_product'], type: 'inapp'})
+  fetchProducts({skus: ['invalid_product'], type: 'in-app'})
     .then((products) => {
       if (products.length === 0) {
         console.log('✅ Empty products handled correctly');

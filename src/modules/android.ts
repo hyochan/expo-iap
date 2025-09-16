@@ -5,19 +5,21 @@ import {Linking} from 'react-native';
 import ExpoIapModule from '../ExpoIapModule';
 
 // Types
-import type {ReceiptValidationResultAndroid, VoidResult} from '../types';
-import {Platform as PurchasePlatform} from '../types';
+import type {
+  ReceiptValidationResultAndroid,
+  VoidResult,
+  IapPlatform,
+} from '../types';
 
 // Type guards
-export function isProductAndroid<
-  T extends {platform?: string | PurchasePlatform},
->(item: unknown): item is T & {platform: PurchasePlatform.Android | 'android'} {
+export function isProductAndroid<T extends {platform?: string | IapPlatform}>(
+  item: unknown,
+): item is T & {platform: 'android'} {
   return (
     item != null &&
     typeof item === 'object' &&
     'platform' in item &&
-    ((item as any).platform === 'android' ||
-      (item as any).platform === PurchasePlatform.Android)
+    (item as any).platform === 'android'
   );
 }
 
@@ -73,7 +75,7 @@ export const deepLinkToSubscriptionsAndroid = async ({
  * @param {string} params.productId - product id for your in app product.
  * @param {string} params.productToken - token for your purchase (called 'token' in the API documentation).
  * @param {string} params.accessToken - OAuth access token with androidpublisher scope. Required for authentication.
- * @param {boolean} params.isSub - whether this is subscription or inapp. `true` for subscription.
+ * @param {boolean} params.isSub - whether this is subscription or in-app. `true` for subscription.
  * @returns {Promise<ReceiptAndroid>}
  */
 export const validateReceiptAndroid = async ({

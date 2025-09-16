@@ -44,7 +44,7 @@ const {connected, getProducts} = useIAP();
 useEffect(() => {
   if (connected) {
     // ✅ Only call requestProducts when connected
-    fetchProducts({skus: productIds, type: 'inapp'});
+    fetchProducts({skus: productIds, type: 'in-app'});
   } else {
     console.log('Not connected to store yet');
   }

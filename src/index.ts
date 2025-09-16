@@ -68,6 +68,25 @@ export const emitter = (ExpoIapModule || NativeModulesProxy.ExpoIap) as {
   ) => void;
 };
 
+type ProductTypeInput = 'inapp' | 'in-app' | 'subs';
+type InAppTypeInput = Exclude<ProductTypeInput, 'subs'>;
+
+const normalizeProductType = (type?: ProductTypeInput) => {
+  if (!type || type === 'inapp' || type === 'in-app') {
+    return {
+      canonical: 'in-app' as const,
+      native: 'inapp' as const,
+    };
+  }
+  if (type === 'subs') {
+    return {
+      canonical: 'subs' as const,
+      native: 'subs' as const,
+    };
+  }
+  throw new Error(`Unsupported product type: ${type}`);
+};
+
 export const purchaseUpdatedListener = (
   listener: (event: Purchase) => void,
 ) => {
@@ -146,14 +165,14 @@ export async function endConnection(): Promise<boolean> {
  *
  * @param params - Product fetch configuration
  * @param params.skus - Array of product SKUs to fetch
- * @param params.type - Type of products: 'inapp' for regular products (default) or 'subs' for subscriptions
+ * @param params.type - Type of products: 'in-app' for regular products (default) or 'subs' for subscriptions
  *
  * @example
  * ```typescript
  * // Regular products
  * const products = await fetchProducts({
  *   skus: ['product1', 'product2'],
- *   type: 'inapp'
+ *   type: 'in-app'
  * });
  *
  * // Subscriptions
@@ -165,10 +184,10 @@ export async function endConnection(): Promise<boolean> {
  */
 export const fetchProducts = async ({
   skus,
-  type = 'inapp',
+  type,
 }: {
   skus: string[];
-  type?: 'inapp' | 'subs';
+  type?: ProductTypeInput;
 }): Promise<Product[] | ProductSubscription[]> => {
   if (!skus?.length) {
     throw new PurchaseError({
@@ -177,8 +196,10 @@ export const fetchProducts = async ({
     });
   }
 
+  const {canonical, native} = normalizeProductType(type);
+
   if (Platform.OS === 'ios') {
-    const rawItems = await ExpoIapModule.fetchProducts({skus, type});
+    const rawItems = await ExpoIapModule.fetchProducts({skus, type: native});
 
     const filteredItems = rawItems.filter((item: unknown) => {
       if (!isProductIOS(item)) {
@@ -193,13 +214,13 @@ export const fetchProducts = async ({
       return isValid;
     });
 
-    return type === 'inapp'
+    return canonical === 'in-app'
       ? (filteredItems as Product[])
       : (filteredItems as ProductSubscription[]);
   }
 
   if (Platform.OS === 'android') {
-    const items = await ExpoIapModule.fetchProducts(type, skus);
+    const items = await ExpoIapModule.fetchProducts(native, skus);
     const filteredItems = items.filter((item: unknown) => {
       if (!isProductAndroid(item)) return false;
       return (
@@ -211,7 +232,7 @@ export const fetchProducts = async ({
       );
     });
 
-    return type === 'inapp'
+    return canonical === 'in-app'
       ? (filteredItems as Product[])
       : (filteredItems as ProductSubscription[]);
   }
@@ -288,7 +309,7 @@ const offerToRecordIOS = (
 type PurchaseRequest =
   | {
       request: RequestPurchaseProps;
-      type?: 'inapp';
+      type?: InAppTypeInput;
     }
   | {
       request: RequestSubscriptionPropsByPlatforms;
@@ -311,7 +332,7 @@ const normalizeRequestProps = (
  *
  * @param requestObj - Purchase request configuration
  * @param requestObj.request - Platform-specific purchase parameters
- * @param requestObj.type - Type of purchase: 'inapp' for products (default) or 'subs' for subscriptions
+ * @param requestObj.type - Type of purchase: 'in-app' for products (default) or 'subs' for subscriptions
  *
  * @example
  * ```typescript
@@ -321,7 +342,7 @@ const normalizeRequestProps = (
  *     ios: { sku: productId },
  *     android: { skus: [productId] }
  *   },
- *   type: 'inapp'
+ *   type: 'in-app'
  * });
  *
  * // Subscription purchase
@@ -340,7 +361,9 @@ const normalizeRequestProps = (
 export const requestPurchase = (
   requestObj: PurchaseRequest,
 ): Promise<Purchase | Purchase[] | void> => {
-  const {request, type = 'inapp'} = requestObj;
+  const {request, type} = requestObj;
+  const {canonical, native} = normalizeProductType(type);
+  const isInAppPurchase = canonical === 'in-app';
 
   if (Platform.OS === 'ios') {
     const normalizedRequest = normalizeRequestProps(request, 'ios');
@@ -369,7 +392,7 @@ export const requestPurchase = (
         withOffer: offer,
       });
 
-      return type === 'inapp' ? (purchase as Purchase) : (purchase as Purchase);
+      return purchase as Purchase;
     })();
   }
 
@@ -382,7 +405,7 @@ export const requestPurchase = (
       );
     }
 
-    if (type === 'inapp') {
+    if (isInAppPurchase) {
       const {
         skus,
         obfuscatedAccountIdAndroid,
@@ -392,7 +415,7 @@ export const requestPurchase = (
 
       return (async () => {
         return ExpoIapModule.requestPurchase({
-          type: 'inapp',
+          type: native,
           skuArr: skus,
           purchaseToken: undefined,
           replacementMode: -1,
@@ -404,7 +427,7 @@ export const requestPurchase = (
       })();
     }
 
-    if (type === 'subs') {
+    if (canonical === 'subs') {
       const {
         skus,
         obfuscatedAccountIdAndroid,
@@ -417,7 +440,7 @@ export const requestPurchase = (
 
       return (async () => {
         return ExpoIapModule.requestPurchase({
-          type: 'subs',
+          type: native,
           skuArr: skus,
           purchaseToken,
           replacementMode: replacementModeAndroid,

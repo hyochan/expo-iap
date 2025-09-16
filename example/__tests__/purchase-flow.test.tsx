@@ -67,7 +67,7 @@ describe('PurchaseFlow Component', () => {
         ios: {sku: 'test.product.1', quantity: 1},
         android: {skus: ['test.product.1']},
       },
-      type: 'inapp',
+      type: 'in-app',
     });
   });
 });

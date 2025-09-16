@@ -69,12 +69,12 @@ type UseIap = {
   getAvailablePurchases: () => Promise<void>;
   fetchProducts: (params: {
     skus: string[];
-    type?: 'inapp' | 'subs';
+    type?: 'in-app' | 'inapp' | 'subs';
   }) => Promise<void>;
 
   requestPurchase: (params: {
     request: RequestPurchaseProps | RequestSubscriptionPropsByPlatforms;
-    type?: 'inapp' | 'subs';
+    type?: 'in-app' | 'inapp' | 'subs';
   }) => Promise<any>;
   validateReceipt: (
     sku: string,
@@ -194,7 +194,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const fetchProductsInternal = useCallback(
     async (params: {
       skus: string[];
-      type?: 'inapp' | 'subs';
+      type?: 'in-app' | 'inapp' | 'subs';
     }): Promise<void> => {
       try {
         const result = await fetchProducts(params);
@@ -293,7 +293,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   );
 
   const requestPurchaseWithReset = useCallback(
-    async (requestObj: {request: any; type?: 'inapp' | 'subs'}) => {
+    async (requestObj: {request: any; type?: 'in-app' | 'inapp' | 'subs'}) => {
       clearCurrentPurchase();
       clearCurrentPurchaseError();
 

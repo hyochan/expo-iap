@@ -111,7 +111,7 @@ describe('Public API (index.ts)', () => {
         {platform: 'ios', id: 'b'},
         {platform: 'android', id: 'a'},
       ]);
-      const res = await fetchProducts({skus: ['b', 'c'], type: 'inapp'});
+      const res = await fetchProducts({skus: ['b', 'c'], type: 'in-app'});
       expect(res).toEqual([{platform: 'ios', id: 'b'}]);
     });
 
@@ -134,7 +134,7 @@ describe('Public API (index.ts)', () => {
 
     it('fetchProducts rejects on empty skus', async () => {
       await expect(
-        fetchProducts({skus: [], type: 'inapp'}),
+        fetchProducts({skus: [], type: 'in-app'}),
       ).rejects.toMatchObject({
         code: 'EMPTY_SKU_LIST',
       } as any);
@@ -161,7 +161,7 @@ describe('Public API (index.ts)', () => {
             andDangerouslyFinishTransactionAutomatically: true,
           },
         },
-        type: 'inapp',
+        type: 'in-app',
       });
       expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -172,7 +172,7 @@ describe('Public API (index.ts)', () => {
       expect(res).toEqual({id: 'x'});
     });
 
-    it('maps Android inapp request properly', async () => {
+    it('maps Android in-app request properly', async () => {
       (Platform as any).OS = 'android';
       (Platform as any).select = (obj: any) => obj.android;
       (ExpoIapModule.requestPurchase as jest.Mock) = jest
@@ -180,7 +180,7 @@ describe('Public API (index.ts)', () => {
         .mockResolvedValue([]);
       await requestPurchase({
         request: {android: {skus: ['p1']}},
-        type: 'inapp',
+        type: 'in-app',
       });
       expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -217,14 +217,14 @@ describe('Public API (index.ts)', () => {
     it('iOS rejects when sku missing', () => {
       (Platform as any).OS = 'ios';
       expect(() =>
-        requestPurchase({request: {ios: {}} as any, type: 'inapp'} as any),
+        requestPurchase({request: {ios: {}} as any, type: 'in-app'} as any),
       ).toThrow(/sku/);
     });
 
     it('Android rejects when skus missing', () => {
       (Platform as any).OS = 'android';
       expect(() =>
-        requestPurchase({request: {android: {}} as any, type: 'inapp'} as any),
+        requestPurchase({request: {android: {}} as any, type: 'in-app'} as any),
       ).toThrow(/skus/);
     });
 
@@ -235,7 +235,7 @@ describe('Public API (index.ts)', () => {
           request: {android: {skus: ['x']}} as any,
           type: 'other' as any,
         }),
-      ).toThrow(/Invalid request for Android/);
+      ).toThrow(/Unsupported product type/);
     });
 
     it('iOS maps withOffer through offerToRecordIOS', async () => {
@@ -252,7 +252,7 @@ describe('Public API (index.ts)', () => {
         .mockResolvedValue({id: 'x'});
       await requestPurchase({
         request: {ios: {sku: 'sku1', withOffer: offer}},
-        type: 'inapp',
+        type: 'in-app',
       } as any);
       expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith(
         expect.objectContaining({

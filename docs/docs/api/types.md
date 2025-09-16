@@ -14,27 +14,20 @@ Key runtime helpers that build on these types live alongside them:
 
 Below is a curated overview of the most commonly used types. Consult `src/types.ts` for the full schema.
 
-## Core Enumerations
+## Core Type Aliases
 
 ```ts
-export enum Platform {
-  Android = 'ANDROID',
-  Ios = 'IOS',
-}
+export type IapPlatform = 'android' | 'ios';
 
-export enum ProductType {
-  InApp = 'IN_APP',
-  Subs = 'SUBS',
-}
+export type ProductType = 'in-app' | 'subs';
 
-export enum PurchaseState {
-  Deferred = 'DEFERRED',
-  Failed = 'FAILED',
-  Pending = 'PENDING',
-  Purchased = 'PURCHASED',
-  Restored = 'RESTORED',
-  Unknown = 'UNKNOWN',
-}
+export type PurchaseState =
+  | 'deferred'
+  | 'failed'
+  | 'pending'
+  | 'purchased'
+  | 'restored'
+  | 'unknown';
 ```
 
 The `ErrorCode` enum now mirrors the OpenIAP schema without the legacy `E_` prefix:
@@ -54,7 +47,7 @@ Use `PurchaseError` from `src/purchase-error.ts` to work with typed errors and p
 
 ## Product Types
 
-All products share the generated `ProductCommon` interface. Platform extensions discriminate on the `platform` field via the `Platform` enum.
+All products share the generated `ProductCommon` interface. Platform extensions discriminate on the `platform` field via the `IapPlatform` string union.
 
 ```ts
 export interface ProductCommon {
@@ -66,7 +59,7 @@ export interface ProductCommon {
   displayPrice: string;
   currency: string;
   price?: number | null;
-  platform: Platform;
+  platform: IapPlatform;
 }
 
 export interface ProductAndroid extends ProductCommon {
@@ -77,29 +70,29 @@ export interface ProductAndroid extends ProductCommon {
     | null;
 }
 
-export interface ProductIos extends ProductCommon {
+export interface ProductIOS extends ProductCommon {
   displayNameIOS: string;
   isFamilyShareableIOS: boolean;
   jsonRepresentationIOS: string;
-  typeIOS: ProductTypeIos;
-  subscriptionInfoIOS?: SubscriptionInfoIos | null;
+  typeIOS: ProductTypeIOS;
+  subscriptionInfoIOS?: SubscriptionInfoIOS | null;
 }
 
-export type Product = ProductAndroid | ProductIos;
+export type Product = ProductAndroid | ProductIOS;
 export type ProductSubscription =
   | ProductSubscriptionAndroid
-  | ProductSubscriptionIos;
+  | ProductSubscriptionIOS;
 ```
 
 ## Purchase Types
 
-Purchases share the `PurchaseCommon` shape and discriminate on the same `platform` enum. Both variants expose the unified `purchaseToken` field for server validation.
+Purchases share the `PurchaseCommon` shape and discriminate on the same `platform` union. Both variants expose the unified `purchaseToken` field for server validation.
 
 ```ts
 export interface PurchaseCommon {
   id: string;
   productId: string;
-  platform: Platform;
+  platform: IapPlatform;
   purchaseState: PurchaseState;
   transactionDate: number;
   quantity: number;
@@ -115,15 +108,15 @@ export interface PurchaseAndroid extends PurchaseCommon {
   dataAndroid?: string | null;
 }
 
-export interface PurchaseIos extends PurchaseCommon {
+export interface PurchaseIOS extends PurchaseCommon {
   appAccountToken?: string | null;
   environmentIOS?: string | null;
   expirationDateIOS?: number | null;
   originalTransactionIdentifierIOS?: string | null;
-  offerIOS?: PurchaseOfferIos | null;
+  offerIOS?: PurchaseOfferIOS | null;
 }
 
-export type Purchase = PurchaseAndroid | PurchaseIos;
+export type Purchase = PurchaseAndroid | PurchaseIOS;
 ```
 
 ## Active Subscriptions

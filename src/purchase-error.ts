@@ -1,8 +1,14 @@
 import {NATIVE_ERROR_CODES} from './ExpoIapModule';
-import {ErrorCode, Platform} from './types';
+import {ErrorCode} from './types';
+import type {IapPlatform} from './types';
 
 /** Platform identifiers supported by {@link PurchaseError}. */
-export type PurchaseErrorPlatform = Platform | 'ios' | 'android';
+export type PurchaseErrorPlatform =
+  | IapPlatform
+  | 'IOS'
+  | 'ANDROID'
+  | 'ios'
+  | 'android';
 
 /** Properties used to construct a {@link PurchaseError}. */
 export interface PurchaseErrorProps {
@@ -29,7 +35,9 @@ const toStandardizedCode = (errorCode: ErrorCode): string =>
 const normalizePlatform = (
   platform: PurchaseErrorPlatform,
 ): 'ios' | 'android' =>
-  platform === Platform.Ios || platform === 'ios' ? 'ios' : 'android';
+  typeof platform === 'string' && platform.toLowerCase() === 'ios'
+    ? 'ios'
+    : 'android';
 
 const OPENIAP_ERROR_CODE_SET: Set<string> = new Set(
   Object.values(ErrorCode).map((code) => toStandardizedCode(code)),

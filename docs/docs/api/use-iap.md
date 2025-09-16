@@ -134,7 +134,7 @@ interface UseIAPOptions {
   ```tsx
   if (connected) {
     // Safe to make IAP calls
-    fetchProducts({skus: ['product.id'], type: 'inapp'});
+    fetchProducts({skus: ['product.id'], type: 'in-app'});
   }
   ```
 
@@ -219,7 +219,7 @@ interface UseIAPOptions {
 
 #### fetchProducts
 
-- **Type**: `(params: { skus: string[]; type?: 'inapp' | 'subs' }) => Promise<void>`
+- **Type**: `(params: { skus: string[]; type?: 'in-app' | 'subs' }) => Promise<void>`
 - **Description**: Fetch products or subscriptions and update `products` / `subscriptions` state. In the hook this returns `void` (no data result), by design.
 - **Do not await for data**: Call it, then consume `products` / `subscriptions` state from the hook.
 - **Example**:
@@ -230,7 +230,7 @@ interface UseIAPOptions {
     // In hook: returns void, updates state
     fetchProducts({
       skus: ['com.app.premium', 'com.app.coins_100'],
-      type: 'inapp',
+      type: 'in-app',
     });
     fetchProducts({skus: ['com.app.premium_monthly'], type: 'subs'});
   }, [connected, fetchProducts]);
@@ -507,7 +507,7 @@ const {requestPurchase} = useIAP({
    ```tsx
    useEffect(() => {
      if (connected) {
-       fetchProducts({skus: productIds, type: 'inapp'});
+       fetchProducts({skus: productIds, type: 'in-app'});
      }
    }, [connected, fetchProducts]);
    ```

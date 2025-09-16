@@ -52,7 +52,7 @@ const result = await requestPurchase(...) as ProductPurchaseIos;
 // ✅ NEW WAY - Automatic type inference
 const result = await requestPurchase({
   request: { sku: 'product.id' },
-  type: 'inapp'
+  type: 'in-app'
 });
 // TypeScript automatically knows the correct return type!
 ```
@@ -66,7 +66,7 @@ const result = await requestPurchase({
     sku: 'product.id', // Universal property
     quantity: 1, // iOS-specific (ignored on Android)
   },
-  type: 'inapp',
+  type: 'in-app',
 });
 ```
 

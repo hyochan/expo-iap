@@ -2,7 +2,6 @@ import React from 'react';
 import {render, fireEvent} from '@testing-library/react-native';
 import {Alert, Platform} from 'react-native';
 import SubscriptionFlow from '../app/subscription-flow';
-import {PaymentModeIOS} from '../../src/types';
 
 // Mock Alert
 jest.spyOn(Alert, 'alert');
@@ -24,9 +23,9 @@ const createMockSubscription = (overrides = {}) => ({
   currency: 'USD',
   platform: 'ios',
   subscriptionInfoIOS: {
-    subscriptionPeriod: {unit: 'MONTH'},
+    subscriptionPeriod: {unit: 'month'},
     introductoryOffer: {
-      paymentMode: PaymentModeIOS.FreeTrial,
+      paymentMode: 'free-trial',
       periodCount: 7,
       period: {unit: 'day'},
       displayPrice: 'Free',

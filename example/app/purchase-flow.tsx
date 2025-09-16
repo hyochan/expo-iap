@@ -92,7 +92,7 @@ export default function PurchaseFlow() {
     if (connected && !didFetchRef.current) {
       didFetchRef.current = true;
       console.log('[PurchaseFlow] Calling fetchProducts with:', PRODUCT_IDS);
-      fetchProducts({skus: PRODUCT_IDS, type: 'inapp'})
+      fetchProducts({skus: PRODUCT_IDS, type: 'in-app'})
         .then(() => {
           console.log('[PurchaseFlow] fetchProducts completed');
         })
@@ -128,7 +128,7 @@ export default function PurchaseFlow() {
           skus: [itemId],
         },
       },
-      type: 'inapp',
+      type: 'in-app',
     });
   };
 

@@ -84,7 +84,7 @@ const loadProducts = async () => {
   try {
     const products = await fetchProducts({
       skus: ['com.example.product1', 'com.example.product2'],
-      type: 'inapp',
+      type: 'in-app',
     });
 
     console.log('Products:', products);
@@ -114,7 +114,7 @@ const loadSubscriptions = async () => {
 
 - `params` (object):
   - `skus` (string[]): Array of product or subscription IDs to fetch
-  - `type` ('inapp' | 'subs'): Product type - 'inapp' for products, 'subs' for subscriptions
+  - `type` ('in-app' | 'subs'): Product type - 'in-app' for products, 'subs' for subscriptions
 
 **Returns:** `Promise<Product[]>`
 
@@ -149,7 +149,7 @@ const buyProduct = async (productId: string) => {
           skus: [productId],
         },
       },
-      type: 'inapp',
+      type: 'in-app',
     });
   } catch (error) {
     console.error('Purchase failed:', error);
@@ -193,7 +193,7 @@ await requestPurchase({
     quantity: 1,
     appAccountToken: 'user-account-token',
   },
-  type: 'inapp',
+  type: 'in-app',
 });
 ```
 
@@ -206,7 +206,7 @@ await requestPurchase({
     obfuscatedAccountIdAndroid: 'user-account-id',
     obfuscatedProfileIdAndroid: 'user-profile-id',
   },
-  type: 'inapp',
+  type: 'in-app',
 });
 ```
 
@@ -222,7 +222,7 @@ await requestPurchase({
     - `obfuscatedAccountIdAndroid?` (string, Android only): Obfuscated account ID
     - `obfuscatedProfileIdAndroid?` (string, Android only): Obfuscated profile ID
     - `isOfferPersonalized?` (boolean, Android only): Whether offer is personalized
-  - `type?` ('inapp' | 'subs'): Purchase type, defaults to 'inapp'
+  - `type?` ('in-app' | 'subs'): Purchase type, defaults to 'in-app'
 
 **Returns:** `Promise<Purchase | Purchase[] | void>`
 
@@ -776,6 +776,6 @@ This ensures pending transactions are surfaced and properly resolved without a s
 ## Removed APIs
 
 - `requestProducts()` — Removed in v3.0.0. Use `fetchProducts({ skus, type })` instead.
-- `getProducts()` — Removed in v3.0.0. Use `fetchProducts({ skus, type: 'inapp' })` instead.
+- `getProducts()` — Removed in v3.0.0. Use `fetchProducts({ skus, type: 'in-app' })` instead.
 - `getSubscriptions()` — Removed in v3.0.0. Use `fetchProducts({ skus, type: 'subs' })` instead.
 - `requestSubscription()` — Removed in v3.0.0. Use `requestPurchase({ ..., type: 'subs' })` and supply Android `subscriptionOffers`.

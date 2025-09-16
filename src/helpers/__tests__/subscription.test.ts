@@ -6,7 +6,6 @@ jest.mock('../../index', () => ({
 /* eslint-disable import/first */
 import {getActiveSubscriptions, hasActiveSubscriptions} from '../subscription';
 import type {Purchase} from '../../types';
-import {PurchaseState, Platform as PurchasePlatform} from '../../types';
 import {Platform as ReactNativePlatform} from 'react-native';
 import {getAvailablePurchases} from '../../index';
 /* eslint-enable import/first */
@@ -19,6 +18,10 @@ const mockPlatform = (os: 'ios' | 'android') => {
   });
 };
 
+const IOS_PLATFORM: Purchase['platform'] = 'ios';
+const ANDROID_PLATFORM: Purchase['platform'] = 'android';
+const PURCHASE_STATE_PURCHASED: Purchase['purchaseState'] = 'purchased';
+
 describe('Subscription Helper Functions', () => {
   const currentTime = Date.now();
   const oneDayMs = 24 * 60 * 60 * 1000;
@@ -28,9 +31,9 @@ describe('Subscription Helper Functions', () => {
       id: 'trans-123',
       productId: 'test.subscription',
       transactionDate: currentTime,
-      platform: PurchasePlatform.Ios,
+      platform: IOS_PLATFORM,
       isAutoRenewing: true,
-      purchaseState: PurchaseState.Purchased,
+      purchaseState: PURCHASE_STATE_PURCHASED,
       purchaseToken: 'test-token',
       quantity: 1,
       ...overrides,
@@ -59,7 +62,7 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             expirationDateIOS: currentTime + 7 * oneDayMs,
             environmentIOS: 'Production',
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
         ];
 
@@ -83,7 +86,7 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             transactionDate: currentTime - 10 * oneDayMs,
             expirationDateIOS: currentTime - oneDayMs,
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
         ];
 
@@ -99,7 +102,7 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             transactionDate: currentTime - 12 * 60 * 60 * 1000,
             environmentIOS: 'Sandbox',
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
         ];
 
@@ -118,13 +121,13 @@ describe('Subscription Helper Functions', () => {
             id: 'trans-123',
             productId: 'sub1',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
           createPurchase({
             id: 'trans-456',
             productId: 'sub2',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
         ];
 
@@ -140,7 +143,7 @@ describe('Subscription Helper Functions', () => {
         const mockPurchases: Purchase[] = [
           createPurchase({
             expirationDateIOS: currentTime + 5 * oneDayMs,
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
         ];
 
@@ -157,7 +160,7 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             purchaseToken: 'jwt-token-example',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
         ];
 
@@ -172,7 +175,7 @@ describe('Subscription Helper Functions', () => {
         const mockPurchases: Purchase[] = [
           createPurchase({
             expirationDateIOS: currentTime + 10 * oneDayMs,
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
         ];
 
@@ -193,7 +196,7 @@ describe('Subscription Helper Functions', () => {
       it('should return active subscriptions', async () => {
         const mockPurchases: Purchase[] = [
           createPurchase({
-            platform: PurchasePlatform.Android,
+            platform: ANDROID_PLATFORM,
             autoRenewingAndroid: true,
           }),
         ];
@@ -214,7 +217,7 @@ describe('Subscription Helper Functions', () => {
       it('should mark cancelled subscriptions as expiring soon', async () => {
         const mockPurchases: Purchase[] = [
           createPurchase({
-            platform: PurchasePlatform.Android,
+            platform: ANDROID_PLATFORM,
             autoRenewingAndroid: false,
           }),
         ];
@@ -233,13 +236,13 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             id: 'trans-123',
             productId: 'sub1',
-            platform: PurchasePlatform.Android,
+            platform: ANDROID_PLATFORM,
             autoRenewingAndroid: true,
           }),
           createPurchase({
             id: 'trans-456',
             productId: 'sub2',
-            platform: PurchasePlatform.Android,
+            platform: ANDROID_PLATFORM,
             autoRenewingAndroid: true,
           }),
         ];
@@ -259,7 +262,7 @@ describe('Subscription Helper Functions', () => {
           createPurchase({
             id: 'trans-123',
             productId: 'regular.product',
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
         ];
 
@@ -287,13 +290,13 @@ describe('Subscription Helper Functions', () => {
             id: 'trans-123',
             productId: 'sub1',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
           createPurchase({
             id: 'trans-456',
             productId: 'sub2',
             expirationDateIOS: currentTime + 7 * oneDayMs,
-            platform: PurchasePlatform.Ios,
+            platform: IOS_PLATFORM,
           }),
         ];
 
@@ -322,7 +325,7 @@ describe('Subscription Helper Functions', () => {
           id: 'trans-123',
           productId: 'test.subscription',
           expirationDateIOS: currentTime + 7 * oneDayMs,
-          platform: PurchasePlatform.Ios,
+          platform: IOS_PLATFORM,
         }),
       ];
 
@@ -348,7 +351,7 @@ describe('Subscription Helper Functions', () => {
           id: 'trans-123',
           productId: 'sub1',
           expirationDateIOS: currentTime + 7 * oneDayMs,
-          platform: PurchasePlatform.Ios,
+          platform: IOS_PLATFORM,
         }),
       ];
 

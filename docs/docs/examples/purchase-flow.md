@@ -22,11 +22,11 @@ View the full example source:
 
 - Load products:
 
-  `fetchProducts({ skus, type: 'inapp' })`
+  `fetchProducts({ skus, type: 'in-app' })`
 
 - Start purchase:
 
-  `requestPurchase({ request: { ios: { sku }, android: { skus: [sku] } }, type: 'inapp' })`
+  `requestPurchase({ request: { ios: { sku }, android: { skus: [sku] } }, type: 'in-app' })`
 
 - Receive callbacks: `onPurchaseSuccess` / `onPurchaseError` (from `useIAP`)
 
@@ -80,7 +80,7 @@ await requestPurchase({
     ios: {sku: productId, quantity: 1},
     android: {skus: [productId]},
   },
-  type: 'inapp',
+  type: 'in-app',
 });
 ```
 
