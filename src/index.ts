@@ -343,28 +343,13 @@ const offerToRecordIOS = (
  * Helper to normalize request props to platform-specific format
  */
 const normalizeRequestProps = (
-  request: RequestPurchasePropsByPlatforms | RequestSubscriptionPropsByPlatforms,
+  request:
+    | RequestPurchasePropsByPlatforms
+    | RequestSubscriptionPropsByPlatforms,
   platform: 'ios' | 'android',
 ): any => {
   // Platform-specific format - directly return the appropriate platform data
   return platform === 'ios' ? request.ios : request.android;
-};
-
-const toGeneratedRequestProps = (
-  requestObj: PurchaseRequestInput,
-  canonical: 'in-app' | 'subs',
-): RequestPurchaseProps => {
-  if (canonical === 'subs') {
-    return {
-      request: (requestObj as PurchaseRequestSubscription).request,
-      type: 'subs',
-    };
-  }
-
-  return {
-    request: (requestObj as PurchaseRequestInApp).request,
-    type: 'in-app',
-  };
 };
 
 /**
@@ -401,16 +386,12 @@ const toGeneratedRequestProps = (
 export const requestPurchase = (
   requestObj: PurchaseRequestInput,
 ): Promise<Purchase | Purchase[] | void> => {
-  const {type} = requestObj;
+  const {request, type} = requestObj;
   const {canonical, native} = normalizeProductType(type);
-  const generatedRequest = toGeneratedRequestProps(requestObj, canonical);
   const isInAppPurchase = canonical === 'in-app';
 
   if (Platform.OS === 'ios') {
-    const normalizedRequest = normalizeRequestProps(
-      generatedRequest.request,
-      'ios',
-    );
+    const normalizedRequest = normalizeRequestProps(request, 'ios');
 
     if (!normalizedRequest?.sku) {
       throw new Error(
@@ -441,10 +422,7 @@ export const requestPurchase = (
   }
 
   if (Platform.OS === 'android') {
-    const normalizedRequest = normalizeRequestProps(
-      generatedRequest.request,
-      'android',
-    );
+    const normalizedRequest = normalizeRequestProps(request, 'android');
 
     if (!normalizedRequest?.skus?.length) {
       throw new Error(

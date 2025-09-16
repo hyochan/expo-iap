@@ -62,7 +62,7 @@ For complete type definitions and documentation, see: <https://www.openiap.dev/d
 
 The library follows the OpenIAP type specifications with platform-specific extensions using iOS/Android suffixes.
 
-> **Important:** `src/types.ts` is generated from the OpenIAP schema. Never edit this file manually or commit hand-written changes. After updating any `*.graphql` schema, run `npm run generate` to refresh the file.
+> **Important:** `src/types.ts` is generated from the OpenIAP schema. Never edit this file manually or commit hand-written changes. After updating any `*.graphql` schema, run `bun run generate:types` (or the equivalent script in your package manager) to refresh the file.
 
 ### React/JSX Conventions
 

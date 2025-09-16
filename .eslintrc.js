@@ -1,6 +1,7 @@
 module.exports = {
   root: true,
   extends: ['expo', 'prettier'],
+  ignorePatterns: ['src/types.ts'],
   plugins: ['prettier'],
   rules: {
     'eslint-comments/no-unlimited-disable': 0,

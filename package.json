@@ -23,6 +23,7 @@
     "build:plugin": "tsc --build plugin",
     "clean:plugin": "expo-module clean plugin",
     "lint:plugin": "eslint plugin/src/*",
+    "generate:types": "node scripts/update-types.mjs --tag 1.0.1",
     "docs:start": "cd docs && bun run start",
     "docs:build": "cd docs && bun run build",
     "docs:serve": "cd docs && bun run serve",
