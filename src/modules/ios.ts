@@ -8,9 +8,9 @@ import ExpoIapModule from '../ExpoIapModule';
 import type {
   Product,
   Purchase,
-  SubscriptionStatusIos,
+  SubscriptionStatusIOS,
   AppTransaction,
-  ReceiptValidationResultIos,
+  ReceiptValidationResultIOS,
 } from '../types';
 import type {PurchaseError} from '../PurchaseError';
 import {Platform as PurchasePlatform} from '../types';
@@ -76,7 +76,7 @@ export const isEligibleForIntroOfferIOS = (
  */
 export const subscriptionStatusIOS = (
   sku: string,
-): Promise<SubscriptionStatusIos[]> => {
+): Promise<SubscriptionStatusIOS[]> => {
   return ExpoIapModule.subscriptionStatusIOS(sku);
 };
 
@@ -194,7 +194,7 @@ export const getTransactionJwsIOS = (sku: string): Promise<string> => {
  */
 export const validateReceiptIOS = async (
   sku: string,
-): Promise<ReceiptValidationResultIos> => {
+): Promise<ReceiptValidationResultIOS> => {
   const result = await ExpoIapModule.validateReceiptIOS(sku);
   return result;
 };

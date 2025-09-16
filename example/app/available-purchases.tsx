@@ -308,14 +308,16 @@ export default function AvailablePurchases() {
                   </View>
                 )}
 
-                {subscription.daysUntilExpirationIOS !== undefined && (
+                {subscription.daysUntilExpirationIOS != null && (
                   <View style={styles.purchaseRow}>
                     <Text style={styles.label}>Days Left:</Text>
                     <Text
                       style={[
                         styles.value,
-                        subscription.daysUntilExpirationIOS <= 3 &&
-                          styles.expiredText,
+                        subscription.daysUntilExpirationIOS != null &&
+                        subscription.daysUntilExpirationIOS <= 3
+                          ? styles.expiredText
+                          : undefined,
                       ]}
                     >
                       {subscription.daysUntilExpirationIOS} days

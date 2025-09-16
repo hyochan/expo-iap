@@ -15,6 +15,7 @@ import {requestPurchase, useIAP, showManageSubscriptionsIOS} from '../../src';
 import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {ProductSubscription, PurchaseIos, Purchase} from '../../src/types';
+import {Platform as PurchasePlatform, PaymentModeIOS} from '../../src/types';
 import type {PurchaseError} from '../../src/PurchaseError';
 
 /**
@@ -97,7 +98,7 @@ export default function SubscriptionFlow() {
       let isPurchased = false;
       let isRestoration = false;
 
-      if (Platform.OS === 'ios' && purchase.platform === 'ios') {
+      if (Platform.OS === 'ios' && purchase.platform === PurchasePlatform.Ios) {
         // Type-safe access to iOS-specific fields
         const iosPurchase = purchase as PurchaseIos;
 
@@ -129,7 +130,10 @@ export default function SubscriptionFlow() {
         );
         console.log('  currentTransactionId:', purchase.id);
         console.log('  transactionReason:', iosPurchase.transactionReasonIOS);
-      } else if (Platform.OS === 'android' && purchase.platform === 'android') {
+      } else if (
+        Platform.OS === 'android' &&
+        purchase.platform === PurchasePlatform.Android
+      ) {
         // For Android, consider it purchased if we received the purchase callback
         // The purchase callback itself indicates success in most cases
         isPurchased = true;
@@ -473,15 +477,15 @@ export default function SubscriptionFlow() {
     ) {
       const offer = subscription.subscriptionInfoIOS.introductoryOffer;
       switch (offer.paymentMode) {
-        case 'FREETRIAL':
+        case PaymentModeIOS.FreeTrial:
           return `${
             offer.periodCount
           } ${offer.period.unit.toLowerCase()}(s) free trial`;
-        case 'PAYASYOUGO':
+        case PaymentModeIOS.PayAsYouGo:
           return `${offer.displayPrice} for ${
             offer.periodCount
           } ${offer.period.unit.toLowerCase()}(s)`;
-        case 'PAYUPFRONT':
+        case PaymentModeIOS.PayUpFront:
           return `${offer.displayPrice} for first ${
             offer.periodCount
           } ${offer.period.unit.toLowerCase()}(s)`;
@@ -639,7 +643,7 @@ export default function SubscriptionFlow() {
                   <View style={styles.statusRow}>
                     <Text style={styles.statusLabel}>Expires:</Text>
                     <Text style={styles.statusValue}>
-                      {sub.expirationDateIOS.toLocaleDateString()}
+                    {new Date(sub.expirationDateIOS).toLocaleDateString()}
                     </Text>
                   </View>
                 ) : null}
@@ -855,7 +859,7 @@ export default function SubscriptionFlow() {
                 </View>
                 <View style={styles.purchaseStatus}>
                   <Text style={styles.purchaseStatusText}>
-                    {purchase.platform === 'ios' &&
+                    {purchase.platform === PurchasePlatform.Ios &&
                     'expirationDateIOS' in purchase &&
                     purchase.expirationDateIOS
                       ? purchase.expirationDateIOS > Date.now()

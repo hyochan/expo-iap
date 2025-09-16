@@ -25,7 +25,7 @@ import {
   RequestSubscriptionPropsByPlatforms,
   ProductSubscription,
   PurchaseAndroid,
-  DiscountOfferInputIos,
+  DiscountOfferInputIOS,
   VoidResult,
   ReceiptValidationResult,
 } from './types';
@@ -272,8 +272,8 @@ export const restorePurchases = async (
 };
 
 const offerToRecordIOS = (
-  offer: DiscountOfferInputIos | undefined,
-): Record<keyof DiscountOfferInputIos, string> | undefined => {
+  offer: DiscountOfferInputIOS | undefined,
+): Record<keyof DiscountOfferInputIOS, string> | undefined => {
   if (!offer) return undefined;
   return {
     identifier: offer.identifier,

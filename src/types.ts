@@ -46,18 +46,18 @@ export interface DeepLinkOptions {
   skuAndroid?: string | null;
 }
 
-export interface DiscountIos {
+export interface DiscountIOS {
   identifier: string;
   localizedPrice?: string | null;
   numberOfPeriods: number;
-  paymentMode: PaymentModeIos;
+  paymentMode: PaymentModeIOS;
   price: string;
   priceAmount: number;
   subscriptionPeriod: string;
   type: string;
 }
 
-export interface DiscountOfferIos {
+export interface DiscountOfferIOS {
   /** Discount identifier */
   identifier: string;
   /** Key identifier for validation */
@@ -70,7 +70,7 @@ export interface DiscountOfferIos {
   timestamp: number;
 }
 
-export interface DiscountOfferInputIos {
+export interface DiscountOfferInputIOS {
   /** Discount identifier */
   identifier: string;
   /** Key identifier for validation */
@@ -83,7 +83,7 @@ export interface DiscountOfferInputIos {
   timestamp: number;
 }
 
-export interface EntitlementIos {
+export interface EntitlementIOS {
   jsonRepresentation: string;
   sku: string;
   transactionId: string;
@@ -142,7 +142,7 @@ export interface Mutation {
   /** Acknowledge a non-consumable purchase or subscription */
   acknowledgePurchaseAndroid: Promise<VoidResult>;
   /** Initiate a refund request for a product (iOS 15+) */
-  beginRefundRequestIOS: Promise<RefundResultIos>;
+  beginRefundRequestIOS: Promise<RefundResultIOS>;
   /** Clear pending transactions from the StoreKit payment queue */
   clearTransactionIOS: Promise<VoidResult>;
   /** Consume a purchase token so it can be repurchased */
@@ -200,7 +200,7 @@ export interface MutationValidateReceiptArgs {
   options: ReceiptValidationProps;
 }
 
-export enum PaymentModeIos {
+export enum PaymentModeIOS {
   Empty = 'EMPTY',
   FreeTrial = 'FREE_TRIAL',
   PayAsYouGo = 'PAY_AS_YOU_GO',
@@ -276,10 +276,10 @@ export interface ProductIos extends ProductCommon {
   jsonRepresentationIOS: string;
   platform: Platform;
   price?: number | null;
-  subscriptionInfoIOS?: SubscriptionInfoIos | null;
+  subscriptionInfoIOS?: SubscriptionInfoIOS | null;
   title: string;
   type: ProductType;
-  typeIOS: ProductTypeIos;
+  typeIOS: ProductTypeIOS;
 }
 
 export enum ProductQueryType {
@@ -325,7 +325,7 @@ export interface ProductSubscriptionIos extends ProductCommon {
   currency: string;
   debugDescription?: string | null;
   description: string;
-  discountsIOS?: DiscountIos[] | null;
+  discountsIOS?: DiscountIOS[] | null;
   displayName?: string | null;
   displayNameIOS: string;
   displayPrice: string;
@@ -333,18 +333,18 @@ export interface ProductSubscriptionIos extends ProductCommon {
   introductoryPriceAsAmountIOS?: string | null;
   introductoryPriceIOS?: string | null;
   introductoryPriceNumberOfPeriodsIOS?: string | null;
-  introductoryPricePaymentModeIOS?: PaymentModeIos | null;
-  introductoryPriceSubscriptionPeriodIOS?: SubscriptionPeriodIos | null;
+  introductoryPricePaymentModeIOS?: PaymentModeIOS | null;
+  introductoryPriceSubscriptionPeriodIOS?: SubscriptionPeriodIOS | null;
   isFamilyShareableIOS: boolean;
   jsonRepresentationIOS: string;
   platform: Platform;
   price?: number | null;
-  subscriptionInfoIOS?: SubscriptionInfoIos | null;
+  subscriptionInfoIOS?: SubscriptionInfoIOS | null;
   subscriptionPeriodNumberIOS?: string | null;
-  subscriptionPeriodUnitIOS?: SubscriptionPeriodIos | null;
+  subscriptionPeriodUnitIOS?: SubscriptionPeriodIOS | null;
   title: string;
   type: ProductType;
-  typeIOS: ProductTypeIos;
+  typeIOS: ProductTypeIOS;
 }
 
 export enum ProductType {
@@ -352,7 +352,7 @@ export enum ProductType {
   Subs = 'SUBS',
 }
 
-export enum ProductTypeIos {
+export enum ProductTypeIOS {
   AutoRenewableSubscription = 'AUTO_RENEWABLE_SUBSCRIPTION',
   Consumable = 'CONSUMABLE',
   NonConsumable = 'NON_CONSUMABLE',
@@ -412,7 +412,7 @@ export interface PurchaseIos extends PurchaseCommon {
   ids?: string[] | null;
   isAutoRenewing: boolean;
   isUpgradedIOS?: boolean | null;
-  offerIOS?: PurchaseOfferIos | null;
+  offerIOS?: PurchaseOfferIOS | null;
   originalTransactionDateIOS?: number | null;
   originalTransactionIdentifierIOS?: string | null;
   ownershipTypeIOS?: string | null;
@@ -445,7 +445,7 @@ export interface PurchaseInput {
   transactionDate: number;
 }
 
-export interface PurchaseOfferIos {
+export interface PurchaseOfferIOS {
   id: string;
   paymentMode: string;
   type: string;
@@ -479,7 +479,7 @@ export enum PurchaseState {
 export interface Query {
   _placeholder?: boolean | null;
   /** Get current StoreKit 2 entitlements (iOS 15+) */
-  currentEntitlementIOS: Promise<EntitlementIos[]>;
+  currentEntitlementIOS: Promise<EntitlementIOS[]>;
   /** Retrieve products or subscriptions from the store */
   fetchProducts: Promise<FetchProductsResult>;
   /** Get active subscriptions (filters by subscriptionIds when provided) */
@@ -507,7 +507,7 @@ export interface Query {
   /** Get the latest transaction for a product using StoreKit 2 */
   latestTransactionIOS?: Promise<PurchaseIos | null>;
   /** Get StoreKit 2 subscription status details (iOS 15+) */
-  subscriptionStatusIOS: Promise<SubscriptionStatusIos[]>;
+  subscriptionStatusIOS: Promise<SubscriptionStatusIOS[]>;
 }
 
 export interface QueryCurrentEntitlementIosArgs {
@@ -566,7 +566,7 @@ export interface ReceiptValidationProps {
 
 export type ReceiptValidationResult =
   | ReceiptValidationResultAndroid
-  | ReceiptValidationResultIos;
+  | ReceiptValidationResultIOS;
 
 export interface ReceiptValidationResultAndroid {
   autoRenewing: boolean;
@@ -589,7 +589,7 @@ export interface ReceiptValidationResultAndroid {
   testTransaction: boolean;
 }
 
-export interface ReceiptValidationResultIos {
+export interface ReceiptValidationResultIOS {
   /** Whether the receipt is valid */
   isValid: boolean;
   /** JWS representation */
@@ -600,12 +600,12 @@ export interface ReceiptValidationResultIos {
   receiptData: string;
 }
 
-export interface RefundResultIos {
+export interface RefundResultIOS {
   message?: string | null;
   status: string;
 }
 
-export interface RenewalInfoIos {
+export interface RenewalInfoIOS {
   autoRenewPreference?: string | null;
   jsonRepresentation?: string | null;
   willAutoRenew: boolean;
@@ -632,7 +632,7 @@ export interface RequestPurchaseIosProps {
   /** Product SKU */
   sku: string;
   /** Discount offer to apply */
-  withOffer?: DiscountOfferInputIos | null;
+  withOffer?: DiscountOfferInputIOS | null;
 }
 
 export interface RequestPurchaseProps {
@@ -676,7 +676,7 @@ export interface RequestSubscriptionIosProps {
   appAccountToken?: string | null;
   quantity?: number | null;
   sku: string;
-  withOffer?: DiscountOfferInputIos | null;
+  withOffer?: DiscountOfferInputIOS | null;
 }
 
 export interface RequestSubscriptionPropsByPlatforms {
@@ -696,29 +696,29 @@ export interface Subscription {
   purchaseUpdated: Purchase;
 }
 
-export interface SubscriptionInfoIos {
-  introductoryOffer?: SubscriptionOfferIos | null;
-  promotionalOffers?: SubscriptionOfferIos[] | null;
+export interface SubscriptionInfoIOS {
+  introductoryOffer?: SubscriptionOfferIOS | null;
+  promotionalOffers?: SubscriptionOfferIOS[] | null;
   subscriptionGroupId: string;
-  subscriptionPeriod: SubscriptionPeriodValueIos;
+  subscriptionPeriod: SubscriptionPeriodValueIOS;
 }
 
-export interface SubscriptionOfferIos {
+export interface SubscriptionOfferIOS {
   displayPrice: string;
   id: string;
-  paymentMode: PaymentModeIos;
-  period: SubscriptionPeriodValueIos;
+  paymentMode: PaymentModeIOS;
+  period: SubscriptionPeriodValueIOS;
   periodCount: number;
   price: number;
-  type: SubscriptionOfferTypeIos;
+  type: SubscriptionOfferTypeIOS;
 }
 
-export enum SubscriptionOfferTypeIos {
+export enum SubscriptionOfferTypeIOS {
   Introductory = 'INTRODUCTORY',
   Promotional = 'PROMOTIONAL',
 }
 
-export enum SubscriptionPeriodIos {
+export enum SubscriptionPeriodIOS {
   Day = 'DAY',
   Empty = 'EMPTY',
   Month = 'MONTH',
@@ -726,13 +726,13 @@ export enum SubscriptionPeriodIos {
   Year = 'YEAR',
 }
 
-export interface SubscriptionPeriodValueIos {
-  unit: SubscriptionPeriodIos;
+export interface SubscriptionPeriodValueIOS {
+  unit: SubscriptionPeriodIOS;
   value: number;
 }
 
-export interface SubscriptionStatusIos {
-  renewalInfo?: RenewalInfoIos | null;
+export interface SubscriptionStatusIOS {
+  renewalInfo?: RenewalInfoIOS | null;
   state: string;
 }
 
