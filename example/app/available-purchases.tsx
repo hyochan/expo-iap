@@ -14,7 +14,8 @@ import {useIAP, getStorefront, deepLinkToSubscriptions} from '../../src';
 import type {ActiveSubscription} from '../../src';
 import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
-import type {Purchase, PurchaseError} from '../../src/ExpoIap.types';
+import type {Purchase} from '../../src/types';
+import type {PurchaseError} from '../../src/PurchaseError';
 
 export default function AvailablePurchases() {
   const [loading, setLoading] = useState(false);

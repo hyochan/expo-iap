@@ -40,7 +40,7 @@ describe('iOS Functions Tests', () => {
     });
 
     it('should call getAppTransactionIOS successfully', async () => {
-      const mockAppTransaction: ExpoIap.AppTransactionIOS = {
+      const mockAppTransaction: ExpoIap.AppTransaction = {
         appTransactionId: 'test-transaction-id',
         bundleId: 'com.example.testapp',
         appVersion: '2.0.0',
@@ -100,9 +100,9 @@ describe('iOS Functions Tests', () => {
   });
 
   describe('Type Exports', () => {
-    it('should have proper type structure for AppTransactionIOS', () => {
+    it('should have proper type structure for AppTransaction', () => {
       // Type checking through object creation
-      const mockTransaction: ExpoIap.AppTransactionIOS = {
+      const mockTransaction: ExpoIap.AppTransaction = {
         appTransactionId: 'test-id',
         bundleId: 'com.example.app',
         appVersion: '1.0.0',

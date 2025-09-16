@@ -14,12 +14,8 @@ import * as Clipboard from 'expo-clipboard';
 import {requestPurchase, useIAP, showManageSubscriptionsIOS} from '../../src';
 import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
-import type {
-  ProductSubscription,
-  PurchaseError,
-  PurchaseIOS,
-  Purchase,
-} from '../../src/ExpoIap.types';
+import type {ProductSubscription, PurchaseIos, Purchase} from '../../src/types';
+import type {PurchaseError} from '../../src/PurchaseError';
 
 /**
  * Subscription Flow Example - Subscription Products
@@ -103,7 +99,7 @@ export default function SubscriptionFlow() {
 
       if (Platform.OS === 'ios' && purchase.platform === 'ios') {
         // Type-safe access to iOS-specific fields
-        const iosPurchase = purchase as PurchaseIOS;
+        const iosPurchase = purchase as PurchaseIos;
 
         // Check if purchase was successful based on transaction data
         const hasValidToken = !!(
@@ -163,7 +159,7 @@ export default function SubscriptionFlow() {
           `ℹ️ Subscription restored (${purchase.platform})\n` +
             `Product: ${purchase.productId}\n` +
             `Original Transaction: ${
-              (purchase as PurchaseIOS).originalTransactionIdentifierIOS ||
+              (purchase as PurchaseIos).originalTransactionIdentifierIOS ||
               'N/A'
             }\n` +
             `No additional charge - existing subscription confirmed`,

@@ -95,14 +95,14 @@ jest.mock('expo-iap', () => {
       PurchaseError: 'purchase-error',
     },
     ErrorCode: {
-      E_DEVELOPER_ERROR: 'E_DEVELOPER_ERROR',
-      E_ITEM_UNAVAILABLE: 'E_ITEM_UNAVAILABLE',
-      E_NETWORK_ERROR: 'E_NETWORK_ERROR',
-      E_RECEIPT_FAILED: 'E_RECEIPT_FAILED',
-      E_RECEIPT_FINISHED_FAILED: 'E_RECEIPT_FINISHED_FAILED',
-      E_USER_CANCELLED: 'E_USER_CANCELLED',
-      E_NOT_PREPARED: 'E_NOT_PREPARED',
-      E_UNKNOWN: 'E_UNKNOWN',
+      DeveloperError: 'DEVELOPER_ERROR',
+      ItemUnavailable: 'ITEM_UNAVAILABLE',
+      NetworkError: 'NETWORK_ERROR',
+      ReceiptFailed: 'RECEIPT_FAILED',
+      ReceiptFinishedFailed: 'RECEIPT_FINISHED_FAILED',
+      UserCancelled: 'USER_CANCELLED',
+      NotPrepared: 'NOT_PREPARED',
+      Unknown: 'UNKNOWN',
     },
 
     // Type guards
@@ -110,6 +110,6 @@ jest.mock('expo-iap', () => {
     isProductAndroid: jest.fn(),
 
     // Mock types
-    AppTransactionIOS: {},
+    AppTransaction: {},
   };
 });
