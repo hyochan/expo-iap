@@ -1,14 +1,13 @@
 import {NATIVE_ERROR_CODES} from './ExpoIapModule';
-import {ErrorCode} from './types';
-import type {IapPlatform} from './types';
+import {ErrorCode, Platform as GeneratedPlatform} from './types';
+
+type GeneratedPlatformValue =
+  (typeof GeneratedPlatform)[keyof typeof GeneratedPlatform];
 
 /** Platform identifiers supported by {@link PurchaseError}. */
 export type PurchaseErrorPlatform =
-  | IapPlatform
-  | 'IOS'
-  | 'ANDROID'
-  | 'ios'
-  | 'android';
+  | GeneratedPlatformValue
+  | Lowercase<GeneratedPlatformValue>;
 
 /** Properties used to construct a {@link PurchaseError}. */
 export interface PurchaseErrorProps {

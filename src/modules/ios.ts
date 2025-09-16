@@ -11,8 +11,8 @@ import type {
   SubscriptionStatusIOS,
   AppTransaction,
   ReceiptValidationResultIOS,
-  IapPlatform,
 } from '../types';
+import {Platform as PurchasePlatform} from '../types';
 import type {PurchaseError} from '../purchase-error';
 import {Linking} from 'react-native';
 
@@ -24,14 +24,17 @@ export type TransactionEvent = {
 // Listeners
 
 // Type guards
-export function isProductIOS<T extends {platform?: string | IapPlatform}>(
+export function isProductIOS<
+  T extends {platform?: string | PurchasePlatform},
+>(
   item: unknown,
-): item is T & {platform: 'ios'} {
+): item is T & {platform: 'ios' | PurchasePlatform} {
   return (
     item != null &&
     typeof item === 'object' &&
     'platform' in item &&
-    (item as any).platform === 'ios'
+    ((item as any).platform === 'ios' ||
+      (item as any).platform === PurchasePlatform.Ios)
   );
 }
 

@@ -5,21 +5,19 @@ import {Linking} from 'react-native';
 import ExpoIapModule from '../ExpoIapModule';
 
 // Types
-import type {
-  ReceiptValidationResultAndroid,
-  VoidResult,
-  IapPlatform,
-} from '../types';
+import type {ReceiptValidationResultAndroid, VoidResult} from '../types';
+import {Platform as PurchasePlatform} from '../types';
 
 // Type guards
-export function isProductAndroid<T extends {platform?: string | IapPlatform}>(
-  item: unknown,
-): item is T & {platform: 'android'} {
+export function isProductAndroid<
+  T extends {platform?: string | PurchasePlatform},
+>(item: unknown): item is T & {platform: 'android' | PurchasePlatform} {
   return (
     item != null &&
     typeof item === 'object' &&
     'platform' in item &&
-    (item as any).platform === 'android'
+    ((item as any).platform === 'android' ||
+      (item as any).platform === PurchasePlatform.Android)
   );
 }
 

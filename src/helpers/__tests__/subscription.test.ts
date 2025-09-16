@@ -6,6 +6,7 @@ jest.mock('../../index', () => ({
 /* eslint-disable import/first */
 import {getActiveSubscriptions, hasActiveSubscriptions} from '../subscription';
 import type {Purchase} from '../../types';
+import {Platform as PurchasePlatform, PurchaseState as GeneratedPurchaseState} from '../../types';
 import {Platform as ReactNativePlatform} from 'react-native';
 import {getAvailablePurchases} from '../../index';
 /* eslint-enable import/first */
@@ -18,9 +19,10 @@ const mockPlatform = (os: 'ios' | 'android') => {
   });
 };
 
-const IOS_PLATFORM: Purchase['platform'] = 'ios';
-const ANDROID_PLATFORM: Purchase['platform'] = 'android';
-const PURCHASE_STATE_PURCHASED: Purchase['purchaseState'] = 'purchased';
+const IOS_PLATFORM: Purchase['platform'] = PurchasePlatform.Ios;
+const ANDROID_PLATFORM: Purchase['platform'] = PurchasePlatform.Android;
+const PURCHASE_STATE_PURCHASED: Purchase['purchaseState'] =
+  GeneratedPurchaseState.Purchased;
 
 describe('Subscription Helper Functions', () => {
   const currentTime = Date.now();
