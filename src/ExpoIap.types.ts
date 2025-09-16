@@ -16,6 +16,15 @@ export type ChangeEventPayload = {
 
 export type ProductType = 'inapp' | 'subs';
 
+export enum PurchaseState {
+  Pending = 'pending',
+  Purchased = 'purchased',
+  Failed = 'failed',
+  Restored = 'restored',
+  Deferred = 'deferred',
+  Unknown = 'unknown',
+}
+
 // =============================================================================
 // COMMON TYPES (Base types shared across all platforms)
 // =============================================================================
@@ -37,9 +46,13 @@ export type PurchaseCommon = {
   id: string; // Transaction identifier - used by finishTransaction
   productId: string; // Product identifier - which product was purchased
   ids?: string[]; // Product identifiers for purchases that include multiple products
+  transactionId?: string; // Legacy identifier
   transactionDate: number;
   purchaseToken?: string; // Unified token (iOS: JWS, Android: purchaseToken)
   platform?: string;
+  quantity: number;
+  purchaseState: PurchaseState;
+  isAutoRenewing: boolean;
 };
 
 export type ProductSubscriptionCommon = ProductCommon & {
@@ -55,7 +68,7 @@ export type Product =
   | (ProductAndroid & AndroidPlatform)
   | (ProductIOS & IosPlatform);
 
-export type SubscriptionProduct =
+export type ProductSubscription =
   | (ProductSubscriptionAndroid & AndroidPlatform)
   | (ProductSubscriptionIOS & IosPlatform);
 
@@ -80,41 +93,41 @@ export type PurchaseResult = {
  * These are mapped to platform-specific error codes and provide consistent error handling
  */
 export enum ErrorCode {
-  E_UNKNOWN = 'E_UNKNOWN',
-  E_USER_CANCELLED = 'E_USER_CANCELLED',
-  E_USER_ERROR = 'E_USER_ERROR',
-  E_ITEM_UNAVAILABLE = 'E_ITEM_UNAVAILABLE',
-  E_REMOTE_ERROR = 'E_REMOTE_ERROR',
-  E_NETWORK_ERROR = 'E_NETWORK_ERROR',
-  E_SERVICE_ERROR = 'E_SERVICE_ERROR',
-  E_RECEIPT_FAILED = 'E_RECEIPT_FAILED',
-  E_RECEIPT_FINISHED = 'E_RECEIPT_FINISHED',
-  E_RECEIPT_FINISHED_FAILED = 'E_RECEIPT_FINISHED_FAILED',
-  E_NOT_PREPARED = 'E_NOT_PREPARED',
-  E_NOT_ENDED = 'E_NOT_ENDED',
-  E_ALREADY_OWNED = 'E_ALREADY_OWNED',
-  E_DEVELOPER_ERROR = 'E_DEVELOPER_ERROR',
-  E_BILLING_RESPONSE_JSON_PARSE_ERROR = 'E_BILLING_RESPONSE_JSON_PARSE_ERROR',
-  E_DEFERRED_PAYMENT = 'E_DEFERRED_PAYMENT',
-  E_INTERRUPTED = 'E_INTERRUPTED',
-  E_IAP_NOT_AVAILABLE = 'E_IAP_NOT_AVAILABLE',
-  E_PURCHASE_ERROR = 'E_PURCHASE_ERROR',
-  E_SYNC_ERROR = 'E_SYNC_ERROR',
-  E_TRANSACTION_VALIDATION_FAILED = 'E_TRANSACTION_VALIDATION_FAILED',
-  E_ACTIVITY_UNAVAILABLE = 'E_ACTIVITY_UNAVAILABLE',
-  E_ALREADY_PREPARED = 'E_ALREADY_PREPARED',
-  E_PENDING = 'E_PENDING',
-  E_CONNECTION_CLOSED = 'E_CONNECTION_CLOSED',
+  Unknown = 'E_UNKNOWN',
+  UserCancelled = 'E_USER_CANCELLED',
+  UserError = 'E_USER_ERROR',
+  ItemUnavailable = 'E_ITEM_UNAVAILABLE',
+  RemoteError = 'E_REMOTE_ERROR',
+  NetworkError = 'E_NETWORK_ERROR',
+  ServiceError = 'E_SERVICE_ERROR',
+  ReceiptFailed = 'E_RECEIPT_FAILED',
+  ReceiptFinished = 'E_RECEIPT_FINISHED',
+  ReceiptFinishedFailed = 'E_RECEIPT_FINISHED_FAILED',
+  NotPrepared = 'E_NOT_PREPARED',
+  NotEnded = 'E_NOT_ENDED',
+  AlreadyOwned = 'E_ALREADY_OWNED',
+  DeveloperError = 'E_DEVELOPER_ERROR',
+  BillingResponseJsonParseError = 'E_BILLING_RESPONSE_JSON_PARSE_ERROR',
+  DeferredPayment = 'E_DEFERRED_PAYMENT',
+  Interrupted = 'E_INTERRUPTED',
+  IapNotAvailable = 'E_IAP_NOT_AVAILABLE',
+  PurchaseError = 'E_PURCHASE_ERROR',
+  SyncError = 'E_SYNC_ERROR',
+  TransactionValidationFailed = 'E_TRANSACTION_VALIDATION_FAILED',
+  ActivityUnavailable = 'E_ACTIVITY_UNAVAILABLE',
+  AlreadyPrepared = 'E_ALREADY_PREPARED',
+  Pending = 'E_PENDING',
+  ConnectionClosed = 'E_CONNECTION_CLOSED',
   // Additional detailed errors (Android-focused, kept cross-platform)
-  E_INIT_CONNECTION = 'E_INIT_CONNECTION',
-  E_SERVICE_DISCONNECTED = 'E_SERVICE_DISCONNECTED',
-  E_QUERY_PRODUCT = 'E_QUERY_PRODUCT',
-  E_SKU_NOT_FOUND = 'E_SKU_NOT_FOUND',
-  E_SKU_OFFER_MISMATCH = 'E_SKU_OFFER_MISMATCH',
-  E_ITEM_NOT_OWNED = 'E_ITEM_NOT_OWNED',
-  E_BILLING_UNAVAILABLE = 'E_BILLING_UNAVAILABLE',
-  E_FEATURE_NOT_SUPPORTED = 'E_FEATURE_NOT_SUPPORTED',
-  E_EMPTY_SKU_LIST = 'E_EMPTY_SKU_LIST',
+  InitConnection = 'E_INIT_CONNECTION',
+  ServiceDisconnected = 'E_SERVICE_DISCONNECTED',
+  QueryProduct = 'E_QUERY_PRODUCT',
+  SkuNotFound = 'E_SKU_NOT_FOUND',
+  SkuOfferMismatch = 'E_SKU_OFFER_MISMATCH',
+  ItemNotOwned = 'E_ITEM_NOT_OWNED',
+  BillingUnavailable = 'E_BILLING_UNAVAILABLE',
+  FeatureNotSupported = 'E_FEATURE_NOT_SUPPORTED',
+  EmptySkuList = 'E_EMPTY_SKU_LIST',
 }
 
 // Fast lookup set for validating standardized error code strings
@@ -128,42 +141,42 @@ const OPENIAP_ERROR_CODE_SET: Set<string> = new Set(
  */
 // Shared OpenIAP string code mapping for both platforms
 const COMMON_ERROR_CODE_MAP = {
-  [ErrorCode.E_UNKNOWN]: 'E_UNKNOWN',
-  [ErrorCode.E_USER_CANCELLED]: 'E_USER_CANCELLED',
-  [ErrorCode.E_USER_ERROR]: 'E_USER_ERROR',
-  [ErrorCode.E_ITEM_UNAVAILABLE]: 'E_ITEM_UNAVAILABLE',
-  [ErrorCode.E_REMOTE_ERROR]: 'E_REMOTE_ERROR',
-  [ErrorCode.E_NETWORK_ERROR]: 'E_NETWORK_ERROR',
-  [ErrorCode.E_SERVICE_ERROR]: 'E_SERVICE_ERROR',
-  [ErrorCode.E_RECEIPT_FAILED]: 'E_RECEIPT_FAILED',
-  [ErrorCode.E_RECEIPT_FINISHED]: 'E_RECEIPT_FINISHED',
-  [ErrorCode.E_RECEIPT_FINISHED_FAILED]: 'E_RECEIPT_FINISHED_FAILED',
-  [ErrorCode.E_NOT_PREPARED]: 'E_NOT_PREPARED',
-  [ErrorCode.E_NOT_ENDED]: 'E_NOT_ENDED',
-  [ErrorCode.E_ALREADY_OWNED]: 'E_ALREADY_OWNED',
-  [ErrorCode.E_DEVELOPER_ERROR]: 'E_DEVELOPER_ERROR',
-  [ErrorCode.E_BILLING_RESPONSE_JSON_PARSE_ERROR]:
+  [ErrorCode.Unknown]: 'E_UNKNOWN',
+  [ErrorCode.UserCancelled]: 'E_USER_CANCELLED',
+  [ErrorCode.UserError]: 'E_USER_ERROR',
+  [ErrorCode.ItemUnavailable]: 'E_ITEM_UNAVAILABLE',
+  [ErrorCode.RemoteError]: 'E_REMOTE_ERROR',
+  [ErrorCode.NetworkError]: 'E_NETWORK_ERROR',
+  [ErrorCode.ServiceError]: 'E_SERVICE_ERROR',
+  [ErrorCode.ReceiptFailed]: 'E_RECEIPT_FAILED',
+  [ErrorCode.ReceiptFinished]: 'E_RECEIPT_FINISHED',
+  [ErrorCode.ReceiptFinishedFailed]: 'E_RECEIPT_FINISHED_FAILED',
+  [ErrorCode.NotPrepared]: 'E_NOT_PREPARED',
+  [ErrorCode.NotEnded]: 'E_NOT_ENDED',
+  [ErrorCode.AlreadyOwned]: 'E_ALREADY_OWNED',
+  [ErrorCode.DeveloperError]: 'E_DEVELOPER_ERROR',
+  [ErrorCode.BillingResponseJsonParseError]:
     'E_BILLING_RESPONSE_JSON_PARSE_ERROR',
-  [ErrorCode.E_DEFERRED_PAYMENT]: 'E_DEFERRED_PAYMENT',
-  [ErrorCode.E_INTERRUPTED]: 'E_INTERRUPTED',
-  [ErrorCode.E_IAP_NOT_AVAILABLE]: 'E_IAP_NOT_AVAILABLE',
-  [ErrorCode.E_PURCHASE_ERROR]: 'E_PURCHASE_ERROR',
-  [ErrorCode.E_SYNC_ERROR]: 'E_SYNC_ERROR',
-  [ErrorCode.E_TRANSACTION_VALIDATION_FAILED]:
+  [ErrorCode.DeferredPayment]: 'E_DEFERRED_PAYMENT',
+  [ErrorCode.Interrupted]: 'E_INTERRUPTED',
+  [ErrorCode.IapNotAvailable]: 'E_IAP_NOT_AVAILABLE',
+  [ErrorCode.PurchaseError]: 'E_PURCHASE_ERROR',
+  [ErrorCode.SyncError]: 'E_SYNC_ERROR',
+  [ErrorCode.TransactionValidationFailed]:
     'E_TRANSACTION_VALIDATION_FAILED',
-  [ErrorCode.E_ACTIVITY_UNAVAILABLE]: 'E_ACTIVITY_UNAVAILABLE',
-  [ErrorCode.E_ALREADY_PREPARED]: 'E_ALREADY_PREPARED',
-  [ErrorCode.E_PENDING]: 'E_PENDING',
-  [ErrorCode.E_CONNECTION_CLOSED]: 'E_CONNECTION_CLOSED',
-  [ErrorCode.E_INIT_CONNECTION]: 'E_INIT_CONNECTION',
-  [ErrorCode.E_SERVICE_DISCONNECTED]: 'E_SERVICE_DISCONNECTED',
-  [ErrorCode.E_QUERY_PRODUCT]: 'E_QUERY_PRODUCT',
-  [ErrorCode.E_SKU_NOT_FOUND]: 'E_SKU_NOT_FOUND',
-  [ErrorCode.E_SKU_OFFER_MISMATCH]: 'E_SKU_OFFER_MISMATCH',
-  [ErrorCode.E_ITEM_NOT_OWNED]: 'E_ITEM_NOT_OWNED',
-  [ErrorCode.E_BILLING_UNAVAILABLE]: 'E_BILLING_UNAVAILABLE',
-  [ErrorCode.E_FEATURE_NOT_SUPPORTED]: 'E_FEATURE_NOT_SUPPORTED',
-  [ErrorCode.E_EMPTY_SKU_LIST]: 'E_EMPTY_SKU_LIST',
+  [ErrorCode.ActivityUnavailable]: 'E_ACTIVITY_UNAVAILABLE',
+  [ErrorCode.AlreadyPrepared]: 'E_ALREADY_PREPARED',
+  [ErrorCode.Pending]: 'E_PENDING',
+  [ErrorCode.ConnectionClosed]: 'E_CONNECTION_CLOSED',
+  [ErrorCode.InitConnection]: 'E_INIT_CONNECTION',
+  [ErrorCode.ServiceDisconnected]: 'E_SERVICE_DISCONNECTED',
+  [ErrorCode.QueryProduct]: 'E_QUERY_PRODUCT',
+  [ErrorCode.SkuNotFound]: 'E_SKU_NOT_FOUND',
+  [ErrorCode.SkuOfferMismatch]: 'E_SKU_OFFER_MISMATCH',
+  [ErrorCode.ItemNotOwned]: 'E_ITEM_NOT_OWNED',
+  [ErrorCode.BillingUnavailable]: 'E_BILLING_UNAVAILABLE',
+  [ErrorCode.FeatureNotSupported]: 'E_FEATURE_NOT_SUPPORTED',
+  [ErrorCode.EmptySkuList]: 'E_EMPTY_SKU_LIST',
 } as const;
 
 export const ErrorCodeMapping = {
@@ -228,7 +241,7 @@ export class PurchaseError implements Error {
   ): PurchaseError {
     const errorCode = errorData.code
       ? ErrorCodeUtils.fromPlatformCode(errorData.code, platform)
-      : ErrorCode.E_UNKNOWN;
+      : ErrorCode.Unknown;
 
     return new PurchaseError({
       message: errorData.message || 'Unknown error occurred',
@@ -298,7 +311,7 @@ export const ErrorCodeUtils = {
       }
     }
 
-    return ErrorCode.E_UNKNOWN;
+    return ErrorCode.Unknown;
   },
 
   /**
@@ -391,6 +404,7 @@ export interface RequestPurchaseAndroidProps {
  */
 export interface RequestSubscriptionAndroidProps
   extends RequestPurchaseAndroidProps {
+  readonly purchaseTokenAndroid?: string;
   readonly replacementModeAndroid?: number;
   readonly subscriptionOffers: {
     sku: string;

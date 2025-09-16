@@ -160,10 +160,10 @@ export type ChangeEventPayload = {value: string};
 
 // iOS detailed product types
 export enum ProductTypeIOS {
-  consumable = 'consumable',
-  nonConsumable = 'nonConsumable',
-  autoRenewableSubscription = 'autoRenewableSubscription',
-  nonRenewingSubscription = 'nonRenewingSubscription',
+  Consumable = 'consumable',
+  NonConsumable = 'nonConsumable',
+  AutoRenewableSubscription = 'autoRenewableSubscription',
+  NonRenewingSubscription = 'nonRenewingSubscription',
 }
 
 // Shared product information
@@ -181,12 +181,12 @@ export type ProductCommon = {
 };
 
 export enum PurchaseState {
-  pending = 'pending',
-  purchased = 'purchased',
-  failed = 'failed',
-  restored = 'restored', // iOS only
-  deferred = 'deferred', // iOS only
-  unknown = 'unknown',
+  Pending = 'pending',
+  Purchased = 'purchased',
+  Failed = 'failed',
+  Restored = 'restored', // iOS only
+  Deferred = 'deferred', // iOS only
+  Unknown = 'unknown',
 }
 
 // Shared purchase information
@@ -385,7 +385,7 @@ export type Product =
   | (ProductAndroid & AndroidPlatform)
   | (ProductIOS & IosPlatform);
 
-export type SubscriptionProduct =
+export type ProductSubscription =
   | (ProductSubscriptionAndroid & AndroidPlatform)
   | (ProductSubscriptionIOS & IosPlatform);
 
@@ -528,7 +528,7 @@ export interface FinishTransactionParams {
 ```ts
 export interface IapContext {
   products: Product[];
-  subscriptions: SubscriptionProduct[];
+  subscriptions: ProductSubscription[];
   availablePurchases: Purchase[];
   promotedProduct?: Product;
   currentPurchase?: Purchase;
@@ -541,7 +541,7 @@ export interface IapContext {
   fetchProducts(params: {
     skus: string[];
     type?: 'inapp' | 'subs' | 'all';
-  }): Promise<Product[] | SubscriptionProduct[]>;
+  }): Promise<Product[] | ProductSubscription[]>;
 
   requestPurchase(params: {
     request: RequestPurchaseProps | RequestSubscriptionProps;

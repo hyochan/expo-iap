@@ -22,7 +22,7 @@ type PricingPhasesAndroid = {
 
 type ProductSubscriptionAndroidOfferDetail = {
   basePlanId: string;
-  offerId: string | null;
+  offerId?: string | null;
   offerToken: string;
   offerTags: string[];
   pricingPhases: PricingPhasesAndroid;
@@ -37,7 +37,7 @@ export type ProductAndroid = ProductCommon & {
 
 type ProductSubscriptionAndroidOfferDetails = {
   basePlanId: string;
-  offerId: string | null;
+  offerId?: string | null;
   offerToken: string;
   pricingPhases: PricingPhasesAndroid;
   offerTags: string[];
@@ -46,9 +46,6 @@ type ProductSubscriptionAndroidOfferDetails = {
 export type ProductSubscriptionAndroid = ProductAndroid & {
   subscriptionOfferDetailsAndroid: ProductSubscriptionAndroidOfferDetails[];
 };
-
-// Legacy naming for backward compatibility
-export type SubscriptionProductAndroid = ProductSubscriptionAndroid;
 
 export type RequestPurchaseAndroidProps = {
   skus: string[];

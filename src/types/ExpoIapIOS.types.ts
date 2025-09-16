@@ -1,5 +1,12 @@
 import {PurchaseCommon, ProductCommon} from '../ExpoIap.types';
 
+export enum ProductTypeIOS {
+  consumable = 'consumable',
+  nonConsumable = 'nonConsumable',
+  autoRenewableSubscription = 'autoRenewableSubscription',
+  nonRenewingSubscription = 'nonRenewingSubscription',
+}
+
 type SubscriptionIosPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | '';
 type PaymentMode = '' | 'FREETRIAL' | 'PAYASYOUGO' | 'PAYUPFRONT';
 
@@ -31,6 +38,7 @@ export type ProductIOS = ProductCommon & {
   isFamilyShareableIOS: boolean;
   jsonRepresentationIOS: string;
   platform: 'ios';
+  typeIOS: ProductTypeIOS;
   subscriptionInfoIOS?: SubscriptionInfo;
   introductoryPriceNumberOfPeriodsIOS?: string;
   introductoryPriceSubscriptionPeriodIOS?: SubscriptionIosPeriod;
@@ -57,9 +65,6 @@ export type ProductSubscriptionIOS = ProductIOS & {
   subscriptionPeriodNumberIOS?: string;
   subscriptionPeriodUnitIOS?: SubscriptionIosPeriod;
 };
-
-// Legacy naming for backward compatibility
-export type SubscriptionProductIOS = ProductSubscriptionIOS;
 
 export type PaymentDiscount = {
   /**
