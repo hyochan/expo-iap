@@ -210,9 +210,7 @@ describe('Public API (index.ts)', () => {
           type: 'subs',
           skuArr: ['sub1'],
           offerTokenArr: ['token-123'],
-          subscriptionOffers: [
-            {sku: 'sub1', offerToken: 'token-123'},
-          ],
+          subscriptionOffers: [{sku: 'sub1', offerToken: 'token-123'}],
         }),
       );
     });
