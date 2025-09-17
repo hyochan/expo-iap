@@ -23,12 +23,17 @@ import {
   ErrorCode,
   RequestPurchaseProps,
   RequestPurchasePropsByPlatforms,
+  RequestPurchaseAndroidProps,
+  RequestPurchaseIosProps,
   RequestSubscriptionPropsByPlatforms,
+  RequestSubscriptionAndroidProps,
+  RequestSubscriptionIosProps,
   ProductSubscription,
   PurchaseAndroid,
   DiscountOfferInputIOS,
   VoidResult,
   ReceiptValidationResult,
+  AndroidSubscriptionOfferInput,
 } from './types';
 import {PurchaseError} from './purchase-error';
 
@@ -57,17 +62,29 @@ export function setValueAsync(value: string) {
   return ExpoIapModule.setValueAsync(value);
 }
 
-// Ensure the emitter has proper EventEmitter interface
-export const emitter = (ExpoIapModule || NativeModulesProxy.ExpoIap) as {
-  addListener: (
-    eventName: string,
-    listener: (...args: any[]) => void,
-  ) => {remove: () => void};
-  removeListener: (
-    eventName: string,
-    listener: (...args: any[]) => void,
-  ) => void;
+type ExpoIapEventPayloads = {
+  [OpenIapEvent.PurchaseUpdated]: Purchase;
+  [OpenIapEvent.PurchaseError]: PurchaseError;
+  [OpenIapEvent.PromotedProductIOS]: Product;
 };
+
+type ExpoIapEventListener<E extends OpenIapEvent> = (
+  payload: ExpoIapEventPayloads[E],
+) => void;
+
+type ExpoIapEmitter = {
+  addListener<E extends OpenIapEvent>(
+    eventName: E,
+    listener: ExpoIapEventListener<E>,
+  ): {remove: () => void};
+  removeListener<E extends OpenIapEvent>(
+    eventName: E,
+    listener: ExpoIapEventListener<E>,
+  ): void;
+};
+
+// Ensure the emitter has proper EventEmitter interface
+export const emitter = (ExpoIapModule || NativeModulesProxy.ExpoIap) as ExpoIapEmitter;
 
 /**
  * TODO(v3.1.0): Remove legacy 'inapp' alias once downstream apps migrate to 'in-app'.
@@ -342,15 +359,31 @@ const offerToRecordIOS = (
 /**
  * Helper to normalize request props to platform-specific format
  */
-const normalizeRequestProps = (
+function normalizeRequestProps(
+  request: RequestPurchasePropsByPlatforms,
+  platform: 'ios',
+): RequestPurchaseIosProps | null | undefined;
+function normalizeRequestProps(
+  request: RequestPurchasePropsByPlatforms,
+  platform: 'android',
+): RequestPurchaseAndroidProps | null | undefined;
+function normalizeRequestProps(
+  request: RequestSubscriptionPropsByPlatforms,
+  platform: 'ios',
+): RequestSubscriptionIosProps | null | undefined;
+function normalizeRequestProps(
+  request: RequestSubscriptionPropsByPlatforms,
+  platform: 'android',
+): RequestSubscriptionAndroidProps | null | undefined;
+function normalizeRequestProps(
   request:
     | RequestPurchasePropsByPlatforms
     | RequestSubscriptionPropsByPlatforms,
   platform: 'ios' | 'android',
-): any => {
+) {
   // Platform-specific format - directly return the appropriate platform data
   return platform === 'ios' ? request.ios : request.android;
-};
+}
 
 /**
  * Request a purchase for products or subscriptions.
@@ -408,7 +441,7 @@ export const requestPurchase = (
     } = normalizedRequest;
 
     return (async () => {
-      const offer = offerToRecordIOS(withOffer);
+      const offer = offerToRecordIOS(withOffer ?? undefined);
       const purchase = await ExpoIapModule.requestPurchase({
         sku,
         andDangerouslyFinishTransactionAutomatically,
@@ -422,15 +455,19 @@ export const requestPurchase = (
   }
 
   if (Platform.OS === 'android') {
-    const normalizedRequest = normalizeRequestProps(request, 'android');
-
-    if (!normalizedRequest?.skus?.length) {
-      throw new Error(
-        'Invalid request for Android. The `skus` property is required and must be a non-empty array.',
-      );
-    }
-
     if (isInAppPurchase) {
+      const normalizedRequest: RequestPurchaseAndroidProps | null | undefined =
+        normalizeRequestProps(
+          request as RequestPurchasePropsByPlatforms,
+          'android',
+        );
+
+      if (!normalizedRequest?.skus?.length) {
+        throw new Error(
+          'Invalid request for Android. The `skus` property is required and must be a non-empty array.',
+        );
+      }
+
       const {
         skus,
         obfuscatedAccountIdAndroid,
@@ -453,25 +490,51 @@ export const requestPurchase = (
     }
 
     if (canonical === 'subs') {
+      const normalizedRequest:
+        | RequestSubscriptionAndroidProps
+        | null
+        | undefined = normalizeRequestProps(
+        request as RequestSubscriptionPropsByPlatforms,
+        'android',
+      );
+
+      if (!normalizedRequest?.skus?.length) {
+        throw new Error(
+          'Invalid request for Android. The `skus` property is required and must be a non-empty array.',
+        );
+      }
+
       const {
         skus,
         obfuscatedAccountIdAndroid,
         obfuscatedProfileIdAndroid,
         isOfferPersonalized,
-        subscriptionOffers = [],
-        replacementModeAndroid = -1,
-        purchaseToken,
+        subscriptionOffers,
+        replacementModeAndroid,
+        purchaseTokenAndroid,
       } = normalizedRequest;
+
+      const normalizedOffers = subscriptionOffers ?? [];
+      const replacementMode = replacementModeAndroid ?? -1;
+      const purchaseToken = purchaseTokenAndroid ?? undefined;
 
       return (async () => {
         return ExpoIapModule.requestPurchase({
           type: native,
           skuArr: skus,
           purchaseToken,
-          replacementMode: replacementModeAndroid,
+          replacementMode,
           obfuscatedAccountId: obfuscatedAccountIdAndroid,
           obfuscatedProfileId: obfuscatedProfileIdAndroid,
-          offerTokenArr: subscriptionOffers.map((so: any) => so.offerToken),
+          offerTokenArr: normalizedOffers.map(
+            (so: AndroidSubscriptionOfferInput) => so.offerToken,
+          ),
+          subscriptionOffers: normalizedOffers.map(
+            (so: AndroidSubscriptionOfferInput) => ({
+              sku: so.sku,
+              offerToken: so.offerToken,
+            }),
+          ),
           isOfferPersonalized: isOfferPersonalized ?? false,
         }) as Promise<Purchase[]>;
       })();
@@ -563,8 +626,8 @@ export const getStorefrontIOS = (): Promise<string> => {
 export const getStorefront = (): Promise<string> => {
   // Cross-platform storefront
   if (Platform.OS === 'android') {
-    if (typeof (ExpoIapModule as any).getStorefrontAndroid === 'function') {
-      return (ExpoIapModule as any).getStorefrontAndroid();
+    if (typeof ExpoIapModule.getStorefrontAndroid === 'function') {
+      return ExpoIapModule.getStorefrontAndroid();
     }
     return Promise.resolve('');
   }

@@ -7,6 +7,7 @@ import dev.hyo.openiap.OpenIapModule
 import dev.hyo.openiap.models.DeepLinkOptions
 import dev.hyo.openiap.models.ProductRequest
 import dev.hyo.openiap.models.RequestPurchaseParams
+import dev.hyo.openiap.models.RequestSubscriptionAndroidProps
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
@@ -196,12 +197,45 @@ class ExpoIapModule : Module() {
                 val obfuscatedProfileId =
                     (params["obfuscatedProfileIdAndroid"] ?: params["obfuscatedProfileId"]) as? String
                 val isOfferPersonalized = params["isOfferPersonalized"] as? Boolean ?: false
+                val offerTokenArr =
+                    (params["offerTokenArr"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                val subscriptionOffersParam =
+                    (params["subscriptionOffers"] as? List<*>)?.mapNotNull { rawOffer ->
+                        val offerMap = rawOffer as? Map<*, *> ?: return@mapNotNull null
+                        val sku = offerMap["sku"] as? String
+                        val offerToken = offerMap["offerToken"] as? String
+                        if (sku.isNullOrEmpty() || offerToken.isNullOrEmpty()) {
+                            null
+                        } else {
+                            RequestSubscriptionAndroidProps.SubscriptionOffer(sku = sku, offerToken = offerToken)
+                        }
+                    } ?: emptyList()
 
                 PromiseUtils.addPromiseForKey(PromiseUtils.PROMISE_BUY_ITEM, promise)
                 scope.launch {
                     try {
                         openIap.setActivity(currentActivity)
                         val reqType = ProductRequest.ProductRequestType.fromString(type)
+                        val subscriptionOffers =
+                            if (reqType == ProductRequest.ProductRequestType.Subs) {
+                                when {
+                                    subscriptionOffersParam.isNotEmpty() -> subscriptionOffersParam
+                                    offerTokenArr.isNotEmpty() ->
+                                        skus.zip(offerTokenArr).mapNotNull { (sku, token) ->
+                                            if (token.isNotEmpty()) {
+                                                RequestSubscriptionAndroidProps.SubscriptionOffer(
+                                                    sku = sku,
+                                                    offerToken = token,
+                                                )
+                                            } else {
+                                                null
+                                            }
+                                        }
+                                    else -> emptyList()
+                                }
+                            } else {
+                                emptyList()
+                            }
                         val result =
                             openIap.requestPurchase(
                                 RequestPurchaseParams(
@@ -209,6 +243,7 @@ class ExpoIapModule : Module() {
                                     obfuscatedAccountIdAndroid = obfuscatedAccountId,
                                     obfuscatedProfileIdAndroid = obfuscatedProfileId,
                                     isOfferPersonalized = isOfferPersonalized,
+                                    subscriptionOffers = subscriptionOffers,
                                 ),
                                 reqType,
                             )
