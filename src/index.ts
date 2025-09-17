@@ -530,12 +530,7 @@ export const requestPurchase = (
           offerTokenArr: normalizedOffers.map(
             (so: AndroidSubscriptionOfferInput) => so.offerToken,
           ),
-          subscriptionOffers: normalizedOffers.map(
-            (so: AndroidSubscriptionOfferInput) => ({
-              sku: so.sku,
-              offerToken: so.offerToken,
-            }),
-          ),
+          subscriptionOffers: normalizedOffers,
           isOfferPersonalized: isOfferPersonalized ?? false,
         }) as Promise<Purchase[]>;
       })();
