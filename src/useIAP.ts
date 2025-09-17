@@ -43,10 +43,6 @@ import {
   isRecoverableError,
 } from './utils/errorMapping';
 
-// Deduplicate purchase success events across re-mounts (dev StrictMode, nav returns)
-// Keep minimal in-memory state; safe for subscriptions since renewals use new ids
-const handledPurchaseIds = new Set<string>();
-
 type UseIap = {
   connected: boolean;
   products: Product[];
@@ -54,12 +50,8 @@ type UseIap = {
   promotedProductIdIOS?: string;
   subscriptions: ProductSubscription[];
   availablePurchases: Purchase[];
-  currentPurchase?: Purchase;
-  currentPurchaseError?: PurchaseError;
   promotedProductIOS?: Product;
   activeSubscriptions: ActiveSubscription[];
-  clearCurrentPurchase: () => void;
-  clearCurrentPurchaseError: () => void;
   finishTransaction: ({
     purchase,
     isConsumable,
@@ -111,10 +103,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const [subscriptions, setSubscriptions] = useState<ProductSubscription[]>([]);
 
   const [availablePurchases, setAvailablePurchases] = useState<Purchase[]>([]);
-  const [currentPurchase, setCurrentPurchase] = useState<Purchase>();
   const [promotedProductIOS, setPromotedProductIOS] = useState<Product>();
-  const [currentPurchaseError, setCurrentPurchaseError] =
-    useState<PurchaseError>();
   const [promotedProductIdIOS] = useState<string>();
   const [activeSubscriptions, setActiveSubscriptions] = useState<
     ActiveSubscription[]
@@ -164,14 +153,6 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   useEffect(() => {
     subscriptionsRefState.current = subscriptions;
   }, [subscriptions]);
-
-  const clearCurrentPurchase = useCallback(() => {
-    setCurrentPurchase(undefined);
-  }, []);
-
-  const clearCurrentPurchaseError = useCallback(() => {
-    setCurrentPurchaseError(undefined);
-  }, []);
 
   const getSubscriptionsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
@@ -261,49 +242,26 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   );
 
   const finishTransaction = useCallback(
-    async ({
+    ({
       purchase,
       isConsumable,
     }: {
       purchase: Purchase;
       isConsumable?: boolean;
     }): Promise<VoidResult | boolean> => {
-      try {
-        return await finishTransactionInternal({
-          purchase,
-          isConsumable,
-        });
-      } catch (err) {
-        throw err;
-      } finally {
-        if (purchase.id === currentPurchase?.id) {
-          clearCurrentPurchase();
-        }
-        if (purchase.id === currentPurchaseError?.productId) {
-          clearCurrentPurchaseError();
-        }
-      }
+      return finishTransactionInternal({
+        purchase,
+        isConsumable,
+      });
     },
-    [
-      currentPurchase?.id,
-      currentPurchaseError?.productId,
-      clearCurrentPurchase,
-      clearCurrentPurchaseError,
-    ],
+    [],
   );
 
   const requestPurchaseWithReset = useCallback(
-    async (requestObj: PurchaseRequestInput) => {
-      clearCurrentPurchase();
-      clearCurrentPurchaseError();
-
-      try {
-        return await requestPurchaseInternal(requestObj);
-      } catch (error) {
-        throw error;
-      }
+    (requestObj: PurchaseRequestInput) => {
+      return requestPurchaseInternal(requestObj);
     },
-    [clearCurrentPurchase, clearCurrentPurchaseError],
+    [],
   );
 
   const refreshSubscriptionStatus = useCallback(
@@ -353,24 +311,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   const initIapWithSubscriptions = useCallback(async (): Promise<void> => {
     // CRITICAL: Register listeners BEFORE initConnection to avoid race condition
     // Events might fire immediately after initConnection, so listeners must be ready
-    console.log('[useIAP] Setting up event listeners BEFORE initConnection...');
-
     // Register purchase update listener BEFORE initConnection to avoid race conditions.
     subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
       async (purchase: Purchase) => {
-        console.log('[useIAP] Purchase success callback triggered:', purchase);
-
-        // Guard against duplicate emissions for the same transaction
-        const dedupeKey = purchase.id;
-        if (dedupeKey && handledPurchaseIds.has(dedupeKey)) {
-          console.log('[useIAP] Duplicate purchase event ignored:', dedupeKey);
-          return;
-        }
-        if (dedupeKey) handledPurchaseIds.add(dedupeKey);
-
-        setCurrentPurchaseError(undefined);
-        setCurrentPurchase(purchase);
-
         if ('expirationDateIOS' in purchase) {
           await refreshSubscriptionStatus(purchase.id);
         }
@@ -388,16 +331,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
           return; // Ignore initialization error before connected
         }
         const friendly = getUserFriendlyErrorMessage(error);
-        console.log('[useIAP] Purchase error callback triggered:', error);
-        if (isUserCancelledError(error)) {
-          console.log('[useIAP] User cancelled purchase');
-        } else if (isRecoverableError(error)) {
-          console.log('[useIAP] Recoverable purchase error:', friendly);
-        } else {
+        if (!isUserCancelledError(error) && !isRecoverableError(error)) {
           console.warn('[useIAP] Purchase error:', friendly);
         }
-        setCurrentPurchase(undefined);
-        setCurrentPurchaseError(error);
 
         if (optionsRef.current?.onPurchaseError) {
           optionsRef.current.onPurchaseError(error);
@@ -409,7 +345,6 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       // iOS promoted products listener
       subscriptionsRef.current.promotedProductsIOS = promotedProductListenerIOS(
         (product: Product) => {
-          console.log('[useIAP] Promoted product callback triggered:', product);
           setPromotedProductIOS(product);
 
           if (optionsRef.current?.onPromotedProductIOS) {
@@ -419,14 +354,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       );
     }
 
-    console.log(
-      '[useIAP] Event listeners registered, now calling initConnection...',
-    );
-
     // NOW call initConnection after listeners are ready
     const result = await initConnection();
     setConnected(result);
-    console.log('[useIAP] initConnection result:', result);
     if (!result) {
       // If connection failed, clean up listeners
       console.warn('[useIAP] Connection failed, cleaning up listeners...');
@@ -450,7 +380,6 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       currentSubscriptions.promotedProductIOS?.remove();
       endConnection();
       setConnected(false);
-      handledPurchaseIds.clear();
     };
   }, [initIapWithSubscriptions]);
 
@@ -462,12 +391,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     subscriptions,
     finishTransaction,
     availablePurchases,
-    currentPurchase,
-    currentPurchaseError,
     promotedProductIOS,
     activeSubscriptions,
-    clearCurrentPurchase,
-    clearCurrentPurchaseError,
     getAvailablePurchases: getAvailablePurchasesInternal,
     fetchProducts: fetchProductsInternal,
     requestPurchase: requestPurchaseWithReset,
