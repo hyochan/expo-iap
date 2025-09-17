@@ -32,7 +32,7 @@ object PromiseUtils {
     fun rejectAllPendingPromises() {
         // Snapshot to avoid concurrent modification
         promises.values.flatMap { it.toList() }.forEach { promise ->
-            promise.safeReject(OpenIapError.E_CONNECTION_CLOSED, "Connection has been closed", null)
+            promise.safeReject(OpenIapError.ServiceDisconnected.CODE, "Connection has been closed", null)
         }
         promises.clear()
     }
@@ -60,7 +60,7 @@ fun Promise.safeResolve(value: Any?) {
     }
 }
 
-fun Promise.safeReject(message: String) = this.safeReject("E_UNKNOWN", message, null)
+fun Promise.safeReject(message: String) = this.safeReject(OpenIapError.UnknownError.CODE, message, null)
 
 fun Promise.safeReject(
     code: String,

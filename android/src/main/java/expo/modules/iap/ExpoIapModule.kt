@@ -6,7 +6,7 @@ import dev.hyo.openiap.OpenIapError
 import dev.hyo.openiap.OpenIapModule
 import dev.hyo.openiap.models.DeepLinkOptions
 import dev.hyo.openiap.models.ProductRequest
-import dev.hyo.openiap.models.RequestPurchaseAndroidProps
+import dev.hyo.openiap.models.RequestPurchaseParams
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
@@ -103,7 +103,7 @@ class ExpoIapModule : Module() {
                             if (!ok) {
                                 // Clear any buffered events from a failed init
                                 pendingEvents.clear()
-                                promise.reject(OpenIapError.E_INIT_CONNECTION, "Failed to initialize connection", null)
+                                promise.reject(OpenIapError.InitConnection.CODE, "Failed to initialize connection", null)
                                 return@withLock
                             }
 
@@ -118,7 +118,7 @@ class ExpoIapModule : Module() {
 
                             promise.resolve(true)
                         } catch (e: Exception) {
-                            promise.reject(OpenIapError.E_INIT_CONNECTION, e.message, e)
+                            promise.reject(OpenIapError.InitConnection.CODE, e.message, e)
                         }
                     }
                 }
@@ -143,7 +143,7 @@ class ExpoIapModule : Module() {
                         val products = openIap.fetchProducts(ProductRequest(skuArr.toList(), reqType))
                         promise.resolve(products.map { it.toJSON() })
                     } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_QUERY_PRODUCT, e.message, null)
+                        promise.reject(OpenIapError.QueryProduct.CODE, e.message, null)
                     }
                 }
             }
@@ -154,7 +154,7 @@ class ExpoIapModule : Module() {
                         val purchases = openIap.getAvailablePurchases(null)
                         promise.resolve(purchases.map { it.toJSON() })
                     } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
                     }
                 }
             }
@@ -168,7 +168,7 @@ class ExpoIapModule : Module() {
                         openIap.deepLinkToSubscriptions(DeepLinkOptions(sku, packageName))
                         promise.resolve(null)
                     } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
                     }
                 }
             }
@@ -180,7 +180,7 @@ class ExpoIapModule : Module() {
                         val code = openIap.getStorefront()
                         promise.resolve(code)
                     } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, e)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, e)
                     }
                 }
             }
@@ -204,7 +204,7 @@ class ExpoIapModule : Module() {
                         val reqType = ProductRequest.ProductRequestType.fromString(type)
                         val result =
                             openIap.requestPurchase(
-                                RequestPurchaseAndroidProps(
+                                RequestPurchaseParams(
                                     skus = skus,
                                     obfuscatedAccountIdAndroid = obfuscatedAccountId,
                                     obfuscatedProfileIdAndroid = obfuscatedProfileId,
@@ -223,7 +223,7 @@ class ExpoIapModule : Module() {
                     } catch (e: Exception) {
                         val errorMap =
                             mapOf(
-                                "code" to OpenIapError.E_PURCHASE_ERROR,
+                                "code" to OpenIapError.PurchaseFailed.CODE,
                                 "message" to (e.message ?: "Purchase failed"),
                                 "platform" to "android",
                             )
@@ -235,7 +235,7 @@ class ExpoIapModule : Module() {
                         // Reject and clear any pending promises for this purchase flow
                         PromiseUtils.rejectPromisesForKey(
                             PromiseUtils.PROMISE_BUY_ITEM,
-                            OpenIapError.E_PURCHASE_ERROR,
+                            OpenIapError.PurchaseFailed.CODE,
                             e.message,
                             null,
                         )
@@ -249,7 +249,7 @@ class ExpoIapModule : Module() {
                         openIap.acknowledgePurchaseAndroid(token)
                         promise.resolve(mapOf("responseCode" to 0))
                     } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
                     }
                 }
             }
@@ -261,7 +261,7 @@ class ExpoIapModule : Module() {
                         openIap.consumePurchaseAndroid(token)
                         promise.resolve(mapOf("responseCode" to 0, "purchaseToken" to token))
                     } catch (e: Exception) {
-                        promise.reject(OpenIapError.E_SERVICE_ERROR, e.message, null)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
                     }
                 }
             }

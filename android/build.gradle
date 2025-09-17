@@ -58,6 +58,6 @@ dependencies {
       implementation project(":openiap-google")
     } else {
       // Fallback to published artifact when local project isn't linked
-      implementation "io.github.hyochan.openiap:openiap-google:1.1.0"
+      implementation "io.github.hyochan.openiap:openiap-google:1.1.10"
     }
 }
