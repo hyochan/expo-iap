@@ -46,10 +46,10 @@ describe('iOS Module Functions', () => {
         mockResult,
       );
 
-      const result = await isEligibleForIntroOfferIOS(mockProductId);
+      const result = await isEligibleForIntroOfferIOS(mockGroupId);
 
       expect(ExpoIapModule.isEligibleForIntroOfferIOS).toHaveBeenCalledWith(
-        mockProductId,
+        mockGroupId,
       );
       expect(ExpoIapModule.isEligibleForIntroOfferIOS).toHaveBeenCalledTimes(1);
       expect(result).toBe(mockResult);
