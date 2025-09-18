@@ -5,7 +5,11 @@ import {Linking} from 'react-native';
 import ExpoIapModule from '../ExpoIapModule';
 
 // Types
-import type {ReceiptValidationResultAndroid, VoidResult} from '../types';
+import type {
+  DeepLinkOptions,
+  MutationField,
+  ReceiptValidationResultAndroid,
+} from '../types';
 
 // Type guards
 export function isProductAndroid<T extends {platform?: string}>(
@@ -22,25 +26,24 @@ export function isProductAndroid<T extends {platform?: string}>(
 /**
  * Deep link to subscriptions screen on Android.
  * @param {Object} params - The parameters object
- * @param {string} params.sku - The product's SKU (on Android)
- * @param {string} params.packageName - The package name of your Android app (e.g., 'com.example.app')
+ * @param {string} params.skuAndroid - The product's SKU (on Android)
+ * @param {string} params.packageNameAndroid - The package name of your Android app (e.g., 'com.example.app')
  * @returns {Promise<void>}
  *
  * @example
  * ```typescript
  * await deepLinkToSubscriptionsAndroid({
- *   sku: 'subscription_id',
- *   packageName: 'com.example.app'
+ *   skuAndroid: 'subscription_id',
+ *   packageNameAndroid: 'com.example.app'
  * });
  * ```
  */
-export const deepLinkToSubscriptionsAndroid = async ({
-  sku,
-  packageName,
-}: {
-  sku?: string;
-  packageName?: string;
-}): Promise<void> => {
+export const deepLinkToSubscriptionsAndroid = async (
+  options?: DeepLinkOptions | null,
+): Promise<void> => {
+  const sku = options?.skuAndroid ?? undefined;
+  const packageName = options?.packageNameAndroid ?? undefined;
+
   // Prefer native deep link implementation via OpenIAP module
   if (ExpoIapModule?.deepLinkToSubscriptionsAndroid) {
     return (ExpoIapModule as any).deepLinkToSubscriptionsAndroid({
@@ -117,28 +120,26 @@ export const validateReceiptAndroid = async ({
  * @param {string} params.token - The product's token (on Android)
  * @returns {Promise<VoidResult | void>}
  */
-export const acknowledgePurchaseAndroid = async ({
-  token,
-}: {
-  token: string;
-}): Promise<VoidResult | boolean | void> => {
-  const result = await ExpoIapModule.acknowledgePurchaseAndroid(token);
+export const acknowledgePurchaseAndroid: MutationField<
+  'acknowledgePurchaseAndroid'
+> = async (purchaseToken) => {
+  const result = await ExpoIapModule.acknowledgePurchaseAndroid(purchaseToken);
 
-  if (typeof result === 'boolean' || typeof result === 'undefined') {
+  if (typeof result === 'boolean') {
     return result;
   }
 
   if (result && typeof result === 'object') {
     const record = result as Record<string, unknown>;
     if (typeof record.success === 'boolean') {
-      return {success: record.success};
+      return record.success;
     }
     if (typeof record.responseCode === 'number') {
-      return {success: record.responseCode === 0};
+      return record.responseCode === 0;
     }
   }
 
-  return {success: true};
+  return true;
 };
 
 /**

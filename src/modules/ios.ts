@@ -6,14 +6,18 @@ import ExpoIapModule from '../ExpoIapModule';
 
 // Types
 import type {
-  Product,
+  MutationField,
+  ProductIOS,
   Purchase,
-  SubscriptionStatusIOS,
-  AppTransaction,
+  PurchaseIOS,
+  QueryField,
+  ReceiptValidationProps,
   ReceiptValidationResultIOS,
+  SubscriptionStatusIOS,
 } from '../types';
 import type {PurchaseError} from '../purchase-error';
 import {Linking} from 'react-native';
+import {normalizePurchaseId, normalizePurchaseList} from '../utils/purchase';
 
 export type TransactionEvent = {
   transaction?: Purchase;
@@ -44,8 +48,8 @@ export function isProductIOS<T extends {platform?: string}>(
  *
  * @platform iOS
  */
-export const syncIOS = (): Promise<null> => {
-  return ExpoIapModule.syncIOS();
+export const syncIOS: MutationField<'syncIOS'> = async () => {
+  return Boolean(await ExpoIapModule.syncIOS());
 };
 
 /**
@@ -57,10 +61,13 @@ export const syncIOS = (): Promise<null> => {
  *
  * @platform iOS
  */
-export const isEligibleForIntroOfferIOS = (
-  groupId: string,
-): Promise<boolean> => {
-  return ExpoIapModule.isEligibleForIntroOfferIOS(groupId);
+export const isEligibleForIntroOfferIOS: QueryField<
+  'isEligibleForIntroOfferIOS'
+> = async (groupID) => {
+  if (!groupID) {
+    throw new Error('isEligibleForIntroOfferIOS requires a groupID');
+  }
+  return ExpoIapModule.isEligibleForIntroOfferIOS(groupID);
 };
 
 /**
@@ -72,10 +79,14 @@ export const isEligibleForIntroOfferIOS = (
  *
  * @platform iOS
  */
-export const subscriptionStatusIOS = (
-  sku: string,
-): Promise<SubscriptionStatusIOS[]> => {
-  return ExpoIapModule.subscriptionStatusIOS(sku);
+export const subscriptionStatusIOS: QueryField<
+  'subscriptionStatusIOS'
+> = async (sku) => {
+  if (!sku) {
+    throw new Error('subscriptionStatusIOS requires a SKU');
+  }
+  const status = await ExpoIapModule.subscriptionStatusIOS(sku);
+  return (status ?? []) as SubscriptionStatusIOS[];
 };
 
 /**
@@ -87,8 +98,14 @@ export const subscriptionStatusIOS = (
  *
  * @platform iOS
  */
-export const currentEntitlementIOS = (sku: string): Promise<Purchase> => {
-  return ExpoIapModule.currentEntitlementIOS(sku);
+export const currentEntitlementIOS: QueryField<
+  'currentEntitlementIOS'
+> = async (sku) => {
+  if (!sku) {
+    throw new Error('currentEntitlementIOS requires a SKU');
+  }
+  const purchase = await ExpoIapModule.currentEntitlementIOS(sku);
+  return normalizePurchaseId((purchase ?? null) as PurchaseIOS | null);
 };
 
 /**
@@ -100,8 +117,14 @@ export const currentEntitlementIOS = (sku: string): Promise<Purchase> => {
  *
  * @platform iOS
  */
-export const latestTransactionIOS = (sku: string): Promise<Purchase> => {
-  return ExpoIapModule.latestTransactionIOS(sku);
+export const latestTransactionIOS: QueryField<'latestTransactionIOS'> = async (
+  sku,
+) => {
+  if (!sku) {
+    throw new Error('latestTransactionIOS requires a SKU');
+  }
+  const transaction = await ExpoIapModule.latestTransactionIOS(sku);
+  return normalizePurchaseId((transaction ?? null) as PurchaseIOS | null);
 };
 
 /**
@@ -113,11 +136,14 @@ export const latestTransactionIOS = (sku: string): Promise<Purchase> => {
  *
  * @platform iOS
  */
-type RefundRequestStatus = 'success' | 'userCancelled';
-export const beginRefundRequestIOS = (
-  sku: string,
-): Promise<RefundRequestStatus> => {
-  return ExpoIapModule.beginRefundRequestIOS(sku);
+export const beginRefundRequestIOS: MutationField<
+  'beginRefundRequestIOS'
+> = async (sku) => {
+  if (!sku) {
+    throw new Error('beginRefundRequestIOS requires a SKU');
+  }
+  const status = await ExpoIapModule.beginRefundRequestIOS(sku);
+  return status ?? null;
 };
 
 /**
@@ -129,8 +155,11 @@ export const beginRefundRequestIOS = (
  *
  * @platform iOS
  */
-export const showManageSubscriptionsIOS = (): Promise<Purchase[]> => {
-  return ExpoIapModule.showManageSubscriptionsIOS();
+export const showManageSubscriptionsIOS: MutationField<
+  'showManageSubscriptionsIOS'
+> = async () => {
+  const purchases = await ExpoIapModule.showManageSubscriptionsIOS();
+  return normalizePurchaseList((purchases ?? []) as PurchaseIOS[]);
 };
 
 /**
@@ -143,9 +172,11 @@ export const showManageSubscriptionsIOS = (): Promise<Purchase[]> => {
  *
  * @returns {Promise<string>} Base64 encoded receipt data
  */
-export const getReceiptIOS = (): Promise<string> => {
+export const getReceiptDataIOS: QueryField<'getReceiptDataIOS'> = async () => {
   return ExpoIapModule.getReceiptDataIOS();
 };
+
+export const getReceiptIOS = getReceiptDataIOS;
 
 /**
  * Check if a transaction is verified through StoreKit 2.
@@ -157,7 +188,12 @@ export const getReceiptIOS = (): Promise<string> => {
  *
  * @platform iOS
  */
-export const isTransactionVerifiedIOS = (sku: string): Promise<boolean> => {
+export const isTransactionVerifiedIOS: QueryField<
+  'isTransactionVerifiedIOS'
+> = async (sku) => {
+  if (!sku) {
+    throw new Error('isTransactionVerifiedIOS requires a SKU');
+  }
   return ExpoIapModule.isTransactionVerifiedIOS(sku);
 };
 
@@ -171,8 +207,14 @@ export const isTransactionVerifiedIOS = (sku: string): Promise<boolean> => {
  *
  * @platform iOS
  */
-export const getTransactionJwsIOS = (sku: string): Promise<string> => {
-  return ExpoIapModule.getTransactionJwsIOS(sku);
+export const getTransactionJwsIOS: QueryField<'getTransactionJwsIOS'> = async (
+  sku,
+) => {
+  if (!sku) {
+    throw new Error('getTransactionJwsIOS requires a SKU');
+  }
+  const jws = await ExpoIapModule.getTransactionJwsIOS(sku);
+  return jws ?? '';
 };
 
 /**
@@ -190,12 +232,33 @@ export const getTransactionJwsIOS = (sku: string): Promise<string> => {
  *   latestTransaction?: Purchase;
  * }>}
  */
-export const validateReceiptIOS = async (
-  sku: string,
-): Promise<ReceiptValidationResultIOS> => {
-  const result = await ExpoIapModule.validateReceiptIOS(sku);
-  return result;
+const validateReceiptIOSImpl = async (
+  props: ReceiptValidationProps | string,
+) => {
+  const sku =
+    typeof props === 'string' ? props : (props as ReceiptValidationProps)?.sku;
+
+  if (!sku) {
+    throw new Error('validateReceiptIOS requires a SKU');
+  }
+
+  const result = (await ExpoIapModule.validateReceiptIOS(
+    sku,
+  )) as ReceiptValidationResultIOS;
+  const normalizedLatest = normalizePurchaseId(
+    result.latestTransaction ?? undefined,
+  );
+  if (normalizedLatest === result.latestTransaction) {
+    return result;
+  }
+  return {
+    ...result,
+    latestTransaction: normalizedLatest ?? null,
+  };
 };
+
+export const validateReceiptIOS =
+  validateReceiptIOSImpl as QueryField<'validateReceiptIOS'>;
 
 /**
  * Present the code redemption sheet for offer codes (iOS only).
@@ -208,8 +271,10 @@ export const validateReceiptIOS = async (
  *
  * @platform iOS
  */
-export const presentCodeRedemptionSheetIOS = (): Promise<boolean> => {
-  return ExpoIapModule.presentCodeRedemptionSheetIOS();
+export const presentCodeRedemptionSheetIOS: MutationField<
+  'presentCodeRedemptionSheetIOS'
+> = async () => {
+  return Boolean(await ExpoIapModule.presentCodeRedemptionSheetIOS());
 };
 
 /**
@@ -226,8 +291,10 @@ export const presentCodeRedemptionSheetIOS = (): Promise<boolean> => {
  * @platform iOS
  * @since iOS 16.0
  */
-export const getAppTransactionIOS = (): Promise<AppTransaction | null> => {
-  return ExpoIapModule.getAppTransactionIOS();
+export const getAppTransactionIOS: QueryField<
+  'getAppTransactionIOS'
+> = async () => {
+  return (await ExpoIapModule.getAppTransactionIOS()) ?? null;
 };
 
 /**
@@ -240,8 +307,11 @@ export const getAppTransactionIOS = (): Promise<AppTransaction | null> => {
  *
  * @platform iOS
  */
-export const getPromotedProductIOS = (): Promise<Product | null> => {
-  return ExpoIapModule.getPromotedProductIOS();
+export const getPromotedProductIOS: QueryField<
+  'getPromotedProductIOS'
+> = async () => {
+  const product = await ExpoIapModule.getPromotedProductIOS();
+  return (product ?? null) as ProductIOS | null;
 };
 
 /**
@@ -253,8 +323,11 @@ export const getPromotedProductIOS = (): Promise<Product | null> => {
  *
  * @platform iOS
  */
-export const requestPurchaseOnPromotedProductIOS = (): Promise<void> => {
-  return ExpoIapModule.requestPurchaseOnPromotedProductIOS();
+export const requestPurchaseOnPromotedProductIOS: MutationField<
+  'requestPurchaseOnPromotedProductIOS'
+> = async () => {
+  await ExpoIapModule.requestPurchaseOnPromotedProductIOS();
+  return true;
 };
 
 /**
@@ -263,8 +336,11 @@ export const requestPurchaseOnPromotedProductIOS = (): Promise<void> => {
  * @returns Promise resolving to array of pending transactions
  * @platform iOS
  */
-export const getPendingTransactionsIOS = (): Promise<any[]> => {
-  return ExpoIapModule.getPendingTransactionsIOS();
+export const getPendingTransactionsIOS: QueryField<
+  'getPendingTransactionsIOS'
+> = async () => {
+  const transactions = await ExpoIapModule.getPendingTransactionsIOS();
+  return normalizePurchaseList((transactions ?? []) as PurchaseIOS[]);
 };
 
 /**
@@ -273,8 +349,10 @@ export const getPendingTransactionsIOS = (): Promise<any[]> => {
  * @returns Promise resolving when transaction is cleared
  * @platform iOS
  */
-export const clearTransactionIOS = (): Promise<void> => {
-  return ExpoIapModule.clearTransactionIOS();
+export const clearTransactionIOS: MutationField<
+  'clearTransactionIOS'
+> = async () => {
+  return Boolean(await ExpoIapModule.clearTransactionIOS());
 };
 
 /**

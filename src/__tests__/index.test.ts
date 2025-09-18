@@ -215,28 +215,28 @@ describe('Public API (index.ts)', () => {
       );
     });
 
-    it('iOS rejects when sku missing', () => {
+    it('iOS rejects when sku missing', async () => {
       (Platform as any).OS = 'ios';
-      expect(() =>
+      await expect(
         requestPurchase({request: {ios: {}} as any, type: 'in-app'} as any),
-      ).toThrow(/sku/);
+      ).rejects.toThrow(/sku/);
     });
 
-    it('Android rejects when skus missing', () => {
+    it('Android rejects when skus missing', async () => {
       (Platform as any).OS = 'android';
-      expect(() =>
+      await expect(
         requestPurchase({request: {android: {}} as any, type: 'in-app'} as any),
-      ).toThrow(/skus/);
+      ).rejects.toThrow(/skus/);
     });
 
-    it('Android invalid type throws', () => {
+    it('Android invalid type throws', async () => {
       (Platform as any).OS = 'android';
-      expect(() =>
+      await expect(
         requestPurchase({
           request: {android: {skus: ['x']}} as any,
           type: 'other' as any,
         }),
-      ).toThrow(/Unsupported product type/);
+      ).rejects.toThrow(/Unsupported product type/);
     });
 
     it('iOS maps withOffer through offerToRecordIOS', async () => {
@@ -320,10 +320,14 @@ describe('Public API (index.ts)', () => {
       (Platform as any).select = (obj: any) => obj.android;
       (ExpoIapModule.getAvailableItems as jest.Mock) = jest
         .fn()
-        .mockResolvedValueOnce([{id: 'p1'}, {id: 's1'}]);
+        .mockResolvedValueOnce([
+          {id: 'p1', transactionId: 'txn-1'},
+          {id: 's1', transactionId: 'txn-2'},
+        ]);
       const res = await getAvailablePurchases();
       expect(ExpoIapModule.getAvailableItems).toHaveBeenCalled();
       expect(res).toHaveLength(2);
+      expect(res.map((p) => p.id)).toEqual(['txn-1', 'txn-2']);
     });
 
     it('restorePurchases performs iOS sync then fetches purchases', async () => {
@@ -332,12 +336,8 @@ describe('Public API (index.ts)', () => {
       jest.spyOn(iosMod as any, 'syncIOS').mockResolvedValue(undefined as any);
       (ExpoIapModule.getAvailableItems as jest.Mock) = jest
         .fn()
-        .mockResolvedValue([{id: 'x'}]);
-      const result = await restorePurchases({
-        alsoPublishToEventListenerIOS: false,
-        onlyIncludeActiveItemsIOS: true,
-      });
-      expect(Array.isArray(result)).toBe(true);
+        .mockResolvedValue([{id: 'legacy', transactionId: 'txn-restore'}]);
+      await restorePurchases();
       expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith(false, true);
     });
 
@@ -351,16 +351,25 @@ describe('Public API (index.ts)', () => {
     it('iOS rejects without transaction id and succeeds with id', async () => {
       (Platform as any).OS = 'ios';
       (Platform as any).select = (obj: any) => obj.ios;
+      const basePurchase = {
+        platform: 'ios',
+        productId: 'prod.ios',
+        isAutoRenewing: false,
+        purchaseState: 'purchased',
+        purchaseToken: 'jws-token',
+        quantity: 1,
+        transactionDate: Date.now(),
+      };
       await expect(
-        finishTransaction({purchase: {id: ''} as any}),
+        finishTransaction({purchase: {...basePurchase, id: ''} as any}),
       ).rejects.toThrow('purchase.id required');
 
       (ExpoIapModule.finishTransaction as jest.Mock) = jest
         .fn()
         .mockResolvedValue(true);
       await expect(
-        finishTransaction({purchase: {id: 'tid'} as any}),
-      ).resolves.toBe(true);
+        finishTransaction({purchase: {...basePurchase, id: 'tid'} as any}),
+      ).resolves.toBeUndefined();
     });
 
     it('Android consume vs acknowledge flows', async () => {
@@ -373,14 +382,25 @@ describe('Public API (index.ts)', () => {
         .fn()
         .mockResolvedValue({responseCode: 0});
 
+      const basePurchase = {
+        platform: 'android',
+        productId: 'p',
+        isAutoRenewing: false,
+        purchaseState: 'purchased',
+        purchaseToken: 't',
+        quantity: 1,
+        transactionDate: Date.now(),
+        id: 'txn-android',
+      };
+
       await finishTransaction({
-        purchase: {productId: 'p', purchaseToken: 't'} as any,
+        purchase: basePurchase as any,
         isConsumable: true,
       });
       expect(ExpoIapModule.consumePurchaseAndroid).toHaveBeenCalledWith('t');
 
       await finishTransaction({
-        purchase: {productId: 'p', purchaseToken: 't'} as any,
+        purchase: basePurchase as any,
         isConsumable: false,
       });
       expect(ExpoIapModule.acknowledgePurchaseAndroid).toHaveBeenCalledWith(
@@ -390,7 +410,17 @@ describe('Public API (index.ts)', () => {
       // Reset call counts for negative-path assertion
       (ExpoIapModule.consumePurchaseAndroid as jest.Mock).mockClear();
       (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockClear();
-      const p = finishTransaction({purchase: {productId: 'p'} as any});
+      const p = finishTransaction({
+        purchase: {
+          platform: 'android',
+          productId: 'p',
+          isAutoRenewing: false,
+          purchaseState: 'purchased',
+          quantity: 1,
+          transactionDate: Date.now(),
+          id: 'txn-missing-token',
+        } as any,
+      });
       await expect(p).rejects.toMatchObject({
         message: expect.stringMatching(/Purchase token/i),
       });
@@ -398,13 +428,24 @@ describe('Public API (index.ts)', () => {
       expect(ExpoIapModule.acknowledgePurchaseAndroid).not.toHaveBeenCalled();
     });
 
-    it('finishTransaction falls back when Platform.select returns undefined', async () => {
-      const originalSelect = (Platform as any).select;
-      (Platform as any).select = () => undefined;
+    it('finishTransaction rejects on unsupported platform', async () => {
+      const originalOs = (Platform as any).OS;
+      (Platform as any).OS = 'web';
       await expect(
-        finishTransaction({purchase: {id: 'tid'} as any}),
+        finishTransaction({
+          purchase: {
+            id: 'tid',
+            platform: 'web',
+            productId: 'prod.web',
+            isAutoRenewing: false,
+            purchaseState: 'purchased',
+            purchaseToken: 'token',
+            quantity: 1,
+            transactionDate: Date.now(),
+          } as any,
+        }),
       ).rejects.toThrow(/Unsupported Platform/);
-      (Platform as any).select = originalSelect;
+      (Platform as any).OS = originalOs;
     });
   });
 
@@ -441,7 +482,7 @@ describe('Public API (index.ts)', () => {
       const mock = jest
         .spyOn(iosMod as any, 'validateReceiptIOS')
         .mockResolvedValue({isValid: true});
-      const res = await validateReceipt('sku');
+      const res = await validateReceipt({sku: 'sku'});
       expect(res).toEqual({isValid: true});
       mock.mockRestore();
     });
@@ -451,14 +492,17 @@ describe('Public API (index.ts)', () => {
       const spy = jest
         .spyOn(androidMod as any, 'validateReceiptAndroid')
         .mockResolvedValue({});
-      await expect(validateReceipt('sku', {} as any)).rejects.toThrow(
-        /requires packageName/,
-      );
-      await validateReceipt('sku', {
-        packageName: 'com.app',
-        productToken: 'tok',
-        accessToken: 'acc',
-        isSub: true,
+      await expect(
+        validateReceipt({sku: 'sku', androidOptions: {} as any}),
+      ).rejects.toThrow(/requires packageName/);
+      await validateReceipt({
+        sku: 'sku',
+        androidOptions: {
+          packageName: 'com.app',
+          productToken: 'tok',
+          accessToken: 'acc',
+          isSub: true,
+        },
       });
       expect(spy).toHaveBeenCalled();
       spy.mockRestore();
@@ -466,7 +510,7 @@ describe('Public API (index.ts)', () => {
 
     it('validateReceipt throws on unsupported platform', async () => {
       (Platform as any).OS = 'web';
-      await expect(validateReceipt('sku')).rejects.toThrow(
+      await expect(validateReceipt({sku: 'sku'})).rejects.toThrow(
         /Platform not supported/,
       );
     });
@@ -494,7 +538,10 @@ describe('Public API (index.ts)', () => {
         skuAndroid: 's',
         packageNameAndroid: 'com.app',
       });
-      expect(andSpy).toHaveBeenCalledWith({sku: 's', packageName: 'com.app'});
+      expect(andSpy).toHaveBeenCalledWith({
+        skuAndroid: 's',
+        packageNameAndroid: 'com.app',
+      });
       andSpy.mockRestore();
     });
 
@@ -508,10 +555,11 @@ describe('Public API (index.ts)', () => {
       ).rejects.toThrow(/Unsupported platform: web/);
     });
 
-    it('requestPurchase returns resolved promise on unsupported platform', async () => {
+    it('requestPurchase rejects on unsupported platform', async () => {
       (Platform as any).OS = 'web';
-      const res = await requestPurchase({request: {} as any} as any);
-      expect(res).toBeUndefined();
+      await expect(
+        requestPurchase({request: {} as any} as any),
+      ).rejects.toThrow(/Platform not supported/);
     });
   });
 

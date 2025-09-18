@@ -17,25 +17,32 @@ import {
 } from './modules/android';
 
 // Types
-import {
+import type {
+  AndroidSubscriptionOfferInput,
+  DeepLinkOptions,
+  FetchProductsResult,
+  MutationField,
+  MutationValidateReceiptArgs,
   Product,
+  ProductAndroid,
+  ProductIOS,
+  ProductQueryType,
+  ProductSubscription,
   Purchase,
-  ErrorCode,
-  RequestPurchaseProps,
+  PurchaseInput,
+  PurchaseOptions,
+  QueryField,
   RequestPurchasePropsByPlatforms,
   RequestPurchaseAndroidProps,
   RequestPurchaseIosProps,
   RequestSubscriptionPropsByPlatforms,
   RequestSubscriptionAndroidProps,
   RequestSubscriptionIosProps,
-  ProductSubscription,
-  PurchaseAndroid,
   DiscountOfferInputIOS,
-  VoidResult,
-  ReceiptValidationResult,
-  AndroidSubscriptionOfferInput,
 } from './types';
+import {ErrorCode} from './types';
 import {PurchaseError} from './purchase-error';
+import {normalizePurchaseId, normalizePurchaseList} from './utils/purchase';
 
 // Export all types
 export * from './types';
@@ -90,32 +97,7 @@ export const emitter = (ExpoIapModule ||
 /**
  * TODO(v3.1.0): Remove legacy 'inapp' alias once downstream apps migrate to 'in-app'.
  */
-export type ProductTypeInput = 'inapp' | 'in-app' | 'subs';
-export type InAppTypeInput = Exclude<ProductTypeInput, 'subs'>;
-
-type PurchaseRequestInApp = {
-  request: RequestPurchasePropsByPlatforms;
-  type?: InAppTypeInput;
-};
-
-type PurchaseRequestSubscription = {
-  request: RequestSubscriptionPropsByPlatforms;
-  type: 'subs';
-};
-
-export type PurchaseRequestInput =
-  | PurchaseRequestInApp
-  | PurchaseRequestSubscription;
-
-export type PurchaseRequest =
-  | {
-      request: RequestPurchaseProps;
-      type?: InAppTypeInput;
-    }
-  | {
-      request: RequestSubscriptionPropsByPlatforms;
-      type: 'subs';
-    };
+export type ProductTypeInput = ProductQueryType | 'inapp';
 
 const normalizeProductType = (type?: ProductTypeInput) => {
   if (type === 'inapp') {
@@ -126,14 +108,20 @@ const normalizeProductType = (type?: ProductTypeInput) => {
 
   if (!type || type === 'inapp' || type === 'in-app') {
     return {
-      canonical: 'in-app' as const,
+      canonical: 'in-app' as ProductQueryType,
       native: 'inapp' as const,
     };
   }
   if (type === 'subs') {
     return {
-      canonical: 'subs' as const,
+      canonical: 'subs' as ProductQueryType,
       native: 'subs' as const,
+    };
+  }
+  if (type === 'all') {
+    return {
+      canonical: 'all' as ProductQueryType,
+      native: 'all' as const,
     };
   }
   throw new Error(`Unsupported product type: ${type}`);
@@ -144,8 +132,9 @@ export const purchaseUpdatedListener = (
 ) => {
   console.log('[JS] Registering purchaseUpdatedListener');
   const wrappedListener = (event: Purchase) => {
-    console.log('[JS] purchaseUpdatedListener fired:', event);
-    listener(event);
+    const normalized = normalizePurchaseId(event);
+    console.log('[JS] purchaseUpdatedListener fired:', normalized);
+    listener(normalized);
   };
   const emitterSubscription = emitter.addListener(
     OpenIapEvent.PurchaseUpdated,
@@ -203,112 +192,103 @@ export const promotedProductListenerIOS = (
   return emitter.addListener(OpenIapEvent.PromotedProductIOS, listener);
 };
 
-export function initConnection(): Promise<boolean> {
-  const result = ExpoIapModule.initConnection();
-  return Promise.resolve(result);
-}
+export const initConnection: MutationField<'initConnection'> = async () =>
+  ExpoIapModule.initConnection();
 
-export async function endConnection(): Promise<boolean> {
-  return ExpoIapModule.endConnection();
-}
+export const endConnection: MutationField<'endConnection'> = async () =>
+  ExpoIapModule.endConnection();
 
 /**
  * Fetch products with unified API (v2.7.0+)
  *
- * @param params - Product fetch configuration
- * @param params.skus - Array of product SKUs to fetch
- * @param params.type - Type of products: 'in-app' for regular products (default) or 'subs' for subscriptions
- *
- * @example
- * ```typescript
- * // Regular products
- * const products = await fetchProducts({
- *   skus: ['product1', 'product2'],
- *   type: 'in-app'
- * });
- *
- * // Subscriptions
- * const subscriptions = await fetchProducts({
- *   skus: ['sub1', 'sub2'],
- *   type: 'subs'
- * });
- * ```
+ * @param request - Product fetch configuration
+ * @param request.skus - Array of product SKUs to fetch
+ * @param request.type - Product query type: 'in-app', 'subs', or 'all'
  */
-export const fetchProducts = async ({
-  skus,
-  type,
-}: {
-  skus: string[];
-  type?: ProductTypeInput;
-}): Promise<Product[] | ProductSubscription[]> => {
-  if (!skus?.length) {
+export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
+  const {skus, type} = request ?? {};
+
+  if (!Array.isArray(skus) || skus.length === 0) {
     throw new PurchaseError({
       message: 'No SKUs provided',
       code: ErrorCode.EmptySkuList,
     });
   }
 
-  const {canonical, native} = normalizeProductType(type);
+  const {canonical, native} = normalizeProductType(
+    type as ProductTypeInput | undefined,
+  );
+  const skuSet = new Set(skus);
 
-  if (Platform.OS === 'ios') {
-    const rawItems = await ExpoIapModule.fetchProducts({skus, type: native});
-
-    const filteredItems = rawItems.filter((item: unknown) => {
+  const filterIosItems = (
+    items: unknown[],
+  ): Product[] | ProductSubscription[] =>
+    items.filter((item): item is ProductIOS | ProductSubscription => {
       if (!isProductIOS(item)) {
         return false;
       }
-      const isValid =
-        typeof item === 'object' &&
-        item !== null &&
-        'id' in item &&
-        typeof item.id === 'string' &&
-        skus.includes(item.id);
-      return isValid;
+      const candidate = item as ProductIOS | ProductSubscription;
+      return typeof candidate.id === 'string' && skuSet.has(candidate.id);
     });
 
-    return canonical === 'in-app'
-      ? (filteredItems as Product[])
-      : (filteredItems as ProductSubscription[]);
+  const filterAndroidItems = (
+    items: unknown[],
+  ): Product[] | ProductSubscription[] =>
+    items.filter((item): item is ProductAndroid | ProductSubscription => {
+      if (!isProductAndroid(item)) {
+        return false;
+      }
+      const candidate = item as ProductAndroid | ProductSubscription;
+      return typeof candidate.id === 'string' && skuSet.has(candidate.id);
+    });
+
+  const castResult = (
+    items: Product[] | ProductSubscription[],
+  ): FetchProductsResult => {
+    if (canonical === 'in-app') {
+      return items as Product[];
+    }
+    if (canonical === 'subs') {
+      return items as ProductSubscription[];
+    }
+    return items;
+  };
+
+  if (Platform.OS === 'ios') {
+    const rawItems = await ExpoIapModule.fetchProducts({skus, type: native});
+    return castResult(filterIosItems(rawItems));
   }
 
   if (Platform.OS === 'android') {
-    const items = await ExpoIapModule.fetchProducts(native, skus);
-    const filteredItems = items.filter((item: unknown) => {
-      if (!isProductAndroid(item)) return false;
-      return (
-        typeof item === 'object' &&
-        item !== null &&
-        'id' in item &&
-        typeof item.id === 'string' &&
-        skus.includes(item.id)
-      );
-    });
-
-    return canonical === 'in-app'
-      ? (filteredItems as Product[])
-      : (filteredItems as ProductSubscription[]);
+    const rawItems = await ExpoIapModule.fetchProducts(native, skus);
+    return castResult(filterAndroidItems(rawItems));
   }
 
   throw new Error('Unsupported platform');
 };
 
-export const getAvailablePurchases = ({
-  alsoPublishToEventListenerIOS = false,
-  onlyIncludeActiveItemsIOS = true,
-}: {
-  alsoPublishToEventListenerIOS?: boolean;
-  onlyIncludeActiveItemsIOS?: boolean;
-} = {}): Promise<Purchase[]> =>
-  (
+export const getAvailablePurchases: QueryField<
+  'getAvailablePurchases'
+> = async (options) => {
+  const normalizedOptions: PurchaseOptions = {
+    alsoPublishToEventListenerIOS:
+      options?.alsoPublishToEventListenerIOS ?? false,
+    onlyIncludeActiveItemsIOS: options?.onlyIncludeActiveItemsIOS ?? true,
+  };
+
+  const resolvePurchases: () => Promise<Purchase[]> =
     Platform.select({
       ios: () =>
         ExpoIapModule.getAvailableItems(
-          alsoPublishToEventListenerIOS,
-          onlyIncludeActiveItemsIOS,
-        ),
-      android: () => ExpoIapModule.getAvailableItems(),
-    }) || (() => Promise.resolve([]))
-  )();
+          normalizedOptions.alsoPublishToEventListenerIOS,
+          normalizedOptions.onlyIncludeActiveItemsIOS,
+        ) as Promise<Purchase[]>,
+      android: () => ExpoIapModule.getAvailableItems() as Promise<Purchase[]>,
+    }) ?? (() => Promise.resolve([] as Purchase[]));
+
+  const purchases = await resolvePurchases();
+  return normalizePurchaseList(purchases);
+};
 
 /**
  * Restore completed transactions (cross-platform behavior)
@@ -323,25 +303,15 @@ export const getAvailablePurchases = ({
  * @param options.onlyIncludeActiveItemsIOS - iOS only: whether to only include active items
  * @returns Promise resolving to the list of available/restored purchases
  */
-export const restorePurchases = async (
-  options: {
-    alsoPublishToEventListenerIOS?: boolean;
-    onlyIncludeActiveItemsIOS?: boolean;
-  } = {},
-): Promise<Purchase[]> => {
+export const restorePurchases: MutationField<'restorePurchases'> = async () => {
   if (Platform.OS === 'ios') {
-    // Perform best-effort sync on iOS and ignore sync errors to avoid blocking restore flow
     await syncIOS().catch(() => undefined);
   }
 
-  // Then, fetch available purchases for both platforms
-  const purchases = await getAvailablePurchases({
-    alsoPublishToEventListenerIOS:
-      options.alsoPublishToEventListenerIOS ?? false,
-    onlyIncludeActiveItemsIOS: options.onlyIncludeActiveItemsIOS ?? true,
+  await getAvailablePurchases({
+    alsoPublishToEventListenerIOS: false,
+    onlyIncludeActiveItemsIOS: true,
   });
-
-  return purchases;
 };
 
 const offerToRecordIOS = (
@@ -417,11 +387,11 @@ function normalizeRequestProps(
  * });
  * ```
  */
-export const requestPurchase = (
-  requestObj: PurchaseRequestInput,
-): Promise<Purchase | Purchase[] | void> => {
-  const {request, type} = requestObj;
-  const {canonical, native} = normalizeProductType(type);
+export const requestPurchase: MutationField<'requestPurchase'> = async (
+  args,
+) => {
+  const {request, type} = args;
+  const {canonical, native} = normalizeProductType(type as ProductTypeInput);
   const isInAppPurchase = canonical === 'in-app';
 
   if (Platform.OS === 'ios') {
@@ -441,27 +411,24 @@ export const requestPurchase = (
       withOffer,
     } = normalizedRequest;
 
-    return (async () => {
-      const offer = offerToRecordIOS(withOffer ?? undefined);
-      const purchase = await ExpoIapModule.requestPurchase({
-        sku,
-        andDangerouslyFinishTransactionAutomatically,
-        appAccountToken,
-        quantity,
-        withOffer: offer,
-      });
+    const offer = offerToRecordIOS(withOffer ?? undefined);
+    const purchase = await ExpoIapModule.requestPurchase({
+      sku,
+      andDangerouslyFinishTransactionAutomatically,
+      appAccountToken,
+      quantity,
+      withOffer: offer,
+    });
 
-      return purchase as Purchase;
-    })();
+    return normalizePurchaseId(purchase as Purchase);
   }
 
   if (Platform.OS === 'android') {
     if (isInAppPurchase) {
-      const normalizedRequest: RequestPurchaseAndroidProps | null | undefined =
-        normalizeRequestProps(
-          request as RequestPurchasePropsByPlatforms,
-          'android',
-        );
+      const normalizedRequest = normalizeRequestProps(
+        request as RequestPurchasePropsByPlatforms,
+        'android',
+      ) as RequestPurchaseAndroidProps | null | undefined;
 
       if (!normalizedRequest?.skus?.length) {
         throw new Error(
@@ -476,28 +443,25 @@ export const requestPurchase = (
         isOfferPersonalized,
       } = normalizedRequest;
 
-      return (async () => {
-        return ExpoIapModule.requestPurchase({
-          type: native,
-          skuArr: skus,
-          purchaseToken: undefined,
-          replacementMode: -1,
-          obfuscatedAccountId: obfuscatedAccountIdAndroid,
-          obfuscatedProfileId: obfuscatedProfileIdAndroid,
-          offerTokenArr: [],
-          isOfferPersonalized: isOfferPersonalized ?? false,
-        }) as Promise<Purchase[]>;
-      })();
+      const result = (await ExpoIapModule.requestPurchase({
+        type: native,
+        skuArr: skus,
+        purchaseToken: undefined,
+        replacementMode: -1,
+        obfuscatedAccountId: obfuscatedAccountIdAndroid,
+        obfuscatedProfileId: obfuscatedProfileIdAndroid,
+        offerTokenArr: [],
+        isOfferPersonalized: isOfferPersonalized ?? false,
+      })) as Purchase[];
+
+      return normalizePurchaseList(result);
     }
 
     if (canonical === 'subs') {
-      const normalizedRequest:
-        | RequestSubscriptionAndroidProps
-        | null
-        | undefined = normalizeRequestProps(
+      const normalizedRequest = normalizeRequestProps(
         request as RequestSubscriptionPropsByPlatforms,
         'android',
-      );
+      ) as RequestSubscriptionAndroidProps | null | undefined;
 
       if (!normalizedRequest?.skus?.length) {
         throw new Error(
@@ -519,21 +483,21 @@ export const requestPurchase = (
       const replacementMode = replacementModeAndroid ?? -1;
       const purchaseToken = purchaseTokenAndroid ?? undefined;
 
-      return (async () => {
-        return ExpoIapModule.requestPurchase({
-          type: native,
-          skuArr: skus,
-          purchaseToken,
-          replacementMode,
-          obfuscatedAccountId: obfuscatedAccountIdAndroid,
-          obfuscatedProfileId: obfuscatedProfileIdAndroid,
-          offerTokenArr: normalizedOffers.map(
-            (so: AndroidSubscriptionOfferInput) => so.offerToken,
-          ),
-          subscriptionOffers: normalizedOffers,
-          isOfferPersonalized: isOfferPersonalized ?? false,
-        }) as Promise<Purchase[]>;
-      })();
+      const result = (await ExpoIapModule.requestPurchase({
+        type: native,
+        skuArr: skus,
+        purchaseToken,
+        replacementMode,
+        obfuscatedAccountId: obfuscatedAccountIdAndroid,
+        obfuscatedProfileId: obfuscatedProfileIdAndroid,
+        offerTokenArr: normalizedOffers.map(
+          (offer: AndroidSubscriptionOfferInput) => offer.offerToken,
+        ),
+        subscriptionOffers: normalizedOffers,
+        isOfferPersonalized: isOfferPersonalized ?? false,
+      })) as Purchase[];
+
+      return normalizePurchaseList(result);
     }
 
     throw new Error(
@@ -541,53 +505,60 @@ export const requestPurchase = (
     );
   }
 
-  return Promise.resolve(); // Fallback for unsupported platforms
+  throw new Error('Platform not supported');
 };
 
-export const finishTransaction = ({
+const toPurchaseInput = (
+  purchase: Purchase | PurchaseInput,
+): PurchaseInput => ({
+  id: purchase.id,
+  ids: purchase.ids ?? undefined,
+  isAutoRenewing: purchase.isAutoRenewing,
+  platform: purchase.platform,
+  productId: purchase.productId,
+  purchaseState: purchase.purchaseState,
+  purchaseToken: purchase.purchaseToken ?? null,
+  quantity: purchase.quantity,
+  transactionDate: purchase.transactionDate,
+});
+
+export const finishTransaction: MutationField<'finishTransaction'> = async ({
   purchase,
   isConsumable = false,
-}: {
-  purchase: Purchase;
-  isConsumable?: boolean;
-}): Promise<VoidResult | boolean> => {
-  return (
-    Platform.select({
-      ios: async () => {
-        const transactionId = purchase.id;
-        if (!transactionId) {
-          return Promise.reject(
-            new Error('purchase.id required to finish iOS transaction'),
-          );
-        }
-        await ExpoIapModule.finishTransaction(transactionId);
-        return Promise.resolve(true);
-      },
-      android: async () => {
-        const androidPurchase = purchase as PurchaseAndroid;
+}) => {
+  const normalizedPurchase = toPurchaseInput(purchase);
 
-        // Use purchaseToken if available, fallback to purchaseTokenAndroid for backward compatibility
-        const token = androidPurchase.purchaseToken;
+  if (Platform.OS === 'ios') {
+    const transactionId = normalizedPurchase.id;
+    if (!transactionId) {
+      throw new Error('purchase.id required to finish iOS transaction');
+    }
+    await ExpoIapModule.finishTransaction(transactionId);
+    return;
+  }
 
-        if (!token) {
-          return Promise.reject(
-            new PurchaseError({
-              message: 'Purchase token is required to finish transaction',
-              code: ErrorCode.DeveloperError,
-              productId: androidPurchase.productId,
-              platform: 'android',
-            }),
-          );
-        }
+  if (Platform.OS === 'android') {
+    const token = normalizedPurchase.purchaseToken ?? undefined;
 
-        if (isConsumable) {
-          return ExpoIapModule.consumePurchaseAndroid(token);
-        }
+    if (!token) {
+      throw new PurchaseError({
+        message: 'Purchase token is required to finish transaction',
+        code: ErrorCode.DeveloperError,
+        productId: normalizedPurchase.productId,
+        platform: 'android',
+      });
+    }
 
-        return ExpoIapModule.acknowledgePurchaseAndroid(token);
-      },
-    }) || (() => Promise.reject(new Error('Unsupported Platform')))
-  )();
+    if (isConsumable) {
+      await ExpoIapModule.consumePurchaseAndroid(token);
+      return;
+    }
+
+    await ExpoIapModule.acknowledgePurchaseAndroid(token);
+    return;
+  }
+
+  throw new Error('Unsupported Platform');
 };
 
 /**
@@ -638,18 +609,16 @@ export const getStorefront = (): Promise<string> => {
  * - iOS: Send receipt data to Apple's verification endpoint from your server
  * - Android: Use Google Play Developer API with service account credentials
  */
-export const validateReceipt = async (
-  sku: string,
-  androidOptions?: {
-    packageName: string;
-    productToken: string;
-    accessToken: string;
-    isSub?: boolean;
-  },
-): Promise<ReceiptValidationResult> => {
+export const validateReceipt: MutationField<'validateReceipt'> = async (
+  options,
+) => {
+  const {sku, androidOptions} = options as MutationValidateReceiptArgs;
+
   if (Platform.OS === 'ios') {
-    return await validateReceiptIOS(sku);
-  } else if (Platform.OS === 'android') {
+    return validateReceiptIOS({sku});
+  }
+
+  if (Platform.OS === 'android') {
     if (
       !androidOptions ||
       !androidOptions.packageName ||
@@ -660,16 +629,16 @@ export const validateReceipt = async (
         'Android validation requires packageName, productToken, and accessToken',
       );
     }
-    return await validateReceiptAndroid({
+    return validateReceiptAndroid({
       packageName: androidOptions.packageName,
       productId: sku,
       productToken: androidOptions.productToken,
       accessToken: androidOptions.accessToken,
-      isSub: androidOptions.isSub,
+      isSub: androidOptions.isSub ?? undefined,
     });
-  } else {
-    throw new Error('Platform not supported');
   }
+
+  throw new Error('Platform not supported');
 };
 
 /**
@@ -690,22 +659,20 @@ export const validateReceipt = async (
  *   packageNameAndroid: 'com.example.app'
  * });
  */
-export const deepLinkToSubscriptions = (options: {
-  skuAndroid?: string;
-  packageNameAndroid?: string;
-}): Promise<void> => {
+export const deepLinkToSubscriptions: MutationField<
+  'deepLinkToSubscriptions'
+> = async (options) => {
   if (Platform.OS === 'ios') {
-    return deepLinkToSubscriptionsIOS();
+    await deepLinkToSubscriptionsIOS();
+    return;
   }
 
   if (Platform.OS === 'android') {
-    return deepLinkToSubscriptionsAndroid({
-      sku: options?.skuAndroid,
-      packageName: options?.packageNameAndroid,
-    });
+    await deepLinkToSubscriptionsAndroid((options as DeepLinkOptions) ?? null);
+    return;
   }
 
-  return Promise.reject(new Error(`Unsupported platform: ${Platform.OS}`));
+  throw new Error(`Unsupported platform: ${Platform.OS}`);
 };
 
 export * from './useIAP';

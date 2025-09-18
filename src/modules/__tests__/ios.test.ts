@@ -39,17 +39,17 @@ describe('iOS Module Functions', () => {
 
   describe('isEligibleForIntroOfferIOS', () => {
     it('should call native module with correct groupId parameter', async () => {
-      const mockGroupId = 'test-subscription-group';
+      const mockProductId = 'com.example.monthly';
       const mockResult = true;
 
       (ExpoIapModule.isEligibleForIntroOfferIOS as jest.Mock).mockResolvedValue(
         mockResult,
       );
 
-      const result = await isEligibleForIntroOfferIOS(mockGroupId);
+      const result = await isEligibleForIntroOfferIOS(mockProductId);
 
       expect(ExpoIapModule.isEligibleForIntroOfferIOS).toHaveBeenCalledWith(
-        mockGroupId,
+        mockProductId,
       );
       expect(ExpoIapModule.isEligibleForIntroOfferIOS).toHaveBeenCalledTimes(1);
       expect(result).toBe(mockResult);
@@ -63,16 +63,16 @@ describe('iOS Module Functions', () => {
         'com.example.subscriptions.monthly',
       ];
 
-      for (const groupId of testCases) {
+      for (const groupID of testCases) {
         (
           ExpoIapModule.isEligibleForIntroOfferIOS as jest.Mock
         ).mockResolvedValue(true);
 
-        await isEligibleForIntroOfferIOS(groupId);
+        await isEligibleForIntroOfferIOS(groupID);
 
         expect(
           ExpoIapModule.isEligibleForIntroOfferIOS,
-        ).toHaveBeenLastCalledWith(groupId);
+        ).toHaveBeenLastCalledWith(groupID);
       }
     });
 
@@ -90,12 +90,12 @@ describe('iOS Module Functions', () => {
 
   describe('syncIOS', () => {
     it('should call native sync function', async () => {
-      (ExpoIapModule.syncIOS as jest.Mock).mockResolvedValue(null);
+      (ExpoIapModule.syncIOS as jest.Mock).mockResolvedValue(true);
 
       const result = await syncIOS();
 
       expect(ExpoIapModule.syncIOS).toHaveBeenCalledTimes(1);
-      expect(result).toBeNull();
+      expect(result).toBe(true);
     });
   });
 
@@ -117,7 +117,6 @@ describe('iOS Module Functions', () => {
       );
 
       const result = await subscriptionStatusIOS(mockSku);
-
       expect(ExpoIapModule.subscriptionStatusIOS).toHaveBeenCalledWith(mockSku);
       expect(result).toEqual(mockStatus);
     });
@@ -180,12 +179,13 @@ describe('iOS Module Functions', () => {
         mockValidationResult,
       );
 
-      const result = await validateReceiptIOS(mockSku);
+      const result = (await validateReceiptIOS({sku: mockSku})) as any;
 
       expect(ExpoIapModule.validateReceiptIOS).toHaveBeenCalledWith(mockSku);
       expect(result.isValid).toBe(true);
       expect(result.receiptData).toBeDefined();
       expect(result.jwsRepresentation).toBeDefined();
+      expect(result.latestTransaction?.id).toBe('transaction-123');
     });
   });
 
@@ -231,16 +231,21 @@ describe('iOS Module Functions', () => {
   describe('Other iOS Functions', () => {
     it('should call currentEntitlementIOS with SKU', async () => {
       const mockSku = 'com.example.entitlement';
-      const mockEntitlement = {id: mockSku, isActive: true};
+      const mockEntitlement = {
+        id: 'legacy-id',
+        productId: mockSku,
+        transactionId: 'txn-1',
+      } as any;
 
       (ExpoIapModule.currentEntitlementIOS as jest.Mock).mockResolvedValue(
         mockEntitlement,
       );
 
-      const result = await currentEntitlementIOS(mockSku);
+      const result = (await currentEntitlementIOS(mockSku)) as any;
 
       expect(ExpoIapModule.currentEntitlementIOS).toHaveBeenCalledWith(mockSku);
-      expect(result).toEqual(mockEntitlement);
+      expect(result?.id).toBe('txn-1');
+      expect(result?.transactionId).toBe('txn-1');
     });
 
     it('should call latestTransactionIOS with SKU', async () => {
@@ -251,10 +256,11 @@ describe('iOS Module Functions', () => {
         mockTransaction,
       );
 
-      const result = await latestTransactionIOS(mockSku);
+      const result = (await latestTransactionIOS(mockSku)) as any;
 
       expect(ExpoIapModule.latestTransactionIOS).toHaveBeenCalledWith(mockSku);
-      expect(result).toEqual(mockTransaction);
+      expect(result?.id).toBe('123');
+      expect(result?.transactionId).toBe('123');
     });
 
     it('should call beginRefundRequestIOS with SKU', async () => {
@@ -272,16 +278,19 @@ describe('iOS Module Functions', () => {
     });
 
     it('should call showManageSubscriptionsIOS', async () => {
-      const mockPurchases: any[] = [];
+      const mockPurchases: any[] = [
+        {id: 'legacy', transactionId: 'txn-77', platform: 'ios'},
+      ];
       (ExpoIapModule.showManageSubscriptionsIOS as jest.Mock).mockResolvedValue(
         mockPurchases,
       );
 
-      const result = await showManageSubscriptionsIOS();
+      const result = (await showManageSubscriptionsIOS()) as any[];
 
       expect(ExpoIapModule.showManageSubscriptionsIOS).toHaveBeenCalledTimes(1);
       expect(Array.isArray(result)).toBe(true);
-      expect(result).toEqual(mockPurchases);
+      expect(result[0]?.id).toBe('txn-77');
+      expect(result[0]?.transactionId).toBe('txn-77');
     });
 
     it('should call getReceiptIOS', async () => {
@@ -357,11 +366,12 @@ describe('iOS Module Functions', () => {
         ExpoIapModule.requestPurchaseOnPromotedProductIOS as jest.Mock
       ).mockResolvedValue(undefined);
 
-      await requestPurchaseOnPromotedProductIOS();
+      const result = await requestPurchaseOnPromotedProductIOS();
 
       expect(
         ExpoIapModule.requestPurchaseOnPromotedProductIOS,
       ).toHaveBeenCalledTimes(1);
+      expect(result).toBe(true);
     });
   });
 });

@@ -41,8 +41,8 @@ describe('Android Module Functions', () => {
   describe('deepLinkToSubscriptionsAndroid', () => {
     it('opens correct Play Store URL', async () => {
       await deepLinkToSubscriptionsAndroid({
-        sku: 'monthly_premium',
-        packageName: 'com.example.app',
+        skuAndroid: 'monthly_premium',
+        packageNameAndroid: 'com.example.app',
       });
       expect(Linking.openURL).toHaveBeenCalledWith(
         'https://play.google.com/store/account/subscriptions?package=com.example.app&sku=monthly_premium',
@@ -51,7 +51,10 @@ describe('Android Module Functions', () => {
 
     it('throws when packageName missing', async () => {
       await expect(
-        deepLinkToSubscriptionsAndroid({sku: 'id', packageName: '' as any}),
+        deepLinkToSubscriptionsAndroid({
+          skuAndroid: 'id',
+          packageNameAndroid: '' as any,
+        }),
       ).rejects.toThrow('packageName is required');
     });
   });
@@ -106,11 +109,11 @@ describe('Android Module Functions', () => {
       (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockResolvedValue(
         {responseCode: 0},
       );
-      const res = await acknowledgePurchaseAndroid({token: 'tkn'});
+      const res = await acknowledgePurchaseAndroid('tkn');
       expect(ExpoIapModule.acknowledgePurchaseAndroid).toHaveBeenCalledWith(
         'tkn',
       );
-      expect(res).toEqual({success: true});
+      expect(res).toBe(true);
     });
   });
 });

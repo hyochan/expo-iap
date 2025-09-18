@@ -19,7 +19,6 @@ import {
   hasActiveSubscriptions,
   type ActiveSubscription,
   type ProductTypeInput,
-  type PurchaseRequestInput,
   restorePurchases,
 } from './index';
 import {
@@ -28,14 +27,18 @@ import {
 } from './modules/ios';
 
 // Types
-import {
+import type {
   Product,
-  Purchase,
   ProductSubscription,
-  ErrorCode,
-  VoidResult,
+  ProductQueryType,
+  ProductRequest,
+  Purchase,
+  MutationRequestPurchaseArgs,
+  PurchaseInput,
+  ReceiptValidationProps,
   ReceiptValidationResult,
 } from './types';
+import {ErrorCode} from './types';
 import {PurchaseError} from './purchase-error';
 import {
   getUserFriendlyErrorMessage,
@@ -58,7 +61,7 @@ type UseIap = {
   }: {
     purchase: Purchase;
     isConsumable?: boolean;
-  }) => Promise<VoidResult | boolean>;
+  }) => Promise<void>;
   getAvailablePurchases: () => Promise<void>;
   fetchProducts: (params: {
     skus: string[];
@@ -66,20 +69,14 @@ type UseIap = {
   }) => Promise<void>;
 
   requestPurchase: (
-    params: PurchaseRequestInput,
+    params: MutationRequestPurchaseArgs,
   ) => ReturnType<typeof requestPurchaseInternal>;
   validateReceipt: (
-    sku: string,
-    androidOptions?: {
-      packageName: string;
-      productToken: string;
-      accessToken: string;
-      isSub?: boolean;
-    },
+    props: ReceiptValidationProps,
   ) => Promise<ReceiptValidationResult>;
   restorePurchases: () => Promise<void>;
   getPromotedProductIOS: () => Promise<Product | null>;
-  requestPurchaseOnPromotedProductIOS: () => Promise<void>;
+  requestPurchaseOnPromotedProductIOS: () => Promise<boolean>;
   getActiveSubscriptions: (subscriptionIds?: string[]) => Promise<void>;
   hasActiveSubscriptions: (subscriptionIds?: string[]) => Promise<boolean>;
 };
@@ -154,14 +151,40 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     subscriptionsRefState.current = subscriptions;
   }, [subscriptions]);
 
+  const normalizeProductQueryType = useCallback(
+    (type?: ProductTypeInput): ProductQueryType => {
+      if (!type || type === 'inapp' || type === 'in-app') {
+        return 'in-app';
+      }
+      return type;
+    },
+    [],
+  );
+
+  const toPurchaseInput = useCallback(
+    (purchase: Purchase): PurchaseInput => ({
+      id: purchase.id,
+      ids: purchase.ids ?? undefined,
+      isAutoRenewing: purchase.isAutoRenewing,
+      platform: purchase.platform,
+      productId: purchase.productId,
+      purchaseState: purchase.purchaseState,
+      purchaseToken: purchase.purchaseToken ?? null,
+      quantity: purchase.quantity,
+      transactionDate: purchase.transactionDate,
+    }),
+    [],
+  );
+
   const getSubscriptionsInternal = useCallback(
     async (skus: string[]): Promise<void> => {
       try {
         const result = await fetchProducts({skus, type: 'subs'});
+        const subscriptionsResult = (result ?? []) as ProductSubscription[];
         setSubscriptions((prevSubscriptions) =>
           mergeWithDuplicateCheck(
             prevSubscriptions,
-            result as ProductSubscription[],
+            subscriptionsResult,
             (subscription) => subscription.id,
           ),
         );
@@ -178,22 +201,50 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       type?: ProductTypeInput;
     }): Promise<void> => {
       try {
-        const result = await fetchProducts(params);
+        const queryType = normalizeProductQueryType(params.type);
+        const request: ProductRequest = {skus: params.skus, type: queryType};
+        const result = await fetchProducts(request);
+        const items = (result ?? []) as (Product | ProductSubscription)[];
 
-        if (params.type === 'subs') {
+        if (queryType === 'subs') {
+          const subscriptionsResult = items as ProductSubscription[];
           setSubscriptions((prevSubscriptions) =>
             mergeWithDuplicateCheck(
               prevSubscriptions,
-              result as ProductSubscription[],
+              subscriptionsResult,
               (subscription) => subscription.id,
             ),
           );
-        } else {
+        } else if (queryType === 'in-app') {
+          const productsResult = items as Product[];
           setProducts((prevProducts) =>
             mergeWithDuplicateCheck(
               prevProducts,
-              result as Product[],
+              productsResult,
               (product) => product.id,
+            ),
+          );
+        } else {
+          const productItems = items.filter(
+            (item) => item.type === 'in-app',
+          ) as Product[];
+          const subscriptionItems = items.filter(
+            (item) => item.type === 'subs',
+          ) as ProductSubscription[];
+
+          setProducts((prevProducts) =>
+            mergeWithDuplicateCheck(
+              prevProducts,
+              productItems,
+              (product) => product.id,
+            ),
+          );
+
+          setSubscriptions((prevSubscriptions) =>
+            mergeWithDuplicateCheck(
+              prevSubscriptions,
+              subscriptionItems,
+              (subscription) => subscription.id,
             ),
           );
         }
@@ -201,7 +252,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         console.error('Error fetching products:', error);
       }
     },
-    [mergeWithDuplicateCheck],
+    [mergeWithDuplicateCheck, normalizeProductQueryType],
   );
 
   const getAvailablePurchasesInternal = useCallback(async (): Promise<void> => {
@@ -242,23 +293,23 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   );
 
   const finishTransaction = useCallback(
-    ({
+    async ({
       purchase,
       isConsumable,
     }: {
       purchase: Purchase;
       isConsumable?: boolean;
-    }): Promise<VoidResult | boolean> => {
-      return finishTransactionInternal({
-        purchase,
+    }): Promise<void> => {
+      await finishTransactionInternal({
+        purchase: toPurchaseInput(purchase),
         isConsumable,
       });
     },
-    [],
+    [toPurchaseInput],
   );
 
   const requestPurchaseWithReset = useCallback(
-    (requestObj: PurchaseRequestInput) => {
+    (requestObj: MutationRequestPurchaseArgs) => {
       return requestPurchaseInternal(requestObj);
     },
     [],
@@ -283,7 +334,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   // Android: fetch available purchases directly.
   const restorePurchasesInternal = useCallback(async (): Promise<void> => {
     try {
-      const purchases = await restorePurchases({
+      await restorePurchases();
+      const purchases = await getAvailablePurchases({
         alsoPublishToEventListenerIOS: false,
         onlyIncludeActiveItemsIOS: true,
       });
@@ -293,20 +345,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }
   }, []);
 
-  const validateReceipt = useCallback(
-    async (
-      sku: string,
-      androidOptions?: {
-        packageName: string;
-        productToken: string;
-        accessToken: string;
-        isSub?: boolean;
-      },
-    ) => {
-      return validateReceiptInternal(sku, androidOptions);
-    },
-    [],
-  );
+  const validateReceipt = useCallback(async (props: ReceiptValidationProps) => {
+    return validateReceiptInternal(props);
+  }, []);
 
   const initIapWithSubscriptions = useCallback(async (): Promise<void> => {
     // CRITICAL: Register listeners BEFORE initConnection to avoid race condition
