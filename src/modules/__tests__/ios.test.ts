@@ -132,7 +132,9 @@ describe('iOS Module Functions', () => {
 
     it('should return empty array when native module returns null', async () => {
       const mockSku = 'com.example.subscription';
-      (ExpoIapModule.subscriptionStatusIOS as jest.Mock).mockResolvedValue(null);
+      (ExpoIapModule.subscriptionStatusIOS as jest.Mock).mockResolvedValue(
+        null,
+      );
 
       const result = await subscriptionStatusIOS(mockSku);
 
@@ -328,7 +330,9 @@ describe('iOS Module Functions', () => {
 
     it('currentEntitlementIOS returns null when native returns null', async () => {
       const mockSku = 'com.example.entitlement';
-      (ExpoIapModule.currentEntitlementIOS as jest.Mock).mockResolvedValue(null);
+      (ExpoIapModule.currentEntitlementIOS as jest.Mock).mockResolvedValue(
+        null,
+      );
 
       const result = await currentEntitlementIOS(mockSku);
 
@@ -518,7 +522,9 @@ describe('iOS Module Functions', () => {
     });
 
     it('getPromotedProductIOS returns null when native returns null', async () => {
-      (ExpoIapModule.getPromotedProductIOS as jest.Mock).mockResolvedValue(null);
+      (ExpoIapModule.getPromotedProductIOS as jest.Mock).mockResolvedValue(
+        null,
+      );
 
       const result = await getPromotedProductIOS();
 

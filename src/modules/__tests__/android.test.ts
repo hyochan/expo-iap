@@ -152,17 +152,21 @@ describe('Android Module Functions', () => {
     });
 
     it('returns native success boolean when provided', async () => {
-      (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockResolvedValue({
-        success: false,
-      });
+      (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockResolvedValue(
+        {
+          success: false,
+        },
+      );
       const res = await acknowledgePurchaseAndroid('token-value');
       expect(res).toBe(false);
     });
 
     it('returns success when responseCode provided', async () => {
-      (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockResolvedValue({
-        responseCode: 42,
-      });
+      (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockResolvedValue(
+        {
+          responseCode: 42,
+        },
+      );
       const res = await acknowledgePurchaseAndroid('token-value');
       expect(res).toBe(false);
     });
