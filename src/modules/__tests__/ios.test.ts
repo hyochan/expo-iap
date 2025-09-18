@@ -39,7 +39,7 @@ describe('iOS Module Functions', () => {
 
   describe('isEligibleForIntroOfferIOS', () => {
     it('should call native module with correct groupId parameter', async () => {
-      const mockProductId = 'com.example.monthly';
+      const mockGroupId = 'com.example.monthly';
       const mockResult = true;
 
       (ExpoIapModule.isEligibleForIntroOfferIOS as jest.Mock).mockResolvedValue(
