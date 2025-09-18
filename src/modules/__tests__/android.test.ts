@@ -16,6 +16,7 @@ import {
   deepLinkToSubscriptionsAndroid,
   validateReceiptAndroid,
   acknowledgePurchaseAndroid,
+  openRedeemOfferCodeAndroid,
 } from '../android';
 /* eslint-enable import/first */
 
@@ -56,6 +57,24 @@ describe('Android Module Functions', () => {
           packageNameAndroid: '' as any,
         }),
       ).rejects.toThrow('packageName is required');
+    });
+
+    it('delegates to native module when available', async () => {
+      const original = (ExpoIapModule as any).deepLinkToSubscriptionsAndroid;
+      const nativeFn = jest.fn().mockResolvedValue(undefined);
+      (ExpoIapModule as any).deepLinkToSubscriptionsAndroid = nativeFn;
+
+      await deepLinkToSubscriptionsAndroid({
+        skuAndroid: 'monthly_premium',
+        packageNameAndroid: 'com.example.app',
+      });
+
+      expect(nativeFn).toHaveBeenCalledWith({
+        skuAndroid: 'monthly_premium',
+        packageNameAndroid: 'com.example.app',
+      });
+
+      (ExpoIapModule as any).deepLinkToSubscriptionsAndroid = original;
     });
   });
 
@@ -114,6 +133,47 @@ describe('Android Module Functions', () => {
         'tkn',
       );
       expect(res).toBe(true);
+    });
+
+    it('returns direct boolean when native resolves boolean', async () => {
+      (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockResolvedValue(
+        false,
+      );
+      const res = await acknowledgePurchaseAndroid('token');
+      expect(res).toBe(false);
+    });
+
+    it('defaults to true when native returns undefined', async () => {
+      (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+      const res = await acknowledgePurchaseAndroid('token');
+      expect(res).toBe(true);
+    });
+
+    it('returns native success boolean when provided', async () => {
+      (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockResolvedValue({
+        success: false,
+      });
+      const res = await acknowledgePurchaseAndroid('token-value');
+      expect(res).toBe(false);
+    });
+
+    it('returns success when responseCode provided', async () => {
+      (ExpoIapModule.acknowledgePurchaseAndroid as jest.Mock).mockResolvedValue({
+        responseCode: 42,
+      });
+      const res = await acknowledgePurchaseAndroid('token-value');
+      expect(res).toBe(false);
+    });
+  });
+
+  describe('openRedeemOfferCodeAndroid', () => {
+    it('opens redeem URL', async () => {
+      await openRedeemOfferCodeAndroid();
+      expect(Linking.openURL).toHaveBeenCalledWith(
+        'https://play.google.com/redeem?code=',
+      );
     });
   });
 });

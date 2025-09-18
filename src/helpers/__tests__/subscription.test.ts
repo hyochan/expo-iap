@@ -21,6 +21,7 @@ const mockPlatform = (os: 'ios' | 'android') => {
 describe('Subscription Helper Functions', () => {
   const currentTime = Date.now();
   const oneDayMs = 24 * 60 * 60 * 1000;
+  const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
   const createPurchase = (overrides: Partial<Purchase>): Purchase =>
     ({
@@ -44,7 +45,12 @@ describe('Subscription Helper Functions', () => {
       configurable: true,
       get: () => originalPlatformOS,
     });
-    jest.restoreAllMocks();
+    consoleErrorSpy.mockClear();
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   describe('getActiveSubscriptions', () => {

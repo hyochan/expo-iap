@@ -29,6 +29,8 @@ import {
   requestPurchaseOnPromotedProductIOS,
   deepLinkToSubscriptionsIOS,
   isProductIOS,
+  getPendingTransactionsIOS,
+  clearTransactionIOS,
 } from '../ios';
 /* eslint-enable import/first */
 
@@ -86,6 +88,13 @@ describe('iOS Module Functions', () => {
         'Native module error',
       );
     });
+
+    it('should throw when groupId missing', async () => {
+      // @ts-expect-error force undefined to exercise runtime guard
+      await expect(isEligibleForIntroOfferIOS(undefined)).rejects.toThrow(
+        /requires a groupID/,
+      );
+    });
   });
 
   describe('syncIOS', () => {
@@ -119,6 +128,22 @@ describe('iOS Module Functions', () => {
       const result = await subscriptionStatusIOS(mockSku);
       expect(ExpoIapModule.subscriptionStatusIOS).toHaveBeenCalledWith(mockSku);
       expect(result).toEqual(mockStatus);
+    });
+
+    it('should return empty array when native module returns null', async () => {
+      const mockSku = 'com.example.subscription';
+      (ExpoIapModule.subscriptionStatusIOS as jest.Mock).mockResolvedValue(null);
+
+      const result = await subscriptionStatusIOS(mockSku);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should throw when SKU missing', async () => {
+      // @ts-expect-error runtime guard
+      await expect(subscriptionStatusIOS(undefined)).rejects.toThrow(
+        /requires a SKU/,
+      );
     });
   });
 
@@ -187,6 +212,52 @@ describe('iOS Module Functions', () => {
       expect(result.jwsRepresentation).toBeDefined();
       expect(result.latestTransaction?.id).toBe('transaction-123');
     });
+
+    it('should throw when SKU missing', async () => {
+      // @ts-expect-error runtime guard
+      await expect(validateReceiptIOS(undefined)).rejects.toThrow(
+        /requires a SKU/,
+      );
+    });
+
+    it('returns original result when already normalized', async () => {
+      const mockResult: any = {
+        isValid: true,
+        receiptData: 'data',
+        jwsRepresentation: 'jws',
+        latestTransaction: {
+          id: 'transaction-123',
+          transactionId: 'transaction-123',
+          platform: 'ios',
+        },
+      };
+
+      (ExpoIapModule.validateReceiptIOS as jest.Mock).mockResolvedValue(
+        mockResult,
+      );
+
+      const result = await validateReceiptIOS({sku: 'product.id'});
+
+      expect(result).toBe(mockResult);
+    });
+
+    it('allows string SKU argument for backward compatibility', async () => {
+      (ExpoIapModule.validateReceiptIOS as jest.Mock).mockResolvedValue({
+        isValid: true,
+        receiptData: 'data',
+        jwsRepresentation: 'jws',
+        latestTransaction: undefined,
+      });
+
+      const result = await validateReceiptIOS('string.sku' as any);
+
+      expect(result).toEqual({
+        isValid: true,
+        receiptData: 'data',
+        jwsRepresentation: 'jws',
+        latestTransaction: undefined,
+      });
+    });
   });
 
   describe('Type Guards', () => {
@@ -248,6 +319,22 @@ describe('iOS Module Functions', () => {
       expect(result?.transactionId).toBe('txn-1');
     });
 
+    it('currentEntitlementIOS throws when SKU missing', async () => {
+      // @ts-expect-error runtime guard
+      await expect(currentEntitlementIOS(undefined)).rejects.toThrow(
+        /requires a SKU/,
+      );
+    });
+
+    it('currentEntitlementIOS returns null when native returns null', async () => {
+      const mockSku = 'com.example.entitlement';
+      (ExpoIapModule.currentEntitlementIOS as jest.Mock).mockResolvedValue(null);
+
+      const result = await currentEntitlementIOS(mockSku);
+
+      expect(result).toBeNull();
+    });
+
     it('should call latestTransactionIOS with SKU', async () => {
       const mockSku = 'com.example.product';
       const mockTransaction = {id: mockSku, transactionId: '123'};
@@ -261,6 +348,25 @@ describe('iOS Module Functions', () => {
       expect(ExpoIapModule.latestTransactionIOS).toHaveBeenCalledWith(mockSku);
       expect(result?.id).toBe('123');
       expect(result?.transactionId).toBe('123');
+    });
+
+    it('latestTransactionIOS throws when SKU missing', async () => {
+      // @ts-expect-error runtime guard
+      await expect(latestTransactionIOS(undefined)).rejects.toThrow(
+        /requires a SKU/,
+      );
+    });
+
+    it('latestTransactionIOS returns null when native module returns undefined', async () => {
+      const mockSku = 'com.example.product';
+
+      (ExpoIapModule.latestTransactionIOS as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await latestTransactionIOS(mockSku);
+
+      expect(result).toBeNull();
     });
 
     it('should call beginRefundRequestIOS with SKU', async () => {
@@ -277,6 +383,24 @@ describe('iOS Module Functions', () => {
       expect(result).toBe(mockStatus);
     });
 
+    it('beginRefundRequestIOS throws when SKU missing', async () => {
+      // @ts-expect-error runtime guard
+      await expect(beginRefundRequestIOS(undefined)).rejects.toThrow(
+        /requires a SKU/,
+      );
+    });
+
+    it('beginRefundRequestIOS returns null when native module returns undefined', async () => {
+      const mockSku = 'com.example.product';
+      (ExpoIapModule.beginRefundRequestIOS as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await beginRefundRequestIOS(mockSku);
+
+      expect(result).toBeNull();
+    });
+
     it('should call showManageSubscriptionsIOS', async () => {
       const mockPurchases: any[] = [
         {id: 'legacy', transactionId: 'txn-77', platform: 'ios'},
@@ -291,6 +415,16 @@ describe('iOS Module Functions', () => {
       expect(Array.isArray(result)).toBe(true);
       expect(result[0]?.id).toBe('txn-77');
       expect(result[0]?.transactionId).toBe('txn-77');
+    });
+
+    it('showManageSubscriptionsIOS returns empty array when native returns null', async () => {
+      (ExpoIapModule.showManageSubscriptionsIOS as jest.Mock).mockResolvedValue(
+        null,
+      );
+
+      const result = await showManageSubscriptionsIOS();
+
+      expect(result).toEqual([]);
     });
 
     it('should call getReceiptIOS', async () => {
@@ -321,6 +455,13 @@ describe('iOS Module Functions', () => {
       expect(result).toBe(true);
     });
 
+    it('isTransactionVerifiedIOS throws when SKU missing', async () => {
+      // @ts-expect-error runtime guard
+      await expect(isTransactionVerifiedIOS(undefined)).rejects.toThrow(
+        /requires a SKU/,
+      );
+    });
+
     it('should call getTransactionJwsIOS with SKU', async () => {
       const mockSku = 'com.example.product';
       const mockJws = 'jws-token-string';
@@ -333,6 +474,21 @@ describe('iOS Module Functions', () => {
 
       expect(ExpoIapModule.getTransactionJwsIOS).toHaveBeenCalledWith(mockSku);
       expect(result).toBe(mockJws);
+    });
+
+    it('getTransactionJwsIOS returns empty string when native returns null', async () => {
+      (ExpoIapModule.getTransactionJwsIOS as jest.Mock).mockResolvedValue(null);
+
+      const result = await getTransactionJwsIOS('com.example.product');
+
+      expect(result).toBe('');
+    });
+
+    it('getTransactionJwsIOS throws when SKU missing', async () => {
+      // @ts-expect-error runtime guard
+      await expect(getTransactionJwsIOS(undefined)).rejects.toThrow(
+        /requires a SKU/,
+      );
     });
 
     it('should call presentCodeRedemptionSheetIOS', async () => {
@@ -361,6 +517,14 @@ describe('iOS Module Functions', () => {
       expect(result).toEqual(mockProduct);
     });
 
+    it('getPromotedProductIOS returns null when native returns null', async () => {
+      (ExpoIapModule.getPromotedProductIOS as jest.Mock).mockResolvedValue(null);
+
+      const result = await getPromotedProductIOS();
+
+      expect(result).toBeNull();
+    });
+
     it('should call requestPurchaseOnPromotedProductIOS', async () => {
       (
         ExpoIapModule.requestPurchaseOnPromotedProductIOS as jest.Mock
@@ -372,6 +536,46 @@ describe('iOS Module Functions', () => {
         ExpoIapModule.requestPurchaseOnPromotedProductIOS,
       ).toHaveBeenCalledTimes(1);
       expect(result).toBe(true);
+    });
+
+    it('normalizes pending transactions list', async () => {
+      (ExpoIapModule.getPendingTransactionsIOS as jest.Mock).mockResolvedValue([
+        {id: 'legacy-id', transactionId: 'txn-pending', platform: 'ios'},
+      ]);
+
+      const result = await getPendingTransactionsIOS();
+
+      expect(ExpoIapModule.getPendingTransactionsIOS).toHaveBeenCalledTimes(1);
+      expect(result[0].id).toBe('txn-pending');
+    });
+
+    it('clears iOS transactions', async () => {
+      (ExpoIapModule.clearTransactionIOS as jest.Mock).mockResolvedValue(true);
+
+      const result = await clearTransactionIOS();
+
+      expect(ExpoIapModule.clearTransactionIOS).toHaveBeenCalledTimes(1);
+      expect(result).toBe(true);
+    });
+
+    it('getPendingTransactionsIOS returns empty list when native returns null', async () => {
+      (ExpoIapModule.getPendingTransactionsIOS as jest.Mock).mockResolvedValue(
+        null,
+      );
+
+      const result = await getPendingTransactionsIOS();
+
+      expect(result).toEqual([]);
+    });
+
+    it('clearTransactionIOS returns false when native resolves undefined', async () => {
+      (ExpoIapModule.clearTransactionIOS as jest.Mock).mockResolvedValue(
+        undefined,
+      );
+
+      const result = await clearTransactionIOS();
+
+      expect(result).toBe(false);
     });
   });
 });

@@ -34,6 +34,16 @@ import * as androidMod from '../modules/android';
 import {Platform} from 'react-native';
 /* eslint-enable import/first */
 
+const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+afterEach(() => {
+  consoleLogSpy.mockClear();
+});
+
+afterAll(() => {
+  consoleLogSpy.mockRestore();
+});
+
 describe('Public API (index.ts)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -146,6 +156,38 @@ describe('Public API (index.ts)', () => {
         /Unsupported platform/,
       );
     });
+
+    it('warns when using legacy inapp type alias', async () => {
+      (Platform as any).OS = 'ios';
+      (Platform as any).select = (obj: any) => obj.ios;
+      (ExpoIapModule.fetchProducts as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue([{platform: 'ios', id: 'legacy'}]);
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await fetchProducts({skus: ['legacy'], type: 'inapp' as any});
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        "expo-iap: 'inapp' product type is deprecated and will be removed in v3.1.0. Use 'in-app' instead.",
+      );
+      warnSpy.mockRestore();
+    });
+
+    it('returns results unchanged when querying all product types', async () => {
+      (Platform as any).OS = 'ios';
+      (Platform as any).select = (obj: any) => obj.ios;
+      (ExpoIapModule.fetchProducts as jest.Mock) = jest.fn().mockResolvedValue([
+        {platform: 'ios', id: 'a'},
+        {platform: 'ios', id: 'b'},
+      ]);
+
+      const res = await fetchProducts({skus: ['a', 'b'], type: 'all'});
+
+      expect(res).toEqual([
+        {platform: 'ios', id: 'a'},
+        {platform: 'ios', id: 'b'},
+      ]);
+    });
   });
 
   describe('requestPurchase', () => {
@@ -237,6 +279,26 @@ describe('Public API (index.ts)', () => {
           type: 'other' as any,
         }),
       ).rejects.toThrow(/Unsupported product type/);
+    });
+
+    it('Android rejects purchase requests for all product types', async () => {
+      (Platform as any).OS = 'android';
+      await expect(
+        requestPurchase({
+          request: {android: {skus: ['x']}} as any,
+          type: 'all' as any,
+        }),
+      ).rejects.toThrow(/valid request object/);
+    });
+
+    it('Android subscription requests require skus array', async () => {
+      (Platform as any).OS = 'android';
+      await expect(
+        requestPurchase({
+          request: {android: {}} as any,
+          type: 'subs',
+        }),
+      ).rejects.toThrow(/The `skus` property is required/);
     });
 
     it('iOS maps withOffer through offerToRecordIOS', async () => {
@@ -459,6 +521,16 @@ describe('Public API (index.ts)', () => {
       warnSpy.mockRestore();
     });
 
+    it('getStorefront uses iOS helper when running on iOS', async () => {
+      (Platform as any).OS = 'ios';
+      (ExpoIapModule.getStorefrontIOS as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue('FR');
+      const res = await getStorefront();
+      expect(ExpoIapModule.getStorefrontIOS).toHaveBeenCalledTimes(1);
+      expect(res).toBe('FR');
+    });
+
     it('getStorefront calls platform storefront implementation', async () => {
       (Platform as any).OS = 'ios';
       (ExpoIapModule.getStorefrontIOS as jest.Mock) = jest
@@ -473,6 +545,14 @@ describe('Public API (index.ts)', () => {
         .mockResolvedValue('KR');
       const resA = await getStorefront();
       expect(resA).toBe('KR');
+
+      delete (ExpoIapModule as any).getStorefrontAndroid;
+    });
+
+    it('getStorefront returns empty string on android without native helper', async () => {
+      (Platform as any).OS = 'android';
+      const res = await getStorefront();
+      expect(res).toBe('');
     });
   });
 
