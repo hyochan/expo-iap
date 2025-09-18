@@ -8,6 +8,11 @@
 - Subject must be imperative, lowercase, without a trailing period, and roughly 50 characters
 - Wrap commit body lines near 72 characters and include footers such as `BREAKING CHANGE:` or `Closes #123` when needed
 
+## Tooling & Package Management
+
+- **Use Bun exclusively.** Run installs with `bun install`, scripts with `bun run <script>`, add deps via `bun add` / `bun add -d`.
+- Do **not** suggest or create `package-lock.json` or `yarn.lock`; `bun.lock` is the single source of truth.
+
 ## Expo-Specific Guidelines
 
 ### iOS Pod Configuration
@@ -37,6 +42,11 @@ Before committing any changes:
 5. Only commit if all checks succeed
 
 ### Platform-Specific Naming Conventions
+
+#### Function Naming
+
+- Functions that only operate on one platform must carry the suffix: `nameIOS` or `nameAndroid` (e.g. `getStorefrontIOS`, `deepLinkToSubscriptionsAndroid`).
+- Cross-platform helpers should expose a single name and branch internally via `Platform.select` or equivalent.
 
 #### Field Naming
 
@@ -71,6 +81,8 @@ For complete type definitions and documentation, see: <https://www.openiap.dev/d
 The library follows the OpenIAP type specifications with platform-specific extensions using iOS/Android suffixes.
 
 > **Important:** `src/types.ts` is generated from the OpenIAP schema. Never edit this file manually or commit hand-written changes. After updating any `*.graphql` schema, run `bun run generate:types` (or the equivalent script in your package manager) to refresh the file.
+
+- Whenever you need Request/Params/Result types in the JS API surface (`src/index.ts`, hooks, modules, examples), import them directly from the generated `src/types.ts` (e.g., `MutationRequestPurchaseArgs`, `QueryFetchProductsArgs`). Bind exported functions with the generated `QueryField` / `MutationField` helpers so their signatures stay in lockstep with `types.ts` instead of redefining ad-hoc unions like `ProductTypeInput`.
 
 ### React/JSX Conventions
 
