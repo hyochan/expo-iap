@@ -90,6 +90,26 @@ export const requestProducts = async (params: {
 export const requestProducts = async (params) => {
   // implementation
 };
+
+// ✅ Prefer generated helper-based signatures for exported APIs
+export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
+  // Types inferred from src/types.ts
+};
+
+export const finishTransaction: MutationField<'finishTransaction'> = async (
+  args,
+) => {
+  const {purchase} = args;
+  // ...
+};
+
+// ❌ Avoid hand-written params/return types when a generated helper exists
+export const fetchProducts = async (request: {
+  skus: string[];
+  type?: 'in-app' | 'subs';
+}): Promise<{products: Product[]; subscriptions: ProductSubscription[]}> => {
+  // ...
+};
 ```
 
 ## Platform-Specific Naming
@@ -109,9 +129,11 @@ Functions that handle platform differences internally do NOT need suffixes.
 
 ```typescript
 // iOS-only functions (no Platform.OS check needed in iOS module)
-export const validateReceiptIOS = async (sku: string): Promise<boolean> => {
+export const validateReceiptIOS = async (
+  props: ReceiptValidationProps,
+): Promise<boolean> => {
   // iOS implementation
-  return ExpoIapModule.validateReceiptIOS(sku);
+  return ExpoIapModule.validateReceiptIOS(props.sku);
 };
 
 export const getStorefrontIOS = async (): Promise<string> => {
