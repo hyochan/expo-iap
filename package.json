@@ -27,7 +27,7 @@
     "docs:build": "cd docs && bun run build",
     "docs:serve": "cd docs && bun run serve",
     "docs:install": "cd docs && bun install",
-    "generate:types": "node scripts/update-types.mjs --tag 1.0.2",
+    "generate:types": "node scripts/update-types.mjs --tag 1.0.6",
     "generate:icon": "npx sharp-cli resize 32 32 -i docs/static/img/icon.png -o docs/static/img/favicon-32x32.png && npx sharp-cli resize 16 16 -i docs/static/img/icon.png -o docs/static/img/favicon-16x16.png && npx sharp-cli resize 180 180 -i docs/static/img/icon.png -o docs/static/img/apple-touch-icon.png && npx sharp-cli resize 192 192 -i docs/static/img/icon.png -o docs/static/img/android-chrome-192x192.png && npx sharp-cli resize 512 512 -i docs/static/img/icon.png -o docs/static/img/android-chrome-512x512.png && npx sharp-cli resize 150 150 -i docs/static/img/icon.png -o docs/static/img/mstile-150x150.png && npx sharp-cli resize 1200 630 -i docs/static/img/icon.png -o docs/static/img/og-image.png && npx sharp-cli resize 1200 600 -i docs/static/img/icon.png -o docs/static/img/twitter-card.png && npx sharp-cli resize 16 16 -i docs/static/img/icon.png -o docs/static/img/favicon.png && cp docs/static/img/favicon-16x16.png docs/static/img/favicon.ico"
   },
   "keywords": [
