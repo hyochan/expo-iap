@@ -213,6 +213,7 @@ export const endConnection: MutationField<'endConnection'> = async () =>
  * @param request.type - Product query type: 'in-app', 'subs', or 'all'
  */
 export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
+  console.log('fetchProducts called with:', request);
   const {skus, type} = request ?? {};
 
   if (!Array.isArray(skus) || skus.length === 0) {

@@ -11,6 +11,7 @@ import * as path from 'path';
 import withLocalOpenIAP from './withLocalOpenIAP';
 
 const pkg = require('../../package.json');
+const OPENIAP_ANDROID_VERSION = '1.2.6';
 
 // Log a message only once per Node process
 const logOnce = (() => {
@@ -54,7 +55,10 @@ const modifyAppBuildGradle = (
     language === 'kotlin'
       ? `    implementation("${ga}:${v}")`
       : `    implementation "${ga}:${v}"`;
-  const openiapDep = impl('io.github.hyochan.openiap:openiap-google', '1.2.3');
+  const openiapDep = impl(
+    'io.github.hyochan.openiap:openiap-google',
+    OPENIAP_ANDROID_VERSION,
+  );
 
   // Remove any existing openiap-google lines (any version, groovy/kotlin, implementation/api)
   const openiapAnyLine =
@@ -67,15 +71,15 @@ const modifyAppBuildGradle = (
   // Ensure the desired dependency line is present
   if (
     !new RegExp(
-      String.raw`io\.github\.hyochan\.openiap:openiap-google:1\.1\.10`,
+      String.raw`io\.github\.hyochan\.openiap:openiap-google:${OPENIAP_ANDROID_VERSION}`,
     ).test(modified)
   ) {
     // Insert just after the opening `dependencies {` line
     modified = addLineToGradle(modified, /dependencies\s*{/, openiapDep, 1);
     logOnce(
       hadExisting
-        ? '🛠️ expo-iap: Replaced OpenIAP dependency with 1.2.3'
-        : '🛠️ expo-iap: Added OpenIAP dependency (1.2.3) to build.gradle',
+        ? `🛠️ expo-iap: Replaced OpenIAP dependency with ${OPENIAP_ANDROID_VERSION}`
+        : `🛠️ expo-iap: Added OpenIAP dependency (${OPENIAP_ANDROID_VERSION}) to build.gradle`,
     );
   }
 
