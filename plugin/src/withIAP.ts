@@ -54,7 +54,7 @@ const modifyAppBuildGradle = (
     language === 'kotlin'
       ? `    implementation("${ga}:${v}")`
       : `    implementation "${ga}:${v}"`;
-  const openiapDep = impl('io.github.hyochan.openiap:openiap-google', '1.2.2');
+  const openiapDep = impl('io.github.hyochan.openiap:openiap-google', '1.2.3');
 
   // Remove any existing openiap-google lines (any version, groovy/kotlin, implementation/api)
   const openiapAnyLine =
@@ -74,8 +74,8 @@ const modifyAppBuildGradle = (
     modified = addLineToGradle(modified, /dependencies\s*{/, openiapDep, 1);
     logOnce(
       hadExisting
-        ? '🛠️ expo-iap: Replaced OpenIAP dependency with 1.2.2'
-        : '🛠️ expo-iap: Added OpenIAP dependency (1.2.2) to build.gradle',
+        ? '🛠️ expo-iap: Replaced OpenIAP dependency with 1.2.3'
+        : '🛠️ expo-iap: Added OpenIAP dependency (1.2.3) to build.gradle',
     );
   }
 
