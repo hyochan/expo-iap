@@ -19,7 +19,8 @@ export function isProductAndroid<T extends {platform?: string}>(
     item != null &&
     typeof item === 'object' &&
     'platform' in item &&
-    (item as any).platform === 'android'
+    typeof (item as any).platform === 'string' &&
+    (item as any).platform.toLowerCase() === 'android'
   );
 }
 

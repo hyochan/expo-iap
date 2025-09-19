@@ -14,7 +14,8 @@ import {requestPurchase, useIAP, getAppTransactionIOS} from '../../src';
 import Loading from '../src/components/Loading';
 import {PRODUCT_IDS} from '../../src/utils/constants';
 import type {Product, Purchase} from '../../src/types';
-import type {PurchaseError} from '../../src/purchase-error';
+import type {PurchaseError} from '../../src/utils/errorMapping';
+import PurchaseDetails from '../src/components/PurchaseDetails';
 
 /**
  * Purchase Flow Example - In-App Products
@@ -404,33 +405,16 @@ export default function PurchaseFlow() {
               </TouchableOpacity>
             </View>
             <ScrollView>
-              {lastPurchase && (
-                <>
-                  <Text style={styles.modalLabel}>Transaction ID</Text>
-                  <Text style={styles.modalValue}>{lastPurchase.id}</Text>
-
-                  <Text style={styles.modalLabel}>Product ID</Text>
-                  <Text style={styles.modalValue}>
-                    {lastPurchase.productId}
-                  </Text>
-
-                  <Text style={styles.modalLabel}>Platform</Text>
-                  <Text style={styles.modalValue}>{lastPurchase.platform}</Text>
-
-                  <Text style={styles.modalLabel}>Date</Text>
-                  <Text style={styles.modalValue}>
-                    {new Date(lastPurchase.transactionDate).toLocaleString()}
-                  </Text>
-
-                  {lastPurchase.purchaseToken ? (
-                    <>
-                      <Text style={styles.modalLabel}>Purchase Token</Text>
-                      <Text style={styles.modalValue}>
-                        {lastPurchase.purchaseToken}
-                      </Text>
-                    </>
-                  ) : null}
-                </>
+              {lastPurchase ? (
+                <PurchaseDetails
+                  purchase={lastPurchase}
+                  containerStyle={styles.purchaseDetailsContainer}
+                  rowStyle={styles.purchaseDetailRow}
+                  labelStyle={styles.modalLabel}
+                  valueStyle={styles.modalValue}
+                />
+              ) : (
+                <Text style={styles.modalValue}>No purchase recorded.</Text>
               )}
             </ScrollView>
           </View>
@@ -676,6 +660,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     marginBottom: 5,
+  },
+  purchaseDetailsContainer: {
+    gap: 10,
+  },
+  purchaseDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   closeButton: {
     backgroundColor: '#007AFF',

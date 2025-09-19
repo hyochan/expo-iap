@@ -212,7 +212,7 @@ describe('iOS Module Functions', () => {
       expect(result.isValid).toBe(true);
       expect(result.receiptData).toBeDefined();
       expect(result.jwsRepresentation).toBeDefined();
-      expect(result.latestTransaction?.id).toBe('transaction-123');
+      expect(result.latestTransaction?.id).toBe('com.example.product');
     });
 
     it('should throw when SKU missing', async () => {
@@ -317,7 +317,7 @@ describe('iOS Module Functions', () => {
       const result = (await currentEntitlementIOS(mockSku)) as any;
 
       expect(ExpoIapModule.currentEntitlementIOS).toHaveBeenCalledWith(mockSku);
-      expect(result?.id).toBe('txn-1');
+      expect(result?.id).toBe('legacy-id');
       expect(result?.transactionId).toBe('txn-1');
     });
 
@@ -350,7 +350,7 @@ describe('iOS Module Functions', () => {
       const result = (await latestTransactionIOS(mockSku)) as any;
 
       expect(ExpoIapModule.latestTransactionIOS).toHaveBeenCalledWith(mockSku);
-      expect(result?.id).toBe('123');
+      expect(result?.id).toBe('com.example.product');
       expect(result?.transactionId).toBe('123');
     });
 
@@ -417,7 +417,7 @@ describe('iOS Module Functions', () => {
 
       expect(ExpoIapModule.showManageSubscriptionsIOS).toHaveBeenCalledTimes(1);
       expect(Array.isArray(result)).toBe(true);
-      expect(result[0]?.id).toBe('txn-77');
+      expect(result[0]?.id).toBe('legacy');
       expect(result[0]?.transactionId).toBe('txn-77');
     });
 
@@ -552,7 +552,7 @@ describe('iOS Module Functions', () => {
       const result = await getPendingTransactionsIOS();
 
       expect(ExpoIapModule.getPendingTransactionsIOS).toHaveBeenCalledTimes(1);
-      expect(result[0].id).toBe('txn-pending');
+      expect(result[0].id).toBe('legacy-id');
     });
 
     it('clears iOS transactions', async () => {

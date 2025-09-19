@@ -9,6 +9,7 @@ import {
   validateReceiptIOS,
   deepLinkToSubscriptionsIOS,
   syncIOS,
+  getStorefrontIOS,
 } from './modules/ios';
 import {
   isProductAndroid,
@@ -24,12 +25,9 @@ import type {
   MutationField,
   MutationValidateReceiptArgs,
   Product,
-  ProductAndroid,
-  ProductIOS,
   ProductQueryType,
   ProductSubscription,
   Purchase,
-  PurchaseInput,
   PurchaseOptions,
   QueryField,
   RequestPurchasePropsByPlatforms,
@@ -41,12 +39,10 @@ import type {
   DiscountOfferInputIOS,
 } from './types';
 import {ErrorCode} from './types';
-import {PurchaseError} from './purchase-error';
-import {normalizePurchaseId, normalizePurchaseList} from './utils/purchase';
+import {createPurchaseError, type PurchaseError} from './utils/errorMapping';
 
 // Export all types
 export * from './types';
-export {ErrorCodeUtils, ErrorCodeMapping} from './purchase-error';
 export * from './modules/android';
 export * from './modules/ios';
 
@@ -57,16 +53,10 @@ export {
 } from './helpers/subscription';
 
 // Get the native constant value
-export const PI = ExpoIapModule.PI;
-
 export enum OpenIapEvent {
   PurchaseUpdated = 'purchase-updated',
   PurchaseError = 'purchase-error',
   PromotedProductIOS = 'promoted-product-ios',
-}
-
-export function setValueAsync(value: string) {
-  return ExpoIapModule.setValueAsync(value);
 }
 
 type ExpoIapEventPayloads = {
@@ -109,7 +99,7 @@ const normalizeProductType = (type?: ProductTypeInput) => {
   if (!type || type === 'inapp' || type === 'in-app') {
     return {
       canonical: 'in-app' as ProductQueryType,
-      native: 'inapp' as const,
+      native: 'in-app' as const,
     };
   }
   if (type === 'subs') {
@@ -127,12 +117,29 @@ const normalizeProductType = (type?: ProductTypeInput) => {
   throw new Error(`Unsupported product type: ${type}`);
 };
 
+const normalizePurchasePlatform = (purchase: Purchase): Purchase => {
+  const platform = purchase.platform;
+  if (typeof platform !== 'string') {
+    return purchase;
+  }
+
+  const lowered = platform.toLowerCase();
+  if (lowered === platform || (lowered !== 'ios' && lowered !== 'android')) {
+    return purchase;
+  }
+
+  return {...purchase, platform: lowered};
+};
+
+const normalizePurchaseArray = (purchases: Purchase[]): Purchase[] =>
+  purchases.map((purchase) => normalizePurchasePlatform(purchase));
+
 export const purchaseUpdatedListener = (
   listener: (event: Purchase) => void,
 ) => {
   console.log('[JS] Registering purchaseUpdatedListener');
   const wrappedListener = (event: Purchase) => {
-    const normalized = normalizePurchaseId(event);
+    const normalized = normalizePurchasePlatform(event);
     console.log('[JS] purchaseUpdatedListener fired:', normalized);
     listener(normalized);
   };
@@ -209,7 +216,7 @@ export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
   const {skus, type} = request ?? {};
 
   if (!Array.isArray(skus) || skus.length === 0) {
-    throw new PurchaseError({
+    throw createPurchaseError({
       message: 'No SKUs provided',
       code: ErrorCode.EmptySkuList,
     });
@@ -223,22 +230,22 @@ export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
   const filterIosItems = (
     items: unknown[],
   ): Product[] | ProductSubscription[] =>
-    items.filter((item): item is ProductIOS | ProductSubscription => {
+    items.filter((item): item is Product | ProductSubscription => {
       if (!isProductIOS(item)) {
         return false;
       }
-      const candidate = item as ProductIOS | ProductSubscription;
+      const candidate = item as Product | ProductSubscription;
       return typeof candidate.id === 'string' && skuSet.has(candidate.id);
     });
 
   const filterAndroidItems = (
     items: unknown[],
   ): Product[] | ProductSubscription[] =>
-    items.filter((item): item is ProductAndroid | ProductSubscription => {
+    items.filter((item): item is Product | ProductSubscription => {
       if (!isProductAndroid(item)) {
         return false;
       }
-      const candidate = item as ProductAndroid | ProductSubscription;
+      const candidate = item as Product | ProductSubscription;
       return typeof candidate.id === 'string' && skuSet.has(candidate.id);
     });
 
@@ -287,31 +294,18 @@ export const getAvailablePurchases: QueryField<
     }) ?? (() => Promise.resolve([] as Purchase[]));
 
   const purchases = await resolvePurchases();
-  return normalizePurchaseList(purchases);
+  return normalizePurchaseArray(purchases as Purchase[]);
 };
 
-/**
- * Restore completed transactions (cross-platform behavior)
- *
- * - iOS: perform a lightweight sync to refresh transactions and ignore sync errors,
- *   then fetch available purchases to surface restored items to the app.
- * - Android: simply fetch available purchases (restoration happens via query).
- *
- * This helper returns the restored/available purchases so callers can update UI/state.
- *
- * @param options.alsoPublishToEventListenerIOS - iOS only: whether to also publish to the event listener
- * @param options.onlyIncludeActiveItemsIOS - iOS only: whether to only include active items
- * @returns Promise resolving to the list of available/restored purchases
- */
-export const restorePurchases: MutationField<'restorePurchases'> = async () => {
-  if (Platform.OS === 'ios') {
-    await syncIOS().catch(() => undefined);
+export const getStorefront: QueryField<'getStorefrontIOS'> = async () => {
+  // Cross-platform storefront
+  if (Platform.OS === 'android') {
+    if (typeof ExpoIapModule.getStorefrontAndroid === 'function') {
+      return ExpoIapModule.getStorefrontAndroid();
+    }
+    return '';
   }
-
-  await getAvailablePurchases({
-    alsoPublishToEventListenerIOS: false,
-    onlyIncludeActiveItemsIOS: true,
-  });
+  return getStorefrontIOS();
 };
 
 const offerToRecordIOS = (
@@ -420,7 +414,7 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
       withOffer: offer,
     });
 
-    return normalizePurchaseId(purchase as Purchase);
+    return normalizePurchasePlatform(purchase as Purchase);
   }
 
   if (Platform.OS === 'android') {
@@ -454,7 +448,7 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         isOfferPersonalized: isOfferPersonalized ?? false,
       })) as Purchase[];
 
-      return normalizePurchaseList(result);
+      return normalizePurchaseArray(result);
     }
 
     if (canonical === 'subs') {
@@ -497,7 +491,7 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         isOfferPersonalized: isOfferPersonalized ?? false,
       })) as Purchase[];
 
-      return normalizePurchaseList(result);
+      return normalizePurchaseArray(result);
     }
 
     throw new Error(
@@ -508,28 +502,12 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
   throw new Error('Platform not supported');
 };
 
-const toPurchaseInput = (
-  purchase: Purchase | PurchaseInput,
-): PurchaseInput => ({
-  id: purchase.id,
-  ids: purchase.ids ?? undefined,
-  isAutoRenewing: purchase.isAutoRenewing,
-  platform: purchase.platform,
-  productId: purchase.productId,
-  purchaseState: purchase.purchaseState,
-  purchaseToken: purchase.purchaseToken ?? null,
-  quantity: purchase.quantity,
-  transactionDate: purchase.transactionDate,
-});
-
 export const finishTransaction: MutationField<'finishTransaction'> = async ({
   purchase,
   isConsumable = false,
 }) => {
-  const normalizedPurchase = toPurchaseInput(purchase);
-
   if (Platform.OS === 'ios') {
-    const transactionId = normalizedPurchase.id;
+    const transactionId = purchase.id;
     if (!transactionId) {
       throw new Error('purchase.id required to finish iOS transaction');
     }
@@ -538,13 +516,13 @@ export const finishTransaction: MutationField<'finishTransaction'> = async ({
   }
 
   if (Platform.OS === 'android') {
-    const token = normalizedPurchase.purchaseToken ?? undefined;
+    const token = purchase.purchaseToken ?? undefined;
 
     if (!token) {
-      throw new PurchaseError({
+      throw createPurchaseError({
         message: 'Purchase token is required to finish transaction',
         code: ErrorCode.DeveloperError,
-        productId: normalizedPurchase.productId,
+        productId: purchase.productId,
         platform: 'android',
       });
     }
@@ -562,43 +540,57 @@ export const finishTransaction: MutationField<'finishTransaction'> = async ({
 };
 
 /**
- * Retrieves the current storefront information from iOS App Store
+ * Restore completed transactions (cross-platform behavior)
  *
- * @returns Promise resolving to the storefront country code
- * @throws Error if called on non-iOS platform
+ * - iOS: perform a lightweight sync to refresh transactions and ignore sync errors,
+ *   then fetch available purchases to surface restored items to the app.
+ * - Android: simply fetch available purchases (restoration happens via query).
  *
- * @example
- * ```typescript
- * const storefront = await getStorefrontIOS();
- * console.log(storefront); // 'US'
- * ```
- *
- * @platform iOS
+ * This helper returns the restored/available purchases so callers can update UI/state.
  */
-export const getStorefrontIOS = (): Promise<string> => {
-  if (Platform.OS !== 'ios') {
-    console.warn('getStorefrontIOS: This method is only available on iOS');
-    return Promise.resolve('');
+export const restorePurchases: MutationField<'restorePurchases'> = async () => {
+  if (Platform.OS === 'ios') {
+    await syncIOS().catch(() => undefined);
   }
-  return ExpoIapModule.getStorefrontIOS();
+
+  await getAvailablePurchases({
+    alsoPublishToEventListenerIOS: false,
+    onlyIncludeActiveItemsIOS: true,
+  });
 };
 
 /**
- * Gets the storefront country code from the underlying native store.
- * Returns a two-letter country code such as 'US', 'KR', or empty string on failure.
+ * Deeplinks to native interface that allows users to manage their subscriptions
+ * @param options.skuAndroid - Required for Android to locate specific subscription (ignored on iOS)
+ * @param options.packageNameAndroid - Required for Android to identify your app (ignored on iOS)
  *
- * @platform ios
- * @platform android
+ * @returns Promise that resolves when the deep link is successfully opened
+ *
+ * @throws {Error} When called on unsupported platform or when required Android parameters are missing
+ *
+ * @example
+ * import { deepLinkToSubscriptions } from 'expo-iap';
+ *
+ * // Works on both iOS and Android
+ * await deepLinkToSubscriptions({
+ *   skuAndroid: 'your_subscription_sku',
+ *   packageNameAndroid: 'com.example.app'
+ * });
  */
-export const getStorefront = (): Promise<string> => {
-  // Cross-platform storefront
-  if (Platform.OS === 'android') {
-    if (typeof ExpoIapModule.getStorefrontAndroid === 'function') {
-      return ExpoIapModule.getStorefrontAndroid();
-    }
-    return Promise.resolve('');
+export const deepLinkToSubscriptions: MutationField<
+  'deepLinkToSubscriptions'
+> = async (options) => {
+  if (Platform.OS === 'ios') {
+    await deepLinkToSubscriptionsIOS();
+    return;
   }
-  return getStorefrontIOS();
+
+  if (Platform.OS === 'android') {
+    await deepLinkToSubscriptionsAndroid((options as DeepLinkOptions) ?? null);
+    return;
+  }
+
+  throw new Error(`Unsupported platform: ${Platform.OS}`);
 };
 
 /**
@@ -641,39 +633,14 @@ export const validateReceipt: MutationField<'validateReceipt'> = async (
   throw new Error('Platform not supported');
 };
 
-/**
- * Deeplinks to native interface that allows users to manage their subscriptions
- * @param options.skuAndroid - Required for Android to locate specific subscription (ignored on iOS)
- * @param options.packageNameAndroid - Required for Android to identify your app (ignored on iOS)
- *
- * @returns Promise that resolves when the deep link is successfully opened
- *
- * @throws {Error} When called on unsupported platform or when required Android parameters are missing
- *
- * @example
- * import { deepLinkToSubscriptions } from 'expo-iap';
- *
- * // Works on both iOS and Android
- * await deepLinkToSubscriptions({
- *   skuAndroid: 'your_subscription_sku',
- *   packageNameAndroid: 'com.example.app'
- * });
- */
-export const deepLinkToSubscriptions: MutationField<
-  'deepLinkToSubscriptions'
-> = async (options) => {
-  if (Platform.OS === 'ios') {
-    await deepLinkToSubscriptionsIOS();
-    return;
-  }
-
-  if (Platform.OS === 'android') {
-    await deepLinkToSubscriptionsAndroid((options as DeepLinkOptions) ?? null);
-    return;
-  }
-
-  throw new Error(`Unsupported platform: ${Platform.OS}`);
-};
-
 export * from './useIAP';
-export * from './utils/errorMapping';
+export {
+  ErrorCodeUtils,
+  ErrorCodeMapping,
+  createPurchaseError,
+  createPurchaseErrorFromPlatform,
+} from './utils/errorMapping';
+export type {
+  PurchaseError as ExpoPurchaseError,
+  PurchaseErrorProps,
+} from './utils/errorMapping';

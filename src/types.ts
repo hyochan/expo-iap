@@ -128,9 +128,9 @@ export enum ErrorCode {
 
 export type FetchProductsResult = Product[] | ProductSubscription[] | null;
 
-export type IapEvent = 'promoted-product-ios' | 'purchase-error' | 'purchase-updated';
+export type IapEvent = 'purchase-updated' | 'purchase-error' | 'promoted-product-ios';
 
-export type IapPlatform = 'android' | 'ios';
+export type IapPlatform = 'ios' | 'android';
 
 export interface Mutation {
   /** Acknowledge a non-consumable purchase or subscription */
@@ -266,7 +266,7 @@ export interface ProductIOS extends ProductCommon {
   typeIOS: ProductTypeIOS;
 }
 
-export type ProductQueryType = 'all' | 'in-app' | 'subs';
+export type ProductQueryType = 'in-app' | 'subs' | 'all';
 
 export interface ProductRequest {
   skus: string[];
@@ -327,7 +327,7 @@ export interface ProductSubscriptionIOS extends ProductCommon {
 
 export type ProductType = 'in-app' | 'subs';
 
-export type ProductTypeIOS = 'auto-renewable-subscription' | 'consumable' | 'non-consumable' | 'non-renewing-subscription';
+export type ProductTypeIOS = 'consumable' | 'non-consumable' | 'auto-renewable-subscription' | 'non-renewing-subscription';
 
 export type Purchase = PurchaseAndroid | PurchaseIOS;
 
@@ -349,6 +349,7 @@ export interface PurchaseAndroid extends PurchaseCommon {
   quantity: number;
   signatureAndroid?: (string | null);
   transactionDate: number;
+  transactionId?: (string | null);
 }
 
 export interface PurchaseCommon {
@@ -399,6 +400,7 @@ export interface PurchaseIOS extends PurchaseCommon {
   storefrontCountryCodeIOS?: (string | null);
   subscriptionGroupIdIOS?: (string | null);
   transactionDate: number;
+  transactionId: string;
   transactionReasonIOS?: (string | null);
   webOrderLineItemIdIOS?: (string | null);
 }
@@ -428,7 +430,7 @@ export interface PurchaseOptions {
   onlyIncludeActiveItemsIOS?: (boolean | null);
 }
 
-export type PurchaseState = 'deferred' | 'failed' | 'pending' | 'purchased' | 'restored' | 'unknown';
+export type PurchaseState = 'pending' | 'purchased' | 'failed' | 'restored' | 'deferred' | 'unknown';
 
 export interface Query {
   /** Get current StoreKit 2 entitlements (iOS 15+) */
@@ -654,7 +656,7 @@ export interface SubscriptionOfferIOS {
 
 export type SubscriptionOfferTypeIOS = 'introductory' | 'promotional';
 
-export type SubscriptionPeriodIOS = 'day' | 'empty' | 'month' | 'week' | 'year';
+export type SubscriptionPeriodIOS = 'day' | 'week' | 'month' | 'year' | 'empty';
 
 export interface SubscriptionPeriodValueIOS {
   unit: SubscriptionPeriodIOS;

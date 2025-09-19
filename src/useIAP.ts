@@ -39,7 +39,7 @@ import type {
   ReceiptValidationResult,
 } from './types';
 import {ErrorCode} from './types';
-import {PurchaseError} from './purchase-error';
+import type {PurchaseError} from './utils/errorMapping';
 import {
   getUserFriendlyErrorMessage,
   isUserCancelledError,
@@ -161,6 +161,17 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     [],
   );
 
+  const canonicalProductType = useCallback(
+    (value?: string): ProductQueryType => {
+      if (!value) {
+        return 'in-app';
+      }
+      const normalized = value.trim().toLowerCase().replace(/[_-]/g, '');
+      return normalized === 'subs' ? 'subs' : 'in-app';
+    },
+    [],
+  );
+
   const toPurchaseInput = useCallback(
     (purchase: Purchase): PurchaseInput => ({
       id: purchase.id,
@@ -226,10 +237,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
           );
         } else {
           const productItems = items.filter(
-            (item) => item.type === 'in-app',
+            (item) => canonicalProductType(item.type as string) === 'in-app',
           ) as Product[];
           const subscriptionItems = items.filter(
-            (item) => item.type === 'subs',
+            (item) => canonicalProductType(item.type as string) === 'subs',
           ) as ProductSubscription[];
 
           setProducts((prevProducts) =>
@@ -252,7 +263,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         console.error('Error fetching products:', error);
       }
     },
-    [mergeWithDuplicateCheck, normalizeProductQueryType],
+    [canonicalProductType, mergeWithDuplicateCheck, normalizeProductQueryType],
   );
 
   const getAvailablePurchasesInternal = useCallback(async (): Promise<void> => {

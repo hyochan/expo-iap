@@ -9,7 +9,7 @@ The expo-iap type surface is now generated in one place: `src/types.ts`. The fil
 Key runtime helpers that build on these types live alongside them:
 
 - `src/types.ts` – auto-generated enums and interfaces
-- `src/purchase-error.ts` – typed error helpers (`PurchaseError`, `ErrorCodeUtils`)
+- `src/utils/errorMapping.ts` – typed error helpers (`createPurchaseError`, `ErrorCodeUtils`)
 - `src/helpers/subscription.ts` – subscription utilities that re-export `ActiveSubscription`
 
 Below is a curated overview of the most commonly used types. Consult `src/types.ts` for the full schema.
@@ -43,7 +43,7 @@ export enum ErrorCode {
 }
 ```
 
-Use `PurchaseError` from `src/purchase-error.ts` to work with typed errors and platform mappings.
+Use `createPurchaseError` from `src/utils/errorMapping.ts` to work with typed errors and platform mappings.
 
 ## Product Types
 
@@ -177,7 +177,7 @@ Use the higher-level `validateReceipt` helper exported from `src/index.ts` for a
 ## Where to Find Everything
 
 - For the exhaustive list of enums and interfaces, open `src/types.ts`.
-- For error handling utilities (`PurchaseError`, `ErrorCodeUtils`), use `src/purchase-error.ts`.
+- For error handling utilities (`createPurchaseError`, `ErrorCodeUtils`), use `src/utils/errorMapping.ts`.
 - All generated types are re-exported from the package root so consumers can import from `expo-iap` directly:
 
 ```ts

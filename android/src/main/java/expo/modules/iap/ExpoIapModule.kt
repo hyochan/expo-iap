@@ -2,12 +2,22 @@ package expo.modules.iap
 
 import android.content.Context
 import android.util.Log
+import dev.hyo.openiap.AndroidSubscriptionOfferInput
+import dev.hyo.openiap.DeepLinkOptions
+import dev.hyo.openiap.FetchProductsResultProducts
+import dev.hyo.openiap.FetchProductsResultSubscriptions
 import dev.hyo.openiap.OpenIapError
 import dev.hyo.openiap.OpenIapModule
-import dev.hyo.openiap.models.DeepLinkOptions
-import dev.hyo.openiap.models.ProductRequest
-import dev.hyo.openiap.models.RequestPurchaseParams
-import dev.hyo.openiap.models.RequestSubscriptionAndroidProps
+import dev.hyo.openiap.ProductQueryType
+import dev.hyo.openiap.ProductRequest
+import dev.hyo.openiap.Purchase
+import dev.hyo.openiap.RequestPurchaseAndroidProps
+import dev.hyo.openiap.RequestPurchaseProps
+import dev.hyo.openiap.RequestPurchasePropsByPlatforms
+import dev.hyo.openiap.RequestPurchaseResultPurchase
+import dev.hyo.openiap.RequestPurchaseResultPurchases
+import dev.hyo.openiap.RequestSubscriptionAndroidProps
+import dev.hyo.openiap.RequestSubscriptionPropsByPlatforms
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
@@ -18,6 +28,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.Locale
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -59,7 +70,20 @@ class ExpoIapModule : Module() {
         pendingEvents.add(name to payload)
     }
 
-    // Mapping helpers now provided by openiap-google (toJSON helpers)
+    private fun parseProductQueryType(rawType: String?): ProductQueryType {
+        val normalized =
+            rawType
+                ?.trim()
+                ?.lowercase(Locale.US)
+                ?.replace("-", "")
+                ?.replace("_", "")
+
+        return when (normalized) {
+            "subs" -> ProductQueryType.Subs
+            "all" -> ProductQueryType.All
+            else -> ProductQueryType.InApp
+        }
+    }
 
     override fun definition() =
         ModuleDefinition {
@@ -90,8 +114,9 @@ class ExpoIapModule : Module() {
                             if (!listenersAttached) {
                                 listenersAttached = true
                                 openIap.addPurchaseUpdateListener { p ->
-                                    runCatching { emitOrQueue(EVENT_PURCHASE_UPDATED, p.toJSON()) }
-                                        .onFailure { Log.e(TAG, "Failed to buffer/send PURCHASE_UPDATED", it) }
+                                    runCatching {
+                                        emitOrQueue(EVENT_PURCHASE_UPDATED, p.toJson())
+                                    }.onFailure { Log.e(TAG, "Failed to buffer/send PURCHASE_UPDATED", it) }
                                 }
                                 openIap.addPurchaseErrorListener { e ->
                                     runCatching { emitOrQueue(EVENT_PURCHASE_ERROR, e.toJSON()) }
@@ -140,9 +165,16 @@ class ExpoIapModule : Module() {
             AsyncFunction("fetchProducts") { type: String, skuArr: Array<String>, promise: Promise ->
                 scope.launch {
                     try {
-                        val reqType = ProductRequest.ProductRequestType.fromString(type)
-                        val products = openIap.fetchProducts(ProductRequest(skuArr.toList(), reqType))
-                        promise.resolve(products.map { it.toJSON() })
+                        val queryType = parseProductQueryType(type)
+                        val request = ProductRequest(skuArr.toList(), queryType)
+                        val result = openIap.fetchProducts(request)
+                        val payload =
+                            when (result) {
+                                is FetchProductsResultProducts -> result.value.orEmpty().map { it.toJson() }
+                                is FetchProductsResultSubscriptions -> result.value.orEmpty().map { it.toJson() }
+                                else -> emptyList<Map<String, Any?>>()
+                            }
+                        promise.resolve(payload)
                     } catch (e: Exception) {
                         promise.reject(OpenIapError.QueryProduct.CODE, e.message, null)
                     }
@@ -153,7 +185,7 @@ class ExpoIapModule : Module() {
                 scope.launch {
                     try {
                         val purchases = openIap.getAvailablePurchases(null)
-                        promise.resolve(purchases.map { it.toJSON() })
+                        promise.resolve(purchases.map { it.toJson() })
                     } catch (e: Exception) {
                         promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
                     }
@@ -166,7 +198,12 @@ class ExpoIapModule : Module() {
                 val packageName = (params["packageName"] ?: params["packageNameAndroid"]) as? String
                 scope.launch {
                     try {
-                        openIap.deepLinkToSubscriptions(DeepLinkOptions(sku, packageName))
+                        openIap.deepLinkToSubscriptions(
+                            DeepLinkOptions(
+                                packageNameAndroid = packageName,
+                                skuAndroid = sku,
+                            ),
+                        )
                         promise.resolve(null)
                     } catch (e: Exception) {
                         promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
@@ -187,7 +224,7 @@ class ExpoIapModule : Module() {
             }
 
             AsyncFunction("requestPurchase") { params: Map<String, Any?>, promise: Promise ->
-                val type = params["type"] as String
+                val type = params["type"] as? String
                 val skus: List<String> =
                     (params["skus"] as? List<*>)?.filterIsInstance<String>()
                         ?: (params["skuArr"] as? List<*>)?.filterIsInstance<String>()
@@ -199,7 +236,7 @@ class ExpoIapModule : Module() {
                 val isOfferPersonalized = params["isOfferPersonalized"] as? Boolean ?: false
                 val offerTokenArr =
                     (params["offerTokenArr"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                val subscriptionOffersParam =
+                val explicitSubscriptionOffers =
                     (params["subscriptionOffers"] as? List<*>)?.mapNotNull { rawOffer ->
                         val offerMap = rawOffer as? Map<*, *> ?: return@mapNotNull null
                         val sku = offerMap["sku"] as? String
@@ -207,54 +244,103 @@ class ExpoIapModule : Module() {
                         if (sku.isNullOrEmpty() || offerToken.isNullOrEmpty()) {
                             null
                         } else {
-                            RequestSubscriptionAndroidProps.SubscriptionOffer(sku = sku, offerToken = offerToken)
+                            AndroidSubscriptionOfferInput(offerToken = offerToken, sku = sku)
                         }
                     } ?: emptyList()
+                val purchaseToken =
+                    (params["purchaseTokenAndroid"] ?: params["purchaseToken"]) as? String
+                val replacementMode =
+                    (params["replacementModeAndroid"] ?: params["replacementMode"]) as? Number
+
+                val productType =
+                    when (parseProductQueryType(type)) {
+                        ProductQueryType.Subs -> ProductQueryType.Subs
+                        else -> ProductQueryType.InApp
+                    }
+
+                val fallbackOffers =
+                    if (explicitSubscriptionOffers.isEmpty() && offerTokenArr.isNotEmpty()) {
+                        skus.zip(offerTokenArr).mapNotNull { (sku, token) ->
+                            if (token.isNotEmpty()) {
+                                AndroidSubscriptionOfferInput(offerToken = token, sku = sku)
+                            } else {
+                                null
+                            }
+                        }
+                    } else {
+                        emptyList()
+                    }
+
+                val subscriptionOffers =
+                    (explicitSubscriptionOffers.ifEmpty { fallbackOffers })
+                        .takeIf { it.isNotEmpty() }
+
+                val requestProps =
+                    when (productType) {
+                        ProductQueryType.Subs -> {
+                            val android =
+                                RequestSubscriptionAndroidProps(
+                                    isOfferPersonalized = isOfferPersonalized,
+                                    obfuscatedAccountIdAndroid = obfuscatedAccountId,
+                                    obfuscatedProfileIdAndroid = obfuscatedProfileId,
+                                    purchaseTokenAndroid = purchaseToken,
+                                    replacementModeAndroid = replacementMode?.toInt(),
+                                    skus = skus,
+                                    subscriptionOffers = subscriptionOffers,
+                                )
+                            RequestPurchaseProps(
+                                request =
+                                    RequestPurchaseProps.Request.Subscription(
+                                        RequestSubscriptionPropsByPlatforms(android = android),
+                                    ),
+                                type = ProductQueryType.Subs,
+                            )
+                        }
+
+                        else -> {
+                            val android =
+                                RequestPurchaseAndroidProps(
+                                    isOfferPersonalized = isOfferPersonalized,
+                                    obfuscatedAccountIdAndroid = obfuscatedAccountId,
+                                    obfuscatedProfileIdAndroid = obfuscatedProfileId,
+                                    skus = skus,
+                                )
+                            RequestPurchaseProps(
+                                request =
+                                    RequestPurchaseProps.Request.Purchase(
+                                        RequestPurchasePropsByPlatforms(android = android),
+                                    ),
+                                type = ProductQueryType.InApp,
+                            )
+                        }
+                    }
 
                 PromiseUtils.addPromiseForKey(PromiseUtils.PROMISE_BUY_ITEM, promise)
                 scope.launch {
                     try {
                         openIap.setActivity(currentActivity)
-                        val reqType = ProductRequest.ProductRequestType.fromString(type)
-                        val subscriptionOffers =
-                            if (reqType == ProductRequest.ProductRequestType.Subs) {
-                                when {
-                                    subscriptionOffersParam.isNotEmpty() -> subscriptionOffersParam
-                                    offerTokenArr.isNotEmpty() ->
-                                        skus.zip(offerTokenArr).mapNotNull { (sku, token) ->
-                                            if (token.isNotEmpty()) {
-                                                RequestSubscriptionAndroidProps.SubscriptionOffer(
-                                                    sku = sku,
-                                                    offerToken = token,
-                                                )
-                                            } else {
-                                                null
-                                            }
-                                        }
-                                    else -> emptyList()
-                                }
-                            } else {
-                                emptyList()
+                        val result = openIap.requestPurchase(requestProps)
+                        val purchases =
+                            when (result) {
+                                is RequestPurchaseResultPurchases -> result.value.orEmpty()
+                                is RequestPurchaseResultPurchase -> result.value?.let(::listOf).orEmpty()
+                                else -> emptyList()
                             }
-                        val result =
-                            openIap.requestPurchase(
-                                RequestPurchaseParams(
-                                    skus = skus,
-                                    obfuscatedAccountIdAndroid = obfuscatedAccountId,
-                                    obfuscatedProfileIdAndroid = obfuscatedProfileId,
-                                    isOfferPersonalized = isOfferPersonalized,
-                                    subscriptionOffers = subscriptionOffers,
-                                ),
-                                reqType,
-                            )
-                        result.forEach { p ->
-                            try {
-                                emitOrQueue(EVENT_PURCHASE_UPDATED, p.toJSON())
-                            } catch (ex: Exception) {
-                                Log.e(TAG, "Failed to send PURCHASE_UPDATED event (requestPurchase)", ex)
+                        purchases.forEach { purchase ->
+                            runCatching {
+                                emitOrQueue(EVENT_PURCHASE_UPDATED, purchase.toJson())
+                            }.onFailure { ex ->
+                                Log.e(
+                                    TAG,
+                                    "Failed to send PURCHASE_UPDATED event (requestPurchase)",
+                                    ex,
+                                )
                             }
                         }
-                        PromiseUtils.resolvePromisesForKey(PromiseUtils.PROMISE_BUY_ITEM, result.map { it.toJSON() })
+                        PromiseUtils.resolvePromisesForKey(
+                            PromiseUtils.PROMISE_BUY_ITEM,
+                            purchases.map { it.toJson() },
+                        )
                     } catch (e: Exception) {
                         val errorMap =
                             mapOf(
@@ -262,12 +348,14 @@ class ExpoIapModule : Module() {
                                 "message" to (e.message ?: "Purchase failed"),
                                 "platform" to "android",
                             )
-                        try {
-                            emitOrQueue(EVENT_PURCHASE_ERROR, errorMap)
-                        } catch (ex: Exception) {
-                            Log.e(TAG, "Failed to send PURCHASE_ERROR event (requestPurchase)", ex)
-                        }
-                        // Reject and clear any pending promises for this purchase flow
+                        runCatching { emitOrQueue(EVENT_PURCHASE_ERROR, errorMap) }
+                            .onFailure { ex ->
+                                Log.e(
+                                    TAG,
+                                    "Failed to send PURCHASE_ERROR event (requestPurchase)",
+                                    ex,
+                                )
+                            }
                         PromiseUtils.rejectPromisesForKey(
                             PromiseUtils.PROMISE_BUY_ITEM,
                             OpenIapError.PurchaseFailed.CODE,

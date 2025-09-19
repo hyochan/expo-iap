@@ -15,7 +15,8 @@ import type {ActiveSubscription} from '../../src';
 import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {Purchase} from '../../src/types';
-import type {PurchaseError} from '../../src/purchase-error';
+import type {PurchaseError} from '../../src/utils/errorMapping';
+import PurchaseDetails from '../src/components/PurchaseDetails';
 
 export default function AvailablePurchases() {
   const [loading, setLoading] = useState(false);
@@ -350,60 +351,13 @@ export default function AvailablePurchases() {
                 </View>
               </View>
 
-              <View style={styles.purchaseDetails}>
-                <View style={styles.purchaseRow}>
-                  <Text style={styles.label}>Platform:</Text>
-                  <Text style={styles.value}>{purchase.platform}</Text>
-                </View>
-                {purchase.transactionDate && (
-                  <View style={styles.purchaseRow}>
-                    <Text style={styles.label}>Date:</Text>
-                    <Text style={styles.value}>
-                      {new Date(purchase.transactionDate).toLocaleDateString()}
-                    </Text>
-                  </View>
-                )}
-                {purchase.id && (
-                  <View style={styles.purchaseRow}>
-                    <Text style={styles.label}>Transaction ID:</Text>
-                    <Text style={styles.value}>{purchase.id}</Text>
-                  </View>
-                )}
-
-                {/* iOS-specific fields */}
-                {Platform.OS === 'ios' &&
-                  'expirationDateIOS' in purchase &&
-                  purchase.expirationDateIOS && (
-                    <View style={styles.purchaseRow}>
-                      <Text style={styles.label}>Expires:</Text>
-                      <Text
-                        style={[
-                          styles.value,
-                          purchase.expirationDateIOS < Date.now() &&
-                            styles.expiredText,
-                        ]}
-                      >
-                        {new Date(
-                          purchase.expirationDateIOS,
-                        ).toLocaleDateString()}
-                        {purchase.expirationDateIOS < Date.now()
-                          ? ' (Expired)'
-                          : ''}
-                      </Text>
-                    </View>
-                  )}
-
-                {Platform.OS === 'ios' &&
-                  'environmentIOS' in purchase &&
-                  purchase.environmentIOS && (
-                    <View style={styles.purchaseRow}>
-                      <Text style={styles.label}>Environment:</Text>
-                      <Text style={styles.value}>
-                        {purchase.environmentIOS}
-                      </Text>
-                    </View>
-                  )}
-              </View>
+              <PurchaseDetails
+                purchase={purchase}
+                containerStyle={styles.purchaseDetails}
+                rowStyle={styles.purchaseRow}
+                labelStyle={styles.label}
+                valueStyle={styles.value}
+              />
             </View>
           ))}
         </View>

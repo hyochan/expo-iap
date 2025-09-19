@@ -11,11 +11,17 @@ import {
   Modal,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import {requestPurchase, useIAP, showManageSubscriptionsIOS} from '../../src';
+import {
+  requestPurchase,
+  useIAP,
+  showManageSubscriptionsIOS,
+  deepLinkToSubscriptions,
+} from '../../src';
 import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {ProductSubscription, PurchaseIOS, Purchase} from '../../src/types';
-import type {PurchaseError} from '../../src/purchase-error';
+import type {PurchaseError} from '../../src/utils/errorMapping';
+import PurchaseDetails from '../src/components/PurchaseDetails';
 
 /**
  * Subscription Flow Example - Subscription Products
@@ -97,7 +103,11 @@ export default function SubscriptionFlow() {
       let isPurchased = false;
       let isRestoration = false;
 
-      if (Platform.OS === 'ios' && purchase.platform === 'ios') {
+      const purchasePlatform = (purchase.platform ?? '')
+        .toString()
+        .toLowerCase();
+
+      if (Platform.OS === 'ios' && purchasePlatform === 'ios') {
         // Type-safe access to iOS-specific fields
         const iosPurchase = purchase as PurchaseIOS;
 
@@ -129,7 +139,7 @@ export default function SubscriptionFlow() {
         );
         console.log('  currentTransactionId:', purchase.id);
         console.log('  transactionReason:', iosPurchase.transactionReasonIOS);
-      } else if (Platform.OS === 'android' && purchase.platform === 'android') {
+      } else if (Platform.OS === 'android' && purchasePlatform === 'android') {
         // For Android, consider it purchased if we received the purchase callback
         // The purchase callback itself indicates success in most cases
         isPurchased = true;
@@ -382,6 +392,24 @@ export default function SubscriptionFlow() {
     // Find the subscription to get offer details for Android
     const subscription = subscriptions.find((sub) => sub.id === itemId);
 
+    const androidOffers =
+      subscription &&
+      'subscriptionOfferDetailsAndroid' in subscription &&
+      Array.isArray(subscription.subscriptionOfferDetailsAndroid)
+        ? subscription.subscriptionOfferDetailsAndroid
+            .map((offer) =>
+              offer?.offerToken
+                ? {
+                    sku: itemId,
+                    offerToken: offer.offerToken,
+                  }
+                : null,
+            )
+            .filter((offer): offer is {sku: string; offerToken: string} =>
+              Boolean(offer?.offerToken),
+            )
+        : [];
+
     // Fire-and-forget: requestPurchase is event-based; handle results via hook callbacks
     if (typeof requestPurchase !== 'function') {
       console.warn(
@@ -400,14 +428,7 @@ export default function SubscriptionFlow() {
         android: {
           skus: [itemId],
           subscriptionOffers:
-            subscription &&
-            'subscriptionOfferDetailsAndroid' in subscription &&
-            subscription.subscriptionOfferDetailsAndroid
-              ? subscription.subscriptionOfferDetailsAndroid.map((offer) => ({
-                  sku: itemId,
-                  offerToken: offer.offerToken,
-                }))
-              : [],
+            androidOffers.length > 0 ? androidOffers : undefined,
         },
       },
       type: 'subs',
@@ -443,19 +464,27 @@ export default function SubscriptionFlow() {
   const handleManageSubscriptions = async () => {
     try {
       if (Platform.OS === 'ios') {
-        console.log('Opening subscription management...');
-        await showManageSubscriptionsIOS();
+        console.log('Opening subscription management (iOS)...');
+        await showManageSubscriptionsIOS().catch((error) => {
+          console.warn(
+            '[SubscriptionFlow] showManageSubscriptionsIOS failed, falling back to deep link',
+            error,
+          );
+        });
+        await deepLinkToSubscriptions({});
         console.log('Subscription management opened');
 
         // After returning from subscription management, refresh status
         console.log('Refreshing subscription status after management...');
         checkSubscriptionStatus();
       } else {
-        Alert.alert(
-          'Manage Subscriptions',
-          'On Android, subscriptions are managed through Google Play Store.\n\n' +
-            'Go to: Play Store → Menu → Subscriptions',
-          [{text: 'OK', style: 'default'}],
+        const sku = subscriptions[0]?.id ?? SUBSCRIPTION_PRODUCT_IDS[0];
+        const packageName = 'dev.hyo.martie';
+        console.log('Opening subscription management (Android)...');
+        await deepLinkToSubscriptions(
+          sku
+            ? {skuAndroid: sku, packageNameAndroid: packageName}
+            : {packageNameAndroid: packageName},
         );
       }
     } catch (error) {
@@ -946,35 +975,16 @@ export default function SubscriptionFlow() {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalContent}>
-              {lastPurchase && (
-                <View style={{gap: 6}}>
-                  <Text style={styles.detailLabel}>Transaction ID</Text>
-                  <Text style={styles.detailValue}>{lastPurchase.id}</Text>
-
-                  <Text style={styles.detailLabel}>Product ID</Text>
-                  <Text style={styles.detailValue}>
-                    {lastPurchase.productId}
-                  </Text>
-
-                  <Text style={styles.detailLabel}>Platform</Text>
-                  <Text style={styles.detailValue}>
-                    {lastPurchase.platform}
-                  </Text>
-
-                  <Text style={styles.detailLabel}>Date</Text>
-                  <Text style={styles.detailValue}>
-                    {new Date(lastPurchase.transactionDate).toLocaleString()}
-                  </Text>
-
-                  {lastPurchase.purchaseToken ? (
-                    <>
-                      <Text style={styles.detailLabel}>Purchase Token</Text>
-                      <Text style={styles.detailValue}>
-                        {lastPurchase.purchaseToken}
-                      </Text>
-                    </>
-                  ) : null}
-                </View>
+              {lastPurchase ? (
+                <PurchaseDetails
+                  purchase={lastPurchase}
+                  containerStyle={styles.purchaseDetailsContainer}
+                  rowStyle={styles.purchaseDetailRow}
+                  labelStyle={styles.detailLabel}
+                  valueStyle={styles.detailValue}
+                />
+              ) : (
+                <Text style={styles.detailValue}>No purchase recorded.</Text>
               )}
             </ScrollView>
           </View>
@@ -1197,6 +1207,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     marginBottom: 5,
+  },
+  purchaseDetailsContainer: {
+    gap: 10,
+  },
+  purchaseDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   detailsButton: {
     paddingVertical: 10,

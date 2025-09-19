@@ -15,9 +15,8 @@ import type {
   ReceiptValidationResultIOS,
   SubscriptionStatusIOS,
 } from '../types';
-import type {PurchaseError} from '../purchase-error';
-import {Linking} from 'react-native';
-import {normalizePurchaseId, normalizePurchaseList} from '../utils/purchase';
+import type {PurchaseError} from '../utils/errorMapping';
+import {Linking, Platform} from 'react-native';
 
 export type TransactionEvent = {
   transaction?: Purchase;
@@ -34,7 +33,8 @@ export function isProductIOS<T extends {platform?: string}>(
     item != null &&
     typeof item === 'object' &&
     'platform' in item &&
-    (item as any).platform === 'ios'
+    typeof (item as any).platform === 'string' &&
+    (item as any).platform.toLowerCase() === 'ios'
   );
 }
 
@@ -105,7 +105,7 @@ export const currentEntitlementIOS: QueryField<
     throw new Error('currentEntitlementIOS requires a SKU');
   }
   const purchase = await ExpoIapModule.currentEntitlementIOS(sku);
-  return normalizePurchaseId((purchase ?? null) as PurchaseIOS | null);
+  return (purchase ?? null) as PurchaseIOS | null;
 };
 
 /**
@@ -124,7 +124,7 @@ export const latestTransactionIOS: QueryField<'latestTransactionIOS'> = async (
     throw new Error('latestTransactionIOS requires a SKU');
   }
   const transaction = await ExpoIapModule.latestTransactionIOS(sku);
-  return normalizePurchaseId((transaction ?? null) as PurchaseIOS | null);
+  return (transaction ?? null) as PurchaseIOS | null;
 };
 
 /**
@@ -159,7 +159,7 @@ export const showManageSubscriptionsIOS: MutationField<
   'showManageSubscriptionsIOS'
 > = async () => {
   const purchases = await ExpoIapModule.showManageSubscriptionsIOS();
-  return normalizePurchaseList((purchases ?? []) as PurchaseIOS[]);
+  return (purchases ?? []) as PurchaseIOS[];
 };
 
 /**
@@ -177,6 +177,28 @@ export const getReceiptDataIOS: QueryField<'getReceiptDataIOS'> = async () => {
 };
 
 export const getReceiptIOS = getReceiptDataIOS;
+
+/**
+ * Retrieves the current storefront information from the iOS App Store.
+ *
+ * @returns Promise resolving to the storefront country code
+ * @throws Error if called on non-iOS platform
+ *
+ * @example
+ * ```typescript
+ * const storefront = await getStorefrontIOS();
+ * console.log(storefront); // 'US'
+ * ```
+ *
+ * @platform iOS
+ */
+export const getStorefrontIOS: QueryField<'getStorefrontIOS'> = async () => {
+  if (Platform.OS !== 'ios') {
+    console.warn('getStorefrontIOS: This method is only available on iOS');
+    return '';
+  }
+  return ExpoIapModule.getStorefrontIOS();
+};
 
 /**
  * Check if a transaction is verified through StoreKit 2.
@@ -242,19 +264,9 @@ const validateReceiptIOSImpl = async (
     throw new Error('validateReceiptIOS requires a SKU');
   }
 
-  const result = (await ExpoIapModule.validateReceiptIOS(
+  return (await ExpoIapModule.validateReceiptIOS(
     sku,
   )) as ReceiptValidationResultIOS;
-  const normalizedLatest = normalizePurchaseId(
-    result.latestTransaction ?? undefined,
-  );
-  if (normalizedLatest === result.latestTransaction) {
-    return result;
-  }
-  return {
-    ...result,
-    latestTransaction: normalizedLatest ?? null,
-  };
 };
 
 export const validateReceiptIOS =
@@ -340,7 +352,7 @@ export const getPendingTransactionsIOS: QueryField<
   'getPendingTransactionsIOS'
 > = async () => {
   const transactions = await ExpoIapModule.getPendingTransactionsIOS();
-  return normalizePurchaseList((transactions ?? []) as PurchaseIOS[]);
+  return (transactions ?? []) as PurchaseIOS[];
 };
 
 /**
