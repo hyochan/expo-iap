@@ -318,7 +318,7 @@ purchaseUpdatedListener((purchase) => {
 
 **fetchProducts() Introduction**
 
-`fetchProducts()` replaces `fetchProducts()`:
+`fetchProducts()` replaces `requestProducts()`:
 
 ```tsx
 // ❌ Old (deprecated in v2.8.7)
