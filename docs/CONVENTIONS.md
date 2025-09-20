@@ -79,7 +79,7 @@ export interface Platform {
 
 ```typescript
 // ✅ Good - Clear parameter and return types
-export const requestProducts = async (params: {
+export const fetchProducts = async (params: {
   skus: string[];
   type?: 'in-app' | 'subs';
 }): Promise<Product[]> => {
@@ -87,7 +87,7 @@ export const requestProducts = async (params: {
 };
 
 // ❌ Bad - Missing types
-export const requestProducts = async (params) => {
+export const fetchProducts = async (params) => {
   // implementation
 };
 
@@ -161,7 +161,7 @@ export const deepLinkToSubscriptionsAndroid = async ({
 
 ```typescript
 // These functions handle platform differences internally
-export const requestProducts = async (params: {
+export const fetchProducts = async (params: {
   skus: string[];
   type?: 'in-app' | 'subs';
 }): Promise<Product[]> => {
@@ -294,12 +294,12 @@ Always use async/await over promises:
 
 ```typescript
 // ✅ Good
-export const requestProducts = async (params: {
+export const fetchProducts = async (params: {
   skus: string[];
   type?: 'in-app' | 'subs';
 }): Promise<Product[]> => {
   try {
-    const products = await ExpoIapModule.requestProducts(params);
+    const products = await ExpoIapModule.fetchProducts(params);
     return products;
   } catch (error) {
     console.error('Failed to get products:', error);
@@ -308,8 +308,8 @@ export const requestProducts = async (params: {
 };
 
 // ❌ Bad
-export const requestProducts = (params): Promise<Product[]> => {
-  return ExpoIapModule.requestProducts(params)
+export const fetchProducts = (params): Promise<Product[]> => {
+  return ExpoIapModule.fetchProducts(params)
     .then((products) => products)
     .catch((error) => {
       console.error('Failed to get products:', error);
@@ -334,12 +334,12 @@ All public APIs must have JSDoc comments:
  *
  * @example
  * ```typescript
- * const products = await requestProducts({ skus: ['com.example.premium'], type: 'in-app' });
+ * const products = await fetchProducts({ skus: ['com.example.premium'], type: 'in-app' });
  * ```
  *
  * @platform iOS
  */
-export const requestProductsIOS = async (params: {
+export const fetchProductsIOS = async (params: {
   skus: string[];
   type?: 'in-app' | 'subs';
 }): Promise<ProductIOS[]> => {
@@ -357,7 +357,7 @@ export const requestProductsIOS = async (params: {
 ### Hook vs Root API Semantics
 
 - useIAP (hook) methods are designed for React state flows and generally return `Promise<void>` while updating internal state. Do not expect data from these methods.
-  - Examples: `fetchProducts`, `requestProducts`, `getProducts` (deprecated helper), `getSubscriptions` (deprecated helper), `requestPurchase`, `getAvailablePurchases`.
+  - Examples: `fetchProducts`, `requestPurchase`, `getAvailablePurchases`.
   - Pattern: call the method, then read from hook state such as `products`, `subscriptions`, `availablePurchases`.
 - Exceptions in the hook API:
   - `getActiveSubscriptions(subscriptionIds?) => Promise<ActiveSubscription[]>` returns computed subscription info and also updates `activeSubscriptions` state.
@@ -378,7 +378,7 @@ describe('PurchaseManager', () => {
     });
 
     it('should get products on iOS', async () => {
-      const products = await requestProductsIOS({
+      const products = await fetchProductsIOS({
         skus: ['com.example.product'],
         type: 'in-app',
       });
@@ -393,7 +393,7 @@ describe('PurchaseManager', () => {
 
     it('should throw error on Android', async () => {
       await expect(
-        requestProductsIOS({skus: ['com.example.product'], type: 'in-app'}),
+        fetchProductsIOS({skus: ['com.example.product'], type: 'in-app'}),
       ).rejects.toThrow('This method is only available on iOS');
     });
   });
@@ -547,8 +547,8 @@ await requestPurchase({
   type: 'subs',
 });
 
-// ❌ Bad - Using deprecated requestSubscription
-await requestSubscription({
+// ❌ Bad - Using deprecated requestPurchase
+await requestPurchase({
   sku: subscriptionId,
   skus: [subscriptionId],
 });

@@ -139,8 +139,6 @@ describe('Public API (index.ts)', () => {
       expect(res).toEqual([{platform: 'android', id: 'sub2'}]);
     });
 
-    // Removed legacy getProducts/getSubscriptions in v3.0.0
-
     it('fetchProducts rejects on empty skus', async () => {
       await expect(
         fetchProducts({skus: [], type: 'in-app'}),
@@ -331,38 +329,6 @@ describe('Public API (index.ts)', () => {
   });
 
   describe('legacy wrappers and getters', () => {
-    it('getProducts and getSubscriptions delegate and filter', async () => {
-      (Platform as any).OS = 'android';
-      (ExpoIapModule.fetchProducts as jest.Mock) = jest.fn().mockResolvedValue([
-        {platform: 'android', id: 'a'},
-        {platform: 'android', id: 'b'},
-      ]);
-      expect(true).toBe(true);
-
-      (Platform as any).OS = 'ios';
-      (Platform as any).select = (obj: any) => obj.ios;
-      (ExpoIapModule.fetchProducts as jest.Mock) = jest.fn().mockResolvedValue([
-        {platform: 'ios', id: 's1'},
-        {platform: 'ios', id: 's2'},
-      ]);
-      expect(true).toBe(true);
-    });
-
-    it('requestProducts placeholder (removed in v3)', async () => {
-      // Removed legacy API in v3; keeping placeholder to maintain suite structure
-      expect(true).toBe(true);
-    });
-
-    it('requestSubscription warns and calls purchase with subs', async () => {
-      (Platform as any).OS = 'android';
-      (ExpoIapModule.requestPurchase as jest.Mock) = jest
-        .fn()
-        .mockResolvedValue([]);
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      expect(true).toBe(true);
-      warnSpy.mockRestore();
-    });
-
     it('getAvailablePurchases: iOS and Android paths', async () => {
       // iOS path
       (Platform as any).OS = 'ios';

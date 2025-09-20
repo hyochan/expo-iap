@@ -43,7 +43,7 @@ When you use the `useIAP` hook, it automatically:
 import {useIAP} from 'expo-iap';
 
 export default function App() {
-  const {connected, products, requestProducts} = useIAP();
+  const {connected, products, fetchProducts} = useIAP();
 
   useEffect(() => {
     // Connection is automatically established
@@ -52,7 +52,7 @@ export default function App() {
       // You can now safely call store methods
       fetchProducts({skus: ['product1', 'product2'], type: 'in-app'});
     }
-  }, [connected, requestProducts]);
+  }, [connected, fetchProducts]);
 
   return <YourAppContent />;
 }
@@ -223,7 +223,7 @@ export default function StoreComponent() {
 ```tsx
 // ✅ Good: Using useIAP hook
 function MyApp() {
-  const {connected, products, requestProducts} = useIAP();
+  const {connected, products, fetchProducts} = useIAP();
 
   useEffect(() => {
     if (connected) {

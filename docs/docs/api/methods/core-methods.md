@@ -776,6 +776,3 @@ This ensures pending transactions are surfaced and properly resolved without a s
 ## Removed APIs
 
 - `requestProducts()` — Removed in v3.0.0. Use `fetchProducts({ skus, type })` instead.
-- `getProducts()` — Removed in v3.0.0. Use `fetchProducts({ skus, type: 'in-app' })` instead.
-- `getSubscriptions()` — Removed in v3.0.0. Use `fetchProducts({ skus, type: 'subs' })` instead.
-- `requestSubscription()` — Removed in v3.0.0. Use `requestPurchase({ ..., type: 'subs' })` and supply Android `subscriptionOffers`.

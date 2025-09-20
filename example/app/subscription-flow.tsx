@@ -314,7 +314,7 @@ export default function SubscriptionFlow() {
     if (connected && !didFetchSubsRef.current) {
       didFetchSubsRef.current = true;
       console.log('Connected to store, loading subscription products...');
-      // requestProducts is event-based, not promise-based
+      // fetchProducts populates hook state; results surface via subscriptions state
       // Results will be available through the useIAP hook's subscriptions state
       fetchProducts({skus: subscriptionIds, type: 'subs'});
       console.log('Product loading request sent - waiting for results...');

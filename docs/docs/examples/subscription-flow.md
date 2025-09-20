@@ -81,7 +81,7 @@ export default function SubscriptionManager() {
     subscriptions,
     currentPurchase,
     currentPurchaseError,
-    requestProducts,
+    fetchProducts,
     getAvailablePurchases,
     requestPurchase,
     finishTransaction,

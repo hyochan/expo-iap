@@ -20,7 +20,6 @@ module.exports = {
     clearTransactionIOS: jest.fn(),
     // Common methods
     fetchProducts: jest.fn(),
-    requestProducts: jest.fn(),
     requestPurchase: jest.fn(),
     requestPurchaseOnPromotedProductIOS: jest.fn(),
     // Android-specific methods

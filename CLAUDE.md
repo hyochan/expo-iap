@@ -93,7 +93,7 @@ The library follows the OpenIAP type specifications with platform-specific exten
 ### Hook API Semantics (useIAP)
 
 - Inside the `useIAP` hook, most methods return `Promise<void>` and update internal state. Do not design examples or implementations that expect data from these methods.
-  - Examples: `fetchProducts`, `requestProducts`, `getProducts`/`getSubscriptions` (deprecated helpers), `requestPurchase`, `getAvailablePurchases`.
+  - Examples: `fetchProducts`, `requestPurchase`, `getAvailablePurchases`.
   - After calling, consume state from the hook: `products`, `subscriptions`, `availablePurchases`, etc.
 - Defined exceptions that DO return values in the hook:
   - `getActiveSubscriptions(subscriptionIds?) => Promise<ActiveSubscription[]>` (also updates `activeSubscriptions` state)
@@ -102,7 +102,7 @@ The library follows the OpenIAP type specifications with platform-specific exten
 
 ### API Method Naming
 
-- Functions that depend on event results should use `request` prefix (e.g., `requestPurchase`, `requestSubscription`)
+- Functions that depend on event results should use `request` prefix (e.g., `requestPurchase`)
 - Follow OpenIAP terminology: <https://www.openiap.dev/docs/apis#terminology>
 - Do not use generic prefixes like `get`, `find` - refer to the official terminology
 

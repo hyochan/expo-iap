@@ -145,7 +145,7 @@ The helper `getActiveSubscriptions` in `src/helpers/subscription.ts` converts `P
 The request types have been harmonised to match the schema definitions.
 
 ```ts
-export interface RequestPurchaseProps {
+export interface RequestPurchasePropsByPlatforms {
   android?: RequestPurchaseAndroidProps | null;
   ios?: RequestPurchaseIosProps | null;
 }
@@ -155,11 +155,15 @@ export interface RequestSubscriptionPropsByPlatforms {
   ios?: RequestSubscriptionIosProps | null;
 }
 
-export interface RequestPurchaseParams {
-  requestPurchase?: RequestPurchasePropsByPlatforms | null;
-  requestSubscription?: RequestSubscriptionPropsByPlatforms | null;
-  type?: ProductQueryType | null;
-}
+export type MutationRequestPurchaseArgs =
+  | {
+      request: RequestPurchasePropsByPlatforms;
+      type: 'in-app';
+    }
+  | {
+      request: RequestSubscriptionPropsByPlatforms;
+      type: 'subs';
+    };
 ```
 
 ## Receipt Validation

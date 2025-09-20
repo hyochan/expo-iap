@@ -39,11 +39,11 @@ This is one of the most common issues. Here are the potential causes and solutio
 #### 1. Connection not established
 
 ```tsx
-const {connected, getProducts} = useIAP();
+const {connected, fetchProducts} = useIAP();
 
 useEffect(() => {
   if (connected) {
-    // ✅ Only call requestProducts when connected
+    // ✅ Only call fetchProducts when connected
     fetchProducts({skus: productIds, type: 'in-app'});
   } else {
     console.log('Not connected to store yet');

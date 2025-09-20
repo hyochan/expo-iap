@@ -16,8 +16,8 @@ This guide helps you migrate from `react-native-iap` to `expo-iap`. While the AP
 
 v3 unifies tokens and removes legacy helpers to simplify the surface.
 
-- Removed functions: `getProducts`, `getSubscriptions`, `requestProducts`, `requestSubscription`, `getPurchaseHistory` / `getPurchaseHistories`, and non‑suffixed iOS aliases
-- Use `fetchProducts({ skus, type })` and `requestPurchase({ request, type })`
+- Legacy product/subscription listing helpers were removed; use `fetchProducts({ skus, type })` for both purchases and subscriptions.
+- Prefer `fetchProducts({ skus, type })` alongside `requestPurchase({ request, type })`
 - `showManageSubscriptionsIOS(): Promise<Purchase[]>` now returns purchases
 - `getAvailablePurchases` options are iOS‑only: `alsoPublishToEventListenerIOS`, `onlyIncludeActiveItemsIOS`
 - Tokens: Use `purchase.purchaseToken` for both platforms
@@ -25,10 +25,9 @@ v3 unifies tokens and removes legacy helpers to simplify the surface.
 Quick mappings:
 
 ```ts
-// getProducts/getSubscriptions/requestProducts → fetchProducts
+// Legacy product/subscription helpers → fetchProducts
 await fetchProducts({skus: ['id1', 'id2'], type: 'in-app'});
 
-// requestSubscription → requestPurchase with subs
 await requestPurchase({
   request: {
     ios: {sku: 'sub_monthly'},
@@ -72,7 +71,7 @@ import {useIAP, withIAPContext} from 'react-native-iap';
 const AppWithIAP = withIAPContext(App);
 
 function App() {
-  const {connected, products, getProducts} = useIAP();
+  const {connected, products, fetchProducts} = useIAP();
   // ...
 }
 ```
@@ -84,7 +83,7 @@ import {useIAP} from 'expo-iap';
 
 // No context wrapper needed
 function App() {
-  const {connected, products, getProducts} = useIAP();
+  const {connected, products, fetchProducts} = useIAP();
   // Connection and listeners are automatically managed
 }
 ```
@@ -138,7 +137,7 @@ Replace all react-native-iap imports:
 // Before
 import {
   initConnection,
-  getProducts,
+  fetchProducts,
   requestPurchase,
   useIAP,
   withIAPContext,
@@ -147,7 +146,7 @@ import {
 // After
 import {
   initConnection,
-  getProducts,
+  fetchProducts,
   requestPurchase,
   useIAP,
   // withIAPContext not needed
@@ -195,8 +194,8 @@ const {
   currentPurchase,
   currentPurchaseError,
   finishTransaction,
-  getProducts,
-  getSubscriptions,
+  fetchProducts,
+  fetchProducts,
 } = useIAP();
 ```
 
@@ -212,8 +211,8 @@ const {
   currentPurchase,
   currentPurchaseError,
   finishTransaction,
-  getProducts,
-  getSubscriptions,
+  fetchProducts,
+  fetchProducts,
   getPurchaseHistories, // Method: plural form in expo-iap v2.6.0+
   getAvailablePurchases,
   // Additional methods and better typing
@@ -319,11 +318,11 @@ purchaseUpdatedListener((purchase) => {
 
 **fetchProducts() Introduction**
 
-`fetchProducts()` replaces `requestProducts()`:
+`fetchProducts()` replaces `fetchProducts()`:
 
 ```tsx
 // ❌ Old (deprecated in v2.8.7)
-const products = await requestProducts({skus: ['product1'], type: 'in-app'});
+const products = await fetchProducts({skus: ['product1'], type: 'in-app'});
 
 // ✅ New (v2.8.7+)
 const products = await fetchProducts({skus: ['product1'], type: 'in-app'});
@@ -362,26 +361,9 @@ await getPurchaseHistories(); // Note: plural form in expo-iap v2.6.0+
 
 ### Deprecated Methods in expo-iap
 
-> **⚠️ Important:** The following methods are deprecated and will be removed in a future version:
-
-| Deprecated Method        | Replacement                               |
-| ------------------------ | ----------------------------------------- |
-| `getProducts(skus)`      | `fetchProducts({ skus, type: 'in-app' })` |
-| `getSubscriptions(skus)` | `fetchProducts({ skus, type: 'subs' })`   |
-
-**Migration Examples:**
+> **⚠️ Important:** Dedicated product/subscription request helpers have been removed. Always call `fetchProducts({ skus, type })` for both consumables and subscriptions.
 
 ```tsx
-// Old way (deprecated)
-import {getProducts, getSubscriptions} from 'expo-iap';
-
-const products = await fetchProducts({
-  skus: ['product1', 'product2'],
-  type: 'in-app',
-});
-const subs = await fetchProducts({skus: ['sub1', 'sub2'], type: 'subs'});
-
-// New way (recommended)
 import {fetchProducts} from 'expo-iap';
 
 const products = await fetchProducts({
@@ -389,7 +371,10 @@ const products = await fetchProducts({
   type: 'in-app',
 });
 
-const subs = await fetchProducts({skus: ['sub1', 'sub2'], type: 'subs'});
+const subscriptions = await fetchProducts({
+  skus: ['sub1', 'sub2'],
+  type: 'subs',
+});
 ```
 
 ### New Methods
@@ -423,7 +408,7 @@ Create a simple test to ensure basic functionality works:
 import {useIAP} from 'expo-iap';
 
 export default function MigrationTest() {
-  const {connected, getProducts} = useIAP();
+  const {connected, fetchProducts} = useIAP();
 
   useEffect(() => {
     if (connected) {
@@ -437,7 +422,7 @@ export default function MigrationTest() {
           console.error('❌ Product fetch failed:', error);
         });
     }
-  }, [connected, getProducts]);
+  }, [connected, fetchProducts]);
 
   return (
     <View>

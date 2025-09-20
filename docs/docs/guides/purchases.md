@@ -164,7 +164,7 @@ export default function PurchaseScreen() {
     subscriptions,
     currentPurchase,
     currentPurchaseError,
-    requestProducts,
+    fetchProducts,
     requestPurchase,
     finishTransaction,
     validateReceipt,
@@ -189,7 +189,7 @@ export default function PurchaseScreen() {
     };
 
     initializeIAP();
-  }, [connected, requestProducts]);
+  }, [connected, fetchProducts]);
 
   // Validate receipt helper
   const handleValidateReceipt = useCallback(

@@ -97,7 +97,7 @@ Common causes:
 5. **Store setup incomplete** - see platform-specific requirements below
 
 ```tsx
-const {connected, requestProducts} = useIAP();
+const {connected, fetchProducts} = useIAP();
 
 useEffect(() => {
   if (connected) {
@@ -360,7 +360,7 @@ When using the `useIAP` hook:
 
 - Products are automatically cached by the native StoreKit (iOS) and Google Play Billing (Android) modules
 - The hook maintains state of fetched products in the `products` and `subscriptions` arrays
-- Simply call `requestProducts` when needed - the library handles caching efficiently
+- Simply call `fetchProducts` when needed - the library handles caching efficiently
 
 ```tsx
 // No manual caching needed - just fetch when connected
@@ -420,7 +420,7 @@ const {
   connected,
   products,
   purchases,
-  requestProducts, // Updated method name
+  fetchProducts, // Updated method name
   requestPurchase,
   finishTransaction,
   // ... other methods

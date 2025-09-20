@@ -187,25 +187,6 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     [],
   );
 
-  const getSubscriptionsInternal = useCallback(
-    async (skus: string[]): Promise<void> => {
-      try {
-        const result = await fetchProducts({skus, type: 'subs'});
-        const subscriptionsResult = (result ?? []) as ProductSubscription[];
-        setSubscriptions((prevSubscriptions) =>
-          mergeWithDuplicateCheck(
-            prevSubscriptions,
-            subscriptionsResult,
-            (subscription) => subscription.id,
-          ),
-        );
-      } catch (error) {
-        console.error('Error fetching subscriptions:', error);
-      }
-    },
-    [mergeWithDuplicateCheck],
-  );
-
   const fetchProductsInternal = useCallback(
     async (params: {
       skus: string[];
@@ -330,14 +311,14 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     async (productId: string) => {
       try {
         if (subscriptionsRefState.current.some((sub) => sub.id === productId)) {
-          await getSubscriptionsInternal([productId]);
+          await fetchProductsInternal({skus: [productId], type: 'subs'});
           await getAvailablePurchasesInternal();
         }
       } catch (error) {
         console.warn('Failed to refresh subscription status:', error);
       }
     },
-    [getAvailablePurchasesInternal, getSubscriptionsInternal],
+    [fetchProductsInternal, getAvailablePurchasesInternal],
   );
 
   // Restore completed transactions with cross-platform behavior.

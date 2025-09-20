@@ -54,7 +54,7 @@ type SubscriptionOffer = {
 ### With expo-iap v2.6.0+
 
 ```typescript
-import {requestProducts} from 'expo-iap';
+import {fetchProducts} from 'expo-iap';
 
 const subscriptions = await fetchProducts({
   skus: ['com.example.premium'],

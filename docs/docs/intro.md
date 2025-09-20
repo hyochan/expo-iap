@@ -53,7 +53,7 @@ function MyStore() {
   const {
     connected,
     products,
-    requestProducts,
+    fetchProducts,
     requestPurchase,
     currentPurchase,
     finishTransaction,

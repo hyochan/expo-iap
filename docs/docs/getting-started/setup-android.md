@@ -37,7 +37,7 @@ const androidProductIds = [
 ];
 
 function App() {
-  const {connected, products, subscriptions, requestProducts, requestPurchase} =
+  const {connected, products, subscriptions, fetchProducts, requestPurchase} =
     useIAP({
       onPurchaseSuccess: (purchase) => {
         console.log('Purchase successful:', purchase);
