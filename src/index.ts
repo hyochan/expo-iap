@@ -508,9 +508,10 @@ export const finishTransaction: MutationField<'finishTransaction'> = async ({
   isConsumable = false,
 }) => {
   if (Platform.OS === 'ios') {
-    const transactionId = purchase.id;
+    const transactionId =
+      ('transactionId' in purchase && purchase.transactionId) || purchase.id;
     if (!transactionId) {
-      throw new Error('purchase.id required to finish iOS transaction');
+      throw new Error('transaction identifier required to finish iOS transaction');
     }
     await ExpoIapModule.finishTransaction(transactionId);
     return;
@@ -547,7 +548,8 @@ export const finishTransaction: MutationField<'finishTransaction'> = async ({
  *   then fetch available purchases to surface restored items to the app.
  * - Android: simply fetch available purchases (restoration happens via query).
  *
- * This helper returns the restored/available purchases so callers can update UI/state.
+ * This helper triggers the refresh flows but does not return the purchases; consumers should
+ * call `getAvailablePurchases` or rely on hook state to inspect the latest items.
  */
 export const restorePurchases: MutationField<'restorePurchases'> = async () => {
   if (Platform.OS === 'ios') {

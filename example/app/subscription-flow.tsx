@@ -465,13 +465,19 @@ export default function SubscriptionFlow() {
     try {
       if (Platform.OS === 'ios') {
         console.log('Opening subscription management (iOS)...');
-        await showManageSubscriptionsIOS().catch((error) => {
-          console.warn(
-            '[SubscriptionFlow] showManageSubscriptionsIOS failed, falling back to deep link',
-            error,
-          );
-        });
-        await deepLinkToSubscriptions({});
+        const openedNative = await showManageSubscriptionsIOS()
+          .then(() => true)
+          .catch((error) => {
+            console.warn(
+              '[SubscriptionFlow] showManageSubscriptionsIOS failed, falling back to deep link',
+              error,
+            );
+            return false;
+          });
+
+        if (!openedNative) {
+          await deepLinkToSubscriptions({});
+        }
         console.log('Subscription management opened');
 
         // After returning from subscription management, refresh status

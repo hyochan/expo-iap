@@ -423,14 +423,24 @@ describe('Public API (index.ts)', () => {
       };
       await expect(
         finishTransaction({purchase: {...basePurchase, id: ''} as any}),
-      ).rejects.toThrow('purchase.id required');
+      ).rejects.toThrow(
+        'transaction identifier required to finish iOS transaction',
+      );
 
       (ExpoIapModule.finishTransaction as jest.Mock) = jest
         .fn()
         .mockResolvedValue(true);
+      const purchaseWithTransactionId = {
+        ...basePurchase,
+        id: 'legacy-id',
+        transactionId: 'storekit-transaction-id',
+      } as any;
       await expect(
-        finishTransaction({purchase: {...basePurchase, id: 'tid'} as any}),
+        finishTransaction({purchase: purchaseWithTransactionId}),
       ).resolves.toBeUndefined();
+      expect(ExpoIapModule.finishTransaction).toHaveBeenCalledWith(
+        'storekit-transaction-id',
+      );
     });
 
     it('Android consume vs acknowledge flows', async () => {
