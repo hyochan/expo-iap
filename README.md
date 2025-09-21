@@ -42,6 +42,7 @@ Quick links:
 
 - [llms.txt](https://hyochan.github.io/expo-iap/llms.txt) - Quick reference
 - [llms-full.txt](https://hyochan.github.io/expo-iap/llms-full.txt) - Full API reference
+- [Onside Integration](https://hyochan.github.io/expo-iap/guides/onside-integration) - Using Onside marketplace payments on iOS
 
 ## Notice
 

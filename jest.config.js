@@ -24,6 +24,7 @@ module.exports = {
   moduleNameMapper: {
     '^react-native$': '<rootDir>/src/__mocks__/react-native.js',
     '^expo-modules-core$': '<rootDir>/src/__mocks__/expo-modules-core.js',
+    '^expo-onside$': '<rootDir>/src/__mocks__/expo-onside.js',
   },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

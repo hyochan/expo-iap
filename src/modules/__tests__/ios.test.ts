@@ -28,6 +28,8 @@ jest.mock('../../ExpoIapModule', () => ({
   },
 }));
 
+jest.mock('expo-onside');
+
 // Mock React Native's Linking module
 jest.mock('react-native', () => ({
   Linking: {

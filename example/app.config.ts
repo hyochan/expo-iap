@@ -97,7 +97,7 @@ export default ({config}: ConfigContext): ExpoConfig => {
           kotlinVersion: '2.2.0',
         },
         ios: {
-          deploymentTarget: isTV ? '16.0' : '15.1',
+          deploymentTarget: '16.0',
         },
       },
     ],

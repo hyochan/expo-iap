@@ -5,7 +5,11 @@
   ],
   "ios": {
     "modules": [
-      "ExpoIapModule"
+      "ExpoIapModule",
+      "ExpoOnsideModule"
+    ],
+    "appDelegateSubscribers": [
+      "OnsideAppDelegateSubscriber"
     ]
   },
   "android": {
