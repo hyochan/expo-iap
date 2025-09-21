@@ -202,12 +202,15 @@ describe('Public API (index.ts)', () => {
         },
         type: 'in-app',
       });
-      expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith(
-        expect.objectContaining({
-          sku: 'sku1',
-          andDangerouslyFinishTransactionAutomatically: true,
-        }),
-      );
+      expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith({
+        type: 'in-app',
+        request: {
+          ios: {
+            sku: 'sku1',
+            andDangerouslyFinishTransactionAutomatically: true,
+          },
+        },
+      });
       expect(res).toEqual({id: 'x'});
     });
 
@@ -314,17 +317,15 @@ describe('Public API (index.ts)', () => {
         request: {ios: {sku: 'sku1', withOffer: offer}},
         type: 'in-app',
       } as any);
-      expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith(
-        expect.objectContaining({
-          withOffer: expect.objectContaining({
-            identifier: 'id',
-            keyIdentifier: 'key',
-            nonce: 'nonce',
-            signature: 'sig',
-            timestamp: expect.any(String),
-          }),
-        }),
-      );
+      expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith({
+        type: 'in-app',
+        request: {
+          ios: {
+            sku: 'sku1',
+            withOffer: offer,
+          },
+        },
+      });
     });
   });
 
@@ -375,7 +376,7 @@ describe('Public API (index.ts)', () => {
   });
 
   describe('finishTransaction', () => {
-    it('iOS rejects without transaction id and succeeds with id', async () => {
+    it('iOS forwards purchase payload to native finishTransaction', async () => {
       (Platform as any).OS = 'ios';
       (Platform as any).select = (obj: any) => obj.ios;
       const basePurchase = {
@@ -386,26 +387,23 @@ describe('Public API (index.ts)', () => {
         purchaseToken: 'jws-token',
         quantity: 1,
         transactionDate: Date.now(),
+        id: 'transaction-identifier',
       };
-      await expect(
-        finishTransaction({purchase: {...basePurchase, id: ''} as any}),
-      ).rejects.toThrow(
-        'transaction identifier required to finish iOS transaction',
-      );
-
       (ExpoIapModule.finishTransaction as jest.Mock) = jest
         .fn()
         .mockResolvedValue(true);
-      const purchaseWithTransactionId = {
-        ...basePurchase,
-        id: 'legacy-id',
-        transactionId: 'storekit-transaction-id',
-      } as any;
       await expect(
-        finishTransaction({purchase: purchaseWithTransactionId}),
+        finishTransaction({purchase: basePurchase as any}),
       ).resolves.toBeUndefined();
       expect(ExpoIapModule.finishTransaction).toHaveBeenCalledWith(
-        'storekit-transaction-id',
+        basePurchase,
+        false,
+      );
+
+      await finishTransaction({purchase: basePurchase as any, isConsumable: true});
+      expect(ExpoIapModule.finishTransaction).toHaveBeenLastCalledWith(
+        basePurchase,
+        true,
       );
     });
 

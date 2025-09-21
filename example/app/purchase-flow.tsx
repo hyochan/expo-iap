@@ -133,19 +133,6 @@ export default function PurchaseFlow() {
     });
   };
 
-  // Monitor products changes
-  useEffect(() => {
-    console.log('[PurchaseFlow] Products updated:', products.length, 'items');
-    products.forEach((product, index) => {
-      console.log(
-        `[PurchaseFlow] Product ${index}:`,
-        product.id,
-        product.title,
-        product.displayPrice,
-      );
-    });
-  }, [products]);
-
   const handleCopyResult = async () => {
     if (purchaseResult) {
       await Clipboard.setStringAsync(purchaseResult);

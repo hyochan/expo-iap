@@ -23,6 +23,7 @@ import type {
   DeepLinkOptions,
   FetchProductsResult,
   MutationField,
+  MutationRequestPurchaseArgs,
   MutationValidateReceiptArgs,
   Product,
   ProductQueryType,
@@ -36,7 +37,6 @@ import type {
   RequestSubscriptionPropsByPlatforms,
   RequestSubscriptionAndroidProps,
   RequestSubscriptionIosProps,
-  DiscountOfferInputIOS,
 } from './types';
 import {ErrorCode} from './types';
 import {createPurchaseError, type PurchaseError} from './utils/errorMapping';
@@ -309,19 +309,6 @@ export const getStorefront: QueryField<'getStorefrontIOS'> = async () => {
   return getStorefrontIOS();
 };
 
-const offerToRecordIOS = (
-  offer: DiscountOfferInputIOS | undefined,
-): Record<keyof DiscountOfferInputIOS, string> | undefined => {
-  if (!offer) return undefined;
-  return {
-    identifier: offer.identifier,
-    keyIdentifier: offer.keyIdentifier,
-    nonce: offer.nonce,
-    signature: offer.signature,
-    timestamp: offer.timestamp.toString(),
-  };
-};
-
 /**
  * Helper to normalize request props to platform-specific format
  */
@@ -398,24 +385,30 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
       );
     }
 
-    const {
-      sku,
-      andDangerouslyFinishTransactionAutomatically = false,
-      appAccountToken,
-      quantity,
-      withOffer,
-    } = normalizedRequest;
+    const payload: MutationRequestPurchaseArgs =
+      canonical === 'subs'
+        ? {
+            type: 'subs',
+            request: request as RequestSubscriptionPropsByPlatforms,
+          }
+        : {
+            type: 'in-app',
+            request: request as RequestPurchasePropsByPlatforms,
+          };
 
-    const offer = offerToRecordIOS(withOffer ?? undefined);
-    const purchase = await ExpoIapModule.requestPurchase({
-      sku,
-      andDangerouslyFinishTransactionAutomatically,
-      appAccountToken,
-      quantity,
-      withOffer: offer,
-    });
+    const purchase = (await ExpoIapModule.requestPurchase(
+      payload,
+    )) as Purchase | Purchase[] | null;
 
-    return normalizePurchasePlatform(purchase as Purchase);
+    if (Array.isArray(purchase)) {
+      return normalizePurchaseArray(purchase);
+    }
+
+    if (purchase) {
+      return normalizePurchasePlatform(purchase);
+    }
+
+    return canonical === 'subs' ? [] : null;
   }
 
   if (Platform.OS === 'android') {
@@ -508,12 +501,7 @@ export const finishTransaction: MutationField<'finishTransaction'> = async ({
   isConsumable = false,
 }) => {
   if (Platform.OS === 'ios') {
-    const transactionId =
-      ('transactionId' in purchase && purchase.transactionId) || purchase.id;
-    if (!transactionId) {
-      throw new Error('transaction identifier required to finish iOS transaction');
-    }
-    await ExpoIapModule.finishTransaction(transactionId);
+    await ExpoIapModule.finishTransaction(purchase, isConsumable);
     return;
   }
 
