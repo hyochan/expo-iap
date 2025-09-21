@@ -27,7 +27,7 @@ const PurchaseDetails: React.FC<PurchaseDetailsProps> = ({
   return (
     <View style={[styles.container, containerStyle]}>
       {rows.map((row) => (
-        <View key={`${row.label}-${row.value}`} style={[styles.row, rowStyle]}>
+        <View key={`${row.label}-${row.value}`} style={[rowStyle, styles.row]}>
           <Text style={[styles.label, labelStyle]}>{row.label}</Text>
           <Text style={[styles.value, valueStyle]}>{row.value}</Text>
         </View>
@@ -41,20 +41,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 12,
+    flexDirection: 'column',
+    gap: 4,
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e1e7ef',
   },
   label: {
-    flexShrink: 0,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#333',
+    color: '#4a4a4a',
   },
   value: {
-    flex: 1,
-    color: '#555',
-    textAlign: 'right',
+    fontSize: 13,
+    color: '#1f1f1f',
   },
 });
 

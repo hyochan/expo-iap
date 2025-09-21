@@ -16,6 +16,7 @@ import {PRODUCT_IDS} from '../../src/utils/constants';
 import type {Product, Purchase} from '../../src/types';
 import type {PurchaseError} from '../../src/utils/errorMapping';
 import PurchaseDetails from '../src/components/PurchaseDetails';
+import PurchaseSummaryRow from '../src/components/PurchaseSummaryRow';
 
 /**
  * Purchase Flow Example - In-App Products
@@ -51,12 +52,7 @@ export default function PurchaseFlow() {
       setIsProcessing(false);
 
       // Handle successful purchase
-      setPurchaseResult(
-        `✅ Purchase successful (${purchase.platform})\n` +
-          `Product: ${purchase.productId}\n` +
-          `Transaction ID: ${purchase.id || 'N/A'}\n` +
-          `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}`,
-      );
+      setPurchaseResult('Purchase completed successfully.');
 
       // IMPORTANT: Server-side receipt validation should be performed here
       // Send the receipt to your backend server for validation
@@ -81,7 +77,7 @@ export default function PurchaseFlow() {
       setIsProcessing(false);
 
       // Handle purchase error
-      setPurchaseResult(`❌ Purchase failed: ${error.message}`);
+      setPurchaseResult(`Purchase failed: ${error.message}`);
     },
     onSyncError: (error: Error) => {
       console.warn('Sync error:', error);
@@ -262,27 +258,31 @@ export default function PurchaseFlow() {
           )}
         </View>
 
-        {/* Purchase Result */}
-        {purchaseResult ? (
+        {purchaseResult || lastPurchase ? (
           <View style={styles.resultContainer}>
-            <Text style={styles.resultTitle}>Purchase Result:</Text>
-            <Text style={styles.resultText}>{purchaseResult}</Text>
-            <View style={styles.resultActionsRow}>
+            {purchaseResult ? (
+              <>
+                <Text style={styles.resultTitle}>Latest Status</Text>
+                <Text style={styles.resultText}>{purchaseResult}</Text>
+              </>
+            ) : null}
+            {lastPurchase ? (
+              <View style={{marginTop: 8}}>
+                <Text style={styles.resultSubtitle}>Latest Purchase</Text>
+                <PurchaseSummaryRow
+                  purchase={lastPurchase}
+                  onPress={() => setPurchaseDetailsVisible(true)}
+                />
+              </View>
+            ) : null}
+            {purchaseResult ? (
               <TouchableOpacity
                 style={styles.copyButton}
                 onPress={handleCopyResult}
               >
-                <Text style={styles.copyButtonText}>📋 Copy Result</Text>
+                <Text style={styles.copyButtonText}>📋 Copy Message</Text>
               </TouchableOpacity>
-              {lastPurchase ? (
-                <TouchableOpacity
-                  style={[styles.detailsButton, styles.resultDetailsButton]}
-                  onPress={() => setPurchaseDetailsVisible(true)}
-                >
-                  <Text style={styles.detailsButtonText}>Details</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
+            ) : null}
           </View>
         ) : null}
 
@@ -550,6 +550,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
+  },
+  resultSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   resultText: {
     fontSize: 12,

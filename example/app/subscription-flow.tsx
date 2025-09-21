@@ -22,6 +22,7 @@ import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {ProductSubscription, PurchaseIOS, Purchase} from '../../src/types';
 import type {PurchaseError} from '../../src/utils/errorMapping';
 import PurchaseDetails from '../src/components/PurchaseDetails';
+import PurchaseSummaryRow from '../src/components/PurchaseSummaryRow';
 
 /**
  * Subscription Flow Example - Subscription Products
@@ -71,6 +72,9 @@ export default function SubscriptionFlow() {
   const [modalVisible, setModalVisible] = useState(false);
   const [isHandlingPurchase, setIsHandlingPurchase] = useState(false);
   const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(
+    null,
+  );
   const [purchaseDetailsVisible, setPurchaseDetailsVisible] = useState(false);
 
   // Use the useIAP hook for managing subscriptions with built-in subscription status
@@ -158,7 +162,7 @@ export default function SubscriptionFlow() {
         console.warn(
           'Purchase callback received but purchase validation failed',
         );
-        setPurchaseResult(`⚠️ Purchase validation failed`);
+        setPurchaseResult('Purchase validation failed.');
         Alert.alert(
           'Purchase Issue',
           'Purchase could not be validated. Please try again.',
@@ -169,15 +173,7 @@ export default function SubscriptionFlow() {
 
       if (isRestoration) {
         // This is a subscription restoration (existing subscription reactivated)
-        setPurchaseResult(
-          `ℹ️ Subscription restored (${purchase.platform})\n` +
-            `Product: ${purchase.productId}\n` +
-            `Original Transaction: ${
-              (purchase as PurchaseIOS).originalTransactionIdentifierIOS ||
-              'N/A'
-            }\n` +
-            `No additional charge - existing subscription confirmed`,
-        );
+        setPurchaseResult('Subscription restored successfully.');
 
         // IMPORTANT: Server-side receipt validation should be performed here
         // Send the receipt to your backend server for validation
@@ -221,12 +217,7 @@ export default function SubscriptionFlow() {
       }
 
       // Handle new subscription purchase
-      setPurchaseResult(
-        `✅ New subscription activated (${purchase.platform})\n` +
-          `Product: ${purchase.productId}\n` +
-          `Transaction ID: ${purchase.id || 'N/A'}\n` +
-          `Date: ${new Date(purchase.transactionDate).toLocaleDateString()}`,
-      );
+      setPurchaseResult('Subscription activated successfully.');
 
       // IMPORTANT: Server-side receipt validation should be performed here
       // Send the receipt to your backend server for validation
@@ -270,7 +261,7 @@ export default function SubscriptionFlow() {
       setIsHandlingPurchase(false); // Reset both flags on error
 
       // Handle subscription error
-      setPurchaseResult(`❌ Subscription failed: ${error.message}`);
+      setPurchaseResult(`Subscription failed: ${error.message}`);
     },
     onSyncError: (error: Error) => {
       console.warn('Sync error:', error);
@@ -623,35 +614,6 @@ export default function SubscriptionFlow() {
         </View>
       </View>
 
-      {/* Debug Information */}
-      {__DEV__ && (
-        <View style={[styles.section, {backgroundColor: '#fff3cd'}]}>
-          <Text style={styles.sectionTitle}>Debug Info (Dev Only)</Text>
-          <Text style={{fontSize: 12, fontFamily: 'monospace'}}>
-            Connected: {connected.toString()}
-            {'\n'}
-            Subscriptions: {subscriptions.length}
-            {'\n'}
-            Active Subscriptions: {activeSubscriptions.length}
-            {'\n'}
-            Available Purchases: {availablePurchases.length}
-            {'\n'}
-            Checking Status: {isCheckingStatus.toString()}
-            {'\n'}
-            {activeSubscriptions.length > 0 &&
-              `Active IDs: ${activeSubscriptions
-                .map((s) => s.productId)
-                .join(', ')}\n`}
-            {activeSubscriptions.length > 0 &&
-              `Active Status: ${JSON.stringify(
-                activeSubscriptions[0],
-                null,
-                2,
-              )}`}
-          </Text>
-        </View>
-      )}
-
       {/* Subscription Status Section - Using library's activeSubscriptions */}
       {activeSubscriptions.length > 0 ? (
         <View style={[styles.section, styles.statusSection]}>
@@ -862,59 +824,38 @@ export default function SubscriptionFlow() {
               Past purchases and subscription transactions (deduplicated)
             </Text>
             {deduplicatedPurchases.map((purchase, index) => (
-              <View
-                key={`${purchase.productId}-${index}`}
-                style={styles.purchaseCard}
-              >
-                <View style={styles.purchaseInfo}>
-                  <Text style={styles.purchaseTitle}>{purchase.productId}</Text>
-                  <Text style={styles.purchaseDate}>
-                    {new Date(purchase.transactionDate).toLocaleDateString()}
-                  </Text>
-                  <Text style={styles.purchasePlatform}>
-                    Platform: {purchase.platform}
-                  </Text>
-                  {Platform.OS === 'ios' &&
-                  'expirationDateIOS' in purchase &&
-                  purchase.expirationDateIOS ? (
-                    <Text style={styles.purchaseExpiry}>
-                      Expires:{' '}
-                      {new Date(
-                        purchase.expirationDateIOS,
-                      ).toLocaleDateString()}
-                    </Text>
-                  ) : null}
-                  {Platform.OS === 'android' &&
-                  'autoRenewingAndroid' in purchase ? (
-                    <Text style={styles.purchaseRenewal}>
-                      Auto-Renewing:{' '}
-                      {purchase.autoRenewingAndroid ? 'Yes' : 'No'}
-                    </Text>
-                  ) : null}
-                </View>
-                <View style={styles.purchaseStatus}>
-                  <Text style={styles.purchaseStatusText}>
-                    {purchase.platform === 'ios' &&
-                    'expirationDateIOS' in purchase &&
-                    purchase.expirationDateIOS
-                      ? purchase.expirationDateIOS > Date.now()
-                        ? '✅ Active'
-                        : '❌ Expired'
-                      : '✅ Purchased'}
-                  </Text>
-                </View>
-              </View>
+              <PurchaseSummaryRow
+                key={`history-${purchase.productId}-${index}`}
+                purchase={purchase}
+                onPress={() => {
+                  setSelectedPurchase(purchase);
+                  setPurchaseDetailsVisible(true);
+                }}
+              />
             ))}
           </View>
         ) : null;
       })()}
 
-      {purchaseResult ? (
+      {purchaseResult || lastPurchase ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Result</Text>
+          <Text style={styles.sectionTitle}>Latest Activity</Text>
           <View style={styles.resultCard}>
-            <Text style={styles.resultText}>{purchaseResult}</Text>
-            <View style={styles.resultActionsRow}>
+            {purchaseResult ? (
+              <Text style={styles.resultText}>{purchaseResult}</Text>
+            ) : null}
+            {lastPurchase ? (
+              <View style={{marginTop: 8}}>
+                <PurchaseSummaryRow
+                  purchase={lastPurchase}
+                  onPress={() => {
+                    setSelectedPurchase(lastPurchase);
+                    setPurchaseDetailsVisible(true);
+                  }}
+                />
+              </View>
+            ) : null}
+            {purchaseResult ? (
               <TouchableOpacity
                 style={styles.resultCopyButton}
                 onPress={async () => {
@@ -922,22 +863,14 @@ export default function SubscriptionFlow() {
                     await Clipboard.setStringAsync(purchaseResult);
                     Alert.alert(
                       'Copied',
-                      'Purchase result copied to clipboard',
+                      'Purchase message copied to clipboard',
                     );
                   }
                 }}
               >
-                <Text style={styles.resultCopyButtonText}>📋 Copy Result</Text>
+                <Text style={styles.resultCopyButtonText}>📋 Copy Message</Text>
               </TouchableOpacity>
-              {lastPurchase ? (
-                <TouchableOpacity
-                  style={[styles.detailsButton, styles.resultDetailsButton]}
-                  onPress={() => setPurchaseDetailsVisible(true)}
-                >
-                  <Text style={styles.detailsButtonText}>Details</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
+            ) : null}
           </View>
         </View>
       ) : null}
@@ -971,7 +904,10 @@ export default function SubscriptionFlow() {
         animationType="slide"
         transparent={true}
         visible={purchaseDetailsVisible}
-        onRequestClose={() => setPurchaseDetailsVisible(false)}
+        onRequestClose={() => {
+          setPurchaseDetailsVisible(false);
+          setSelectedPurchase(null);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -979,22 +915,25 @@ export default function SubscriptionFlow() {
               <Text style={styles.modalTitle}>Purchase Details</Text>
               <TouchableOpacity
                 style={styles.closeButton}
-                onPress={() => setPurchaseDetailsVisible(false)}
+                onPress={() => {
+                  setPurchaseDetailsVisible(false);
+                  setSelectedPurchase(null);
+                }}
               >
                 <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalContent}>
-              {lastPurchase ? (
+              {selectedPurchase ? (
                 <PurchaseDetails
-                  purchase={lastPurchase}
+                  purchase={selectedPurchase}
                   containerStyle={styles.purchaseDetailsContainer}
                   rowStyle={styles.purchaseDetailRow}
                   labelStyle={styles.detailLabel}
                   valueStyle={styles.detailValue}
                 />
               ) : (
-                <Text style={styles.detailValue}>No purchase recorded.</Text>
+                <Text style={styles.detailValue}>No purchase selected.</Text>
               )}
             </ScrollView>
           </View>
@@ -1353,53 +1292,6 @@ const styles = StyleSheet.create({
   },
   subscribedButtonText: {
     color: '#fff',
-  },
-  purchaseCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  purchaseInfo: {
-    flex: 1,
-  },
-  purchaseTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  purchaseDate: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  purchasePlatform: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  purchaseExpiry: {
-    fontSize: 12,
-    color: '#28a745',
-    marginBottom: 2,
-  },
-  purchaseRenewal: {
-    fontSize: 12,
-    color: '#007AFF',
-  },
-  purchaseStatus: {
-    alignItems: 'center',
-  },
-  purchaseStatusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#28a745',
   },
   modalOverlay: {
     flex: 1,

@@ -17,6 +17,7 @@ import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
 import type {Purchase} from '../../src/types';
 import type {PurchaseError} from '../../src/utils/errorMapping';
 import PurchaseDetails from '../src/components/PurchaseDetails';
+import PurchaseSummaryRow from '../src/components/PurchaseSummaryRow';
 
 export default function AvailablePurchases() {
   const [loading, setLoading] = useState(false);
@@ -24,6 +25,10 @@ export default function AvailablePurchases() {
   const [selectedSubscription, setSelectedSubscription] =
     useState<ActiveSubscription | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(
+    null,
+  );
+  const [purchaseDetailsVisible, setPurchaseDetailsVisible] = useState(false);
   const [storefront, setStorefront] = useState<string>('');
 
   // Deduplicate purchases by productId, keeping the most recent transaction
@@ -340,25 +345,15 @@ export default function AvailablePurchases() {
           </Text>
 
           {deduplicatedAvailablePurchases.map((purchase, index) => (
-            <View
+            <PurchaseSummaryRow
               key={`available-${purchase.productId}-${index}`}
-              style={[styles.purchaseItem, styles.availablePurchaseItem]}
-            >
-              <View style={styles.purchaseHeader}>
-                <Text style={styles.productId}>{purchase.productId}</Text>
-                <View style={[styles.statusBadge, styles.availableBadge]}>
-                  <Text style={styles.statusBadgeText}>💰 Available</Text>
-                </View>
-              </View>
-
-              <PurchaseDetails
-                purchase={purchase}
-                containerStyle={styles.purchaseDetails}
-                rowStyle={styles.purchaseRow}
-                labelStyle={styles.label}
-                valueStyle={styles.value}
-              />
-            </View>
+              purchase={purchase}
+              style={styles.availableSummaryRow}
+              onPress={() => {
+                setSelectedPurchase(purchase);
+                setPurchaseDetailsVisible(true);
+              }}
+            />
           ))}
         </View>
       )}
@@ -491,6 +486,46 @@ export default function AvailablePurchases() {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        visible={purchaseDetailsVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setPurchaseDetailsVisible(false);
+          setSelectedPurchase(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Purchase Details</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setPurchaseDetailsVisible(false);
+                  setSelectedPurchase(null);
+                }}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              {selectedPurchase ? (
+                <PurchaseDetails
+                  purchase={selectedPurchase}
+                  containerStyle={styles.purchaseDetails}
+                  rowStyle={styles.purchaseRow}
+                  labelStyle={styles.label}
+                  valueStyle={styles.value}
+                />
+              ) : (
+                <Text style={styles.emptyText}>No purchase selected.</Text>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -576,6 +611,10 @@ const styles = StyleSheet.create({
     borderLeftColor: '#007AFF',
     backgroundColor: '#f0f8ff',
     borderLeftWidth: 4,
+  },
+  availableSummaryRow: {
+    backgroundColor: '#eef5ff',
+    borderColor: '#c8ddff',
   },
   availableBadge: {
     backgroundColor: '#e7f3ff',
