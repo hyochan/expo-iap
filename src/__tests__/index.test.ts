@@ -59,9 +59,9 @@ describe('Public API (index.ts)', () => {
         expect.any(Function),
       );
       const passed = addListener.mock.calls[0][1];
-      const event = {id: 't', productId: 'p'};
+      const event = {id: 't', productId: 'p', platform: 'IOS'} as any;
       passed(event);
-      expect(fn).toHaveBeenCalledWith(event);
+      expect(fn).toHaveBeenCalledWith({...event, platform: 'ios'});
     });
 
     it('registers purchase error listener', () => {
@@ -213,6 +213,46 @@ describe('Public API (index.ts)', () => {
         },
       });
       expect(res).toEqual({id: 'x'});
+    });
+
+    it('throws on unsupported iOS product type', async () => {
+      (Platform as any).OS = 'ios';
+      (ExpoIapModule.requestPurchase as jest.Mock) = jest.fn();
+      await expect(
+        requestPurchase({
+          request: {ios: {sku: 'skuX'}},
+          type: 'all',
+        } as any),
+      ).rejects.toThrow(/Unsupported product type/);
+      expect(ExpoIapModule.requestPurchase).not.toHaveBeenCalled();
+    });
+
+    it('normalizes iOS array purchases', async () => {
+      (Platform as any).OS = 'ios';
+      (ExpoIapModule.requestPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue([{id: 'a', platform: 'IOS'}]);
+
+      const res = await requestPurchase({
+        request: {ios: {sku: 'skuSub'}},
+        type: 'subs',
+      });
+
+      expect(res).toEqual([{id: 'a', platform: 'ios'}]);
+    });
+
+    it('returns empty array when iOS subs resolves null', async () => {
+      (Platform as any).OS = 'ios';
+      (ExpoIapModule.requestPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(null);
+
+      const res = await requestPurchase({
+        request: {ios: {sku: 'skuSub'}},
+        type: 'subs',
+      });
+
+      expect(res).toEqual([]);
     });
 
     it('maps Android in-app request properly', async () => {
