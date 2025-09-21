@@ -11,7 +11,13 @@ import * as path from 'path';
 import withLocalOpenIAP from './withLocalOpenIAP';
 
 const pkg = require('../../package.json');
-const OPENIAP_ANDROID_VERSION = '1.2.6';
+const openiapVersions = JSON.parse(
+  fs.readFileSync(
+    path.resolve(__dirname, '../../openiap-versions.json'),
+    'utf8',
+  ),
+);
+const OPENIAP_ANDROID_VERSION = openiapVersions.google;
 
 // Log a message only once per Node process
 const logOnce = (() => {

@@ -3,8 +3,27 @@ import {mkdtempSync, readFileSync, writeFileSync, rmSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
+import {fileURLToPath, URL} from 'node:url';
 
-const DEFAULT_TAG = '1.0.1';
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+let versions;
+try {
+  versions = JSON.parse(
+    readFileSync(join(__dirname, '..', 'openiap-versions.json'), 'utf8'),
+  );
+} catch {
+  throw new Error(
+    'expo-iap: Unable to load openiap-versions.json. Ensure the file exists and is valid JSON.',
+  );
+}
+
+const DEFAULT_TAG = versions?.gql;
+if (typeof DEFAULT_TAG !== 'string' || DEFAULT_TAG.length === 0) {
+  throw new Error(
+    'expo-iap: "gql" version missing in openiap-versions.json. Specify --tag manually or update the file.',
+  );
+}
+
 const PROJECT_ROOT = process.cwd();
 
 function parseArgs() {

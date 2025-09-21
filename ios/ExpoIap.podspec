@@ -1,6 +1,7 @@
 require 'json'
 
 package = JSON.parse(File.read(File.join(__dir__, '..', 'package.json')))
+versions = JSON.parse(File.read(File.join(__dir__, '..', 'openiap-versions.json')))
 
 Pod::Spec.new do |s|
   s.name           = 'ExpoIap'
@@ -21,7 +22,7 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
-  s.dependency 'openiap', '1.2.1'
+  s.dependency 'openiap', versions['apple']
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {

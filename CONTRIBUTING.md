@@ -8,6 +8,8 @@ Thank you for your interest in contributing to expo-iap! This guide will help yo
 - [Package Manager](#-package-manager)
 - [Running the Example App](#-running-the-example-app)
 - [Development Guidelines](#-development-guidelines)
+- [OpenIAP Version Management](#-openiap-version-management)
+- [OpenIAP Version Management](#-openiap-version-management)
 - [Testing](#-testing)
 - [Code Style](#-code-style)
 - [Submitting Changes](#-submitting-changes)
@@ -222,6 +224,24 @@ The generated TypeScript definitions in `src/types.ts` come from the [`openiap-g
 - Commit the updated file alongside any related schema or documentation changes.
 
 Always ensure the repository builds and tests succeed after regenerating the types.
+
+## 🔢 OpenIAP Version Management
+
+All native and type-generation version numbers are sourced from `openiap-versions.json` at the repository root:
+
+- `apple` → iOS Pod dependency (`ios/ExpoIap.podspec`).
+- `google` → Android artifact (`android/build.gradle`, Expo config plugin).
+- `gql` → GraphQL type generator (`scripts/update-types.mjs`).
+
+When bumping dependencies:
+
+1. Update the relevant fields in `openiap-versions.json`.
+2. For iOS changes, run `cd ios && pod install` (and commit the Pod.lock if required by the workflow).
+3. For Android, re-run Gradle (`bun run android`) so the new artifact is pulled down.
+4. When the `gql` value changes, run `bun run generate:types` to refresh `src/types.ts`.
+5. Commit the updated JSON, regenerated files, and any resulting lockfile changes together.
+
+If the JSON file is missing or malformed, build scripts (Gradle, Podspec, the type generator) will fail fast — fix the JSON rather than hard-coding version strings in multiple locations.
 
 ### Development Workflow
 

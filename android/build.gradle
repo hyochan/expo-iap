@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
@@ -9,6 +11,22 @@ apply from: expoModulesCorePlugin
 applyKotlinExpoModulesCorePlugin()
 useCoreDependencies()
 useExpoPublishing()
+
+def resolveOpenIapVersionsFile() {
+  def candidates = [
+    new File(projectDir.parentFile, 'openiap-versions.json'),
+    new File(rootDir.parentFile ?: rootDir, 'openiap-versions.json'),
+    new File(rootProject.projectDir.parentFile ?: rootProject.projectDir, 'openiap-versions.json')
+  ]
+  return candidates.find { it.exists() }
+}
+
+def openiapVersionsFile = resolveOpenIapVersionsFile()
+if (openiapVersionsFile == null) {
+  throw new GradleException("expo-iap: Unable to locate openiap-versions.json")
+}
+
+def openiapVersions = new JsonSlurper().parse(openiapVersionsFile)
 
 // If you want to use the managed Android SDK versions from expo-modules-core, set this to true.
 // The Android SDK versions will be bumped from time to time in SDK releases and may introduce breaking changes in your module code.
@@ -58,6 +76,6 @@ dependencies {
       implementation project(":openiap-google")
     } else {
       // Fallback to published artifact when local project isn't linked
-      implementation "io.github.hyochan.openiap:openiap-google:1.2.6"
+      implementation "io.github.hyochan.openiap:openiap-google:${openiapVersions.google}"
     }
 }
