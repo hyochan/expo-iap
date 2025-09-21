@@ -132,7 +132,7 @@ describe('ios module selection', () => {
   describe('autolinking computation', () => {
     const entries = (state: AutolinkState) => [
       {name: 'ExpoIapModule', enable: state.expoIap},
-      {name: 'OneSideModule', enable: state.onside},
+      {name: 'OnsideIapModule', enable: state.onside},
     ];
 
     it('adds missing modules when enabled', () => {
@@ -143,19 +143,19 @@ describe('ios module selection', () => {
           onside: true,
         }),
       );
-      expect(result.modules).toEqual(['ExpoIapModule', 'OneSideModule']);
-      expect(result.added).toEqual(['ExpoIapModule', 'OneSideModule']);
+      expect(result.modules).toEqual(['ExpoIapModule', 'OnsideIapModule']);
+      expect(result.added).toEqual(['ExpoIapModule', 'OnsideIapModule']);
       expect(result.removed).toEqual([]);
     });
 
     it('removes disabled modules while retaining enabled ones', () => {
       const result = computeAutolinkModules(
-        ['ExpoIapModule', 'OneSideModule'],
+        ['ExpoIapModule', 'OnsideIapModule'],
         entries({expoIap: true, onside: false}),
       );
       expect(result.modules).toEqual(['ExpoIapModule']);
       expect(result.added).toEqual([]);
-      expect(result.removed).toEqual(['OneSideModule']);
+      expect(result.removed).toEqual(['OnsideIapModule']);
     });
 
     it('preserves unrelated modules when toggling state', () => {
@@ -163,8 +163,8 @@ describe('ios module selection', () => {
         ['CustomModule'],
         entries({expoIap: false, onside: true}),
       );
-      expect(result.modules).toEqual(['CustomModule', 'OneSideModule']);
-      expect(result.added).toEqual(['OneSideModule']);
+      expect(result.modules).toEqual(['CustomModule', 'OnsideIapModule']);
+      expect(result.added).toEqual(['OnsideIapModule']);
       expect(result.removed).toEqual([]);
     });
   });

@@ -16,7 +16,7 @@
     "test": "jest && bun run test:plugin",
     "test:plugin": "cd plugin && npx jest",
     "test:coverage": "jest --coverage",
-    "prepare": "expo-module prepare && sh -c 'command -v husky >/dev/null 2>&1 && husky install || { echo \"husky not installed; skipping\"; exit 0; }'",
+    "prepare": "bun clean:plugin && bun clean && expo-module prepare && sh -c 'command -v husky >/dev/null 2>&1 && husky install || { echo \"husky not installed; skipping\"; exit 0; }'",
     "expo-module": "expo-module",
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android",

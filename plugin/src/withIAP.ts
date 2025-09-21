@@ -324,7 +324,7 @@ const syncAutolinking = (state: AutolinkState) => {
     const config = JSON.parse(raw);
     const iosConfig = config.ios ?? (config.ios = {});
     const existing: string[] = Array.isArray(iosConfig.modules)
-      ? [...iosConfig.modules]
+      ? iosConfig.modules.filter((module: string) => module !== 'OneSideModule')
       : [];
 
     const desiredEntries: {
@@ -340,10 +340,10 @@ const syncAutolinking = (state: AutolinkState) => {
         removeLog: '🧹 expo-iap: Disabled ExpoIapModule autolinking',
       },
       {
-        name: 'OneSideModule',
+        name: 'OnsideIapModule',
         enable: state.onside,
-        addLog: '🔗 expo-iap: Enabled OneSideModule autolinking',
-        removeLog: '🧹 expo-iap: Disabled OneSideModule autolinking',
+        addLog: '🔗 expo-iap: Enabled OnsideIapModule autolinking',
+        removeLog: '🧹 expo-iap: Disabled OnsideIapModule autolinking',
       },
     ];
 

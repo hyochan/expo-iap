@@ -8,7 +8,7 @@ private enum OnsideEvent: String {
     case promotedProductIOS = "promoted-product-ios"
 }
 
-private enum OneSideBridgeError: Error, LocalizedError {
+private enum OnsideBridgeError: Error, LocalizedError {
     case sdkUnavailable
     case notInitialized
     case emptySkuList
@@ -42,7 +42,7 @@ import OnsideKit
 
 @available(iOS 16.0, *)
 @MainActor
-public final class OneSideModule: Module {
+public final class OnsideIapModule: Module {
     private var isInitialized = false
     private var restoreContinuation: CheckedContinuation<Bool, Error>?
     private let transactionObserver = OnsideTransactionObserverBridge()
@@ -99,13 +99,13 @@ public final class OneSideModule: Module {
 
             let request = try ExpoIapHelper.decodeProductRequest(from: params)
             guard !request.skus.isEmpty else {
-                throw OneSideBridgeError.emptySkuList
+                throw OnsideBridgeError.emptySkuList
             }
 
             let response = try await productFetcher.fetch(identifiers: Set(request.skus))
 
             if !response.invalidProductIdentifiers.isEmpty {
-                throw OneSideBridgeError.productNotFound(response.invalidProductIdentifiers.joined(separator: ", "))
+                throw OnsideBridgeError.productNotFound(response.invalidProductIdentifiers.joined(separator: ", "))
             }
 
             response.products.forEach { productCache[$0.productIdentifier] = $0 }
@@ -120,12 +120,12 @@ public final class OneSideModule: Module {
             try await ensureObserverRegistered()
 
             guard let sku = resolveSku(from: payload) else {
-                throw OneSideBridgeError.emptySkuList
+                throw OnsideBridgeError.emptySkuList
             }
 
             try await ensureProductAvailable(sku: sku)
             guard let product = productCache[sku] else {
-                throw OneSideBridgeError.productNotFound(sku)
+                throw OnsideBridgeError.productNotFound(sku)
             }
 
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
@@ -134,7 +134,7 @@ public final class OneSideModule: Module {
                     case .success:
                         continuation.resume()
                     case .failure(let error):
-                        continuation.resume(throwing: OneSideBridgeError.queueError(error.localizedDescription))
+                        continuation.resume(throwing: OnsideBridgeError.queueError(error.localizedDescription))
                     }
                 }
             }
@@ -151,7 +151,7 @@ public final class OneSideModule: Module {
                 guard let transactionId = purchasePayload["transactionId"] as? String,
                       let uuid = UUID(uuidString: transactionId),
                       let transaction = transactionCache[uuid] else {
-                    throw OneSideBridgeError.transactionNotFound(purchasePayload["transactionId"] as? String ?? "")
+                    throw OnsideBridgeError.transactionNotFound(purchasePayload["transactionId"] as? String ?? "")
                 }
 
                 Onside.paymentQueue().finishTransaction(transaction)
@@ -165,7 +165,7 @@ public final class OneSideModule: Module {
             try await ensureObserverRegistered()
 
             if restoreContinuation != nil {
-                throw OneSideBridgeError.restoreInProgress
+                throw OnsideBridgeError.restoreInProgress
             }
 
             return try await withCheckedThrowingContinuation { continuation in
@@ -179,7 +179,7 @@ public final class OneSideModule: Module {
                     case .success:
                         continuation.resume(returning: true)
                     case .failure(let error):
-                        continuation.resume(throwing: OneSideBridgeError.queueError(error.localizedDescription))
+                        continuation.resume(throwing: OnsideBridgeError.queueError(error.localizedDescription))
                     }
                     restoreContinuation = nil
                 }
@@ -208,7 +208,7 @@ public final class OneSideModule: Module {
         }
         let response = try await productFetcher.fetch(identifiers: [sku])
         if !response.invalidProductIdentifiers.isEmpty {
-            throw OneSideBridgeError.productNotFound(sku)
+            throw OnsideBridgeError.productNotFound(sku)
         }
         response.products.forEach { productCache[$0.productIdentifier] = $0 }
     }
@@ -230,7 +230,7 @@ public final class OneSideModule: Module {
 
         transactionObserver.onRestoreFailed = { [weak self] error in
             guard let self else { return }
-            restoreContinuation?.resume(throwing: OneSideBridgeError.queueError(error.localizedDescription))
+            restoreContinuation?.resume(throwing: OnsideBridgeError.queueError(error.localizedDescription))
             restoreContinuation = nil
         }
     }
@@ -312,7 +312,7 @@ public final class OneSideModule: Module {
     private func encodeToJSONString<T: Encodable>(_ value: T) throws -> String {
         let data = try encoder.encode(value)
         guard let json = String(data: data, encoding: .utf8) else {
-            throw OneSideBridgeError.queueError("Unable to encode JSON string")
+            throw OnsideBridgeError.queueError("Unable to encode JSON string")
         }
         return json
     }
@@ -408,7 +408,7 @@ private final class OnsideProductFetcher: NSObject, OnsideProductsRequestDelegat
 
     func fetch(identifiers: Set<String>) async throws -> OnsideProductsResponse {
         guard !identifiers.isEmpty else {
-            throw OneSideBridgeError.emptySkuList
+            throw OnsideBridgeError.emptySkuList
         }
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -426,7 +426,7 @@ private final class OnsideProductFetcher: NSObject, OnsideProductsRequestDelegat
     }
 
     func onsideProductsRequestRequest(_ request: OnsideProductsRequest, didFailWithError error: OnsideProductsRequestError) {
-        continuation?.resume(throwing: OneSideBridgeError.queueError(error.localizedDescription))
+        continuation?.resume(throwing: OnsideBridgeError.queueError(error.localizedDescription))
         cleanup()
     }
 
@@ -446,7 +446,7 @@ private final class OnsideProductFetcher: NSObject, OnsideProductsRequestDelegat
 
 @available(iOS 15.0, tvOS 15.0, *)
 @MainActor
-public final class OneSideModule: Module {
+public final class OnsideIapModule: Module {
     nonisolated public func definition() -> ModuleDefinition {
         Name("ExpoIapOnside")
 
@@ -457,31 +457,31 @@ public final class OneSideModule: Module {
         )
 
         AsyncFunction("initConnection") { () async throws -> Bool in
-            throw OneSideBridgeError.sdkUnavailable
+            throw OnsideBridgeError.sdkUnavailable
         }
 
         AsyncFunction("endConnection") { () async throws -> Bool in
-            throw OneSideBridgeError.sdkUnavailable
+            throw OnsideBridgeError.sdkUnavailable
         }
 
         AsyncFunction("fetchProducts") { (_: [String: Any]) async throws -> [[String: Any]] in
-            throw OneSideBridgeError.sdkUnavailable
+            throw OnsideBridgeError.sdkUnavailable
         }
 
         AsyncFunction("requestPurchase") { (_: [String: Any]) async throws -> Any? in
-            throw OneSideBridgeError.sdkUnavailable
+            throw OnsideBridgeError.sdkUnavailable
         }
 
         AsyncFunction("finishTransaction") { (_: [String: Any], _: Bool?) async throws -> Bool in
-            throw OneSideBridgeError.sdkUnavailable
+            throw OnsideBridgeError.sdkUnavailable
         }
 
         AsyncFunction("restorePurchases") { () async throws -> Bool in
-            throw OneSideBridgeError.sdkUnavailable
+            throw OnsideBridgeError.sdkUnavailable
         }
 
         AsyncFunction("getStorefrontIOS") { () async throws -> String in
-            throw OneSideBridgeError.sdkUnavailable
+            throw OnsideBridgeError.sdkUnavailable
         }
     }
 }
