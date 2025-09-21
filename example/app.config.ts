@@ -13,10 +13,10 @@ export default ({config}: ConfigContext): ExpoConfig => {
       ios: LOCAL_OPENIAP_PATHS.ios,
       android: LOCAL_OPENIAP_PATHS.android,
     },
-    module: 'onside',
+    module: 'auto',
     // modules: {
-    //   expoIap: false,
-    //   onside: true,
+    //   expoIap: true,
+    //   onside: false,
     // },
   };
 
@@ -41,9 +41,6 @@ export default ({config}: ConfigContext): ExpoConfig => {
         },
         android: {
           kotlinVersion: '2.0.21',
-        },
-        ios: {
-          deploymentTarget: '15.1',
         },
       },
     ],

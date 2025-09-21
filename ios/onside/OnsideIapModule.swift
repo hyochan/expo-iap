@@ -60,7 +60,12 @@ public final class OnsideIapModule: Module {
         Name("ExpoIapOnside")
 
         Constants {
-            OpenIapSerialization.errorCodes()
+            var constants: [String: Any] = [:]
+            OpenIapSerialization.errorCodes().forEach { key, value in
+                constants[key] = value
+            }
+            constants["IS_ONSIDE_KIT_INSTALLED_IOS"] = true
+            return constants
         }
 
         Events(
@@ -449,6 +454,15 @@ private final class OnsideProductFetcher: NSObject, OnsideProductsRequestDelegat
 public final class OnsideIapModule: Module {
     nonisolated public func definition() -> ModuleDefinition {
         Name("ExpoIapOnside")
+
+        Constants {
+            var constants: [String: Any] = [:]
+            OpenIapSerialization.errorCodes().forEach { key, value in
+                constants[key] = value
+            }
+            constants["IS_ONSIDE_KIT_INSTALLED_IOS"] = false
+            return constants
+        }
 
         Events(
             OnsideEvent.purchaseUpdated.rawValue,

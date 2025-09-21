@@ -21,6 +21,12 @@ function resolveNativeModule(): {
   for (const name of candidates) {
     try {
       const module = requireNativeModule(name);
+      if (
+        name === 'ExpoIapOnside' &&
+        module?.IS_ONSIDE_KIT_INSTALLED_IOS === false
+      ) {
+        continue;
+      }
       return {module, name};
     } catch (error) {
       if (name === 'ExpoIapOnside' && isMissingModuleError(error, name)) {
