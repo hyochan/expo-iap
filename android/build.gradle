@@ -27,6 +27,11 @@ if (openiapVersionsFile == null) {
 }
 
 def openiapVersions = new JsonSlurper().parse(openiapVersionsFile)
+def googleVersion = (openiapVersions instanceof Map) ? openiapVersions.google : null
+if (!(googleVersion instanceof String) || !googleVersion.trim()) {
+  throw new GradleException("expo-iap: 'google' version missing or invalid in openiap-versions.json")
+}
+def googleVersionString = googleVersion.trim()
 
 // If you want to use the managed Android SDK versions from expo-modules-core, set this to true.
 // The Android SDK versions will be bumped from time to time in SDK releases and may introduce breaking changes in your module code.
@@ -76,6 +81,6 @@ dependencies {
       implementation project(":openiap-google")
     } else {
       // Fallback to published artifact when local project isn't linked
-      implementation "io.github.hyochan.openiap:openiap-google:${openiapVersions.google}"
+      implementation "io.github.hyochan.openiap:openiap-google:${googleVersionString}"
     }
 }

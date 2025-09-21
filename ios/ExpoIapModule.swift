@@ -45,9 +45,9 @@ public final class ExpoIapModule: Module {
         }
 
         AsyncFunction("endConnection") { () async throws -> Bool in
-            _ = try await OpenIapModule.shared.endConnection()
+            let succeeded = try await OpenIapModule.shared.endConnection()
             await MainActor.run { self.isInitialized = false }
-            return true
+            return succeeded
         }
 
         AsyncFunction("fetchProducts") { (params: [String: Any]) async throws -> [[String: Any]] in
@@ -157,7 +157,7 @@ public final class ExpoIapModule: Module {
             try await ensureConnection()
             let success = try await OpenIapModule.shared.clearTransactionIOS()
             ExpoIapLog.result("clearTransactionIOS", value: success)
-            return true
+            return success
         }
 
         AsyncFunction("getReceiptIOS") { () async throws -> String in
@@ -360,7 +360,20 @@ public final class ExpoIapModule: Module {
         promotedProductSub = OpenIapModule.shared.promotedProductListenerIOS { [weak self] productId in
             Task { @MainActor in
                 guard let self else { return }
-                self.sendEvent(IapEvent.promotedProductIos.rawValue, ["productId": productId])
+                do {
+                    if let product = try await OpenIapModule.shared.getPromotedProductIOS() {
+                        let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(product))
+                        self.sendEvent(IapEvent.promotedProductIos.rawValue, sanitized)
+                        return
+                    }
+                } catch {
+                    ExpoIapLog.failure("promotedProductListenerIOS", error: error)
+                }
+
+                self.sendEvent(
+                    IapEvent.promotedProductIos.rawValue,
+                    ["productId": productId]
+                )
             }
         }
     }

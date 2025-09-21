@@ -9,7 +9,6 @@ Thank you for your interest in contributing to expo-iap! This guide will help yo
 - [Running the Example App](#-running-the-example-app)
 - [Development Guidelines](#-development-guidelines)
 - [OpenIAP Version Management](#-openiap-version-management)
-- [OpenIAP Version Management](#-openiap-version-management)
 - [Testing](#-testing)
 - [Code Style](#-code-style)
 - [Submitting Changes](#-submitting-changes)

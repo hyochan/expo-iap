@@ -16,6 +16,15 @@ enum ExpoIapHelper {
         array.map { sanitizeDictionary($0) }
     }
 
+    // Overloads to support already-sanitized payloads (e.g., serialized OpenIAP responses)
+    static func sanitizeDictionary(_ dictionary: [String: Any]) -> [String: Any] {
+        dictionary
+    }
+
+    static func sanitizeArray(_ array: [[String: Any]]) -> [[String: Any]] {
+        array
+    }
+
     static func parseProductQueryType(_ rawValue: String?) -> ProductQueryType {
         guard let raw = rawValue?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
             return .all
@@ -60,13 +69,16 @@ enum ExpoIapHelper {
         }
 
         if let request = payload["request"] {
-            let type = parseProductQueryType(payload["type"] as? String)
-            var normalized: [String: Any] = ["type": type.rawValue]
-            switch type {
+            let parsedType = parseProductQueryType(payload["type"] as? String)
+            let purchaseType: ProductQueryType = parsedType == .all ? .inApp : parsedType
+            var normalized: [String: Any] = ["type": purchaseType.rawValue]
+            switch purchaseType {
             case .subs:
                 normalized["requestSubscription"] = request
-            case .inApp, .all:
+            case .inApp:
                 normalized["requestPurchase"] = request
+            case .all:
+                break
             }
             return try OpenIapSerialization.decode(object: normalized, as: RequestPurchaseProps.self)
         }

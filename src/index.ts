@@ -379,16 +379,20 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
       );
     }
 
-    const payload: MutationRequestPurchaseArgs =
-      canonical === 'subs'
-        ? {
-            type: 'subs',
-            request: request as RequestSubscriptionPropsByPlatforms,
-          }
-        : {
-            type: 'in-app',
-            request: request as RequestPurchasePropsByPlatforms,
-          };
+    let payload: MutationRequestPurchaseArgs;
+    if (canonical === 'in-app') {
+      payload = {
+        type: 'in-app',
+        request: request as RequestPurchasePropsByPlatforms,
+      };
+    } else if (canonical === 'subs') {
+      payload = {
+        type: 'subs',
+        request: request as RequestSubscriptionPropsByPlatforms,
+      };
+    } else {
+      throw new Error(`Unsupported product type: ${canonical}`);
+    }
 
     const purchase = (await ExpoIapModule.requestPurchase(payload)) as
       | Purchase
