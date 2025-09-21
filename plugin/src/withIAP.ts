@@ -7,6 +7,7 @@ import {
   withGradleProperties,
   withPodfile,
 } from 'expo/config-plugins';
+import type {ExpoConfig} from '@expo/config-types';
 import * as fs from 'fs';
 import * as path from 'path';
 import withLocalOpenIAP from './withLocalOpenIAP';
@@ -14,6 +15,7 @@ import {
   withIosAlternativeBilling,
   type IOSAlternativeBillingConfig,
 } from './withIosAlternativeBilling';
+import type {ExpoIapPluginCommonOptions} from './expoConfig.augmentation';
 
 const pkg = require('../../package.json');
 const openiapVersions = JSON.parse(
@@ -23,6 +25,10 @@ const openiapVersions = JSON.parse(
   ),
 );
 const OPENIAP_ANDROID_VERSION = openiapVersions.google;
+const AUTOLINKING_CONFIG_PATH = path.resolve(
+  __dirname,
+  '../../expo-module.config.json',
+);
 
 // Log a message only once per Node process
 const logOnce = (() => {
@@ -55,7 +61,7 @@ const addLineToGradle = (
   return lines.join('\n');
 };
 
-const modifyAppBuildGradle = (
+export const modifyAppBuildGradle = (
   gradle: string,
   language: 'groovy' | 'kotlin',
   isHorizonEnabled?: boolean,
@@ -255,14 +261,143 @@ const withIapAndroid: ConfigPlugin<
   return config;
 };
 
-/** Ensure Podfile uses CocoaPods CDN and no stale local OpenIAP entry remains. */
-const withIapIOS: ConfigPlugin<IOSAlternativeBillingConfig | undefined> = (
+const ensureOnsidePod = (content: string): string => {
+  const podLine =
+    "  pod 'OnsideKit', :git => 'https://github.com/onside-io/OnsideKit-iOS.git'";
+  const podRegex = /^\s*pod\s+'OnsideKit'\b.*$/m;
+
+  if (podRegex.test(content)) {
+    return content;
+  }
+
+  const targetMatch = content.match(/target\s+'[^']+'\s+do\s*\n/);
+  if (!targetMatch) {
+    WarningAggregator.addWarningIOS(
+      'expo-iap',
+      'Could not find a target block in Podfile when adding OnsideKit; skipping installation.',
+    );
+    return content;
+  }
+
+  const insertIndex = targetMatch.index! + targetMatch[0].length;
+  const before = content.slice(0, insertIndex);
+  const after = content.slice(insertIndex);
+
+  logOnce('📦 expo-iap: Added OnsideKit pod to Podfile');
+
+  return `${before}${podLine}\n${after}`;
+};
+
+export type AutolinkState = {expoIap: boolean; onside: boolean};
+
+type AutolinkEntry = {name: string; enable: boolean};
+
+export function computeAutolinkModules(
+  existing: string[],
+  desired: AutolinkEntry[],
+): {modules: string[]; added: string[]; removed: string[]} {
+  let modules = [...existing];
+  const added: string[] = [];
+  const removed: string[] = [];
+
+  for (const entry of desired) {
+    const hasModule = modules.includes(entry.name);
+    if (entry.enable && !hasModule) {
+      modules = [...modules, entry.name];
+      added.push(entry.name);
+    } else if (!entry.enable && hasModule) {
+      modules = modules.filter((module) => module !== entry.name);
+      removed.push(entry.name);
+    }
+  }
+
+  return {modules, added, removed};
+}
+
+const syncAutolinking = (state: AutolinkState) => {
+  if (!fs.existsSync(AUTOLINKING_CONFIG_PATH)) {
+    return;
+  }
+
+  try {
+    const raw = fs.readFileSync(AUTOLINKING_CONFIG_PATH, 'utf8');
+    const config = JSON.parse(raw);
+    const iosConfig = config.ios ?? (config.ios = {});
+    const existing: string[] = Array.isArray(iosConfig.modules)
+      ? [...iosConfig.modules]
+      : [];
+
+    const desiredEntries: {
+      name: string;
+      enable: boolean;
+      addLog: string;
+      removeLog: string;
+    }[] = [
+      {
+        name: 'ExpoIapModule',
+        enable: state.expoIap,
+        addLog: '🔗 expo-iap: Enabled ExpoIapModule autolinking',
+        removeLog: '🧹 expo-iap: Disabled ExpoIapModule autolinking',
+      },
+      {
+        name: 'OneSideModule',
+        enable: state.onside,
+        addLog: '🔗 expo-iap: Enabled OneSideModule autolinking',
+        removeLog: '🧹 expo-iap: Disabled OneSideModule autolinking',
+      },
+    ];
+
+    const {
+      modules: nextModules,
+      added,
+      removed,
+    } = computeAutolinkModules(
+      existing,
+      desiredEntries.map(({name, enable}) => ({name, enable})),
+    );
+
+    for (const name of added) {
+      const entry = desiredEntries.find((candidate) => candidate.name === name);
+      if (entry) {
+        logOnce(entry.addLog);
+      }
+    }
+
+    for (const name of removed) {
+      const entry = desiredEntries.find((candidate) => candidate.name === name);
+      if (entry) {
+        logOnce(entry.removeLog);
+      }
+    }
+
+    if (added.length > 0 || removed.length > 0) {
+      iosConfig.modules = nextModules;
+      fs.writeFileSync(
+        AUTOLINKING_CONFIG_PATH,
+        `${JSON.stringify(config, null, 2)}\n`,
+        'utf8',
+      );
+    }
+  } catch (error) {
+    WarningAggregator.addWarningIOS(
+      'expo-iap',
+      `Failed to sync Expo IAP autolinking modules: ${String(error)}`,
+    );
+  }
+};
+
+type WithIapIosOptions = {
+  enableOnside?: boolean;
+  iosAlternativeBilling?: IOSAlternativeBillingConfig;
+};
+
+const withIapIOS: ConfigPlugin<WithIapIosOptions | undefined> = (
   config,
   options,
 ) => {
   // Add iOS alternative billing configuration if provided
-  if (options) {
-    config = withIosAlternativeBilling(config, options);
+  if (options?.iosAlternativeBilling) {
+    config = withIosAlternativeBilling(config, options.iosAlternativeBilling);
   }
 
   return withPodfile(config, (config) => {
@@ -281,6 +416,11 @@ const withIapIOS: ConfigPlugin<IOSAlternativeBillingConfig | undefined> = (
     if (localPodRegex.test(content)) {
       content = content.replace(localPodRegex, '').replace(/\n{3,}/g, '\n\n');
       logOnce('🧹 expo-iap: Removed local OpenIAP pod from Podfile');
+    }
+
+    // 3) Optionally install OnsideKit when enabled in config
+    if (options?.enableOnside) {
+      content = ensureOnsidePod(content);
     }
 
     config.modResults.contents = content;
@@ -342,7 +482,88 @@ export interface ExpoIapPluginOptions {
   horizonAppId?: string;
 }
 
-const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
+export interface ModuleSelectionResult {
+  selection: 'auto' | 'expo-iap' | 'onside';
+  includeExpoIap: boolean;
+  includeOnside: boolean;
+}
+
+type ModuleKey = 'expoIap' | 'onside';
+
+type ModuleRules = Record<
+  ModuleKey,
+  {
+    when: Partial<Record<ModuleSelectionResult['selection'], boolean>>;
+    default: (args: {
+      config: ExpoConfig;
+      options?: ExpoIapPluginCommonOptions;
+    }) => boolean;
+  }
+>;
+
+const MODULE_RULES: ModuleRules = {
+  expoIap: {
+    when: {
+      'expo-iap': true,
+      onside: false,
+    },
+    default: ({options}) => options?.modules?.expoIap ?? true,
+  },
+  onside: {
+    when: {
+      'expo-iap': false,
+      onside: true,
+    },
+    default: ({config, options}) =>
+      options?.modules?.onside ?? config.ios?.onside?.enabled ?? true,
+  },
+};
+
+export function resolveModuleSelection(
+  config: ExpoConfig,
+  options?: ExpoIapPluginCommonOptions | void,
+): ModuleSelectionResult {
+  const normalizedOptions = (options ?? undefined) as
+    | ExpoIapPluginCommonOptions
+    | undefined;
+
+  const selection = normalizedOptions?.module ?? 'auto';
+
+  const includeExpoIap = pickModuleState(
+    'expoIap',
+    selection,
+    config,
+    normalizedOptions,
+  );
+  const includeOnside = pickModuleState(
+    'onside',
+    selection,
+    config,
+    normalizedOptions,
+  );
+
+  return {selection, includeExpoIap, includeOnside};
+}
+
+function pickModuleState(
+  key: ModuleKey,
+  selection: ModuleSelectionResult['selection'],
+  config: ExpoConfig,
+  options?: ExpoIapPluginCommonOptions,
+): boolean {
+  const rules = MODULE_RULES[key];
+  const explicit = rules.when[selection];
+  if (explicit !== undefined) {
+    return explicit;
+  }
+  const override = options?.modules?.[key];
+  if (override !== undefined) {
+    return override;
+  }
+  return rules.default({config, options});
+}
+
+const withIAP: ConfigPlugin<ExpoIapPluginCommonOptions | void> = (
   config,
   options,
 ) => {
@@ -359,14 +580,41 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
       `🔍 [expo-iap] Config values: horizonAppId=${horizonAppId}, isHorizonEnabled=${isHorizonEnabled}`,
     );
 
+    const {includeExpoIap, includeOnside} = resolveModuleSelection(
+      config as ExpoConfig,
+      options,
+    );
+
+    const autolinkState: AutolinkState = {
+      expoIap: includeExpoIap,
+      onside: includeOnside,
+    };
+
+    if (includeOnside) {
+      config.ios = {
+        ...config.ios,
+        onside: {
+          ...(config.ios?.onside ?? {}),
+          enabled: true,
+        },
+      } as typeof config.ios;
+    } else if (config.ios?.onside?.enabled) {
+      config.ios.onside.enabled = false;
+    }
+
     // Respect explicit flag; fall back to presence of localPath only when flag is unset
     const isLocalDev = options?.enableLocalDev ?? !!options?.localPath;
-    // Apply Android modifications (skip adding deps when linking local module)
-    let result = withIapAndroid(config, {
-      addDeps: !isLocalDev,
-      horizonAppId,
-      isHorizonEnabled,
-    });
+    const shouldConfigureAndroid = includeExpoIap;
+    const shouldAddAndroidDeps = includeExpoIap && !isLocalDev;
+
+    // Apply Android modifications (skip adding deps when linking local module or when Expo IAP disabled)
+    let result = shouldConfigureAndroid
+      ? withIapAndroid(config, {
+          addDeps: shouldAddAndroidDeps,
+          horizonAppId,
+          isHorizonEnabled,
+        })
+      : config;
 
     // iOS: choose one path to avoid overlap
     if (isLocalDev) {
@@ -401,9 +649,16 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
       }
     } else {
       // Ensure iOS Podfile is set up to resolve public CocoaPods specs
-      result = withIapIOS(result, iosAlternativeBilling);
-      logOnce('📦 [expo-iap] Using OpenIAP from CocoaPods');
+      result = withIapIOS(result, {
+        enableOnside: includeOnside,
+        iosAlternativeBilling,
+      });
+      if (includeExpoIap) {
+        logOnce('📦 [expo-iap] Using OpenIAP from CocoaPods');
+      }
     }
+
+    syncAutolinking(autolinkState);
 
     return result;
   } catch (error) {
@@ -417,4 +672,4 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
 };
 
 export {withIosAlternativeBilling};
-export default createRunOncePlugin(withIap, pkg.name, pkg.version);
+export default createRunOncePlugin(withIAP, pkg.name, pkg.version);
