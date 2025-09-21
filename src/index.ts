@@ -137,33 +137,27 @@ const normalizePurchaseArray = (purchases: Purchase[]): Purchase[] =>
 export const purchaseUpdatedListener = (
   listener: (event: Purchase) => void,
 ) => {
-  console.log('[JS] Registering purchaseUpdatedListener');
   const wrappedListener = (event: Purchase) => {
     const normalized = normalizePurchasePlatform(event);
-    console.log('[JS] purchaseUpdatedListener fired:', normalized);
     listener(normalized);
   };
   const emitterSubscription = emitter.addListener(
     OpenIapEvent.PurchaseUpdated,
     wrappedListener,
   );
-  console.log('[JS] purchaseUpdatedListener registered successfully');
   return emitterSubscription;
 };
 
 export const purchaseErrorListener = (
   listener: (error: PurchaseError) => void,
 ) => {
-  console.log('[JS] Registering purchaseErrorListener');
   const wrappedListener = (error: PurchaseError) => {
-    console.log('[JS] purchaseErrorListener fired:', error);
     listener(error);
   };
   const emitterSubscription = emitter.addListener(
     OpenIapEvent.PurchaseError,
     wrappedListener,
   );
-  console.log('[JS] purchaseErrorListener registered successfully');
   return emitterSubscription;
 };
 
@@ -396,9 +390,10 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
             request: request as RequestPurchasePropsByPlatforms,
           };
 
-    const purchase = (await ExpoIapModule.requestPurchase(
-      payload,
-    )) as Purchase | Purchase[] | null;
+    const purchase = (await ExpoIapModule.requestPurchase(payload)) as
+      | Purchase
+      | Purchase[]
+      | null;
 
     if (Array.isArray(purchase)) {
       return normalizePurchaseArray(purchase);

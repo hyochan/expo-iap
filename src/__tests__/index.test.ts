@@ -27,6 +27,7 @@ import {
   getAvailablePurchases,
   restorePurchases,
   promotedProductListenerIOS,
+  PurchaseInput,
 } from '../index';
 import * as iosMod from '../modules/ios';
 import * as androidMod from '../modules/android';
@@ -388,7 +389,7 @@ describe('Public API (index.ts)', () => {
         quantity: 1,
         transactionDate: Date.now(),
         id: 'transaction-identifier',
-      };
+      } as PurchaseInput;
       (ExpoIapModule.finishTransaction as jest.Mock) = jest
         .fn()
         .mockResolvedValue(true);
@@ -400,7 +401,10 @@ describe('Public API (index.ts)', () => {
         false,
       );
 
-      await finishTransaction({purchase: basePurchase as any, isConsumable: true});
+      await finishTransaction({
+        purchase: basePurchase,
+        isConsumable: true,
+      });
       expect(ExpoIapModule.finishTransaction).toHaveBeenLastCalledWith(
         basePurchase,
         true,

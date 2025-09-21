@@ -86,8 +86,12 @@ export default function SubscriptionFlow() {
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
       // Avoid logging sensitive token in console output
-      const {purchaseToken: _omit, ...safePurchase} = purchase as any;
-      console.log('Subscription successful:', safePurchase);
+      const {purchaseToken: tokenToMask, ...rest} = purchase as any;
+      const masked = {
+        ...rest,
+        ...(tokenToMask ? {purchaseToken: 'hidden'} : {}),
+      };
+      console.log('Subscription successful:', masked);
       setLastPurchase(purchase);
 
       // Prevent duplicate handling of the same purchase

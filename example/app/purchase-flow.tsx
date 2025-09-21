@@ -41,8 +41,12 @@ export default function PurchaseFlow() {
   const {connected, products, fetchProducts, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
       // Avoid logging sensitive token in console output
-      const {purchaseToken: _omit, ...safePurchase} = purchase as any;
-      console.log('Purchase successful:', safePurchase);
+      const {purchaseToken: tokenToMask, ...rest} = purchase as any;
+      const masked = {
+        ...rest,
+        ...(tokenToMask ? {purchaseToken: 'hidden'} : {}),
+      };
+      console.log('Purchase successful:', masked);
       setLastPurchase(purchase);
       setIsProcessing(false);
 

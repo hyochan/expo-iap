@@ -96,6 +96,7 @@ class ExpoIapModule : Module() {
             Events(EVENT_PURCHASE_UPDATED, EVENT_PURCHASE_ERROR)
 
             AsyncFunction("initConnection") { promise: Promise ->
+                ExpoIapLog.payload("initConnection", null)
                 scope.launch {
                     connectionMutex.withLock {
                         try {
@@ -106,6 +107,7 @@ class ExpoIapModule : Module() {
 
                             // If already connected, short-circuit
                             if (connectionReady.get()) {
+                                ExpoIapLog.result("initConnection", true)
                                 promise.resolve(true)
                                 return@withLock
                             }
@@ -129,6 +131,10 @@ class ExpoIapModule : Module() {
                             if (!ok) {
                                 // Clear any buffered events from a failed init
                                 pendingEvents.clear()
+                                ExpoIapLog.failure(
+                                    "initConnection",
+                                    IllegalStateException("Failed to initialize connection"),
+                                )
                                 promise.reject(OpenIapError.InitConnection.CODE, "Failed to initialize connection", null)
                                 return@withLock
                             }
@@ -142,8 +148,10 @@ class ExpoIapModule : Module() {
                                     .onFailure { Log.e(TAG, "Failed to flush buffered event: ${ev.first}", it) }
                             }
 
+                            ExpoIapLog.result("initConnection", true)
                             promise.resolve(true)
                         } catch (e: Exception) {
+                            ExpoIapLog.failure("initConnection", e)
                             promise.reject(OpenIapError.InitConnection.CODE, e.message, e)
                         }
                     }
@@ -151,18 +159,24 @@ class ExpoIapModule : Module() {
             }
 
             AsyncFunction("endConnection") { promise: Promise ->
+                ExpoIapLog.payload("endConnection", null)
                 scope.launch {
                     connectionMutex.withLock {
                         runCatching { openIap.endConnection() }
                         // Reset connection state and clear any buffered events
                         connectionReady.set(false)
                         pendingEvents.clear()
+                        ExpoIapLog.result("endConnection", true)
                         promise.resolve(true)
                     }
                 }
             }
 
             AsyncFunction("fetchProducts") { type: String, skuArr: Array<String>, promise: Promise ->
+                ExpoIapLog.payload(
+                    "fetchProductsAndroid",
+                    mapOf("type" to type, "skus" to skuArr.toList()),
+                )
                 scope.launch {
                     try {
                         val queryType = parseProductQueryType(type)
@@ -174,19 +188,25 @@ class ExpoIapModule : Module() {
                                 is FetchProductsResultSubscriptions -> result.value.orEmpty().map { it.toJson() }
                                 else -> emptyList<Map<String, Any?>>()
                             }
+                        ExpoIapLog.result("fetchProductsAndroid", payload)
                         promise.resolve(payload)
                     } catch (e: Exception) {
+                        ExpoIapLog.failure("fetchProductsAndroid", e)
                         promise.reject(OpenIapError.QueryProduct.CODE, e.message, null)
                     }
                 }
             }
 
             AsyncFunction("getAvailableItems") { promise: Promise ->
+                ExpoIapLog.payload("getAvailableItemsAndroid", null)
                 scope.launch {
                     try {
                         val purchases = openIap.getAvailablePurchases(null)
-                        promise.resolve(purchases.map { it.toJson() })
+                        val payload = purchases.map { it.toJson() }
+                        ExpoIapLog.result("getAvailableItemsAndroid", payload)
+                        promise.resolve(payload)
                     } catch (e: Exception) {
+                        ExpoIapLog.failure("getAvailableItemsAndroid", e)
                         promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
                     }
                 }
@@ -196,6 +216,10 @@ class ExpoIapModule : Module() {
             AsyncFunction("deepLinkToSubscriptionsAndroid") { params: Map<String, Any?>, promise: Promise ->
                 val sku = (params["sku"] ?: params["skuAndroid"]) as? String
                 val packageName = (params["packageName"] ?: params["packageNameAndroid"]) as? String
+                ExpoIapLog.payload(
+                    "deepLinkToSubscriptionsAndroid",
+                    mapOf("sku" to sku, "packageName" to packageName),
+                )
                 scope.launch {
                     try {
                         openIap.deepLinkToSubscriptions(
@@ -204,8 +228,10 @@ class ExpoIapModule : Module() {
                                 skuAndroid = sku,
                             ),
                         )
+                        ExpoIapLog.result("deepLinkToSubscriptionsAndroid", true)
                         promise.resolve(null)
                     } catch (e: Exception) {
+                        ExpoIapLog.failure("deepLinkToSubscriptionsAndroid", e)
                         promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
                     }
                 }
@@ -213,17 +239,21 @@ class ExpoIapModule : Module() {
 
             // Get Google Play storefront country code (Android)
             AsyncFunction("getStorefrontAndroid") { promise: Promise ->
+                ExpoIapLog.payload("getStorefrontAndroid", null)
                 scope.launch {
                     try {
                         val code = openIap.getStorefront()
+                        ExpoIapLog.result("getStorefrontAndroid", code)
                         promise.resolve(code)
                     } catch (e: Exception) {
+                        ExpoIapLog.failure("getStorefrontAndroid", e)
                         promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, e)
                     }
                 }
             }
 
             AsyncFunction("requestPurchase") { params: Map<String, Any?>, promise: Promise ->
+                ExpoIapLog.payload("requestPurchaseAndroid", params)
                 val type = params["type"] as? String
                 val skus: List<String> =
                     (params["skus"] as? List<*>)?.filterIsInstance<String>()
@@ -326,6 +356,10 @@ class ExpoIapModule : Module() {
                                 is RequestPurchaseResultPurchase -> result.value?.let(::listOf).orEmpty()
                                 else -> emptyList()
                             }
+                        ExpoIapLog.result(
+                            "requestPurchaseAndroid",
+                            purchases.map { it.toJson() },
+                        )
                         purchases.forEach { purchase ->
                             runCatching {
                                 emitOrQueue(EVENT_PURCHASE_UPDATED, purchase.toJson())
@@ -342,6 +376,7 @@ class ExpoIapModule : Module() {
                             purchases.map { it.toJson() },
                         )
                     } catch (e: Exception) {
+                        ExpoIapLog.failure("requestPurchaseAndroid", e)
                         val errorMap =
                             mapOf(
                                 "code" to OpenIapError.PurchaseFailed.CODE,
@@ -367,11 +402,15 @@ class ExpoIapModule : Module() {
             }
 
             AsyncFunction("acknowledgePurchaseAndroid") { token: String, promise: Promise ->
+                ExpoIapLog.payload("acknowledgePurchaseAndroid", mapOf("token" to token))
                 scope.launch {
                     try {
                         openIap.acknowledgePurchaseAndroid(token)
-                        promise.resolve(mapOf("responseCode" to 0))
+                        val response = mapOf("responseCode" to 0)
+                        ExpoIapLog.result("acknowledgePurchaseAndroid", response)
+                        promise.resolve(response)
                     } catch (e: Exception) {
+                        ExpoIapLog.failure("acknowledgePurchaseAndroid", e)
                         promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
                     }
                 }
@@ -379,11 +418,15 @@ class ExpoIapModule : Module() {
 
             // New name: consumePurchaseAndroid
             AsyncFunction("consumePurchaseAndroid") { token: String, promise: Promise ->
+                ExpoIapLog.payload("consumePurchaseAndroid", mapOf("token" to token))
                 scope.launch {
                     try {
                         openIap.consumePurchaseAndroid(token)
-                        promise.resolve(mapOf("responseCode" to 0, "purchaseToken" to token))
+                        val response = mapOf("responseCode" to 0, "purchaseToken" to token)
+                        ExpoIapLog.result("consumePurchaseAndroid", response)
+                        promise.resolve(response)
                     } catch (e: Exception) {
+                        ExpoIapLog.failure("consumePurchaseAndroid", e)
                         promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
                     }
                 }
