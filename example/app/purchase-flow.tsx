@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -51,6 +51,18 @@ const deduplicatePurchases = (purchases: Purchase[]): Purchase[] => {
   return Array.from(uniquePurchases.values());
 };
 
+type PurchaseFlowProps = {
+  connected: boolean;
+  products: Product[];
+  availablePurchases: Purchase[];
+  purchaseResult: string;
+  isProcessing: boolean;
+  lastPurchase: Purchase | null;
+  refreshingAvailablePurchases: boolean;
+  onPurchase: (productId: string) => void;
+  onRefreshAvailablePurchases: () => Promise<void>;
+};
+
 /**
  * Purchase Flow Example - In-App Products
  *
@@ -62,97 +74,22 @@ const deduplicatePurchases = (purchases: Purchase[]): Purchase[] => {
  * - Focused on one-time purchases (products)
  */
 
-export default function PurchaseFlow() {
-  // State management with useState
-  const [purchaseResult, setPurchaseResult] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
+function PurchaseFlow({
+  connected,
+  products,
+  availablePurchases,
+  purchaseResult,
+  isProcessing,
+  lastPurchase,
+  refreshingAvailablePurchases,
+  onPurchase,
+  onRefreshAvailablePurchases,
+}: PurchaseFlowProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
   const [purchaseDetailsVisible, setPurchaseDetailsVisible] = useState(false);
   const [purchaseDetailsTarget, setPurchaseDetailsTarget] =
     useState<Purchase | null>(null);
-  const [refreshingAvailablePurchases, setRefreshingAvailablePurchases] =
-    useState(false);
-
-  // Use the useIAP hook for managing purchases
-  const {
-    connected,
-    products,
-    availablePurchases,
-    fetchProducts,
-    finishTransaction,
-    getAvailablePurchases,
-  } = useIAP({
-    onPurchaseSuccess: async (purchase: Purchase) => {
-      // Avoid logging sensitive token in console output
-      const {purchaseToken: tokenToMask, ...rest} = purchase as any;
-      const masked = {
-        ...rest,
-        ...(tokenToMask ? {purchaseToken: 'hidden'} : {}),
-      };
-      console.log('Purchase successful:', masked);
-      setLastPurchase(purchase);
-      setIsProcessing(false);
-
-      // Handle successful purchase
-      setPurchaseResult('Purchase completed successfully.');
-
-      const productId = purchase.productId ?? '';
-      const isConsumablePurchase = CONSUMABLE_PRODUCT_ID_SET.has(productId);
-      if (!isConsumablePurchase && productId) {
-        if (NON_CONSUMABLE_PRODUCT_ID_SET.has(productId)) {
-          console.log(
-            '[PurchaseFlow] Non-consumable purchase recorded:',
-            productId,
-          );
-        } else {
-          console.warn(
-            '[PurchaseFlow] Purchase for product not listed in constants:',
-            productId,
-          );
-        }
-      }
-
-      // IMPORTANT: Server-side receipt validation should be performed here
-      // Send the receipt to your backend server for validation
-      // Example (use unified token on both platforms):
-      // const isValid = await validateReceiptOnServer(purchase.purchaseToken);
-      // if (!isValid) {
-      //   Alert.alert('Error', 'Receipt validation failed');
-      //   return;
-      // }
-
-      // After successful server validation, finish the transaction
-      await finishTransaction({
-        purchase,
-        isConsumable: isConsumablePurchase,
-      });
-
-      try {
-        await getAvailablePurchases();
-        console.log('[PurchaseFlow] Available purchases refreshed');
-      } catch (error) {
-        console.warn(
-          '[PurchaseFlow] Failed to refresh available purchases:',
-          error,
-        );
-      }
-
-      Alert.alert('Success', 'Purchase completed successfully!');
-    },
-    onPurchaseError: (error: PurchaseError) => {
-      console.error('Purchase failed:', error);
-      setIsProcessing(false);
-
-      // Handle purchase error
-      setPurchaseResult(`Purchase failed: ${error.message}`);
-    },
-    onSyncError: (error: Error) => {
-      console.warn('Sync error:', error);
-      Alert.alert('Sync Error', `Failed to sync purchases: ${error.message}`);
-    },
-  });
 
   const availablePurchaseRows = React.useMemo(
     () => deduplicatePurchases(availablePurchases),
@@ -194,60 +131,12 @@ export default function PurchaseFlow() {
   const hasHiddenNonConsumables = products.length > visibleProducts.length;
 
   // Load products when component mounts (guard against dev double-invoke)
-  const didFetchRef = React.useRef(false);
-  useEffect(() => {
-    console.log('[PurchaseFlow] useEffect - connected:', connected);
-    console.log('[PurchaseFlow] PRODUCT_IDS:', PRODUCT_IDS);
-    if (connected && !didFetchRef.current) {
-      didFetchRef.current = true;
-      console.log('[PurchaseFlow] Calling fetchProducts with:', PRODUCT_IDS);
-      fetchProducts({skus: PRODUCT_IDS, type: 'in-app'})
-        .then(() => {
-          console.log('[PurchaseFlow] fetchProducts completed');
-        })
-        .catch((error) => {
-          console.error('[PurchaseFlow] fetchProducts error:', error);
-        });
-
-      getAvailablePurchases()
-        .then(() => {
-          console.log('[PurchaseFlow] getAvailablePurchases completed');
-        })
-        .catch((error) => {
-          console.warn('[PurchaseFlow] getAvailablePurchases error:', error);
-        });
-    } else if (!connected) {
-      didFetchRef.current = false; // reset when disconnected
-      console.log('[PurchaseFlow] Not fetching products - not connected');
-    }
-  }, [connected, fetchProducts, getAvailablePurchases]);
-
-  // Defer loading guard until after all hooks are declared
-
-  const handlePurchase = (itemId: string) => {
-    setIsProcessing(true);
-    setPurchaseResult('Processing purchase...');
-
-    // Fire-and-forget: requestPurchase is event-based; handle results via hook callbacks
-    if (typeof requestPurchase !== 'function') {
-      console.warn('[PurchaseFlow] requestPurchase missing (test/mock env)');
-      setIsProcessing(false);
-      setPurchaseResult('Cannot start purchase in test/mock environment.');
-      return;
-    }
-    void requestPurchase({
-      request: {
-        ios: {
-          sku: itemId,
-          quantity: 1,
-        },
-        android: {
-          skus: [itemId],
-        },
-      },
-      type: 'in-app',
-    });
-  };
+  const handlePurchase = useCallback(
+    (itemId: string) => {
+      onPurchase(itemId);
+    },
+    [onPurchase],
+  );
 
   const handleCopyResult = async () => {
     if (purchaseResult) {
@@ -295,24 +184,9 @@ export default function PurchaseFlow() {
     setModalVisible(true);
   };
 
-  const handleRefreshAvailablePurchases = async () => {
-    if (refreshingAvailablePurchases) {
-      return;
-    }
-
-    setRefreshingAvailablePurchases(true);
-    try {
-      await getAvailablePurchases();
-    } catch (error) {
-      console.warn(
-        '[PurchaseFlow] Failed to refresh available purchases manually:',
-        error,
-      );
-      Alert.alert('Refresh Failed', 'Could not refresh available purchases.');
-    } finally {
-      setRefreshingAvailablePurchases(false);
-    }
-  };
+  const handleRefreshAvailablePurchases = useCallback(() => {
+    return onRefreshAvailablePurchases();
+  }, [onRefreshAvailablePurchases]);
 
   // Show loading screen while disconnected
   if (!connected) {
@@ -624,6 +498,177 @@ export default function PurchaseFlow() {
     </ScrollView>
   );
 }
+
+function PurchaseFlowContainer() {
+  const [purchaseResult, setPurchaseResult] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
+  const [refreshingAvailablePurchases, setRefreshingAvailablePurchases] =
+    useState(false);
+
+  const {
+    connected,
+    products,
+    availablePurchases,
+    fetchProducts,
+    finishTransaction,
+    getAvailablePurchases,
+  } = useIAP({
+    onPurchaseSuccess: async (purchase: Purchase) => {
+      const {purchaseToken: tokenToMask, ...rest} = purchase as any;
+      const masked = {
+        ...rest,
+        ...(tokenToMask ? {purchaseToken: 'hidden'} : {}),
+      };
+      console.log('Purchase successful:', masked);
+      console.log('[PurchaseFlow] purchaseState:', purchase.purchaseState);
+      setLastPurchase(purchase);
+      setIsProcessing(false);
+
+      setPurchaseResult(
+        `Purchase completed successfully (state: ${purchase.purchaseState}).`,
+      );
+
+      const productId = purchase.productId ?? '';
+      const isConsumablePurchase = CONSUMABLE_PRODUCT_ID_SET.has(productId);
+      if (!isConsumablePurchase && productId) {
+        if (NON_CONSUMABLE_PRODUCT_ID_SET.has(productId)) {
+          console.log(
+            '[PurchaseFlow] Non-consumable purchase recorded:',
+            productId,
+          );
+        } else {
+          console.warn(
+            '[PurchaseFlow] Purchase for product not listed in constants:',
+            productId,
+          );
+        }
+      }
+
+      try {
+        await finishTransaction({
+          purchase,
+          isConsumable: isConsumablePurchase,
+        });
+      } catch (error) {
+        console.warn('[PurchaseFlow] finishTransaction failed:', error);
+      }
+
+      try {
+        await getAvailablePurchases();
+        console.log('[PurchaseFlow] Available purchases refreshed');
+      } catch (error) {
+        console.warn(
+          '[PurchaseFlow] Failed to refresh available purchases:',
+          error,
+        );
+      }
+
+      Alert.alert('Success', 'Purchase completed successfully!');
+    },
+    onPurchaseError: (error: PurchaseError) => {
+      console.error('Purchase failed:', error);
+      setIsProcessing(false);
+      setPurchaseResult(`Purchase failed: ${error.message}`);
+    },
+    onSyncError: (error: Error) => {
+      console.warn('Sync error:', error);
+      Alert.alert('Sync Error', `Failed to sync purchases: ${error.message}`);
+    },
+  });
+
+  const didFetchRef = useRef(false);
+
+  useEffect(() => {
+    console.log('[PurchaseFlow] useEffect - connected:', connected);
+    console.log('[PurchaseFlow] PRODUCT_IDS:', PRODUCT_IDS);
+    if (connected && !didFetchRef.current) {
+      didFetchRef.current = true;
+      console.log('[PurchaseFlow] Calling fetchProducts with:', PRODUCT_IDS);
+      fetchProducts({skus: PRODUCT_IDS, type: 'in-app'})
+        .then(() => {
+          console.log('[PurchaseFlow] fetchProducts completed');
+        })
+        .catch((error) => {
+          console.error('[PurchaseFlow] fetchProducts error:', error);
+        });
+
+      getAvailablePurchases()
+        .then(() => {
+          console.log('[PurchaseFlow] getAvailablePurchases completed');
+        })
+        .catch((error) => {
+          console.warn('[PurchaseFlow] getAvailablePurchases error:', error);
+        });
+    } else if (!connected) {
+      didFetchRef.current = false;
+      console.log('[PurchaseFlow] Not fetching products - not connected');
+    }
+  }, [connected, fetchProducts, getAvailablePurchases]);
+
+  const handleRefreshAvailablePurchases = useCallback(async () => {
+    if (refreshingAvailablePurchases) {
+      return;
+    }
+
+    setRefreshingAvailablePurchases(true);
+    try {
+      await getAvailablePurchases();
+    } catch (error) {
+      console.warn(
+        '[PurchaseFlow] Failed to refresh available purchases manually:',
+        error,
+      );
+      Alert.alert('Refresh Failed', 'Could not refresh available purchases.');
+    } finally {
+      setRefreshingAvailablePurchases(false);
+    }
+  }, [getAvailablePurchases, refreshingAvailablePurchases]);
+
+  const handlePurchase = useCallback(
+    (itemId: string) => {
+      setIsProcessing(true);
+      setPurchaseResult('Processing purchase...');
+
+      if (typeof requestPurchase !== 'function') {
+        console.warn('[PurchaseFlow] requestPurchase missing (test/mock env)');
+        setIsProcessing(false);
+        setPurchaseResult('Cannot start purchase in test/mock environment.');
+        return;
+      }
+
+      void requestPurchase({
+        request: {
+          ios: {
+            sku: itemId,
+            quantity: 1,
+          },
+          android: {
+            skus: [itemId],
+          },
+        },
+        type: 'in-app',
+      });
+    },
+    [setIsProcessing, setPurchaseResult],
+  );
+
+  return (
+    <PurchaseFlow
+      connected={connected}
+      products={products}
+      availablePurchases={availablePurchases}
+      purchaseResult={purchaseResult}
+      isProcessing={isProcessing}
+      lastPurchase={lastPurchase}
+      refreshingAvailablePurchases={refreshingAvailablePurchases}
+      onPurchase={handlePurchase}
+      onRefreshAvailablePurchases={handleRefreshAvailablePurchases}
+    />
+  );
+}
+
+export default PurchaseFlowContainer;
 
 const styles = StyleSheet.create({
   container: {

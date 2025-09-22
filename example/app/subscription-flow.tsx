@@ -1,4 +1,4 @@
-import React, {useEffect, useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -19,10 +19,35 @@ import {
 } from '../../src';
 import Loading from '../src/components/Loading';
 import {SUBSCRIPTION_PRODUCT_IDS} from '../../src/utils/constants';
-import type {ProductSubscription, PurchaseIOS, Purchase} from '../../src/types';
+import type {
+  ActiveSubscription,
+  ProductSubscription,
+  PurchaseIOS,
+  Purchase,
+} from '../../src/types';
 import type {PurchaseError} from '../../src/utils/errorMapping';
 import PurchaseDetails from '../src/components/PurchaseDetails';
 import PurchaseSummaryRow from '../src/components/PurchaseSummaryRow';
+
+const deduplicatePurchases = (purchases: Purchase[]): Purchase[] => {
+  const uniquePurchases = new Map<string, Purchase>();
+
+  for (const purchase of purchases) {
+    const existingPurchase = uniquePurchases.get(purchase.productId);
+    if (!existingPurchase) {
+      uniquePurchases.set(purchase.productId, purchase);
+    } else {
+      const existingTimestamp = existingPurchase.transactionDate || 0;
+      const newTimestamp = purchase.transactionDate || 0;
+
+      if (newTimestamp > existingTimestamp) {
+        uniquePurchases.set(purchase.productId, purchase);
+      }
+    }
+  }
+
+  return Array.from(uniquePurchases.values());
+};
 
 /**
  * Subscription Flow Example - Subscription Products
@@ -40,399 +65,70 @@ import PurchaseSummaryRow from '../src/components/PurchaseSummaryRow';
  * - activeSubscriptions state - automatically updated subscription list
  */
 
-export default function SubscriptionFlow() {
-  // Deduplicate purchases by productId, keeping the most recent transaction
-  const deduplicatePurchases = (purchases: Purchase[]): Purchase[] => {
-    const uniquePurchases = new Map<string, Purchase>();
+type SubscriptionFlowProps = {
+  connected: boolean;
+  subscriptions: ProductSubscription[];
+  availablePurchases: Purchase[];
+  activeSubscriptions: ActiveSubscription[];
+  purchaseResult: string;
+  isProcessing: boolean;
+  isCheckingStatus: boolean;
+  lastPurchase: Purchase | null;
+  onSubscribe: (productId: string) => void;
+  onRetryLoadSubscriptions: () => void;
+  onRefreshStatus: () => void;
+  onManageSubscriptions: () => void;
+};
 
-    for (const purchase of purchases) {
-      const existingPurchase = uniquePurchases.get(purchase.productId);
-      if (!existingPurchase) {
-        uniquePurchases.set(purchase.productId, purchase);
-      } else {
-        // Keep the most recent transaction (higher timestamp)
-        const existingTimestamp = existingPurchase.transactionDate || 0;
-        const newTimestamp = purchase.transactionDate || 0;
-
-        if (newTimestamp > existingTimestamp) {
-          uniquePurchases.set(purchase.productId, purchase);
-        }
-      }
-    }
-
-    return Array.from(uniquePurchases.values());
-  };
-
-  // React state management
-  const [purchaseResult, setPurchaseResult] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+function SubscriptionFlow({
+  connected,
+  subscriptions,
+  availablePurchases,
+  activeSubscriptions,
+  purchaseResult,
+  isProcessing,
+  isCheckingStatus,
+  lastPurchase,
+  onSubscribe,
+  onRetryLoadSubscriptions,
+  onRefreshStatus,
+  onManageSubscriptions,
+}: SubscriptionFlowProps) {
   const [selectedSubscription, setSelectedSubscription] =
     useState<ProductSubscription | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [isHandlingPurchase, setIsHandlingPurchase] = useState(false);
-  const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(
     null,
   );
   const [purchaseDetailsVisible, setPurchaseDetailsVisible] = useState(false);
 
-  // Use the useIAP hook for managing subscriptions with built-in subscription status
-  const {
-    connected,
-    subscriptions,
-    availablePurchases,
-    fetchProducts,
-    getAvailablePurchases,
-    finishTransaction,
-    getActiveSubscriptions,
-    activeSubscriptions,
-  } = useIAP({
-    onPurchaseSuccess: async (purchase) => {
-      // Avoid logging sensitive token in console output
-      const {purchaseToken: tokenToMask, ...rest} = purchase as any;
-      const masked = {
-        ...rest,
-        ...(tokenToMask ? {purchaseToken: 'hidden'} : {}),
-      };
-      console.log('Subscription successful:', masked);
-      setLastPurchase(purchase);
+  const handleSubscription = useCallback(
+    (itemId: string) => {
+      // Check if already subscribed to this product
+      const isAlreadySubscribed = activeSubscriptions.some(
+        (sub) => sub.productId === itemId,
+      );
 
-      // Prevent duplicate handling of the same purchase
-      if (isHandlingPurchase) {
-        console.log('Already handling a purchase, skipping duplicate callback');
-        return;
-      }
-
-      setIsHandlingPurchase(true);
-      setIsProcessing(false);
-
-      // Determine if this is a valid purchase using logic similar to Flutter implementation
-      let isPurchased = false;
-      let isRestoration = false;
-
-      const purchasePlatform = (purchase.platform ?? '')
-        .toString()
-        .toLowerCase();
-
-      if (Platform.OS === 'ios' && purchasePlatform === 'ios') {
-        // Type-safe access to iOS-specific fields
-        const iosPurchase = purchase as PurchaseIOS;
-
-        // Check if purchase was successful based on transaction data
-        const hasValidToken = !!(
-          purchase.purchaseToken && purchase.purchaseToken.length > 0
-        );
-        const hasValidTransactionId = !!(purchase.id && purchase.id.length > 0);
-
-        isPurchased = hasValidToken || hasValidTransactionId;
-
-        // For iOS, check if this is a restoration by comparing original vs current transaction
-        // A restoration typically has originalTransactionIdentifierIOS different from transactionId
-        isRestoration = Boolean(
-          iosPurchase.originalTransactionIdentifierIOS &&
-            iosPurchase.originalTransactionIdentifierIOS !== purchase.id &&
-            iosPurchase.transactionReasonIOS &&
-            iosPurchase.transactionReasonIOS !== 'PURCHASE',
-        );
-
-        console.log('iOS Purchase Analysis:');
-        console.log('  hasValidToken:', hasValidToken);
-        console.log('  hasValidTransactionId:', hasValidTransactionId);
-        console.log('  isPurchased:', isPurchased);
-        console.log('  isRestoration:', isRestoration);
-        console.log(
-          '  originalTransactionId:',
-          iosPurchase.originalTransactionIdentifierIOS,
-        );
-        console.log('  currentTransactionId:', purchase.id);
-        console.log('  transactionReason:', iosPurchase.transactionReasonIOS);
-      } else if (Platform.OS === 'android' && purchasePlatform === 'android') {
-        // For Android, consider it purchased if we received the purchase callback
-        // The purchase callback itself indicates success in most cases
-        isPurchased = true;
-        isRestoration = false; // Android doesn't have the same restoration concept
-
-        console.log('Android Purchase Analysis:');
-        console.log('  isPurchased:', isPurchased);
-        console.log('  isRestoration:', isRestoration);
-      }
-
-      if (!isPurchased) {
-        console.warn(
-          'Purchase callback received but purchase validation failed',
-        );
-        setPurchaseResult('Purchase validation failed.');
+      if (isAlreadySubscribed) {
         Alert.alert(
-          'Purchase Issue',
-          'Purchase could not be validated. Please try again.',
+          'Already Subscribed',
+          'You already have an active subscription to this product.',
+          [{text: 'OK', style: 'default'}],
         );
-        setIsHandlingPurchase(false); // Reset flag
         return;
       }
-
-      if (isRestoration) {
-        // This is a subscription restoration (existing subscription reactivated)
-        setPurchaseResult('Subscription restored successfully.');
-
-        // IMPORTANT: Server-side receipt validation should be performed here
-        // Send the receipt to your backend server for validation
-        // Example (use unified token on both platforms):
-        // const isValid = await validateReceiptOnServer(purchase.purchaseToken);
-        // if (!isValid) {
-        //   Alert.alert('Error', 'Receipt validation failed');
-        //   return;
-        // }
-
-        // After successful server validation, finish the transaction
-        // For subscriptions, isConsumable should be false (subscriptions are non-consumable)
-        await finishTransaction({
-          purchase,
-          isConsumable: false, // Set to false for subscriptions
-        });
-
-        // Only show alert if user explicitly requested restoration
-        // Don't show on initial load
-        console.log(
-          'Subscription restoration detected - skipping alert on initial load',
-        );
-
-        console.log('✅ Subscription restoration completed');
-
-        // Immediately refresh subscription status to update UI
-        console.log(
-          '🔄 Immediately refreshing subscription status after restoration...',
-        );
-
-        try {
-          await getActiveSubscriptions();
-          await getAvailablePurchases();
-        } catch (error) {
-          console.warn('Failed to refresh status:', error);
-        }
-
-        // Reset the handling flag
-        setIsHandlingPurchase(false);
-        return;
-      }
-
-      // Handle new subscription purchase
-      setPurchaseResult('Subscription activated successfully.');
-
-      // IMPORTANT: Server-side receipt validation should be performed here
-      // Send the receipt to your backend server for validation
-      // Example (use unified token on both platforms):
-      // const isValid = await validateReceiptOnServer(purchase.purchaseToken);
-      // if (!isValid) {
-      //   Alert.alert('Error', 'Receipt validation failed');
-      //   return;
-      // }
-
-      // After successful server validation, finish the transaction
-      // For subscriptions, isConsumable should be false (subscriptions are non-consumable)
-      await finishTransaction({
-        purchase,
-        isConsumable: false, // Set to false for subscriptions
-      });
-
-      Alert.alert('Success', 'New subscription activated successfully!');
-
-      console.log('✅ New subscription purchase completed');
-
-      // Immediately refresh subscription status to update UI
-      console.log(
-        '🔄 Immediately refreshing subscription status after purchase...',
-      );
-
-      try {
-        await getActiveSubscriptions();
-        await getAvailablePurchases();
-      } catch (error) {
-        console.warn('Failed to refresh status:', error);
-      }
-
-      // Reset the handling flag
-      setIsHandlingPurchase(false);
-      setIsProcessing(false);
+      onSubscribe(itemId);
     },
-    onPurchaseError: (error: PurchaseError) => {
-      console.error('Subscription failed:', error);
-      setIsProcessing(false);
-      setIsHandlingPurchase(false); // Reset both flags on error
+    [activeSubscriptions, onSubscribe],
+  );
 
-      // Handle subscription error
-      setPurchaseResult(`Subscription failed: ${error.message}`);
-    },
-    onSyncError: (error: Error) => {
-      console.warn('Sync error:', error);
-      Alert.alert(
-        'Sync Error',
-        `Failed to sync subscriptions: ${error.message}`,
-      );
-    },
-  });
+  const retryLoadSubscriptions = useCallback(() => {
+    onRetryLoadSubscriptions();
+  }, [onRetryLoadSubscriptions]);
 
-  // Check subscription status using the new library API
-  const checkSubscriptionStatus = useCallback(async () => {
-    if (!connected || isCheckingStatus) return;
-
-    console.log('Checking subscription status...');
-    setIsCheckingStatus(true);
-    try {
-      // No need to pass subscriptionIds - it will check all active subscriptions
-      await getActiveSubscriptions();
-      console.log('Active subscriptions result (state):', activeSubscriptions);
-    } catch (error) {
-      console.error('Error checking subscription status:', error);
-      // Don't show alert for every error - user might be offline or have temporary issues
-      console.warn(
-        'Subscription status check failed, but existing state preserved',
-      );
-    } finally {
-      setIsCheckingStatus(false);
-    }
-  }, [
-    connected,
-    isCheckingStatus,
-    getActiveSubscriptions,
-    activeSubscriptions,
-  ]);
-
-  // Note: Do NOT fetch on mount before connection is ready.
-  // Fetching happens in the connected effect below.
-
-  // Load subscriptions and check status when connected (guard against dev double-invoke)
-  const didFetchSubsRef = React.useRef(false);
-  useEffect(() => {
-    const subscriptionIds = SUBSCRIPTION_PRODUCT_IDS;
-
-    if (connected && !didFetchSubsRef.current) {
-      didFetchSubsRef.current = true;
-      console.log('Connected to store, loading subscription products...');
-      // fetchProducts populates hook state; results surface via subscriptions state
-      // Results will be available through the useIAP hook's subscriptions state
-      fetchProducts({skus: subscriptionIds, type: 'subs'});
-      console.log('Product loading request sent - waiting for results...');
-
-      // Load available purchases to check subscription history
-      console.log('Loading available purchases...');
-      getAvailablePurchases().catch((error) => {
-        console.warn('Failed to load available purchases:', error);
-      });
-    } else if (!connected) {
-      didFetchSubsRef.current = false; // reset when disconnected
-    }
-  }, [connected, fetchProducts, getAvailablePurchases]);
-
-  // Defer loading guard until after all hooks are declared
-
-  // Check subscription status when connected
-  useEffect(() => {
-    if (connected) {
-      checkSubscriptionStatus();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected]);
-
-  // Track activeSubscriptions state changes
-  useEffect(() => {
-    console.log(
-      '[STATE CHANGE] activeSubscriptions:',
-      activeSubscriptions.length,
-      'items:',
-      activeSubscriptions.map((sub) => ({
-        productId: sub.productId,
-        isActive: sub.isActive,
-        expirationDateIOS: sub.expirationDateIOS?.toString(),
-        environmentIOS: sub.environmentIOS,
-        willExpireSoon: sub.willExpireSoon,
-      })),
-    );
-  }, [activeSubscriptions]);
-
-  // Track subscriptions (products) state changes
-  useEffect(() => {
-    console.log(
-      '[STATE CHANGE] subscriptions (products):',
-      subscriptions.length,
-      subscriptions.map((s) => ({id: s.id, title: s.title, type: s.type})),
-    );
-
-    if (subscriptions.length > 0) {
-      console.log(
-        'Full subscription details:',
-        JSON.stringify(subscriptions, null, 2),
-      );
-    }
-  }, [subscriptions]);
-
-  const handleSubscription = (itemId: string) => {
-    // Check if already subscribed to this product
-    const isAlreadySubscribed = activeSubscriptions.some(
-      (sub) => sub.productId === itemId,
-    );
-
-    if (isAlreadySubscribed) {
-      Alert.alert(
-        'Already Subscribed',
-        'You already have an active subscription to this product.',
-        [{text: 'OK', style: 'default'}],
-      );
-      return;
-    }
-
-    setIsProcessing(true);
-    setPurchaseResult('Processing subscription...');
-
-    // Find the subscription to get offer details for Android
-    const subscription = subscriptions.find((sub) => sub.id === itemId);
-
-    const androidOffers =
-      subscription &&
-      'subscriptionOfferDetailsAndroid' in subscription &&
-      Array.isArray(subscription.subscriptionOfferDetailsAndroid)
-        ? subscription.subscriptionOfferDetailsAndroid
-            .map((offer) =>
-              offer?.offerToken
-                ? {
-                    sku: itemId,
-                    offerToken: offer.offerToken,
-                  }
-                : null,
-            )
-            .filter((offer): offer is {sku: string; offerToken: string} =>
-              Boolean(offer?.offerToken),
-            )
-        : [];
-
-    // Fire-and-forget: requestPurchase is event-based; handle results via hook callbacks
-    if (typeof requestPurchase !== 'function') {
-      console.warn(
-        '[SubscriptionFlow] requestPurchase missing (test/mock env)',
-      );
-      setIsProcessing(false);
-      setPurchaseResult('Cannot start purchase in test/mock environment.');
-      return;
-    }
-    void requestPurchase({
-      request: {
-        ios: {
-          sku: itemId,
-          // appAccountToken can be provided in real apps if needed
-        },
-        android: {
-          skus: [itemId],
-          subscriptionOffers:
-            androidOffers.length > 0 ? androidOffers : undefined,
-        },
-      },
-      type: 'subs',
-    });
-  };
-
-  const retryLoadSubscriptions = () => {
-    fetchProducts({skus: SUBSCRIPTION_PRODUCT_IDS, type: 'subs'});
-  };
+  const handleRefreshStatus = useCallback(() => {
+    onRefreshStatus();
+  }, [onRefreshStatus]);
 
   const getSubscriptionDisplayPrice = (
     subscription: ProductSubscription,
@@ -456,43 +152,14 @@ export default function SubscriptionFlow() {
     }
   };
 
-  const handleManageSubscriptions = async () => {
-    try {
-      if (Platform.OS === 'ios') {
-        console.log('Opening subscription management (iOS)...');
-        const openedNative = await showManageSubscriptionsIOS()
-          .then(() => true)
-          .catch((error) => {
-            console.warn(
-              '[SubscriptionFlow] showManageSubscriptionsIOS failed, falling back to deep link',
-              error,
-            );
-            return false;
-          });
+  const handleManageSubscriptions = useCallback(() => {
+    onManageSubscriptions();
+  }, [onManageSubscriptions]);
 
-        if (!openedNative) {
-          await deepLinkToSubscriptions({});
-        }
-        console.log('Subscription management opened');
-
-        // After returning from subscription management, refresh status
-        console.log('Refreshing subscription status after management...');
-        checkSubscriptionStatus();
-      } else {
-        const sku = subscriptions[0]?.id ?? SUBSCRIPTION_PRODUCT_IDS[0];
-        const packageName = 'dev.hyo.martie';
-        console.log('Opening subscription management (Android)...');
-        await deepLinkToSubscriptions(
-          sku
-            ? {skuAndroid: sku, packageNameAndroid: packageName}
-            : {packageNameAndroid: packageName},
-        );
-      }
-    } catch (error) {
-      console.error('Failed to open subscription management:', error);
-      Alert.alert('Error', 'Failed to open subscription management');
-    }
-  };
+  const deduplicatedPurchases = useMemo(
+    () => deduplicatePurchases(availablePurchases),
+    [availablePurchases],
+  );
 
   const getIntroductoryOffer = (
     subscription: ProductSubscription,
@@ -691,7 +358,7 @@ export default function SubscriptionFlow() {
           <View style={styles.subscriptionActionButtons}>
             <TouchableOpacity
               style={styles.refreshButton}
-              onPress={checkSubscriptionStatus}
+              onPress={handleRefreshStatus}
               disabled={isCheckingStatus}
             >
               {isCheckingStatus ? (
@@ -717,7 +384,7 @@ export default function SubscriptionFlow() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Available Subscriptions</Text>
           {activeSubscriptions.length === 0 && connected ? (
-            <TouchableOpacity onPress={checkSubscriptionStatus}>
+            <TouchableOpacity onPress={handleRefreshStatus}>
               <Text style={styles.checkStatusLink}>Check Status</Text>
             </TouchableOpacity>
           ) : null}
@@ -815,27 +482,24 @@ export default function SubscriptionFlow() {
       </View>
 
       {/* Available Purchases Section */}
-      {(() => {
-        const deduplicatedPurchases = deduplicatePurchases(availablePurchases);
-        return deduplicatedPurchases.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Available Purchases History</Text>
-            <Text style={styles.subtitle}>
-              Past purchases and subscription transactions (deduplicated)
-            </Text>
-            {deduplicatedPurchases.map((purchase, index) => (
-              <PurchaseSummaryRow
-                key={`history-${purchase.productId}-${index}`}
-                purchase={purchase}
-                onPress={() => {
-                  setSelectedPurchase(purchase);
-                  setPurchaseDetailsVisible(true);
-                }}
-              />
-            ))}
-          </View>
-        ) : null;
-      })()}
+      {deduplicatedPurchases.length > 0 ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Available Purchases History</Text>
+          <Text style={styles.subtitle}>
+            Past purchases and subscription transactions (deduplicated)
+          </Text>
+          {deduplicatedPurchases.map((purchase, index) => (
+            <PurchaseSummaryRow
+              key={`history-${purchase.productId}-${index}`}
+              purchase={purchase}
+              onPress={() => {
+                setSelectedPurchase(purchase);
+                setPurchaseDetailsVisible(true);
+              }}
+            />
+          ))}
+        </View>
+      ) : null}
 
       {purchaseResult || lastPurchase ? (
         <View style={styles.section}>
@@ -953,6 +617,363 @@ export default function SubscriptionFlow() {
     </ScrollView>
   );
 }
+
+function SubscriptionFlowContainer() {
+  const [purchaseResult, setPurchaseResult] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [isHandlingPurchase, setIsHandlingPurchase] = useState(false);
+  const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
+
+  const didFetchSubsRef = useRef(false);
+
+  const {
+    connected,
+    subscriptions,
+    availablePurchases,
+    fetchProducts,
+    getAvailablePurchases,
+    finishTransaction,
+    getActiveSubscriptions,
+    activeSubscriptions,
+  } = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      const {purchaseToken: tokenToMask, ...rest} = purchase as any;
+      const masked = {
+        ...rest,
+        ...(tokenToMask ? {purchaseToken: 'hidden'} : {}),
+      };
+      console.log('Subscription successful:', masked);
+      setLastPurchase(purchase);
+
+      if (isHandlingPurchase) {
+        console.log('Already handling a purchase, skipping duplicate callback');
+        return;
+      }
+
+      setIsHandlingPurchase(true);
+      setIsProcessing(false);
+
+      let isPurchased = false;
+      let isRestoration = false;
+      const purchasePlatform = (purchase.platform ?? '')
+        .toString()
+        .toLowerCase();
+
+      if (Platform.OS === 'ios' && purchasePlatform === 'ios') {
+        const iosPurchase = purchase as PurchaseIOS;
+        const hasValidToken = !!(
+          purchase.purchaseToken && purchase.purchaseToken.length > 0
+        );
+        const hasValidTransactionId = !!(purchase.id && purchase.id.length > 0);
+
+        isPurchased = hasValidToken || hasValidTransactionId;
+        isRestoration = Boolean(
+          iosPurchase.originalTransactionIdentifierIOS &&
+            iosPurchase.originalTransactionIdentifierIOS !== purchase.id &&
+            iosPurchase.transactionReasonIOS &&
+            iosPurchase.transactionReasonIOS !== 'PURCHASE',
+        );
+
+        console.log('iOS Purchase Analysis:');
+        console.log('  hasValidToken:', hasValidToken);
+        console.log('  hasValidTransactionId:', hasValidTransactionId);
+        console.log('  isPurchased:', isPurchased);
+        console.log('  isRestoration:', isRestoration);
+        console.log(
+          '  originalTransactionId:',
+          iosPurchase.originalTransactionIdentifierIOS,
+        );
+        console.log('  currentTransactionId:', purchase.id);
+        console.log('  transactionReason:', iosPurchase.transactionReasonIOS);
+      } else if (Platform.OS === 'android' && purchasePlatform === 'android') {
+        isPurchased = true;
+        isRestoration = false;
+
+        console.log('Android Purchase Analysis:');
+        console.log('  isPurchased:', isPurchased);
+        console.log('  isRestoration:', isRestoration);
+      }
+
+      if (!isPurchased) {
+        console.warn(
+          'Purchase callback received but purchase validation failed',
+        );
+        setPurchaseResult('Purchase validation failed.');
+        Alert.alert(
+          'Purchase Issue',
+          'Purchase could not be validated. Please try again.',
+        );
+        setIsHandlingPurchase(false);
+        return;
+      }
+
+      if (isRestoration) {
+        setPurchaseResult('Subscription restored successfully.');
+
+        try {
+          await finishTransaction({
+            purchase,
+            isConsumable: false,
+          });
+        } catch (error) {
+          console.warn('finishTransaction failed during restoration:', error);
+        }
+
+        console.log('✅ Subscription restoration completed');
+
+        try {
+          await getActiveSubscriptions();
+          await getAvailablePurchases();
+        } catch (error) {
+          console.warn('Failed to refresh status:', error);
+        }
+
+        setIsHandlingPurchase(false);
+        return;
+      }
+
+      setPurchaseResult('Subscription activated successfully.');
+
+      try {
+        await finishTransaction({
+          purchase,
+          isConsumable: false,
+        });
+      } catch (error) {
+        console.warn('finishTransaction failed (new purchase):', error);
+      }
+
+      Alert.alert('Success', 'New subscription activated successfully!');
+      console.log('✅ New subscription purchase completed');
+
+      try {
+        await getActiveSubscriptions();
+        await getAvailablePurchases();
+      } catch (error) {
+        console.warn('Failed to refresh status:', error);
+      }
+
+      setIsHandlingPurchase(false);
+      setIsProcessing(false);
+    },
+    onPurchaseError: (error: PurchaseError) => {
+      console.error('Subscription failed:', error);
+      setIsProcessing(false);
+      setIsHandlingPurchase(false);
+      setPurchaseResult(`Subscription failed: ${error.message}`);
+    },
+    onSyncError: (error: Error) => {
+      console.warn('Sync error:', error);
+      Alert.alert(
+        'Sync Error',
+        `Failed to sync subscriptions: ${error.message}`,
+      );
+    },
+  });
+
+  const handleRefreshStatus = useCallback(async () => {
+    if (!connected || isCheckingStatus) {
+      return;
+    }
+
+    console.log('Checking subscription status...');
+    setIsCheckingStatus(true);
+    try {
+      await getActiveSubscriptions();
+      console.log('Active subscriptions result (state):', activeSubscriptions);
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+      console.warn(
+        'Subscription status check failed, but existing state preserved',
+      );
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  }, [
+    connected,
+    isCheckingStatus,
+    getActiveSubscriptions,
+    activeSubscriptions,
+  ]);
+
+  useEffect(() => {
+    const subscriptionIds = SUBSCRIPTION_PRODUCT_IDS;
+
+    if (connected && !didFetchSubsRef.current) {
+      didFetchSubsRef.current = true;
+      console.log('Connected to store, loading subscription products...');
+      fetchProducts({skus: subscriptionIds, type: 'subs'});
+      console.log('Product loading request sent - waiting for results...');
+
+      console.log('Loading available purchases...');
+      getAvailablePurchases().catch((error) => {
+        console.warn('Failed to load available purchases:', error);
+      });
+    } else if (!connected) {
+      didFetchSubsRef.current = false;
+    }
+  }, [connected, fetchProducts, getAvailablePurchases]);
+
+  useEffect(() => {
+    if (connected) {
+      void handleRefreshStatus();
+    }
+  }, [connected, handleRefreshStatus]);
+
+  useEffect(() => {
+    console.log(
+      '[STATE CHANGE] activeSubscriptions:',
+      activeSubscriptions.length,
+      'items:',
+      activeSubscriptions.map((sub) => ({
+        productId: sub.productId,
+        isActive: sub.isActive,
+        expirationDateIOS: sub.expirationDateIOS?.toString(),
+        environmentIOS: sub.environmentIOS,
+        willExpireSoon: sub.willExpireSoon,
+      })),
+    );
+  }, [activeSubscriptions]);
+
+  useEffect(() => {
+    console.log(
+      '[STATE CHANGE] subscriptions (products):',
+      subscriptions.length,
+      subscriptions.map((s) => ({id: s.id, title: s.title, type: s.type})),
+    );
+
+    if (subscriptions.length > 0) {
+      console.log(
+        'Full subscription details:',
+        JSON.stringify(subscriptions, null, 2),
+      );
+    }
+  }, [subscriptions]);
+
+  const handleSubscription = useCallback(
+    (itemId: string) => {
+      if (
+        activeSubscriptions.some(
+          (subscription) => subscription.productId === itemId,
+        )
+      ) {
+        setPurchaseResult(
+          'You already have an active subscription to this product.',
+        );
+        setIsProcessing(false);
+        return;
+      }
+
+      setIsProcessing(true);
+      setPurchaseResult('Processing subscription...');
+
+      const subscription = subscriptions.find((sub) => sub.id === itemId);
+
+      const androidOffers =
+        subscription &&
+        'subscriptionOfferDetailsAndroid' in subscription &&
+        Array.isArray(subscription.subscriptionOfferDetailsAndroid)
+          ? subscription.subscriptionOfferDetailsAndroid
+              .map((offer) =>
+                offer?.offerToken
+                  ? {
+                      sku: itemId,
+                      offerToken: offer.offerToken,
+                    }
+                  : null,
+              )
+              .filter((offer): offer is {sku: string; offerToken: string} =>
+                Boolean(offer?.offerToken),
+              )
+          : [];
+
+      if (typeof requestPurchase !== 'function') {
+        console.warn(
+          '[SubscriptionFlow] requestPurchase missing (test/mock env)',
+        );
+        setIsProcessing(false);
+        setPurchaseResult('Cannot start purchase in test/mock environment.');
+        return;
+      }
+
+      void requestPurchase({
+        request: {
+          ios: {
+            sku: itemId,
+          },
+          android: {
+            skus: [itemId],
+            subscriptionOffers:
+              androidOffers.length > 0 ? androidOffers : undefined,
+          },
+        },
+        type: 'subs',
+      });
+    },
+    [activeSubscriptions, subscriptions],
+  );
+
+  const handleRetryLoadSubscriptions = useCallback(() => {
+    fetchProducts({skus: SUBSCRIPTION_PRODUCT_IDS, type: 'subs'});
+  }, [fetchProducts]);
+
+  const handleManageSubscriptions = useCallback(async () => {
+    try {
+      if (Platform.OS === 'ios') {
+        console.log('Opening subscription management (iOS)...');
+        const openedNative = await showManageSubscriptionsIOS()
+          .then(() => true)
+          .catch((error) => {
+            console.warn(
+              '[SubscriptionFlow] showManageSubscriptionsIOS failed, falling back to deep link',
+              error,
+            );
+            return false;
+          });
+
+        if (!openedNative) {
+          await deepLinkToSubscriptions({});
+        }
+        console.log('Subscription management opened');
+
+        console.log('Refreshing subscription status after management...');
+        await handleRefreshStatus();
+      } else {
+        const sku = subscriptions[0]?.id ?? SUBSCRIPTION_PRODUCT_IDS[0];
+        const packageName = 'dev.hyo.martie';
+        console.log('Opening subscription management (Android)...');
+        await deepLinkToSubscriptions(
+          sku
+            ? {skuAndroid: sku, packageNameAndroid: packageName}
+            : {packageNameAndroid: packageName},
+        );
+      }
+    } catch (error) {
+      console.error('Failed to open subscription management:', error);
+      Alert.alert('Error', 'Failed to open subscription management');
+    }
+  }, [handleRefreshStatus, subscriptions]);
+
+  return (
+    <SubscriptionFlow
+      connected={connected}
+      subscriptions={subscriptions}
+      availablePurchases={availablePurchases}
+      activeSubscriptions={activeSubscriptions}
+      purchaseResult={purchaseResult}
+      isProcessing={isProcessing}
+      isCheckingStatus={isCheckingStatus}
+      lastPurchase={lastPurchase}
+      onSubscribe={handleSubscription}
+      onRetryLoadSubscriptions={handleRetryLoadSubscriptions}
+      onRefreshStatus={handleRefreshStatus}
+      onManageSubscriptions={handleManageSubscriptions}
+    />
+  );
+}
+
+export default SubscriptionFlowContainer;
 
 const styles = StyleSheet.create({
   container: {
