@@ -360,17 +360,6 @@ class ExpoIapModule : Module() {
                             "requestPurchaseAndroid",
                             purchases.map { it.toJson() },
                         )
-                        purchases.forEach { purchase ->
-                            runCatching {
-                                emitOrQueue(EVENT_PURCHASE_UPDATED, purchase.toJson())
-                            }.onFailure { ex ->
-                                Log.e(
-                                    TAG,
-                                    "Failed to send PURCHASE_UPDATED event (requestPurchase)",
-                                    ex,
-                                )
-                            }
-                        }
                         PromiseUtils.resolvePromisesForKey(
                             PromiseUtils.PROMISE_BUY_ITEM,
                             purchases.map { it.toJson() },
