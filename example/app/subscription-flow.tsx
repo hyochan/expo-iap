@@ -625,7 +625,14 @@ function SubscriptionFlowContainer() {
   const [isHandlingPurchase, setIsHandlingPurchase] = useState(false);
   const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
 
+  const isHandlingPurchaseRef = useRef(false);
+  const isCheckingStatusRef = useRef(false);
   const didFetchSubsRef = useRef(false);
+
+  const resetHandlingState = useCallback(() => {
+    isHandlingPurchaseRef.current = false;
+    setIsHandlingPurchase(false);
+  }, []);
 
   const {
     connected,
@@ -646,11 +653,12 @@ function SubscriptionFlowContainer() {
       console.log('Subscription successful:', masked);
       setLastPurchase(purchase);
 
-      if (isHandlingPurchase) {
+      if (isHandlingPurchaseRef.current) {
         console.log('Already handling a purchase, skipping duplicate callback');
         return;
       }
 
+      isHandlingPurchaseRef.current = true;
       setIsHandlingPurchase(true);
       setIsProcessing(false);
 
@@ -704,7 +712,7 @@ function SubscriptionFlowContainer() {
           'Purchase Issue',
           'Purchase could not be validated. Please try again.',
         );
-        setIsHandlingPurchase(false);
+        resetHandlingState();
         return;
       }
 
@@ -729,7 +737,7 @@ function SubscriptionFlowContainer() {
           console.warn('Failed to refresh status:', error);
         }
 
-        setIsHandlingPurchase(false);
+        resetHandlingState();
         return;
       }
 
@@ -754,13 +762,13 @@ function SubscriptionFlowContainer() {
         console.warn('Failed to refresh status:', error);
       }
 
-      setIsHandlingPurchase(false);
+      resetHandlingState();
       setIsProcessing(false);
     },
     onPurchaseError: (error: PurchaseError) => {
       console.error('Subscription failed:', error);
       setIsProcessing(false);
-      setIsHandlingPurchase(false);
+      resetHandlingState();
       setPurchaseResult(`Subscription failed: ${error.message}`);
     },
     onSyncError: (error: Error) => {
@@ -773,29 +781,30 @@ function SubscriptionFlowContainer() {
   });
 
   const handleRefreshStatus = useCallback(async () => {
-    if (!connected || isCheckingStatus) {
+    if (!connected || isCheckingStatusRef.current) {
       return;
     }
 
     console.log('Checking subscription status...');
+    isCheckingStatusRef.current = true;
     setIsCheckingStatus(true);
     try {
-      await getActiveSubscriptions();
-      console.log('Active subscriptions result (state):', activeSubscriptions);
+      const latestSubscriptions = await getActiveSubscriptions();
+      console.log(
+        'Active subscriptions result:',
+        latestSubscriptions?.length ?? 0,
+        latestSubscriptions,
+      );
     } catch (error) {
       console.error('Error checking subscription status:', error);
       console.warn(
         'Subscription status check failed, but existing state preserved',
       );
     } finally {
+      isCheckingStatusRef.current = false;
       setIsCheckingStatus(false);
     }
-  }, [
-    connected,
-    isCheckingStatus,
-    getActiveSubscriptions,
-    activeSubscriptions,
-  ]);
+  }, [connected, getActiveSubscriptions]);
 
   useEffect(() => {
     const subscriptionIds = SUBSCRIPTION_PRODUCT_IDS;
