@@ -2,6 +2,8 @@ import Foundation
 import OpenIAP
 
 enum ExpoIapHelper {
+    private static var listeners: [Subscription] = []
+
     static func sanitizeDictionary(_ dictionary: [String: Any?]) -> [String: Any] {
         var result: [String: Any] = [:]
         for (key, value) in dictionary {
@@ -92,5 +94,89 @@ enum ExpoIapHelper {
         }
 
         throw PurchaseError.make(code: .developerError, message: "Invalid request payload")
+    }
+
+    static func setupListeners(
+        module: ExpoIapModule,
+        purchaseUpdated: @escaping (Purchase) -> Void,
+        purchaseError: @escaping (PurchaseError) -> Void,
+        promotedProduct: @escaping (String) async -> Void
+    ) {
+        // Clean up any existing listeners first
+        cleanupListeners()
+
+        let purchaseUpdatedSub = OpenIapModule.shared.purchaseUpdatedListener { purchase in
+            Task { @MainActor in
+                purchaseUpdated(purchase)
+            }
+        }
+
+        let purchaseErrorSub = OpenIapModule.shared.purchaseErrorListener { error in
+            Task { @MainActor in
+                purchaseError(error)
+            }
+        }
+
+        let promotedProductSub = OpenIapModule.shared.promotedProductListenerIOS { productId in
+            Task { @MainActor in
+                await promotedProduct(productId)
+            }
+        }
+
+        listeners = [purchaseUpdatedSub, purchaseErrorSub, promotedProductSub]
+    }
+
+    static func cleanupListeners() {
+        // Clear listeners array - subscriptions will be automatically cancelled
+        listeners.removeAll()
+    }
+
+    static func setupStore(module: ExpoIapModule) {
+        setupListeners(
+            module: module,
+            purchaseUpdated: { [weak module] purchase in
+                guard let module else { return }
+                let payload = sanitizeDictionary(OpenIapSerialization.purchase(purchase))
+                module.sendEvent(OpenIapEvent.purchaseUpdated.rawValue, payload)
+            },
+            purchaseError: { [weak module] error in
+                guard let module else { return }
+                let payload = sanitizeDictionary(OpenIapSerialization.encode(error))
+                module.sendEvent(OpenIapEvent.purchaseError.rawValue, payload)
+            },
+            promotedProduct: { [weak module] productId in
+                guard let module else { return }
+                do {
+                    if let product = try await OpenIapModule.shared.getPromotedProductIOS() {
+                        let sanitized = sanitizeDictionary(OpenIapSerialization.encode(product))
+                        module.sendEvent(OpenIapEvent.promotedProductIos.rawValue, sanitized)
+                        return
+                    }
+                } catch {
+                    ExpoIapLog.failure("promotedProductListenerIOS", error: error)
+                }
+
+                module.sendEvent(
+                    OpenIapEvent.promotedProductIos.rawValue,
+                    ["productId": productId]
+                )
+            }
+        )
+    }
+
+    static func cleanupStore() async {
+        cleanupListeners()
+        _ = try? await OpenIapModule.shared.endConnection()
+    }
+
+    static func ensureConnection(isInitialized: Bool) async throws {
+        try await MainActor.run {
+            guard isInitialized else {
+                throw PurchaseError.make(
+                    code: .initConnection,
+                    message: "Connection not initialized. Call initConnection() first."
+                )
+            }
+        }
     }
 }
