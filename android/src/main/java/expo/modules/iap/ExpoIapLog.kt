@@ -28,6 +28,10 @@ internal object ExpoIapLog {
         Log.e(TAG, "$name failed: ${error.localizedMessage}", error)
     }
 
+    fun warning(message: String) {
+        Log.w(TAG, message)
+    }
+
     fun debug(message: String) {
         Log.d(TAG, message)
     }

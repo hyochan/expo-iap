@@ -28,7 +28,8 @@ enum ExpoIapHelper {
     }
 
     static func parseProductQueryType(_ rawValue: String?) -> ProductQueryType {
-        guard let raw = rawValue?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+        guard let raw = rawValue?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty
+        else {
             return .all
         }
         switch raw.lowercased() {
@@ -58,14 +59,17 @@ enum ExpoIapHelper {
             return try OpenIapSerialization.productRequest(skus: indexedSkus, type: .all)
         }
 
-        if let request = try? OpenIapSerialization.decode(object: payload, as: ProductRequest.self) {
+        if let request = try? OpenIapSerialization.decode(object: payload, as: ProductRequest.self)
+        {
             return request
         }
 
         throw PurchaseError.emptySkuList()
     }
 
-    static func decodeRequestPurchaseProps(from payload: [String: Any]) throws -> RequestPurchaseProps {
+    static func decodeRequestPurchaseProps(from payload: [String: Any]) throws
+        -> RequestPurchaseProps
+    {
         if payload["requestPurchase"] != nil || payload["requestSubscription"] != nil {
             return try OpenIapSerialization.decode(object: payload, as: RequestPurchaseProps.self)
         }
@@ -82,15 +86,17 @@ enum ExpoIapHelper {
             case .all:
                 break
             }
-            return try OpenIapSerialization.decode(object: normalized, as: RequestPurchaseProps.self)
+            return try OpenIapSerialization.decode(
+                object: normalized, as: RequestPurchaseProps.self)
         }
 
         if payload["sku"] != nil {
             let normalized: [String: Any] = [
                 "type": ProductQueryType.inApp.rawValue,
-                "requestPurchase": ["ios": payload]
+                "requestPurchase": ["ios": payload],
             ]
-            return try OpenIapSerialization.decode(object: normalized, as: RequestPurchaseProps.self)
+            return try OpenIapSerialization.decode(
+                object: normalized, as: RequestPurchaseProps.self)
         }
 
         throw PurchaseError.make(code: .developerError, message: "Invalid request payload")
@@ -127,7 +133,10 @@ enum ExpoIapHelper {
     }
 
     static func cleanupListeners() {
-        // Clear listeners array - subscriptions will be automatically cancelled
+        // Cancel and clear subscriptions to prevent memory leaks
+        listeners.forEach { sub in
+            sub.cancel()
+        }
         listeners.removeAll()
     }
 

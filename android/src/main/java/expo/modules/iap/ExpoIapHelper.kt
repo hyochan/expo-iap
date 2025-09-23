@@ -31,7 +31,7 @@ object ExpoIapHelper {
         // Bound the buffer to prevent unbounded growth if init stalls
         if (pendingEvents.size >= MAX_BUFFERED_EVENTS) {
             pendingEvents.poll()
-            ExpoIapLog.debug("pendingEvents overflow; dropping oldest")
+            ExpoIapLog.warning("pendingEvents overflow; dropping oldest")
         }
         pendingEvents.add(name to payload)
     }

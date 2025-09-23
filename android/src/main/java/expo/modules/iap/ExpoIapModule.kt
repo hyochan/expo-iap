@@ -78,16 +78,6 @@ class ExpoIapModule : Module() {
                                 return@withLock
                             }
 
-                            val ok = openIap.initConnection()
-
-                            if (!ok) {
-                                // Clear any buffered events from a failed init
-                                pendingEvents.clear()
-                                ExpoIapLog.failure("initConnection", IllegalStateException("Failed to initialize connection"))
-                                promise.reject(OpenIapError.InitConnection.CODE, "Failed to initialize connection", null)
-                                return@withLock
-                            }
-
                             // Attach listeners early to avoid races during init
                             if (!listenersAttached) {
                                 listenersAttached = true
@@ -100,6 +90,16 @@ class ExpoIapModule : Module() {
                                     EVENT_PURCHASE_UPDATED,
                                     EVENT_PURCHASE_ERROR,
                                 )
+                            }
+
+                            val ok = openIap.initConnection()
+
+                            if (!ok) {
+                                // Clear any buffered events from a failed init
+                                pendingEvents.clear()
+                                ExpoIapLog.failure("initConnection", IllegalStateException("Failed to initialize connection"))
+                                promise.reject(OpenIapError.InitConnection.CODE, "Failed to initialize connection", null)
+                                return@withLock
                             }
 
                             // Mark ready then flush any buffered events
