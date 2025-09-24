@@ -133,10 +133,8 @@ enum ExpoIapHelper {
     }
 
     static func cleanupListeners() {
-        // Cancel and clear subscriptions to prevent memory leaks
-        listeners.forEach { sub in
-            sub.cancel()
-        }
+        // Clear subscriptions to prevent memory leaks
+        // Subscription deinit will automatically call onRemove closure
         listeners.removeAll()
     }
 
