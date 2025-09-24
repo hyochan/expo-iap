@@ -19,11 +19,11 @@ import {
   hasActiveSubscriptions,
   type ActiveSubscription,
   type ProductTypeInput,
-  restorePurchases,
 } from './index';
 import {
   getPromotedProductIOS,
   requestPurchaseOnPromotedProductIOS,
+  syncIOS,
 } from './modules/ios';
 
 // Types
@@ -82,7 +82,6 @@ type UseIap = {
 export interface UseIAPOptions {
   onPurchaseSuccess?: (purchase: Purchase) => void;
   onPurchaseError?: (error: PurchaseError) => void;
-  onSyncError?: (error: Error) => void;
   shouldAutoSyncPurchases?: boolean; // New option to control auto-syncing
   onPromotedProductIOS?: (product: Product) => void;
 }
@@ -321,7 +320,11 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   // Android: fetch available purchases directly.
   const restorePurchasesInternal = useCallback(async (): Promise<void> => {
     try {
-      await restorePurchases();
+      // iOS: Try to sync first, but don't fail if sync errors occur
+      if (Platform.OS === 'ios') {
+        await syncIOS(); // syncIOS returns Promise<boolean>, we don't need the result
+      }
+
       const purchases = await getAvailablePurchases({
         alsoPublishToEventListenerIOS: false,
         onlyIncludeActiveItemsIOS: true,
