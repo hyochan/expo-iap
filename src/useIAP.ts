@@ -322,7 +322,11 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     try {
       // iOS: Try to sync first, but don't fail if sync errors occur
       if (Platform.OS === 'ios') {
-        await syncIOS(); // syncIOS returns Promise<boolean>, we don't need the result
+        try {
+          await syncIOS(); // result is not used
+        } catch (e) {
+          console.warn('[useIAP] syncIOS failed (ignored):', e);
+        }
       }
 
       const purchases = await getAvailablePurchases({
