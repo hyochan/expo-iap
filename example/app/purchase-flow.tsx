@@ -241,10 +241,10 @@ function PurchaseFlow({
               {storefrontLoading
                 ? 'Fetching…'
                 : storefront
-                  ? storefront
-                  : storefrontError
-                    ? 'Unavailable'
-                    : 'Not available'}
+                ? storefront
+                : storefrontError
+                ? 'Unavailable'
+                : 'Not available'}
             </Text>
           </View>
           {storefrontError ? (

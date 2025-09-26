@@ -539,9 +539,7 @@ describe('Public API (index.ts)', () => {
     });
 
     it('getStorefront delegates to native getStorefront method', async () => {
-      const nativeSpy = jest
-        .fn()
-        .mockResolvedValue('US');
+      const nativeSpy = jest.fn().mockResolvedValue('US');
       (ExpoIapModule as any).getStorefront = nativeSpy;
 
       const res = await getStorefront();
