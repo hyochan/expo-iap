@@ -34,11 +34,6 @@ describe('Core Functions Tests', () => {
       expect(typeof ExpoIap.getAvailablePurchases).toBe('function');
     });
 
-    it('should export getStorefrontIOS function', () => {
-      expect(ExpoIap.getStorefrontIOS).toBeDefined();
-      expect(typeof ExpoIap.getStorefrontIOS).toBe('function');
-    });
-
     it('should export getStorefront function', () => {
       expect(ExpoIap.getStorefront).toBeDefined();
       expect(typeof ExpoIap.getStorefront).toBe('function');

@@ -16,14 +16,12 @@ import type {
   SubscriptionStatusIOS,
 } from '../types';
 import type {PurchaseError} from '../utils/errorMapping';
-import {Linking, Platform} from 'react-native';
+import {Linking} from 'react-native';
 
 export type TransactionEvent = {
   transaction?: Purchase;
   error?: PurchaseError;
 };
-
-let hasWarnedDeprecatedGetStorefrontIOS = false;
 
 // Listeners
 
@@ -179,37 +177,6 @@ export const getReceiptDataIOS: QueryField<'getReceiptDataIOS'> = async () => {
 };
 
 export const getReceiptIOS = getReceiptDataIOS;
-
-/**
- * Retrieves the current storefront information from the iOS App Store.
- *
- * @returns Promise resolving to the storefront country code
- * @throws Error if called on non-iOS platform
- *
- * @example
- * ```typescript
- * const storefront = await getStorefrontIOS();
- * console.log(storefront); // 'US'
- * ```
- *
- * @platform iOS
- */
-export const getStorefrontIOS: QueryField<'getStorefrontIOS'> = async () => {
-  if (Platform.OS !== 'ios') {
-    console.warn(
-      'getStorefrontIOS is deprecated and only available on iOS. Use getStorefront instead.',
-    );
-    return '';
-  }
-
-  if (!hasWarnedDeprecatedGetStorefrontIOS) {
-    hasWarnedDeprecatedGetStorefrontIOS = true;
-    console.warn(
-      'getStorefrontIOS is deprecated and will be removed in a future release. Use getStorefront instead.',
-    );
-  }
-  return ExpoIapModule.getStorefrontIOS();
-};
 
 /**
  * Check if a transaction is verified through StoreKit 2.

@@ -20,7 +20,6 @@ import {
   initConnection,
   endConnection,
   finishTransaction,
-  getStorefrontIOS,
   getStorefront,
   validateReceipt,
   deepLinkToSubscriptions,
@@ -529,15 +528,6 @@ describe('Public API (index.ts)', () => {
   });
 
   describe('storefront', () => {
-    it('getStorefrontIOS warns on non‑iOS', async () => {
-      (Platform as any).OS = 'android';
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      const res = await getStorefrontIOS();
-      expect(res).toBe('');
-      expect(warnSpy).toHaveBeenCalled();
-      warnSpy.mockRestore();
-    });
-
     it('getStorefront delegates to native getStorefront method', async () => {
       const nativeSpy = jest.fn().mockResolvedValue('US');
       (ExpoIapModule as any).getStorefront = nativeSpy;

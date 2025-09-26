@@ -45,7 +45,6 @@ jest.mock('expo-iap', () => {
     getAvailablePurchases: mockGetAvailablePurchases,
 
     // iOS functions with IOS suffix
-    getStorefrontIOS: jest.fn(),
     syncIOS: jest.fn(),
     isEligibleForIntroOfferIOS: jest.fn(),
     subscriptionStatusIOS: jest.fn(),

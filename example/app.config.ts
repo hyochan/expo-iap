@@ -46,7 +46,6 @@ export default ({config}: ConfigContext): ExpoConfig => {
     icon: './assets/images/icon.png',
     scheme: 'expo-iap-example',
     userInterfaceStyle: 'automatic',
-    newArchEnabled: true,
     ios: {
       ...config.ios,
       supportsTablet: true,

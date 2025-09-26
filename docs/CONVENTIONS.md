@@ -136,10 +136,6 @@ export const validateReceiptIOS = async (
   return ExpoIapModule.validateReceiptIOS(props.sku);
 };
 
-export const getStorefrontIOS = async (): Promise<string> => {
-  return ExpoIapModule.getStorefront();
-};
-
 // Android-only functions (no Platform.OS check needed in Android module)
 export const deepLinkToSubscriptionsAndroid = async ({
   sku,
@@ -201,8 +197,8 @@ export const getStorefront = (): Promise<string> => {
 };
 
 // GOOD: Should be
-export const getStorefrontIOS = (): Promise<string> => {
-  // Platform check and implementation
+export const syncIOS = async (): Promise<boolean> => {
+  return ExpoIapModule.syncIOS();
 };
 ```
 
@@ -271,18 +267,17 @@ When using platform-specific functions, handle errors gracefully:
 
 ```typescript
 // ✅ Good - Let the function handle platform checks internally
-getStorefrontIOS()
+getStorefront()
   .then((storefront) => {
     console.log('Storefront:', storefront);
   })
   .catch((error) => {
-    // Will throw on non-iOS platforms
     console.log('Storefront not available:', error.message);
   });
 
 // ❌ Bad - Redundant platform check
 if (Platform.OS === 'ios') {
-  getStorefrontIOS().then((storefront) => {
+  getStorefront().then((storefront) => {
     console.log('Storefront:', storefront);
   });
 }
@@ -432,10 +427,10 @@ footer
 ### Examples
 
 ```bash
-feat(ios): add getStorefrontIOS function
+feat(storefront): add cross-platform getStorefront helper
 
-Implements iOS-specific storefront retrieval using StoreKit.
-Follows platform-specific naming convention.
+Implements unified storefront retrieval backed by native modules.
+Logically replaces the iOS-only helper.
 
 Closes #123
 ```
@@ -474,18 +469,18 @@ When updating existing code to follow conventions:
 Example:
 
 ```typescript
-// Step 1: Add new function with correct naming
-export const getStorefrontIOS = async (): Promise<string> => {
+// Step 1: Add new cross-platform helper
+export const getStorefront = async (): Promise<string> => {
   return ExpoIapModule.getStorefront();
 };
 
-// Step 2: Deprecate old function
+// Step 2: Deprecate old platform-specific helper (optional)
 /**
- * @deprecated Use getStorefrontIOS instead
+ * @deprecated Use getStorefront instead
  */
-export const getStorefront = async (): Promise<string> => {
-  console.warn('getStorefront is deprecated. Use getStorefrontIOS instead.');
-  return getStorefrontIOS();
+export const getStorefrontIOS = async (): Promise<string> => {
+  console.warn('getStorefrontIOS is deprecated. Use getStorefront instead.');
+  return getStorefront();
 };
 ```
 

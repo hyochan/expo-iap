@@ -490,18 +490,6 @@ if (pending.length) {
 
 Returns: `Promise<void>`
 
-### getStorefrontIOS()
-
-Returns the current App Store storefront country code (for example, "US", "GB").
-
-```ts
-import {getStorefrontIOS} from 'expo-iap';
-
-const storefront = await getStorefrontIOS();
-```
-
-Returns: `Promise<string>`
-
 ### getPromotedProductIOS()
 
 Gets the currently promoted product, if any. Requires iOS 11+.

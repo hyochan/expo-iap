@@ -254,14 +254,6 @@ public final class ExpoIapModule: Module {
             return storefront
         }
 
-        AsyncFunction("getStorefrontIOS") { () async throws -> String in
-            ExpoIapLog.payload("getStorefrontIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
-            let storefront = try await OpenIapModule.shared.getStorefrontIOS()
-            ExpoIapLog.result("getStorefrontIOS", value: storefront)
-            return storefront
-        }
-
         AsyncFunction("syncIOS") { () async throws -> Bool in
             ExpoIapLog.payload("syncIOS", payload: nil)
             try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)

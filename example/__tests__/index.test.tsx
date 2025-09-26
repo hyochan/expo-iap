@@ -10,7 +10,7 @@ jest.mock('expo-router', () => ({
 
 // Mock expo-iap
 jest.mock('expo-iap', () => ({
-  getStorefrontIOS: jest.fn(() => Promise.resolve('US')),
+  getStorefront: jest.fn(() => Promise.resolve('US')),
 }));
 
 describe('Home Component', () => {
@@ -39,14 +39,14 @@ describe('Home Component', () => {
       configurable: true,
     });
 
-    const getStorefrontIOS = require('expo-iap').getStorefrontIOS;
+    const getStorefrontMock = require('expo-iap').getStorefront;
 
     const {getByText} = render(<Home />);
     expect(getByText('expo-iap Examples')).toBeDefined();
 
     // Wait for async operations to complete
     await waitFor(() => {
-      expect(getStorefrontIOS).toHaveBeenCalled();
+      expect(getStorefrontMock).toHaveBeenCalled();
     });
   });
 
@@ -62,9 +62,9 @@ describe('Home Component', () => {
     const {getByText} = render(<Home />);
     expect(getByText('expo-iap Examples')).toBeDefined();
 
-    // getStorefrontIOS is called but will catch error on Android
-    const getStorefrontIOS = require('expo-iap').getStorefrontIOS;
-    expect(getStorefrontIOS).toHaveBeenCalled();
+    // getStorefront is called but resolves to empty string on unsupported platforms
+    const getStorefrontMock = require('expo-iap').getStorefront;
+    expect(getStorefrontMock).toHaveBeenCalled();
 
     consoleLog.mockRestore();
   });
