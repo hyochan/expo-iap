@@ -330,7 +330,7 @@ const openSubscriptionSettings = () => {
 
 ## getStorefront()
 
-Return the storefront in ISO 3166-1 alpha-2 or ISO 3166-1 alpha-3 format
+Returns the current storefront in ISO 3166-1 alpha-2 or ISO 3166-1 alpha-3 format. Works on iOS and Android; on other platforms it resolves to an empty string.
 
 ```tsx
 import {getStorefront} from 'expo-iap';

@@ -194,7 +194,22 @@ class ExpoIapModule : Module() {
                 }
             }
 
-            // Get Google Play storefront country code (Android)
+            // Get storefront country code (Android implementation)
+            AsyncFunction("getStorefront") { promise: Promise ->
+                ExpoIapLog.payload("getStorefront", null)
+                scope.launch {
+                    try {
+                        val code = openIap.getStorefront()
+                        ExpoIapLog.result("getStorefront", code)
+                        promise.resolve(code)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("getStorefront", e)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, e)
+                    }
+                }
+            }
+
+            // Temporary alias for backwards compatibility
             AsyncFunction("getStorefrontAndroid") { promise: Promise ->
                 ExpoIapLog.payload("getStorefrontAndroid", null)
                 scope.launch {

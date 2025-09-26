@@ -23,6 +23,8 @@ export type TransactionEvent = {
   error?: PurchaseError;
 };
 
+let hasWarnedDeprecatedGetStorefrontIOS = false;
+
 // Listeners
 
 // Type guards
@@ -194,8 +196,17 @@ export const getReceiptIOS = getReceiptDataIOS;
  */
 export const getStorefrontIOS: QueryField<'getStorefrontIOS'> = async () => {
   if (Platform.OS !== 'ios') {
-    console.warn('getStorefrontIOS: This method is only available on iOS');
+    console.warn(
+      'getStorefrontIOS is deprecated and only available on iOS. Use getStorefront instead.',
+    );
     return '';
+  }
+
+  if (!hasWarnedDeprecatedGetStorefrontIOS) {
+    hasWarnedDeprecatedGetStorefrontIOS = true;
+    console.warn(
+      'getStorefrontIOS is deprecated and will be removed in a future release. Use getStorefront instead.',
+    );
   }
   return ExpoIapModule.getStorefrontIOS();
 };

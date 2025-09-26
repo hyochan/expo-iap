@@ -538,38 +538,30 @@ describe('Public API (index.ts)', () => {
       warnSpy.mockRestore();
     });
 
-    it('getStorefront uses iOS helper when running on iOS', async () => {
-      (Platform as any).OS = 'ios';
-      (ExpoIapModule.getStorefrontIOS as jest.Mock) = jest
-        .fn()
-        .mockResolvedValue('FR');
-      const res = await getStorefront();
-      expect(ExpoIapModule.getStorefrontIOS).toHaveBeenCalledTimes(1);
-      expect(res).toBe('FR');
-    });
-
-    it('getStorefront calls platform storefront implementation', async () => {
-      (Platform as any).OS = 'ios';
-      (ExpoIapModule.getStorefrontIOS as jest.Mock) = jest
+    it('getStorefront delegates to native getStorefront method', async () => {
+      const nativeSpy = jest
         .fn()
         .mockResolvedValue('US');
+      (ExpoIapModule as any).getStorefront = nativeSpy;
+
       const res = await getStorefront();
+
+      expect(nativeSpy).toHaveBeenCalledTimes(1);
       expect(res).toBe('US');
 
-      (Platform as any).OS = 'android';
-      (ExpoIapModule as any).getStorefrontAndroid = jest
-        .fn()
-        .mockResolvedValue('KR');
-      const resA = await getStorefront();
-      expect(resA).toBe('KR');
-
-      delete (ExpoIapModule as any).getStorefrontAndroid;
+      delete (ExpoIapModule as any).getStorefront;
     });
 
-    it('getStorefront returns empty string on android without native helper', async () => {
-      (Platform as any).OS = 'android';
+    it('getStorefront supports synchronous native responses', async () => {
+      const nativeSpy = jest.fn().mockReturnValue('CA');
+      (ExpoIapModule as any).getStorefront = nativeSpy;
+
       const res = await getStorefront();
-      expect(res).toBe('');
+
+      expect(nativeSpy).toHaveBeenCalledTimes(1);
+      expect(res).toBe('CA');
+
+      delete (ExpoIapModule as any).getStorefront;
     });
   });
 
