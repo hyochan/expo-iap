@@ -291,7 +291,7 @@ export const getAvailablePurchases: QueryField<
   return normalizePurchaseArray(purchases as Purchase[]);
 };
 
-export const getStorefront: QueryField<'getStorefrontIOS'> = async () => {
+export const getStorefront: QueryField<'getStorefront'> = async () => {
   return ExpoIapModule.getStorefront();
 };
 
