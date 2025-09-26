@@ -209,21 +209,6 @@ class ExpoIapModule : Module() {
                 }
             }
 
-            // Temporary alias for backwards compatibility
-            AsyncFunction("getStorefrontAndroid") { promise: Promise ->
-                ExpoIapLog.payload("getStorefrontAndroid", null)
-                scope.launch {
-                    try {
-                        val code = openIap.getStorefront()
-                        ExpoIapLog.result("getStorefrontAndroid", code)
-                        promise.resolve(code)
-                    } catch (e: Exception) {
-                        ExpoIapLog.failure("getStorefrontAndroid", e)
-                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, e)
-                    }
-                }
-            }
-
             AsyncFunction("requestPurchase") { params: Map<String, Any?>, promise: Promise ->
                 ExpoIapLog.payload("requestPurchaseAndroid", params)
                 val parsedParams = ExpoIapHelper.parseRequestPurchaseParams(params)
