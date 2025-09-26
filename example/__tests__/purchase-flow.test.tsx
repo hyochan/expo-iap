@@ -1,7 +1,7 @@
 import React from 'react';
-import {render, fireEvent} from '@testing-library/react-native';
+import {render, fireEvent, waitFor} from '@testing-library/react-native';
 import PurchaseFlow from '../app/purchase-flow';
-import {requestPurchase} from '../../src';
+import {requestPurchase, getStorefront} from '../../src';
 
 // Mock the useIAP hook
 const mockFetchProducts = jest.fn();
@@ -30,6 +30,7 @@ jest.mock('../../src', () => ({
   useIAP: jest.fn(() => mockUseIAP),
   requestPurchase: jest.fn(),
   getAppTransactionIOS: jest.fn(),
+  getStorefront: jest.fn(),
 }));
 
 describe('PurchaseFlow Component', () => {
@@ -38,34 +39,49 @@ describe('PurchaseFlow Component', () => {
     mockFetchProducts.mockResolvedValue([]);
     mockGetAvailablePurchases.mockResolvedValue([]);
     mockFinishTransaction.mockResolvedValue(undefined);
+    (getStorefront as jest.Mock).mockResolvedValue('US');
   });
 
-  it('should render without crashing', () => {
+  it('should render without crashing', async () => {
     const {getByText} = render(<PurchaseFlow />);
+    await waitFor(() => expect(getStorefront).toHaveBeenCalled());
     expect(getByText('In-App Purchase Flow')).toBeDefined();
     expect(getByText('Available Purchases')).toBeDefined();
   });
 
-  it('should show connected status', () => {
+  it('should show connected status', async () => {
     const {getByText} = render(<PurchaseFlow />);
+    await waitFor(() => expect(getStorefront).toHaveBeenCalled());
     // Look for the text that contains "Connected"
     expect(getByText(/✅ Connected/)).toBeDefined();
   });
 
-  it('should load products on mount', () => {
+  it('should load products on mount', async () => {
     render(<PurchaseFlow />);
-    expect(mockFetchProducts).toHaveBeenCalled();
+    await waitFor(() => expect(mockFetchProducts).toHaveBeenCalled());
+    expect(getStorefront).toHaveBeenCalled();
   });
 
-  it('should display products', () => {
+  it('should display products', async () => {
     const {getByText} = render(<PurchaseFlow />);
+    await waitFor(() => expect(getStorefront).toHaveBeenCalled());
     expect(getByText('Test Product')).toBeDefined();
     // The price is rendered by getProductDisplayPrice which returns displayPrice
     expect(getByText('Test Description')).toBeDefined();
   });
 
+  it('should fetch and show storefront information', async () => {
+    (getStorefront as jest.Mock).mockResolvedValue('KR');
+    const {getByText} = render(<PurchaseFlow />);
+
+    await waitFor(() => expect(getStorefront).toHaveBeenCalled());
+    await waitFor(() => expect(getByText('KR')).toBeDefined());
+    expect(getByText(/Storefront:/)).toBeDefined();
+  });
+
   it('should handle purchase button click', async () => {
     const {getByText} = render(<PurchaseFlow />);
+    await waitFor(() => expect(getStorefront).toHaveBeenCalled());
 
     const purchaseButton = getByText('Purchase');
     fireEvent.press(purchaseButton);

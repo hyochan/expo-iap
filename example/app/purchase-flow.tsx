@@ -10,7 +10,12 @@ import {
   ScrollView,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import {requestPurchase, useIAP, getAppTransactionIOS} from '../../src';
+import {
+  requestPurchase,
+  useIAP,
+  getAppTransactionIOS,
+  getStorefront,
+} from '../../src';
 import Loading from '../src/components/Loading';
 import {
   CONSUMABLE_PRODUCT_IDS,
@@ -61,6 +66,10 @@ type PurchaseFlowProps = {
   refreshingAvailablePurchases: boolean;
   onPurchase: (productId: string) => void;
   onRefreshAvailablePurchases: () => Promise<void>;
+  storefront: string;
+  storefrontError: string | null;
+  storefrontLoading: boolean;
+  onRefreshStorefront: () => Promise<void>;
 };
 
 /**
@@ -84,6 +93,10 @@ function PurchaseFlow({
   refreshingAvailablePurchases,
   onPurchase,
   onRefreshAvailablePurchases,
+  storefront,
+  storefrontError,
+  storefrontLoading,
+  onRefreshStorefront,
 }: PurchaseFlowProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -214,6 +227,45 @@ function PurchaseFlow({
           >
             {connected ? '✅ Connected' : '❌ Disconnected'}
           </Text>
+        </View>
+
+        <View style={styles.storefrontContainer}>
+          <View style={styles.storefrontRow}>
+            <Text style={styles.statusLabel}>Storefront:</Text>
+            <Text
+              style={[
+                styles.storefrontValue,
+                storefrontError ? styles.storefrontErrorValue : null,
+              ]}
+            >
+              {storefrontLoading
+                ? 'Fetching…'
+                : storefront
+                  ? storefront
+                  : storefrontError
+                    ? 'Unavailable'
+                    : 'Not available'}
+            </Text>
+          </View>
+          {storefrontError ? (
+            <Text style={styles.storefrontErrorText}>{storefrontError}</Text>
+          ) : null}
+          <TouchableOpacity
+            style={[
+              styles.storefrontRefreshButton,
+              storefrontLoading && {opacity: 0.6},
+            ]}
+            onPress={() => {
+              void onRefreshStorefront();
+            }}
+            disabled={storefrontLoading}
+          >
+            <Text style={styles.storefrontRefreshButtonText}>
+              {storefrontLoading
+                ? 'Refreshing storefront…'
+                : 'Refresh storefront'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Products List */}
@@ -505,6 +557,9 @@ function PurchaseFlowContainer() {
   const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
   const [refreshingAvailablePurchases, setRefreshingAvailablePurchases] =
     useState(false);
+  const [storefront, setStorefront] = useState('');
+  const [storefrontError, setStorefrontError] = useState<string | null>(null);
+  const [storefrontLoading, setStorefrontLoading] = useState(false);
 
   const {
     connected,
@@ -650,6 +705,33 @@ function PurchaseFlowContainer() {
     [setIsProcessing, setPurchaseResult],
   );
 
+  const loadStorefront = useCallback(async () => {
+    setStorefrontLoading(true);
+    setStorefrontError(null);
+    try {
+      const code = await getStorefront();
+      setStorefront(code ?? '');
+    } catch (error) {
+      console.warn('[PurchaseFlow] getStorefront error:', error);
+      setStorefrontError(
+        error instanceof Error ? error.message : 'Failed to load storefront',
+      );
+      setStorefront('');
+    } finally {
+      setStorefrontLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (connected) {
+      loadStorefront();
+    } else {
+      setStorefront('');
+      setStorefrontError(null);
+      setStorefrontLoading(false);
+    }
+  }, [connected, loadStorefront]);
+
   return (
     <PurchaseFlow
       connected={connected}
@@ -661,6 +743,10 @@ function PurchaseFlowContainer() {
       refreshingAvailablePurchases={refreshingAvailablePurchases}
       onPurchase={handlePurchase}
       onRefreshAvailablePurchases={handleRefreshAvailablePurchases}
+      storefront={storefront}
+      storefrontError={storefrontError}
+      storefrontLoading={storefrontLoading}
+      onRefreshStorefront={loadStorefront}
     />
   );
 }
@@ -706,6 +792,42 @@ const styles = StyleSheet.create({
   statusValue: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  storefrontContainer: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 15,
+    gap: 8,
+  },
+  storefrontRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  storefrontValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0D47A1',
+  },
+  storefrontErrorValue: {
+    color: '#D32F2F',
+  },
+  storefrontErrorText: {
+    fontSize: 12,
+    color: '#D32F2F',
+  },
+  storefrontRefreshButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#1976D2',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  storefrontRefreshButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 13,
   },
   section: {
     marginBottom: 20,

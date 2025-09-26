@@ -11,6 +11,16 @@ import type {
   ReceiptValidationResultAndroid,
 } from '../types';
 
+type NativeAndroidModule = {
+  deepLinkToSubscriptionsAndroid?: (params: {
+    skuAndroid?: string;
+    packageNameAndroid?: string;
+  }) => Promise<void> | void;
+  getStorefront?: () => Promise<string> | string;
+};
+
+const nativeAndroidModule = ExpoIapModule as NativeAndroidModule;
+
 // Type guards
 export function isProductAndroid<T extends {platform?: string}>(
   item: unknown,
@@ -46,8 +56,8 @@ export const deepLinkToSubscriptionsAndroid = async (
   const packageName = options?.packageNameAndroid ?? undefined;
 
   // Prefer native deep link implementation via OpenIAP module
-  if (ExpoIapModule?.deepLinkToSubscriptionsAndroid) {
-    return (ExpoIapModule as any).deepLinkToSubscriptionsAndroid({
+  if (nativeAndroidModule?.deepLinkToSubscriptionsAndroid) {
+    return nativeAndroidModule.deepLinkToSubscriptionsAndroid({
       skuAndroid: sku,
       packageNameAndroid: packageName,
     });
