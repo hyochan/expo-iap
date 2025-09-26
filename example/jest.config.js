@@ -1,6 +1,7 @@
 module.exports = {
   preset: 'jest-expo',
-  testEnvironment: 'node',
+  // Remove testEnvironment override to let jest-expo handle it
+  // testEnvironment: 'node',
   // Disable watchman to avoid sandbox/permission issues in CI and sandboxes
   watchman: false,
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],

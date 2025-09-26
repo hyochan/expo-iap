@@ -1,3 +1,5 @@
+/* eslint-env jest */
+
 // Jest setup for example app
 import '@testing-library/jest-native/extend-expect';
 
@@ -13,8 +15,34 @@ jest.mock('expo-splash-screen', () => ({
 }));
 
 // Mock react-native modules that cause issues in test environment
-// Skip mocking NativeAnimatedHelper as it's not available in newer React Native versions
-// jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
+// TouchableOpacity uses Animated API internally, so we mock it with Pressable
+
+// Mock TouchableOpacity to avoid Animated API issues in tests
+jest.mock(
+  'react-native/Libraries/Components/Touchable/TouchableOpacity',
+  () => {
+    const React = require('react');
+    const {Pressable} = require('react-native');
+
+    const TouchableOpacity = React.forwardRef((props, ref) => {
+      const {activeOpacity = 0.2, ...otherProps} = props;
+      return (
+        <Pressable
+          ref={ref}
+          style={({pressed}) => [
+            otherProps.style,
+            {opacity: pressed ? activeOpacity : 1},
+          ]}
+          {...otherProps}
+        />
+      );
+    });
+
+    TouchableOpacity.displayName = 'TouchableOpacity';
+
+    return {TouchableOpacity, default: TouchableOpacity};
+  },
+);
 
 // Mock expo-modules-core
 jest.mock('expo-modules-core', () => ({
@@ -29,8 +57,6 @@ jest.mock('expo-iap', () => {
   const mockGetAvailablePurchases = jest.fn();
   const mockFinishTransaction = jest.fn();
   const mockGetActiveSubscriptions = jest.fn();
-  const mockGetProducts = jest.fn();
-  const mockGetSubscriptions = jest.fn();
   const mockRequestPurchase = jest.fn();
 
   return {
