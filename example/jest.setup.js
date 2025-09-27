@@ -14,35 +14,20 @@ jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn(),
 }));
 
-// Mock react-native modules that cause issues in test environment
-// TouchableOpacity uses Animated API internally, so we mock it with Pressable
+// Mock react-native Animated API to avoid TouchableOpacity animation issues
+// Create a manual mock for Animated to prevent TouchableOpacity errors
+jest.mock('react-native', () => {
+  const RN = jest.requireActual('react-native');
 
-// Mock TouchableOpacity to avoid Animated API issues in tests
-jest.mock(
-  'react-native/Libraries/Components/Touchable/TouchableOpacity',
-  () => {
-    const React = require('react');
-    const {Pressable} = require('react-native');
+  // Override Animated.timing to return a simple mock
+  RN.Animated.timing = () => ({
+    start: (callback) => callback && callback({finished: true}),
+    stop: jest.fn(),
+    reset: jest.fn(),
+  });
 
-    const TouchableOpacity = React.forwardRef((props, ref) => {
-      const {activeOpacity = 0.2, ...otherProps} = props;
-      return (
-        <Pressable
-          ref={ref}
-          style={({pressed}) => [
-            otherProps.style,
-            {opacity: pressed ? activeOpacity : 1},
-          ]}
-          {...otherProps}
-        />
-      );
-    });
-
-    TouchableOpacity.displayName = 'TouchableOpacity';
-
-    return {TouchableOpacity, default: TouchableOpacity};
-  },
-);
+  return RN;
+});
 
 // Mock expo-modules-core
 jest.mock('expo-modules-core', () => ({

@@ -292,6 +292,9 @@ export const getAvailablePurchases: QueryField<
 };
 
 export const getStorefront: QueryField<'getStorefront'> = async () => {
+  if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
+    return '';
+  }
   return ExpoIapModule.getStorefront();
 };
 
