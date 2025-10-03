@@ -5,16 +5,32 @@
 
 export interface ActiveSubscription {
   autoRenewingAndroid?: (boolean | null);
+  basePlanIdAndroid?: (string | null);
+  /**
+   * The current plan identifier. This is:
+   * - On Android: the basePlanId (e.g., "premium", "premium-year")
+   * - On iOS: the productId (e.g., "com.example.premium_monthly", "com.example.premium_yearly")
+   * This provides a unified way to identify which specific plan/tier the user is subscribed to.
+   */
+  currentPlanId?: (string | null);
   daysUntilExpirationIOS?: (number | null);
   environmentIOS?: (string | null);
   expirationDateIOS?: (number | null);
   isActive: boolean;
   productId: string;
   purchaseToken?: (string | null);
+  /** Required for subscription upgrade/downgrade on Android */
+  purchaseTokenAndroid?: (string | null);
   transactionDate: number;
   transactionId: string;
   willExpireSoon?: (boolean | null);
 }
+
+/**
+ * Alternative billing mode for Android
+ * Controls which billing system is used
+ */
+export type AlternativeBillingModeAndroid = 'none' | 'user-choice' | 'alternative-only';
 
 export interface AndroidSubscriptionOfferInput {
   /** Offer token */
@@ -132,15 +148,42 @@ export type IapEvent = 'purchase-updated' | 'purchase-error' | 'promoted-product
 
 export type IapPlatform = 'ios' | 'android';
 
+/** Connection initialization configuration */
+export interface InitConnectionConfig {
+  /**
+   * Alternative billing mode for Android
+   * If not specified, defaults to NONE (standard Google Play billing)
+   */
+  alternativeBillingModeAndroid?: (AlternativeBillingModeAndroid | null);
+}
+
 export interface Mutation {
   /** Acknowledge a non-consumable purchase or subscription */
   acknowledgePurchaseAndroid: Promise<boolean>;
   /** Initiate a refund request for a product (iOS 15+) */
   beginRefundRequestIOS?: Promise<(string | null)>;
+  /**
+   * Check if alternative billing is available for this user/device
+   * Step 1 of alternative billing flow
+   *
+   * Returns true if available, false otherwise
+   * Throws OpenIapError.NotPrepared if billing client not ready
+   */
+  checkAlternativeBillingAvailabilityAndroid: Promise<boolean>;
   /** Clear pending transactions from the StoreKit payment queue */
   clearTransactionIOS: Promise<boolean>;
   /** Consume a purchase token so it can be repurchased */
   consumePurchaseAndroid: Promise<boolean>;
+  /**
+   * Create external transaction token for Google Play reporting
+   * Step 3 of alternative billing flow
+   * Must be called AFTER successful payment in your payment system
+   * Token must be reported to Google Play backend within 24 hours
+   *
+   * Returns token string, or null if creation failed
+   * Throws OpenIapError.NotPrepared if billing client not ready
+   */
+  createAlternativeBillingTokenAndroid?: Promise<(string | null)>;
   /** Open the native subscription management surface */
   deepLinkToSubscriptions: Promise<void>;
   /** Close the platform billing connection */
@@ -157,6 +200,15 @@ export interface Mutation {
   requestPurchaseOnPromotedProductIOS: Promise<boolean>;
   /** Restore completed purchases across platforms */
   restorePurchases: Promise<void>;
+  /**
+   * Show alternative billing information dialog to user
+   * Step 2 of alternative billing flow
+   * Must be called BEFORE processing payment in your payment system
+   *
+   * Returns true if user accepted, false if user canceled
+   * Throws OpenIapError.NotPrepared if billing client not ready
+   */
+  showAlternativeBillingDialogAndroid: Promise<boolean>;
   /** Open subscription management UI and return changed purchases (iOS 15+) */
   showManageSubscriptionsIOS: Promise<PurchaseIOS[]>;
   /** Force a StoreKit sync for transactions (iOS 15+) */
@@ -181,16 +233,22 @@ export interface MutationFinishTransactionArgs {
 }
 
 
+export type MutationInitConnectionArgs = (InitConnectionConfig | null) | undefined;
+
 export type MutationRequestPurchaseArgs =
   | {
       /** Per-platform purchase request props */
       request: RequestPurchasePropsByPlatforms;
       type: 'in-app';
+      /** Use alternative billing (Google Play alternative billing, Apple external purchase link) */
+      useAlternativeBilling?: boolean | null;
     }
   | {
       /** Per-platform subscription request props */
       request: RequestSubscriptionPropsByPlatforms;
       type: 'subs';
+      /** Use alternative billing (Google Play alternative billing, Apple external purchase link) */
+      useAlternativeBilling?: boolean | null;
     };
 
 
@@ -333,6 +391,7 @@ export type Purchase = PurchaseAndroid | PurchaseIOS;
 
 export interface PurchaseAndroid extends PurchaseCommon {
   autoRenewingAndroid?: (boolean | null);
+  currentPlanId?: (string | null);
   dataAndroid?: (string | null);
   developerPayloadAndroid?: (string | null);
   id: string;
@@ -353,6 +412,13 @@ export interface PurchaseAndroid extends PurchaseCommon {
 }
 
 export interface PurchaseCommon {
+  /**
+   * The current plan identifier. This is:
+   * - On Android: the basePlanId (e.g., "premium", "premium-year")
+   * - On iOS: the productId (e.g., "com.example.premium_monthly", "com.example.premium_yearly")
+   * This provides a unified way to identify which specific plan/tier the user is subscribed to.
+   */
+  currentPlanId?: (string | null);
   id: string;
   ids?: (string[] | null);
   isAutoRenewing: boolean;
@@ -377,6 +443,7 @@ export interface PurchaseIOS extends PurchaseCommon {
   countryCodeIOS?: (string | null);
   currencyCodeIOS?: (string | null);
   currencySymbolIOS?: (string | null);
+  currentPlanId?: (string | null);
   environmentIOS?: (string | null);
   expirationDateIOS?: (number | null);
   id: string;
@@ -405,17 +472,7 @@ export interface PurchaseIOS extends PurchaseCommon {
   webOrderLineItemIdIOS?: (string | null);
 }
 
-export interface PurchaseInput {
-  id: string;
-  ids?: (string[] | null);
-  isAutoRenewing: boolean;
-  platform: IapPlatform;
-  productId: string;
-  purchaseState: PurchaseState;
-  purchaseToken?: (string | null);
-  quantity: number;
-  transactionDate: number;
-}
+export type PurchaseInput = Purchase;
 
 export interface PurchaseOfferIOS {
   id: string;
@@ -571,6 +628,8 @@ export interface RequestPurchaseIosProps {
   andDangerouslyFinishTransactionAutomatically?: (boolean | null);
   /** App account token for user tracking */
   appAccountToken?: (string | null);
+  /** External purchase URL for alternative billing (iOS) */
+  externalPurchaseUrl?: (string | null);
   /** Purchase quantity */
   quantity?: (number | null);
   /** Product SKU */
@@ -584,11 +643,15 @@ export type RequestPurchaseProps =
       /** Per-platform purchase request props */
       request: RequestPurchasePropsByPlatforms;
       type: 'in-app';
+      /** Use alternative billing (Google Play alternative billing, Apple external purchase link) */
+      useAlternativeBilling?: boolean | null;
     }
   | {
       /** Per-platform subscription request props */
       request: RequestSubscriptionPropsByPlatforms;
       type: 'subs';
+      /** Use alternative billing (Google Play alternative billing, Apple external purchase link) */
+      useAlternativeBilling?: boolean | null;
     };
 
 export interface RequestPurchasePropsByPlatforms {
@@ -620,6 +683,8 @@ export interface RequestSubscriptionAndroidProps {
 export interface RequestSubscriptionIosProps {
   andDangerouslyFinishTransactionAutomatically?: (boolean | null);
   appAccountToken?: (string | null);
+  /** External purchase URL for alternative billing (iOS) */
+  externalPurchaseUrl?: (string | null);
   quantity?: (number | null);
   sku: string;
   withOffer?: (DiscountOfferInputIOS | null);
@@ -712,16 +777,19 @@ export type QueryFieldMap = {
 export type MutationArgsMap = {
   acknowledgePurchaseAndroid: MutationAcknowledgePurchaseAndroidArgs;
   beginRefundRequestIOS: MutationBeginRefundRequestIosArgs;
+  checkAlternativeBillingAvailabilityAndroid: never;
   clearTransactionIOS: never;
   consumePurchaseAndroid: MutationConsumePurchaseAndroidArgs;
+  createAlternativeBillingTokenAndroid: never;
   deepLinkToSubscriptions: MutationDeepLinkToSubscriptionsArgs;
   endConnection: never;
   finishTransaction: MutationFinishTransactionArgs;
-  initConnection: never;
+  initConnection: MutationInitConnectionArgs;
   presentCodeRedemptionSheetIOS: never;
   requestPurchase: MutationRequestPurchaseArgs;
   requestPurchaseOnPromotedProductIOS: never;
   restorePurchases: never;
+  showAlternativeBillingDialogAndroid: never;
   showManageSubscriptionsIOS: never;
   syncIOS: never;
   validateReceipt: MutationValidateReceiptArgs;

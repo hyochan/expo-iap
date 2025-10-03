@@ -92,7 +92,7 @@ class ExpoIapModule : Module() {
                                 )
                             }
 
-                            val ok = openIap.initConnection()
+                            val ok = openIap.initConnection(null)
 
                             if (!ok) {
                                 // Clear any buffered events from a failed init
