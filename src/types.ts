@@ -142,9 +142,28 @@ export enum ErrorCode {
   UserError = 'user-error'
 }
 
+/** Result of presenting an external purchase link (iOS 18.2+) */
+export interface ExternalPurchaseLinkResultIOS {
+  /** Optional error message if the presentation failed */
+  error?: (string | null);
+  /** Whether the user completed the external purchase flow */
+  success: boolean;
+}
+
+/** User actions on external purchase notice sheet (iOS 18.2+) */
+export type ExternalPurchaseNoticeAction = 'continue' | 'dismissed';
+
+/** Result of presenting external purchase notice sheet (iOS 18.2+) */
+export interface ExternalPurchaseNoticeResultIOS {
+  /** Optional error message if the presentation failed */
+  error?: (string | null);
+  /** Notice result indicating user action */
+  result: ExternalPurchaseNoticeAction;
+}
+
 export type FetchProductsResult = Product[] | ProductSubscription[] | null;
 
-export type IapEvent = 'purchase-updated' | 'purchase-error' | 'promoted-product-ios';
+export type IapEvent = 'purchase-updated' | 'purchase-error' | 'promoted-product-ios' | 'user-choice-billing-android';
 
 export type IapPlatform = 'ios' | 'android';
 
@@ -194,6 +213,10 @@ export interface Mutation {
   initConnection: Promise<boolean>;
   /** Present the App Store code redemption sheet */
   presentCodeRedemptionSheetIOS: Promise<boolean>;
+  /** Present external purchase custom link with StoreKit UI (iOS 18.2+) */
+  presentExternalPurchaseLinkIOS: Promise<ExternalPurchaseLinkResultIOS>;
+  /** Present external purchase notice sheet (iOS 18.2+) */
+  presentExternalPurchaseNoticeSheetIOS: Promise<ExternalPurchaseNoticeResultIOS>;
   /** Initiate a purchase flow; rely on events for final state */
   requestPurchase?: Promise<(Purchase | Purchase[] | null)>;
   /** Purchase the promoted product surfaced by the App Store */
@@ -234,6 +257,8 @@ export interface MutationFinishTransactionArgs {
 
 
 export type MutationInitConnectionArgs = (InitConnectionConfig | null) | undefined;
+
+export type MutationPresentExternalPurchaseLinkIosArgs = string;
 
 export type MutationRequestPurchaseArgs =
   | {
@@ -490,6 +515,8 @@ export interface PurchaseOptions {
 export type PurchaseState = 'pending' | 'purchased' | 'failed' | 'restored' | 'deferred' | 'unknown';
 
 export interface Query {
+  /** Check if external purchase notice sheet can be presented (iOS 18.2+) */
+  canPresentExternalPurchaseNoticeIOS: Promise<boolean>;
   /** Get current StoreKit 2 entitlements (iOS 15+) */
   currentEntitlementIOS?: Promise<(PurchaseIOS | null)>;
   /** Retrieve products or subscriptions from the store */
@@ -628,8 +655,6 @@ export interface RequestPurchaseIosProps {
   andDangerouslyFinishTransactionAutomatically?: (boolean | null);
   /** App account token for user tracking */
   appAccountToken?: (string | null);
-  /** External purchase URL for alternative billing (iOS) */
-  externalPurchaseUrl?: (string | null);
   /** Purchase quantity */
   quantity?: (number | null);
   /** Product SKU */
@@ -683,8 +708,6 @@ export interface RequestSubscriptionAndroidProps {
 export interface RequestSubscriptionIosProps {
   andDangerouslyFinishTransactionAutomatically?: (boolean | null);
   appAccountToken?: (string | null);
-  /** External purchase URL for alternative billing (iOS) */
-  externalPurchaseUrl?: (string | null);
   quantity?: (number | null);
   sku: string;
   withOffer?: (DiscountOfferInputIOS | null);
@@ -704,6 +727,11 @@ export interface Subscription {
   purchaseError: PurchaseError;
   /** Fires when a purchase completes successfully or a pending purchase resolves */
   purchaseUpdated: Purchase;
+  /**
+   * Fires when a user selects alternative billing in the User Choice Billing dialog (Android only)
+   * Only triggered when the user selects alternative billing instead of Google Play billing
+   */
+  userChoiceBillingAndroid: UserChoiceBillingDetails;
 }
 
 
@@ -738,10 +766,22 @@ export interface SubscriptionStatusIOS {
   state: string;
 }
 
+/**
+ * User Choice Billing event details (Android)
+ * Fired when a user selects alternative billing in the User Choice Billing dialog
+ */
+export interface UserChoiceBillingDetails {
+  /** Token that must be reported to Google Play within 24 hours */
+  externalTransactionToken: string;
+  /** List of product IDs selected by the user */
+  products: string[];
+}
+
 export type VoidResult = void;
 
 // -- Query helper types (auto-generated)
 export type QueryArgsMap = {
+  canPresentExternalPurchaseNoticeIOS: never;
   currentEntitlementIOS: QueryCurrentEntitlementIosArgs;
   fetchProducts: QueryFetchProductsArgs;
   getActiveSubscriptions: QueryGetActiveSubscriptionsArgs;
@@ -786,6 +826,8 @@ export type MutationArgsMap = {
   finishTransaction: MutationFinishTransactionArgs;
   initConnection: MutationInitConnectionArgs;
   presentCodeRedemptionSheetIOS: never;
+  presentExternalPurchaseLinkIOS: MutationPresentExternalPurchaseLinkIosArgs;
+  presentExternalPurchaseNoticeSheetIOS: never;
   requestPurchase: MutationRequestPurchaseArgs;
   requestPurchaseOnPromotedProductIOS: never;
   restorePurchases: never;
@@ -812,6 +854,7 @@ export type SubscriptionArgsMap = {
   promotedProductIOS: never;
   purchaseError: never;
   purchaseUpdated: never;
+  userChoiceBillingAndroid: never;
 };
 
 export type SubscriptionField<K extends keyof Subscription> =

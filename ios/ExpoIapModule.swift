@@ -338,5 +338,33 @@ public final class ExpoIapModule: Module {
                 throw PurchaseError.make(code: .skuNotFound, productId: sku)
             }
         }
+
+        // MARK: - External Purchase (iOS 16.0+)
+
+        AsyncFunction("canPresentExternalPurchaseNoticeIOS") { () async throws -> Bool in
+            ExpoIapLog.payload("canPresentExternalPurchaseNoticeIOS", payload: nil)
+            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
+            let canPresent = try await OpenIapModule.shared.canPresentExternalPurchaseNoticeIOS()
+            ExpoIapLog.result("canPresentExternalPurchaseNoticeIOS", value: canPresent)
+            return canPresent
+        }
+
+        AsyncFunction("presentExternalPurchaseNoticeSheetIOS") { () async throws -> [String: Any] in
+            ExpoIapLog.payload("presentExternalPurchaseNoticeSheetIOS", payload: nil)
+            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
+            let result = try await OpenIapModule.shared.presentExternalPurchaseNoticeSheetIOS()
+            let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(result))
+            ExpoIapLog.result("presentExternalPurchaseNoticeSheetIOS", value: sanitized)
+            return sanitized
+        }
+
+        AsyncFunction("presentExternalPurchaseLinkIOS") { (url: String) async throws -> [String: Any] in
+            ExpoIapLog.payload("presentExternalPurchaseLinkIOS", payload: ["url": url])
+            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
+            let result = try await OpenIapModule.shared.presentExternalPurchaseLinkIOS(url)
+            let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(result))
+            ExpoIapLog.result("presentExternalPurchaseLinkIOS", value: sanitized)
+            return sanitized
+        }
     }
 }

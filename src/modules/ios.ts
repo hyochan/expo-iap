@@ -6,6 +6,8 @@ import ExpoIapModule from '../ExpoIapModule';
 
 // Types
 import type {
+  ExternalPurchaseLinkResultIOS,
+  ExternalPurchaseNoticeResultIOS,
   MutationField,
   ProductIOS,
   Purchase,
@@ -49,7 +51,7 @@ export function isProductIOS<T extends {platform?: string}>(
  * @platform iOS
  */
 export const syncIOS: MutationField<'syncIOS'> = async () => {
-  return Boolean(await ExpoIapModule.syncIOS());
+  return !!(await ExpoIapModule.syncIOS());
 };
 
 /**
@@ -264,7 +266,7 @@ export const validateReceiptIOS =
 export const presentCodeRedemptionSheetIOS: MutationField<
   'presentCodeRedemptionSheetIOS'
 > = async () => {
-  return Boolean(await ExpoIapModule.presentCodeRedemptionSheetIOS());
+  return !!(await ExpoIapModule.presentCodeRedemptionSheetIOS());
 };
 
 /**
@@ -342,7 +344,7 @@ export const getPendingTransactionsIOS: QueryField<
 export const clearTransactionIOS: MutationField<
   'clearTransactionIOS'
 > = async () => {
-  return Boolean(await ExpoIapModule.clearTransactionIOS());
+  return !!(await ExpoIapModule.clearTransactionIOS());
 };
 
 /**
@@ -353,5 +355,45 @@ export const clearTransactionIOS: MutationField<
  */
 export const deepLinkToSubscriptionsIOS = (): Promise<void> =>
   Linking.openURL('https://apps.apple.com/account/subscriptions');
+
+/**
+ * Check if the device can present an external purchase notice sheet (iOS 18.2+).
+ *
+ * @returns Promise resolving to true if the notice sheet can be presented
+ * @platform iOS
+ */
+export const canPresentExternalPurchaseNoticeIOS: QueryField<
+  'canPresentExternalPurchaseNoticeIOS'
+> = async () => {
+  return !!(await ExpoIapModule.canPresentExternalPurchaseNoticeIOS());
+};
+
+/**
+ * Present an external purchase notice sheet to inform users about external purchases (iOS 18.2+).
+ * This must be called before opening an external purchase link.
+ *
+ * @returns Promise resolving to the result with action and error if any
+ * @platform iOS
+ */
+export const presentExternalPurchaseNoticeSheetIOS: MutationField<
+  'presentExternalPurchaseNoticeSheetIOS'
+> = async () => {
+  const result = await ExpoIapModule.presentExternalPurchaseNoticeSheetIOS();
+  return result as ExternalPurchaseNoticeResultIOS;
+};
+
+/**
+ * Present an external purchase link to redirect users to your website (iOS 16.0+).
+ *
+ * @param url - The external purchase URL to open
+ * @returns Promise resolving to the result with success status and error if any
+ * @platform iOS
+ */
+export const presentExternalPurchaseLinkIOS: MutationField<
+  'presentExternalPurchaseLinkIOS'
+> = async (url: string) => {
+  const result = await ExpoIapModule.presentExternalPurchaseLinkIOS(url);
+  return result as ExternalPurchaseLinkResultIOS;
+};
 
 // iOS-specific APIs only; cross-platform wrappers live in src/index.ts
