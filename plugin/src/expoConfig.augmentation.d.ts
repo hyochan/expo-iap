@@ -1,4 +1,5 @@
 import type {IOS} from '@expo/config-types';
+import type {IOSAlternativeBillingConfig} from './withIAP';
 
 export type ExpoIapModuleOverrides = {
   expoIap?: boolean;
@@ -13,6 +14,13 @@ type BaseExpoIapOptions = {
         ios?: string;
         android?: string;
       };
+  /**
+   * iOS Alternative Billing configuration.
+   * Configure external purchase countries, links, and entitlements.
+   * Requires approval from Apple.
+   * @platform ios
+   */
+  iosAlternativeBilling?: IOSAlternativeBillingConfig;
 };
 
 type AutoModuleOptions = BaseExpoIapOptions & {
