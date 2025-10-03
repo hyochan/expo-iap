@@ -6,6 +6,7 @@ import {
 } from 'expo/config-plugins';
 import * as fs from 'fs';
 import * as path from 'path';
+import type {IOSAlternativeBillingConfig} from './withIAP';
 
 /**
  * Plugin to add local OpenIAP pod dependency for development
@@ -13,10 +14,19 @@ import * as path from 'path';
  */
 type LocalPathOption = string | {ios?: string; android?: string};
 
-const withLocalOpenIAP: ConfigPlugin<{localPath?: LocalPathOption} | void> = (
-  config,
-  props,
-) => {
+const withLocalOpenIAP: ConfigPlugin<
+  {
+    localPath?: LocalPathOption;
+    iosAlternativeBilling?: IOSAlternativeBillingConfig;
+  } | void
+> = (config, props) => {
+  // Import and apply iOS alternative billing configuration if provided
+  if (props?.iosAlternativeBilling) {
+    // Import withIosAlternativeBilling from withIAP module
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const {withIosAlternativeBilling} = require('./withIAP');
+    config = withIosAlternativeBilling(config, props.iosAlternativeBilling);
+  }
   // Helper to resolve Android module path
   const resolveAndroidModulePath = (p?: string): string | null => {
     if (!p) return null;
