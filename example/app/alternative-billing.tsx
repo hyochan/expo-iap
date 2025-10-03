@@ -13,6 +13,9 @@ import {
 import {
   useIAP,
   requestPurchase,
+  initConnection,
+  endConnection,
+  presentExternalPurchaseLinkIOS,
   type Product,
   type Purchase,
   type AlternativeBillingModeAndroid,
@@ -27,7 +30,7 @@ import {CONSUMABLE_PRODUCT_IDS} from '../src/utils/constants';
  * Demonstrates alternative billing flows for iOS and Android:
  *
  * iOS (Alternative Billing):
- * - Uses externalPurchaseUrl to redirect users to external website
+ * - Redirects users to external website configured in app.config.ts
  * - No onPurchaseUpdated callback when using external URL
  * - User completes purchase on external website
  * - Must implement deep link to return to app
@@ -56,6 +59,7 @@ function AlternativeBillingScreen() {
   const [purchaseResult, setPurchaseResult] = useState<string>('');
   const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
 
   // Initialize with alternative billing config
   const {
@@ -68,11 +72,7 @@ function AlternativeBillingScreen() {
     createAlternativeBillingTokenAndroid,
   } = useIAP({
     alternativeBillingModeAndroid:
-      Platform.OS === 'android'
-        ? billingMode === 'alternative-only'
-          ? 'alternative-only'
-          : 'user-choice'
-        : undefined,
+      Platform.OS === 'android' ? billingMode : undefined,
     onPurchaseSuccess: async (purchase: Purchase) => {
       console.log('Purchase successful:', purchase);
       setLastPurchase(purchase);
@@ -122,9 +122,47 @@ function AlternativeBillingScreen() {
     }
   }, [connected, fetchProducts]);
 
+  // Reconnect with new billing mode
+  const reconnectWithMode = useCallback(
+    async (newMode: AlternativeBillingModeAndroid) => {
+      try {
+        setIsReconnecting(true);
+        setPurchaseResult('Reconnecting with new billing mode...');
+
+        // End current connection
+        await endConnection();
+
+        // Wait a bit for cleanup
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Reinitialize with new mode
+        const config =
+          Platform.OS === 'android'
+            ? {alternativeBillingModeAndroid: newMode}
+            : undefined;
+        await initConnection(config);
+
+        setPurchaseResult(
+          `✅ Reconnected with ${
+            newMode === 'alternative-only' ? 'Alternative Only' : 'User Choice'
+          } mode`,
+        );
+
+        // Reload products
+        await fetchProducts({skus: CONSUMABLE_PRODUCT_IDS, type: 'in-app'});
+      } catch (error: any) {
+        console.error('Reconnection error:', error);
+        setPurchaseResult(`❌ Reconnection failed: ${error.message}`);
+      } finally {
+        setIsReconnecting(false);
+      }
+    },
+    [fetchProducts],
+  );
+
   // Handle iOS alternative billing purchase (external URL)
   const handleIOSAlternativeBillingPurchase = useCallback(
-    (product: Product) => {
+    async (product: Product) => {
       console.log('[iOS] Starting alternative billing purchase:', product.id);
       console.log('[iOS] External URL:', externalUrl);
       console.log('[iOS] Platform.Version:', Platform.Version);
@@ -135,40 +173,32 @@ function AlternativeBillingScreen() {
       }
 
       setIsProcessing(true);
-      setPurchaseResult('🌐 Redirecting to external URL...');
+      setPurchaseResult('🌐 Opening external purchase link...');
 
-      const purchaseParams = {
-        request: {
-          ios: {
-            sku: product.id,
-            externalPurchaseUrl: externalUrl,
-            quantity: 1,
-          },
-        },
-        type: 'in-app' as const,
-        useAlternativeBilling: true,
-      };
+      try {
+        // Use StoreKit External Purchase Link API
+        const result = await presentExternalPurchaseLinkIOS(externalUrl);
+        console.log('[iOS] External purchase link result:', result);
 
-      console.log(
-        '[iOS] Purchase params:',
-        JSON.stringify(purchaseParams, null, 2),
-      );
-
-      requestPurchase(purchaseParams)
-        .then((result) => {
-          console.log('[iOS] Purchase result:', result);
-          // When using external URL, purchase is handled externally
+        if (result.error) {
+          setPurchaseResult(`❌ Error: ${result.error}`);
+          Alert.alert('Error', result.error);
+        } else if (result.success) {
           setPurchaseResult(
-            `🌐 Redirected to external URL\nProduct: ${product.id}\nURL: ${externalUrl}\n\nComplete purchase on external website.\nNote: onPurchaseUpdated will NOT be called.`,
+            `✅ External purchase link opened successfully\n\nProduct: ${product.id}\nURL: ${externalUrl}\n\nUser was redirected to external website.\n\nNote: Complete purchase on your website and implement server-side validation.`,
           );
-          setIsProcessing(false);
-        })
-        .catch((error) => {
-          console.error('[iOS] Alternative billing error:', error);
-          setPurchaseResult(`❌ Error: ${error.message}`);
-          setIsProcessing(false);
-          Alert.alert('Error', error.message);
-        });
+          Alert.alert(
+            'Redirected',
+            'User was redirected to your external purchase website. Complete the purchase there.',
+          );
+        }
+      } catch (error: any) {
+        console.error('[iOS] Alternative billing error:', error);
+        setPurchaseResult(`❌ Error: ${error.message}`);
+        Alert.alert('Error', error.message);
+      } finally {
+        setIsProcessing(false);
+      }
     },
     [externalUrl],
   );
@@ -389,6 +419,15 @@ function AlternativeBillingScreen() {
           </View>
         ) : null}
 
+        {/* Reconnecting Status */}
+        {isReconnecting ? (
+          <View style={styles.warningBanner}>
+            <Text style={styles.warningBannerText}>
+              🔄 Reconnecting with new billing mode...
+            </Text>
+          </View>
+        ) : null}
+
         {/* Connection Status */}
         <View style={styles.statusContainer}>
           <Text style={styles.statusLabel}>Store Connection:</Text>
@@ -402,11 +441,10 @@ function AlternativeBillingScreen() {
           </Text>
           {Platform.OS === 'android' ? (
             <Text style={styles.statusSubtext}>
-              (
+              Current mode:{' '}
               {billingMode === 'alternative-only'
-                ? 'Alternative Only'
-                : 'User Choice'}
-              )
+                ? 'ALTERNATIVE_ONLY'
+                : 'USER_CHOICE'}
             </Text>
           ) : null}
         </View>
@@ -562,10 +600,7 @@ function AlternativeBillingScreen() {
               onPress={() => {
                 setBillingMode('alternative-only');
                 setShowModeSelector(false);
-                Alert.alert(
-                  'Restart Required',
-                  'Billing mode changed. Please restart the app to apply changes.',
-                );
+                void reconnectWithMode('alternative-only');
               }}
             >
               <Text style={styles.modeOptionTitle}>
@@ -584,10 +619,7 @@ function AlternativeBillingScreen() {
               onPress={() => {
                 setBillingMode('user-choice');
                 setShowModeSelector(false);
-                Alert.alert(
-                  'Restart Required',
-                  'Billing mode changed. Please restart the app to apply changes.',
-                );
+                void reconnectWithMode('user-choice');
               }}
             >
               <Text style={styles.modeOptionTitle}>User Choice Billing</Text>
@@ -698,6 +730,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     marginTop: 5,
+  },
+  warningBanner: {
+    backgroundColor: '#FFF3CD',
+    borderLeftWidth: 4,
+    borderLeftColor: '#FFC107',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  warningBannerText: {
+    fontSize: 14,
+    color: '#856404',
+    fontWeight: '600',
   },
   statusContainer: {
     backgroundColor: 'white',

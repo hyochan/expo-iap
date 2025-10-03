@@ -10,11 +10,51 @@ export default ({config}: ConfigContext): ExpoConfig => {
     [
       '../app.plugin.js',
       {
-        enableLocalDev: true,
+        enableLocalDev: false,
         localPath: {
           ios: LOCAL_OPENIAP_PATHS.ios,
           android: LOCAL_OPENIAP_PATHS.android,
         },
+        // iOS Alternative Billing configuration (optional)
+        // Uncomment and configure for external purchase support
+        // NOTE: Requires Apple approval and proper provisioning profile
+        // iosAlternativeBilling: {
+        //   // Required: Countries where external purchases are supported (ISO 3166-1 alpha-2)
+        //   countries: ['kr', 'nl'],
+        //   //   countries: ['kr', 'nl', 'de', 'fr', 'it', 'es'],
+        //
+        //   // Optional: External purchase URLs per country (iOS 15.4+)
+        //   links: {
+        //     kr: 'https://openiap.dev/kr',
+        //     nl: 'https://openiap.dev/nl',
+        //   },
+        //   //   links: {
+        //   //     kr: 'https://your-site.com/kr/checkout',
+        //   //     nl: 'https://your-site.com/nl/checkout',
+        //   //     de: 'https://your-site.com/de/checkout',
+        //   //   },
+        //
+        //   // Optional: Multiple URLs per country (iOS 17.5+, up to 5)
+        //   //   multiLinks: {
+        //   //     fr: [
+        //   //       'https://your-site.com/fr',
+        //   //       'https://your-site.com/global-sale',
+        //   //     ],
+        //   //     it: ['https://your-site.com/global-sale'],
+        //   //   },
+        //
+        //   // Optional: Custom link regions (iOS 18.1+)
+        //   //   customLinkRegions: ['de', 'fr', 'nl'],
+        //
+        //   // Optional: Streaming regions for music apps (iOS 18.2+)
+        //   //   streamingLinkRegions: ['at', 'de', 'fr', 'nl', 'is', 'no'],
+        //
+        //   // Enable external purchase link entitlement
+        //   enableExternalPurchaseLink: true,
+        //
+        //   // Enable streaming entitlement (music apps only)
+        //   //   enableExternalPurchaseLinkStreaming: false,
+        // },
       },
     ],
     'expo-router',
