@@ -26,6 +26,11 @@ import {
   requestPurchaseOnPromotedProductIOS,
   syncIOS,
 } from './modules/ios';
+import {
+  checkAlternativeBillingAvailabilityAndroid,
+  showAlternativeBillingDialogAndroid,
+  createAlternativeBillingTokenAndroid,
+} from './modules/android';
 
 // Types
 import type {
@@ -80,12 +85,22 @@ type UseIap = {
   requestPurchaseOnPromotedProductIOS: () => Promise<boolean>;
   getActiveSubscriptions: (subscriptionIds?: string[]) => Promise<void>;
   hasActiveSubscriptions: (subscriptionIds?: string[]) => Promise<boolean>;
+  checkAlternativeBillingAvailabilityAndroid: () => Promise<boolean>;
+  showAlternativeBillingDialogAndroid: () => Promise<boolean>;
+  createAlternativeBillingTokenAndroid: (
+    sku?: string,
+  ) => Promise<string | null>;
 };
 
 export interface UseIAPOptions {
   onPurchaseSuccess?: (purchase: Purchase) => void;
   onPurchaseError?: (error: PurchaseError) => void;
   onPromotedProductIOS?: (product: Product) => void;
+  /**
+   * Alternative billing mode for Android
+   * If not specified, defaults to NONE (standard Google Play billing)
+   */
+  alternativeBillingModeAndroid?: 'none' | 'user-choice' | 'alternative-only';
 }
 
 /**
@@ -419,7 +434,13 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }
 
     // NOW call initConnection after listeners are ready
-    const result = await initConnection();
+    const config = optionsRef.current?.alternativeBillingModeAndroid
+      ? {
+          alternativeBillingModeAndroid:
+            optionsRef.current.alternativeBillingModeAndroid,
+        }
+      : undefined;
+    const result = await initConnection(config);
     setConnected(result);
     if (!result) {
       // If connection failed, clean up listeners
@@ -466,5 +487,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     requestPurchaseOnPromotedProductIOS,
     getActiveSubscriptions: getActiveSubscriptionsInternal,
     hasActiveSubscriptions: hasActiveSubscriptionsInternal,
+    // Alternative billing methods (Android only)
+    checkAlternativeBillingAvailabilityAndroid,
+    showAlternativeBillingDialogAndroid,
+    createAlternativeBillingTokenAndroid,
   };
 }

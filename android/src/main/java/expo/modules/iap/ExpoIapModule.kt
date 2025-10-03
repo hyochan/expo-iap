@@ -6,6 +6,7 @@ import dev.hyo.openiap.AndroidSubscriptionOfferInput
 import dev.hyo.openiap.DeepLinkOptions
 import dev.hyo.openiap.FetchProductsResultProducts
 import dev.hyo.openiap.FetchProductsResultSubscriptions
+import dev.hyo.openiap.InitConnectionConfig
 import dev.hyo.openiap.OpenIapError
 import dev.hyo.openiap.OpenIapModule
 import dev.hyo.openiap.ProductQueryType
@@ -62,8 +63,8 @@ class ExpoIapModule : Module() {
 
             Events(EVENT_PURCHASE_UPDATED, EVENT_PURCHASE_ERROR)
 
-            AsyncFunction("initConnection") { promise: Promise ->
-                ExpoIapLog.payload("initConnection", null)
+            AsyncFunction("initConnection") { config: Map<String, Any?>?, promise: Promise ->
+                ExpoIapLog.payload("initConnection", config)
                 scope.launch {
                     connectionMutex.withLock {
                         try {
@@ -92,7 +93,9 @@ class ExpoIapModule : Module() {
                                 )
                             }
 
-                            val ok = openIap.initConnection(null)
+                            // Parse config from Map to InitConnectionConfig
+                            val parsedConfig = config?.let { InitConnectionConfig.fromJson(it) }
+                            val ok = openIap.initConnection(parsedConfig)
 
                             if (!ok) {
                                 // Clear any buffered events from a failed init
@@ -351,6 +354,59 @@ class ExpoIapModule : Module() {
                         promise.resolve(response)
                     } catch (e: Exception) {
                         ExpoIapLog.failure("consumePurchaseAndroid", e)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
+                    }
+                }
+            }
+
+            AsyncFunction("checkAlternativeBillingAvailabilityAndroid") { promise: Promise ->
+                ExpoIapLog.payload("checkAlternativeBillingAvailabilityAndroid", null)
+                scope.launch {
+                    try {
+                        val isAvailable = openIap.checkAlternativeBillingAvailability()
+                        ExpoIapLog.result("checkAlternativeBillingAvailabilityAndroid", isAvailable)
+                        promise.resolve(isAvailable)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("checkAlternativeBillingAvailabilityAndroid", e)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
+                    }
+                }
+            }
+
+            AsyncFunction("showAlternativeBillingDialogAndroid") { promise: Promise ->
+                ExpoIapLog.payload("showAlternativeBillingDialogAndroid", null)
+                scope.launch {
+                    try {
+                        val activity =
+                            runCatching { currentActivity }
+                                .onFailure {
+                                    Log.e(TAG, "showAlternativeBillingDialogAndroid: Activity missing", it)
+                                }.getOrNull() ?: run {
+                                promise.reject(OpenIapError.ServiceUnavailable.CODE, "Activity not available", null)
+                                return@launch
+                            }
+                        openIap.setActivity(activity)
+                        val userAccepted = openIap.showAlternativeBillingInformationDialog(activity)
+                        ExpoIapLog.result("showAlternativeBillingDialogAndroid", userAccepted)
+                        promise.resolve(userAccepted)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("showAlternativeBillingDialogAndroid", e)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
+                    }
+                }
+            }
+
+            AsyncFunction("createAlternativeBillingTokenAndroid") { sku: String?, promise: Promise ->
+                ExpoIapLog.payload("createAlternativeBillingTokenAndroid", mapOf("sku" to sku))
+                scope.launch {
+                    try {
+                        // Note: OpenIapModule.createAlternativeBillingReportingToken() doesn't accept sku parameter
+                        // The sku parameter is ignored for now - may be used in future versions
+                        val token = openIap.createAlternativeBillingReportingToken()
+                        ExpoIapLog.result("createAlternativeBillingTokenAndroid", token)
+                        promise.resolve(token)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("createAlternativeBillingTokenAndroid", e)
                         promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
                     }
                 }

@@ -193,8 +193,8 @@ export const promotedProductListenerIOS = (
   return emitter.addListener(OpenIapEvent.PromotedProductIOS, listener);
 };
 
-export const initConnection: MutationField<'initConnection'> = async () =>
-  ExpoIapModule.initConnection();
+export const initConnection: MutationField<'initConnection'> = async (config) =>
+  ExpoIapModule.initConnection(config ?? null);
 
 export const endConnection: MutationField<'endConnection'> = async () =>
   ExpoIapModule.endConnection();
@@ -375,20 +375,15 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
       );
     }
 
-    let payload: MutationRequestPurchaseArgs;
-    if (canonical === 'in-app') {
-      payload = {
-        type: 'in-app',
-        request: request as RequestPurchasePropsByPlatforms,
-      };
-    } else if (canonical === 'subs') {
-      payload = {
-        type: 'subs',
-        request: request as RequestSubscriptionPropsByPlatforms,
-      };
-    } else {
+    if (canonical !== 'in-app' && canonical !== 'subs') {
       throw new Error(`Unsupported product type: ${canonical}`);
     }
+
+    const payload: MutationRequestPurchaseArgs = {
+      type: canonical === 'in-app' ? 'in-app' : 'subs',
+      request,
+      useAlternativeBilling: args.useAlternativeBilling,
+    };
 
     const purchase = (await ExpoIapModule.requestPurchase(payload)) as
       | Purchase

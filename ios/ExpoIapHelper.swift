@@ -86,6 +86,10 @@ enum ExpoIapHelper {
             case .all:
                 break
             }
+            // Include useAlternativeBilling if present
+            if let useAlternativeBilling = payload["useAlternativeBilling"] {
+                normalized["useAlternativeBilling"] = useAlternativeBilling
+            }
             return try OpenIapSerialization.decode(
                 object: normalized, as: RequestPurchaseProps.self)
         }

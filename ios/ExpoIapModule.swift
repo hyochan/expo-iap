@@ -35,7 +35,9 @@ public final class ExpoIapModule: Module {
             }
         }
 
-        AsyncFunction("initConnection") { () async throws -> Bool in
+        AsyncFunction("initConnection") { (config: [String: Any]?) async throws -> Bool in
+            // Note: iOS doesn't support alternative billing config parameter
+            // Config is ignored on iOS platform
             let isConnected = try await OpenIapModule.shared.initConnection()
             await MainActor.run { self.isInitialized = isConnected }
             return isConnected
@@ -59,8 +61,10 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("requestPurchase") { (payload: [String: Any]) async throws -> Any? in
             ExpoIapLog.payload("requestPurchase", payload: payload)
+            print("🔍 [ExpoIap] Raw payload useAlternativeBilling: \(payload["useAlternativeBilling"] ?? "nil")")
             try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let props = try ExpoIapHelper.decodeRequestPurchaseProps(from: payload)
+            print("🔍 [ExpoIap] Decoded props useAlternativeBilling: \(props.useAlternativeBilling ?? false)")
 
             do {
                 guard let result = try await OpenIapModule.shared.requestPurchase(props) else {

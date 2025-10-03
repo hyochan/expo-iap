@@ -163,3 +163,86 @@ export const acknowledgePurchaseAndroid: MutationField<
 export const openRedeemOfferCodeAndroid = async (): Promise<void> => {
   return Linking.openURL(`https://play.google.com/redeem?code=`);
 };
+
+/**
+ * Check if alternative billing is available for this user/device (Android only).
+ * Step 1 of alternative billing flow.
+ *
+ * Returns true if available, false otherwise.
+ * Throws OpenIapError.NotPrepared if billing client not ready.
+ *
+ * @returns {Promise<boolean>}
+ *
+ * @example
+ * ```typescript
+ * const isAvailable = await checkAlternativeBillingAvailabilityAndroid();
+ * if (isAvailable) {
+ *   // Proceed with alternative billing flow
+ * }
+ * ```
+ */
+export const checkAlternativeBillingAvailabilityAndroid: MutationField<
+  'checkAlternativeBillingAvailabilityAndroid'
+> = async () => {
+  return ExpoIapModule.checkAlternativeBillingAvailabilityAndroid();
+};
+
+/**
+ * Show alternative billing information dialog to user (Android only).
+ * Step 2 of alternative billing flow.
+ * Must be called BEFORE processing payment in your payment system.
+ *
+ * Returns true if user accepted, false if user canceled.
+ * Throws OpenIapError.NotPrepared if billing client not ready.
+ *
+ * @returns {Promise<boolean>}
+ *
+ * @example
+ * ```typescript
+ * const userAccepted = await showAlternativeBillingDialogAndroid();
+ * if (userAccepted) {
+ *   // Process payment in your payment system
+ *   const success = await processCustomPayment();
+ *   if (success) {
+ *     // Create reporting token
+ *     const token = await createAlternativeBillingTokenAndroid();
+ *     // Send token to your backend for Google Play reporting
+ *   }
+ * }
+ * ```
+ */
+export const showAlternativeBillingDialogAndroid: MutationField<
+  'showAlternativeBillingDialogAndroid'
+> = async () => {
+  return ExpoIapModule.showAlternativeBillingDialogAndroid();
+};
+
+/**
+ * Create external transaction token for Google Play reporting (Android only).
+ * Step 3 of alternative billing flow.
+ * Must be called AFTER successful payment in your payment system.
+ * Token must be reported to Google Play backend within 24 hours.
+ *
+ * Returns token string, or null if creation failed.
+ * Throws OpenIapError.NotPrepared if billing client not ready.
+ *
+ * @param {string} sku - The product SKU that was purchased
+ * @returns {Promise<string | null>}
+ *
+ * @example
+ * ```typescript
+ * const token = await createAlternativeBillingTokenAndroid('premium_subscription');
+ * if (token) {
+ *   // Send token to your backend
+ *   await fetch('/api/report-transaction', {
+ *     method: 'POST',
+ *     body: JSON.stringify({ token, sku: 'premium_subscription' })
+ *   });
+ * }
+ * ```
+ */
+export const createAlternativeBillingTokenAndroid: MutationField<
+  'createAlternativeBillingTokenAndroid'
+> = async (sku?: string) => {
+  return ExpoIapModule.createAlternativeBillingTokenAndroid(sku);
+};
