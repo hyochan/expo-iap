@@ -356,6 +356,224 @@ function SubscriptionFlow({
             ) : null}
           </View>
 
+          {/* Subscription Upgrade Detection - iOS renewalInfo */}
+          {Platform.OS === 'ios' &&
+          activeSubscriptions.length > 0 &&
+          availablePurchases.some((p) => {
+            const iosPurchase = p as PurchaseIOS;
+            const pendingProductId = iosPurchase.renewalInfoIOS?.pendingUpgradeProductId;
+
+            // Show upgrade card if there's a pending upgrade product that's different
+            // from the current product. In production, you might want to also check
+            // willAutoRenew, but Apple Sandbox behavior can be inconsistent.
+            return (
+              pendingProductId &&
+              pendingProductId !== p.productId &&
+              activeSubscriptions.some(
+                (sub) => sub.productId === p.productId,
+              )
+            );
+          }) ? (
+            <View style={styles.upgradeDetectionCard}>
+              <Text style={styles.upgradeDetectionTitle}>
+                🎉 Subscription Upgrade Detected
+              </Text>
+              {availablePurchases
+                .filter((p) => {
+                  const iosPurchase = p as PurchaseIOS;
+                  const pendingProductId = iosPurchase.renewalInfoIOS?.pendingUpgradeProductId;
+
+                  return (
+                    pendingProductId &&
+                    pendingProductId !== p.productId &&
+                    activeSubscriptions.some(
+                      (sub) => sub.productId === p.productId,
+                    )
+                  );
+                })
+                .map((purchase, idx) => {
+                  const iosPurchase = purchase as PurchaseIOS;
+                  const renewalInfo = iosPurchase.renewalInfoIOS;
+                  const currentProduct = subscriptions.find(
+                    (s) => s.id === purchase.productId,
+                  );
+                  const upgradeProduct = subscriptions.find(
+                    (s) => s.id === renewalInfo?.pendingUpgradeProductId,
+                  );
+
+                  return (
+                    <View key={idx} style={styles.upgradeInfoBox}>
+                      <View style={styles.upgradeRow}>
+                        <Text style={styles.upgradeLabel}>Current:</Text>
+                        <Text style={styles.upgradeValue}>
+                          {currentProduct?.title || purchase.productId}
+                        </Text>
+                      </View>
+                      <View style={styles.upgradeArrow}>
+                        <Text style={styles.upgradeArrowText}>⬇️</Text>
+                      </View>
+                      <View style={styles.upgradeRow}>
+                        <Text style={styles.upgradeLabel}>
+                          Upgrading to:
+                        </Text>
+                        <Text style={[styles.upgradeValue, styles.highlightText]}>
+                          {upgradeProduct?.title ||
+                            renewalInfo?.pendingUpgradeProductId ||
+                            'Unknown'}
+                        </Text>
+                      </View>
+                      {iosPurchase.expirationDateIOS ? (
+                        <View style={styles.upgradeRow}>
+                          <Text style={styles.upgradeLabel}>
+                            Upgrade Date:
+                          </Text>
+                          <Text style={styles.upgradeValue}>
+                            {new Date(
+                              iosPurchase.expirationDateIOS,
+                            ).toLocaleDateString()}
+                          </Text>
+                        </View>
+                      ) : null}
+                      {renewalInfo?.willAutoRenew !== undefined ? (
+                        <View style={styles.upgradeRow}>
+                          <Text style={styles.upgradeLabel}>Auto-Renew:</Text>
+                          <Text
+                            style={[
+                              styles.upgradeValue,
+                              renewalInfo.willAutoRenew
+                                ? styles.activeStatus
+                                : styles.cancelledStatus,
+                            ]}
+                          >
+                            {renewalInfo.willAutoRenew ? '✅ Enabled' : '⚠️ Disabled'}
+                          </Text>
+                        </View>
+                      ) : null}
+                      <Text style={styles.upgradeNote}>
+                        💡 Your subscription will automatically upgrade when
+                        the current period ends.
+                        {renewalInfo?.willAutoRenew === false
+                          ? ' Note: Auto-renew is currently disabled.'
+                          : ''}
+                      </Text>
+
+                      {/* Show renewalInfo details */}
+                      <TouchableOpacity
+                        style={styles.viewRenewalInfoButton}
+                        onPress={() => {
+                          Alert.alert(
+                            'Renewal Info Details',
+                            JSON.stringify(renewalInfo, null, 2),
+                            [{text: 'OK'}],
+                          );
+                        }}
+                      >
+                        <Text style={styles.viewRenewalInfoButtonText}>
+                          📋 View renewalInfo
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+            </View>
+          ) : null}
+
+          {/* Subscription Cancellation Detection - iOS renewalInfo */}
+          {Platform.OS === 'ios' &&
+          availablePurchases.some((p) => {
+            const iosPurchase = p as PurchaseIOS;
+            return (
+              iosPurchase.renewalInfoIOS?.willAutoRenew === false &&
+              !iosPurchase.renewalInfoIOS?.pendingUpgradeProductId &&
+              activeSubscriptions.some(
+                (sub) => sub.productId === p.productId,
+              )
+            );
+          }) ? (
+            <View style={styles.cancellationDetectionCard}>
+              <Text style={styles.cancellationDetectionTitle}>
+                ⚠️ Subscription Cancelled
+              </Text>
+              {availablePurchases
+                .filter((p) => {
+                  const iosPurchase = p as PurchaseIOS;
+                  return (
+                    iosPurchase.renewalInfoIOS?.willAutoRenew === false &&
+                    !iosPurchase.renewalInfoIOS?.pendingUpgradeProductId &&
+                    activeSubscriptions.some(
+                      (sub) => sub.productId === p.productId,
+                    )
+                  );
+                })
+                .map((purchase, idx) => {
+                  const iosPurchase = purchase as PurchaseIOS;
+                  const renewalInfo = iosPurchase.renewalInfoIOS;
+                  const currentProduct = subscriptions.find(
+                    (s) => s.id === purchase.productId,
+                  );
+                  const preferredProduct = subscriptions.find(
+                    (s) => s.id === renewalInfo?.autoRenewPreference,
+                  );
+
+                  return (
+                    <View key={idx} style={styles.cancellationInfoBox}>
+                      <View style={styles.upgradeRow}>
+                        <Text style={styles.upgradeLabel}>Product:</Text>
+                        <Text style={styles.upgradeValue}>
+                          {currentProduct?.title || purchase.productId}
+                        </Text>
+                      </View>
+                      {iosPurchase.expirationDateIOS ? (
+                        <View style={styles.upgradeRow}>
+                          <Text style={styles.upgradeLabel}>
+                            Expires:
+                          </Text>
+                          <Text style={[styles.upgradeValue, styles.expiredText]}>
+                            {new Date(
+                              iosPurchase.expirationDateIOS,
+                            ).toLocaleDateString()}
+                          </Text>
+                        </View>
+                      ) : null}
+                      {renewalInfo?.pendingUpgradeProductId &&
+                      renewalInfo.pendingUpgradeProductId !== purchase.productId ? (
+                        <View style={styles.upgradeRow}>
+                          <Text style={styles.upgradeLabel}>
+                            Next Renewal:
+                          </Text>
+                          <Text style={styles.upgradeValue}>
+                            {preferredProduct?.title ||
+                              renewalInfo.autoRenewPreference ||
+                              'None'}
+                          </Text>
+                        </View>
+                      ) : null}
+                      <Text style={styles.cancellationNote}>
+                        💡 Your subscription will not auto-renew. You'll have
+                        access until the expiration date.
+                      </Text>
+
+                      {/* Show renewalInfo details */}
+                      <TouchableOpacity
+                        style={styles.viewRenewalInfoButton}
+                        onPress={() => {
+                          Alert.alert(
+                            'Renewal Info Details',
+                            JSON.stringify(renewalInfo, null, 2),
+                            [{text: 'OK'}],
+                          );
+                        }}
+                      >
+                        <Text style={styles.viewRenewalInfoButtonText}>
+                          📋 View renewalInfo
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+            </View>
+          ) : null}
+
           <View style={styles.subscriptionActionButtons}>
             <TouchableOpacity
               style={styles.refreshButton}
@@ -823,10 +1041,11 @@ function SubscriptionFlowContainer() {
   }, [connected, fetchProducts, getAvailablePurchases]);
 
   useEffect(() => {
-    if (connected) {
+    if (connected && subscriptions.length > 0) {
+      // Wait until subscriptions are loaded before checking status
       void handleRefreshStatus();
     }
-  }, [connected, handleRefreshStatus]);
+  }, [connected, subscriptions.length, handleRefreshStatus]);
 
   useEffect(() => {
     ExpoIapConsole.log(
@@ -1402,5 +1621,111 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  upgradeDetectionCard: {
+    backgroundColor: '#fff5e6',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 2,
+    borderColor: '#ff9800',
+  },
+  upgradeDetectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#e65100',
+    marginBottom: 12,
+  },
+  upgradeInfoBox: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+  },
+  upgradeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  upgradeLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  upgradeValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+    textAlign: 'right',
+  },
+  highlightText: {
+    color: '#ff9800',
+    fontWeight: '700',
+  },
+  upgradeArrow: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  upgradeArrowText: {
+    fontSize: 24,
+  },
+  upgradeNote: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 12,
+    lineHeight: 18,
+    backgroundColor: '#f5f5f5',
+    padding: 8,
+    borderRadius: 6,
+  },
+  viewRenewalInfoButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  viewRenewalInfoButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cancellationDetectionCard: {
+    backgroundColor: '#fff3cd',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 2,
+    borderColor: '#ffc107',
+  },
+  cancellationDetectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#856404',
+    marginBottom: 12,
+  },
+  cancellationInfoBox: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+  },
+  expiredText: {
+    color: '#dc3545',
+    fontWeight: '700',
+  },
+  cancellationNote: {
+    fontSize: 12,
+    color: '#856404',
+    fontStyle: 'italic',
+    marginTop: 12,
+    lineHeight: 18,
+    backgroundColor: '#fffbf0',
+    padding: 8,
+    borderRadius: 6,
   },
 });

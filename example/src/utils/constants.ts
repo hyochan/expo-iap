@@ -17,7 +17,10 @@ export const PRODUCT_IDS: string[] = [
 ];
 
 // Subscription product IDs
-export const SUBSCRIPTION_PRODUCT_IDS: string[] = ['dev.hyo.martie.premium'];
+export const SUBSCRIPTION_PRODUCT_IDS: string[] = [
+  'dev.hyo.martie.premium',
+  'dev.hyo.martie.premium_year',
+];
 
 // Optionally export a single default subscription for convenience
 export const DEFAULT_SUBSCRIPTION_PRODUCT_ID = SUBSCRIPTION_PRODUCT_IDS[0];
