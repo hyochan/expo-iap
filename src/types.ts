@@ -21,6 +21,11 @@ export interface ActiveSubscription {
   purchaseToken?: (string | null);
   /** Required for subscription upgrade/downgrade on Android */
   purchaseTokenAndroid?: (string | null);
+  /**
+   * Renewal information from StoreKit 2 (iOS only). Contains details about subscription renewal status,
+   * pending upgrades/downgrades, and auto-renewal preferences.
+   */
+  renewalInfoIOS?: (RenewalInfoIOS | null);
   transactionDate: number;
   transactionId: string;
   willExpireSoon?: (boolean | null);

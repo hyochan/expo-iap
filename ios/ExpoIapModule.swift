@@ -339,6 +339,23 @@ public final class ExpoIapModule: Module {
             }
         }
 
+        AsyncFunction("getActiveSubscriptions") { (subscriptionIds: [String]?) async throws -> [[String: Any]] in
+            ExpoIapLog.payload("getActiveSubscriptions", payload: subscriptionIds.map { ["subscriptionIds": $0] } ?? [:])
+            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
+            let subscriptions = try await OpenIapModule.shared.getActiveSubscriptions(subscriptionIds)
+            let sanitized = subscriptions.map { ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode($0)) }
+            ExpoIapLog.result("getActiveSubscriptions", value: sanitized)
+            return sanitized
+        }
+
+        AsyncFunction("hasActiveSubscriptions") { (subscriptionIds: [String]?) async throws -> Bool in
+            ExpoIapLog.payload("hasActiveSubscriptions", payload: subscriptionIds.map { ["subscriptionIds": $0] } ?? [:])
+            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
+            let hasActive = try await OpenIapModule.shared.hasActiveSubscriptions(subscriptionIds)
+            ExpoIapLog.result("hasActiveSubscriptions", value: hasActive)
+            return hasActive
+        }
+
         // MARK: - External Purchase (iOS 16.0+)
 
         AsyncFunction("canPresentExternalPurchaseNoticeIOS") { () async throws -> Bool in

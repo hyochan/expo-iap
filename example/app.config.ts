@@ -10,10 +10,13 @@ export default ({config}: ConfigContext): ExpoConfig => {
     [
       '../app.plugin.js',
       {
-        enableLocalDev: false,
+        enableLocalDev: true,
         localPath: {
           ios: LOCAL_OPENIAP_PATHS.ios,
           android: LOCAL_OPENIAP_PATHS.android,
+        },
+        modules: {
+          onside: false,
         },
         // iOS Alternative Billing configuration (optional)
         // Uncomment and configure for external purchase support

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -23,32 +23,11 @@ import {SUBSCRIPTION_PRODUCT_IDS} from '../src/utils/constants';
 import type {
   ActiveSubscription,
   ProductSubscription,
-  PurchaseIOS,
   Purchase,
 } from '../../src/types';
 import type {PurchaseError} from '../../src/utils/errorMapping';
 import PurchaseDetails from '../src/components/PurchaseDetails';
 import PurchaseSummaryRow from '../src/components/PurchaseSummaryRow';
-
-const deduplicatePurchases = (purchases: Purchase[]): Purchase[] => {
-  const uniquePurchases = new Map<string, Purchase>();
-
-  for (const purchase of purchases) {
-    const existingPurchase = uniquePurchases.get(purchase.productId);
-    if (!existingPurchase) {
-      uniquePurchases.set(purchase.productId, purchase);
-    } else {
-      const existingTimestamp = existingPurchase.transactionDate || 0;
-      const newTimestamp = purchase.transactionDate || 0;
-
-      if (newTimestamp > existingTimestamp) {
-        uniquePurchases.set(purchase.productId, purchase);
-      }
-    }
-  }
-
-  return Array.from(uniquePurchases.values());
-};
 
 /**
  * Subscription Flow Example - Subscription Products
@@ -69,7 +48,6 @@ const deduplicatePurchases = (purchases: Purchase[]): Purchase[] => {
 type SubscriptionFlowProps = {
   connected: boolean;
   subscriptions: ProductSubscription[];
-  availablePurchases: Purchase[];
   activeSubscriptions: ActiveSubscription[];
   purchaseResult: string;
   isProcessing: boolean;
@@ -84,7 +62,6 @@ type SubscriptionFlowProps = {
 function SubscriptionFlow({
   connected,
   subscriptions,
-  availablePurchases,
   activeSubscriptions,
   purchaseResult,
   isProcessing,
@@ -103,14 +80,74 @@ function SubscriptionFlow({
   );
   const [purchaseDetailsVisible, setPurchaseDetailsVisible] = useState(false);
 
+  // Check if a product is pending upgrade (scheduled to activate)
+  const isPendingUpgrade = useCallback(
+    (productId: string): boolean => {
+      if (Platform.OS !== 'ios') return false;
+
+      // Debug log all active subscriptions
+      console.log(`[isPendingUpgrade] Checking productId: ${productId}`);
+      console.log(
+        `[isPendingUpgrade] Active subscriptions count: ${activeSubscriptions.length}`,
+      );
+
+      activeSubscriptions.forEach((sub, index) => {
+        console.log(`[isPendingUpgrade] Sub ${index}:`, {
+          productId: sub.productId,
+          isActive: sub.isActive,
+          pendingUpgradeProductId: sub.renewalInfoIOS?.pendingUpgradeProductId,
+          willAutoRenew: sub.renewalInfoIOS?.willAutoRenew,
+          autoRenewPreference: sub.renewalInfoIOS?.autoRenewPreference,
+        });
+      });
+
+      const hasPending = activeSubscriptions.some(
+        (sub) =>
+          sub.renewalInfoIOS?.pendingUpgradeProductId === productId &&
+          sub.productId !== productId,
+      );
+
+      console.log(`[isPendingUpgrade] Result for ${productId}: ${hasPending}`);
+
+      return hasPending;
+    },
+    [activeSubscriptions],
+  );
+
   const handleSubscription = useCallback(
     (itemId: string) => {
+      console.log(
+        `\n[handleSubscription] === Button clicked for: ${itemId} ===`,
+      );
+      console.log(
+        '[handleSubscription] Active subscriptions:',
+        JSON.stringify(
+          activeSubscriptions.map((sub) => ({
+            productId: sub.productId,
+            isActive: sub.isActive,
+            renewalInfoIOS: sub.renewalInfoIOS,
+          })),
+          null,
+          2,
+        ),
+      );
+
       // Check if already subscribed to this product
       const isAlreadySubscribed = activeSubscriptions.some(
         (sub) => sub.productId === itemId,
       );
+      console.log(
+        `[handleSubscription] isAlreadySubscribed: ${isAlreadySubscribed}`,
+      );
+
+      // Check if this product is pending upgrade
+      const isPending = isPendingUpgrade(itemId);
+      console.log(`[handleSubscription] isPending: ${isPending}`);
 
       if (isAlreadySubscribed) {
+        console.log(
+          '[handleSubscription] => Showing "Already Subscribed" alert',
+        );
         Alert.alert(
           'Already Subscribed',
           'You already have an active subscription to this product.',
@@ -118,9 +155,23 @@ function SubscriptionFlow({
         );
         return;
       }
+
+      if (isPending) {
+        console.log(
+          '[handleSubscription] => Showing "Upgrade Scheduled" alert',
+        );
+        Alert.alert(
+          'Upgrade Scheduled',
+          'This subscription upgrade is already scheduled and will activate on your next renewal date.',
+          [{text: 'OK', style: 'default'}],
+        );
+        return;
+      }
+
+      console.log('[handleSubscription] => Calling onSubscribe');
       onSubscribe(itemId);
     },
-    [activeSubscriptions, onSubscribe],
+    [activeSubscriptions, isPendingUpgrade, onSubscribe],
   );
 
   const retryLoadSubscriptions = useCallback(() => {
@@ -156,11 +207,6 @@ function SubscriptionFlow({
   const handleManageSubscriptions = useCallback(() => {
     onManageSubscriptions();
   }, [onManageSubscriptions]);
-
-  const deduplicatedPurchases = useMemo(
-    () => deduplicatePurchases(availablePurchases),
-    [availablePurchases],
-  );
 
   const getIntroductoryOffer = (
     subscription: ProductSubscription,
@@ -337,6 +383,82 @@ function SubscriptionFlow({
                   </View>
                 ) : null}
 
+                {/* Next Renewal/Upgrade Information - iOS renewalInfo */}
+                {Platform.OS === 'ios' && sub.renewalInfoIOS ? (
+                  <>
+                    {sub.renewalInfoIOS.pendingUpgradeProductId &&
+                    sub.renewalInfoIOS.pendingUpgradeProductId !==
+                      sub.productId ? (
+                      <View style={styles.renewalInfoBox}>
+                        <Text style={styles.renewalInfoTitle}>
+                          🔄 Next Renewal
+                        </Text>
+                        <View style={styles.statusRow}>
+                          <Text style={styles.statusLabel}>Upgrading to:</Text>
+                          <Text
+                            style={[styles.statusValue, styles.highlightText]}
+                          >
+                            {subscriptions.find(
+                              (s) =>
+                                s.id ===
+                                sub.renewalInfoIOS?.pendingUpgradeProductId,
+                            )?.title ||
+                              sub.renewalInfoIOS.pendingUpgradeProductId}
+                          </Text>
+                        </View>
+                        {sub.expirationDateIOS ? (
+                          <View style={styles.statusRow}>
+                            <Text style={styles.statusLabel}>
+                              Activation Date:
+                            </Text>
+                            <Text style={styles.statusValue}>
+                              {new Date(
+                                sub.expirationDateIOS,
+                              ).toLocaleDateString()}
+                            </Text>
+                          </View>
+                        ) : null}
+                        <Text style={styles.renewalInfoNote}>
+                          💡 Your subscription will automatically upgrade when
+                          the current period ends.
+                        </Text>
+                      </View>
+                    ) : sub.renewalInfoIOS.autoRenewPreference &&
+                      sub.renewalInfoIOS.autoRenewPreference !==
+                        sub.productId ? (
+                      <View style={styles.renewalInfoBox}>
+                        <Text style={styles.renewalInfoTitle}>
+                          🔄 Next Renewal
+                        </Text>
+                        <View style={styles.statusRow}>
+                          <Text style={styles.statusLabel}>Will renew as:</Text>
+                          <Text
+                            style={[styles.statusValue, styles.highlightText]}
+                          >
+                            {subscriptions.find(
+                              (s) =>
+                                s.id ===
+                                sub.renewalInfoIOS?.autoRenewPreference,
+                            )?.title || sub.renewalInfoIOS.autoRenewPreference}
+                          </Text>
+                        </View>
+                        {sub.expirationDateIOS ? (
+                          <View style={styles.statusRow}>
+                            <Text style={styles.statusLabel}>
+                              Renewal Date:
+                            </Text>
+                            <Text style={styles.statusValue}>
+                              {new Date(
+                                sub.expirationDateIOS,
+                              ).toLocaleDateString()}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    ) : null}
+                  </>
+                ) : null}
+
                 {sub.willExpireSoon ? (
                   <Text style={styles.warningText}>
                     ⚠️ Your subscription will expire soon.{' '}
@@ -362,22 +484,19 @@ function SubscriptionFlow({
               return null;
             }
 
-            const upgradablePurchases = availablePurchases.filter((p) => {
-              const iosPurchase = p as PurchaseIOS;
-              const pendingProductId =
-                iosPurchase.renewalInfoIOS?.pendingUpgradeProductId;
+            const upgradableSubscriptions = activeSubscriptions.filter(
+              (sub) => {
+                const pendingProductId =
+                  sub.renewalInfoIOS?.pendingUpgradeProductId;
 
-              // Show upgrade card if there's a pending upgrade product that's different
-              // from the current product. In production, you might want to also check
-              // willAutoRenew, but Apple Sandbox behavior can be inconsistent.
-              return (
-                pendingProductId &&
-                pendingProductId !== p.productId &&
-                activeSubscriptions.some((sub) => sub.productId === p.productId)
-              );
-            });
+                // Show upgrade card if there's a pending upgrade product that's different
+                // from the current product. In production, you might want to also check
+                // willAutoRenew, but Apple Sandbox behavior can be inconsistent.
+                return pendingProductId && pendingProductId !== sub.productId;
+              },
+            );
 
-            if (upgradablePurchases.length === 0) {
+            if (upgradableSubscriptions.length === 0) {
               return null;
             }
 
@@ -386,11 +505,10 @@ function SubscriptionFlow({
                 <Text style={styles.upgradeDetectionTitle}>
                   🎉 Subscription Upgrade Detected
                 </Text>
-                {upgradablePurchases.map((purchase, idx) => {
-                  const iosPurchase = purchase as PurchaseIOS;
-                  const renewalInfo = iosPurchase.renewalInfoIOS;
+                {upgradableSubscriptions.map((subscription, idx) => {
+                  const renewalInfo = subscription.renewalInfoIOS;
                   const currentProduct = subscriptions.find(
-                    (s) => s.id === purchase.productId,
+                    (s) => s.id === subscription.productId,
                   );
                   const upgradeProduct = subscriptions.find(
                     (s) => s.id === renewalInfo?.pendingUpgradeProductId,
@@ -401,7 +519,7 @@ function SubscriptionFlow({
                       <View style={styles.upgradeRow}>
                         <Text style={styles.upgradeLabel}>Current:</Text>
                         <Text style={styles.upgradeValue}>
-                          {currentProduct?.title || purchase.productId}
+                          {currentProduct?.title || subscription.productId}
                         </Text>
                       </View>
                       <View style={styles.upgradeArrow}>
@@ -417,12 +535,12 @@ function SubscriptionFlow({
                             'Unknown'}
                         </Text>
                       </View>
-                      {iosPurchase.expirationDateIOS ? (
+                      {subscription.expirationDateIOS ? (
                         <View style={styles.upgradeRow}>
                           <Text style={styles.upgradeLabel}>Upgrade Date:</Text>
                           <Text style={styles.upgradeValue}>
                             {new Date(
-                              iosPurchase.expirationDateIOS,
+                              subscription.expirationDateIOS,
                             ).toLocaleDateString()}
                           </Text>
                         </View>
@@ -480,16 +598,14 @@ function SubscriptionFlow({
               return null;
             }
 
-            const cancelledPurchases = availablePurchases.filter((p) => {
-              const iosPurchase = p as PurchaseIOS;
+            const cancelledSubscriptions = activeSubscriptions.filter((sub) => {
               return (
-                iosPurchase.renewalInfoIOS?.willAutoRenew === false &&
-                !iosPurchase.renewalInfoIOS?.pendingUpgradeProductId &&
-                activeSubscriptions.some((sub) => sub.productId === p.productId)
+                sub.renewalInfoIOS?.willAutoRenew === false &&
+                !sub.renewalInfoIOS?.pendingUpgradeProductId
               );
             });
 
-            if (cancelledPurchases.length === 0) {
+            if (cancelledSubscriptions.length === 0) {
               return null;
             }
 
@@ -498,11 +614,10 @@ function SubscriptionFlow({
                 <Text style={styles.cancellationDetectionTitle}>
                   ⚠️ Subscription Cancelled
                 </Text>
-                {cancelledPurchases.map((purchase, idx) => {
-                  const iosPurchase = purchase as PurchaseIOS;
-                  const renewalInfo = iosPurchase.renewalInfoIOS;
+                {cancelledSubscriptions.map((subscription, idx) => {
+                  const renewalInfo = subscription.renewalInfoIOS;
                   const currentProduct = subscriptions.find(
-                    (s) => s.id === purchase.productId,
+                    (s) => s.id === subscription.productId,
                   );
                   const preferredProduct = subscriptions.find(
                     (s) => s.id === renewalInfo?.autoRenewPreference,
@@ -513,24 +628,24 @@ function SubscriptionFlow({
                       <View style={styles.upgradeRow}>
                         <Text style={styles.upgradeLabel}>Product:</Text>
                         <Text style={styles.upgradeValue}>
-                          {currentProduct?.title || purchase.productId}
+                          {currentProduct?.title || subscription.productId}
                         </Text>
                       </View>
-                      {iosPurchase.expirationDateIOS ? (
+                      {subscription.expirationDateIOS ? (
                         <View style={styles.upgradeRow}>
                           <Text style={styles.upgradeLabel}>Expires:</Text>
                           <Text
                             style={[styles.upgradeValue, styles.expiredText]}
                           >
                             {new Date(
-                              iosPurchase.expirationDateIOS,
+                              subscription.expirationDateIOS,
                             ).toLocaleDateString()}
                           </Text>
                         </View>
                       ) : null}
                       {renewalInfo?.pendingUpgradeProductId &&
                       renewalInfo.pendingUpgradeProductId !==
-                        purchase.productId ? (
+                        subscription.productId ? (
                         <View style={styles.upgradeRow}>
                           <Text style={styles.upgradeLabel}>Next Renewal:</Text>
                           <Text style={styles.upgradeValue}>
@@ -604,79 +719,100 @@ function SubscriptionFlow({
         {!connected ? (
           <Loading message="Connecting to store..." />
         ) : subscriptions.length > 0 ? (
-          subscriptions.map((subscription) => (
-            <View key={subscription.id} style={styles.subscriptionCard}>
-              <View style={styles.subscriptionInfo}>
-                <Text style={styles.subscriptionTitle}>
-                  {subscription.title}
-                </Text>
-                <Text style={styles.subscriptionDescription}>
-                  {subscription.description}
-                </Text>
-                <View style={styles.subscriptionDetails}>
-                  <Text style={styles.subscriptionPrice}>
-                    {getSubscriptionDisplayPrice(subscription)}
+          subscriptions.map((subscription) => {
+            // Debug log for each subscription
+            const isSubscribed = activeSubscriptions.some(
+              (sub) => sub.productId === subscription.id,
+            );
+            const isPending = isPendingUpgrade(subscription.id);
+
+            console.log(`[Render] Subscription: ${subscription.id}`, {
+              isSubscribed,
+              isPending,
+              title: subscription.title,
+            });
+
+            return (
+              <View key={subscription.id} style={styles.subscriptionCard}>
+                <View style={styles.subscriptionInfo}>
+                  <Text style={styles.subscriptionTitle}>
+                    {subscription.title}
                   </Text>
-                  <Text style={styles.subscriptionPeriod}>
-                    per {getSubscriptionPeriod(subscription)}
+                  <Text style={styles.subscriptionDescription}>
+                    {subscription.description}
                   </Text>
-                </View>
-                {getIntroductoryOffer(subscription) ? (
-                  <View style={styles.offerBadge}>
-                    <Text style={styles.offerText}>
-                      {getIntroductoryOffer(subscription)}
+                  <View style={styles.subscriptionDetails}>
+                    <Text style={styles.subscriptionPrice}>
+                      {getSubscriptionDisplayPrice(subscription)}
+                    </Text>
+                    <Text style={styles.subscriptionPeriod}>
+                      per {getSubscriptionPeriod(subscription)}
                     </Text>
                   </View>
-                ) : null}
-              </View>
-              <View style={styles.subscriptionActions}>
-                <TouchableOpacity
-                  style={styles.infoButton}
-                  onPress={() => handleSubscriptionPress(subscription)}
-                >
-                  <Text style={styles.infoButtonText}>ℹ️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.subscribeButton,
-                    (isProcessing ||
-                      activeSubscriptions.some(
-                        (sub) => sub.productId === subscription.id,
-                      )) &&
-                      styles.disabledButton,
-                    activeSubscriptions.some(
-                      (sub) => sub.productId === subscription.id,
-                    ) && styles.subscribedButton,
-                  ]}
-                  onPress={() => handleSubscription(subscription.id)}
-                  disabled={
-                    isProcessing ||
-                    !connected ||
-                    activeSubscriptions.some(
-                      (sub) => sub.productId === subscription.id,
-                    )
-                  }
-                >
-                  <Text
-                    style={[
-                      styles.subscribeButtonText,
-                      activeSubscriptions.some(
-                        (sub) => sub.productId === subscription.id,
-                      ) && styles.subscribedButtonText,
-                    ]}
+                  {getIntroductoryOffer(subscription) ? (
+                    <View style={styles.offerBadge}>
+                      <Text style={styles.offerText}>
+                        {getIntroductoryOffer(subscription)}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+                <View style={styles.subscriptionActions}>
+                  <TouchableOpacity
+                    style={styles.infoButton}
+                    onPress={() => handleSubscriptionPress(subscription)}
                   >
-                    {isProcessing
-                      ? 'Processing...'
-                      : activeSubscriptions.some(
+                    <Text style={styles.infoButtonText}>ℹ️</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.subscribeButton,
+                      (isProcessing ||
+                        activeSubscriptions.some(
                           (sub) => sub.productId === subscription.id,
-                        )
-                      ? '✅ Subscribed'
-                      : 'Subscribe'}
-                  </Text>
-                </TouchableOpacity>
+                        ) ||
+                        isPendingUpgrade(subscription.id)) &&
+                        styles.disabledButton,
+                      activeSubscriptions.some(
+                        (sub) => sub.productId === subscription.id,
+                      ) && styles.subscribedButton,
+                      isPendingUpgrade(subscription.id) && styles.pendingButton,
+                    ]}
+                    onPress={() => handleSubscription(subscription.id)}
+                    disabled={
+                      isProcessing ||
+                      !connected ||
+                      activeSubscriptions.some(
+                        (sub) => sub.productId === subscription.id,
+                      ) ||
+                      isPendingUpgrade(subscription.id)
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.subscribeButtonText,
+                        activeSubscriptions.some(
+                          (sub) => sub.productId === subscription.id,
+                        ) && styles.subscribedButtonText,
+                        isPendingUpgrade(subscription.id) &&
+                          styles.pendingButtonText,
+                      ]}
+                    >
+                      {isProcessing
+                        ? 'Processing...'
+                        : activeSubscriptions.some(
+                            (sub) => sub.productId === subscription.id,
+                          )
+                        ? '✅ Subscribed'
+                        : isPendingUpgrade(subscription.id)
+                        ? '⏳ Scheduled'
+                        : 'Subscribe'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          ))
+            );
+          })
         ) : (
           <View style={styles.noSubscriptionsCard}>
             <Text style={styles.noSubscriptionsText}>
@@ -692,26 +828,6 @@ function SubscriptionFlow({
           </View>
         )}
       </View>
-
-      {/* Available Purchases Section */}
-      {deduplicatedPurchases.length > 0 ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Available Purchases History</Text>
-          <Text style={styles.subtitle}>
-            Past purchases and subscription transactions (deduplicated)
-          </Text>
-          {deduplicatedPurchases.map((purchase, index) => (
-            <PurchaseSummaryRow
-              key={`history-${purchase.productId}-${index}`}
-              purchase={purchase}
-              onPress={() => {
-                setSelectedPurchase(purchase);
-                setPurchaseDetailsVisible(true);
-              }}
-            />
-          ))}
-        </View>
-      ) : null}
 
       {purchaseResult || lastPurchase ? (
         <View style={styles.section}>
@@ -847,9 +963,7 @@ function SubscriptionFlowContainer() {
   const {
     connected,
     subscriptions,
-    availablePurchases,
     fetchProducts,
-    getAvailablePurchases,
     finishTransaction,
     getActiveSubscriptions,
     activeSubscriptions,
@@ -880,7 +994,6 @@ function SubscriptionFlowContainer() {
         .toLowerCase();
 
       if (Platform.OS === 'ios' && purchasePlatform === 'ios') {
-        const iosPurchase = purchase as PurchaseIOS;
         const hasValidToken = !!(
           purchase.purchaseToken && purchase.purchaseToken.length > 0
         );
@@ -888,10 +1001,12 @@ function SubscriptionFlowContainer() {
 
         isPurchased = hasValidToken || hasValidTransactionId;
         isRestoration = Boolean(
-          iosPurchase.originalTransactionIdentifierIOS &&
-            iosPurchase.originalTransactionIdentifierIOS !== purchase.id &&
-            iosPurchase.transactionReasonIOS &&
-            iosPurchase.transactionReasonIOS !== 'PURCHASE',
+          'originalTransactionIdentifierIOS' in purchase &&
+            purchase.originalTransactionIdentifierIOS &&
+            purchase.originalTransactionIdentifierIOS !== purchase.id &&
+            'transactionReasonIOS' in purchase &&
+            purchase.transactionReasonIOS &&
+            purchase.transactionReasonIOS !== 'PURCHASE',
         );
 
         ExpoIapConsole.log('iOS Purchase Analysis:');
@@ -901,12 +1016,16 @@ function SubscriptionFlowContainer() {
         ExpoIapConsole.log('  isRestoration:', isRestoration);
         ExpoIapConsole.log(
           '  originalTransactionId:',
-          iosPurchase.originalTransactionIdentifierIOS,
+          'originalTransactionIdentifierIOS' in purchase
+            ? purchase.originalTransactionIdentifierIOS
+            : undefined,
         );
         ExpoIapConsole.log('  currentTransactionId:', purchase.id);
         ExpoIapConsole.log(
           '  transactionReason:',
-          iosPurchase.transactionReasonIOS,
+          'transactionReasonIOS' in purchase
+            ? purchase.transactionReasonIOS
+            : undefined,
         );
       } else if (Platform.OS === 'android' && purchasePlatform === 'android') {
         isPurchased = true;
@@ -949,7 +1068,6 @@ function SubscriptionFlowContainer() {
 
         try {
           await getActiveSubscriptions();
-          await getAvailablePurchases();
         } catch (error) {
           ExpoIapConsole.warn('Failed to refresh status:', error);
         }
@@ -974,7 +1092,6 @@ function SubscriptionFlowContainer() {
 
       try {
         await getActiveSubscriptions();
-        await getAvailablePurchases();
       } catch (error) {
         ExpoIapConsole.warn('Failed to refresh status:', error);
       }
@@ -1023,15 +1140,10 @@ function SubscriptionFlowContainer() {
       ExpoIapConsole.log(
         'Product loading request sent - waiting for results...',
       );
-
-      ExpoIapConsole.log('Loading available purchases...');
-      getAvailablePurchases().catch((error) => {
-        ExpoIapConsole.warn('Failed to load available purchases:', error);
-      });
     } else if (!connected) {
       didFetchSubsRef.current = false;
     }
-  }, [connected, fetchProducts, getAvailablePurchases]);
+  }, [connected, fetchProducts]);
 
   useEffect(() => {
     if (connected && subscriptions.length > 0) {
@@ -1180,7 +1292,6 @@ function SubscriptionFlowContainer() {
     <SubscriptionFlow
       connected={connected}
       subscriptions={subscriptions}
-      availablePurchases={availablePurchases}
       activeSubscriptions={activeSubscriptions}
       purchaseResult={purchaseResult}
       isProcessing={isProcessing}
@@ -1535,6 +1646,13 @@ const styles = StyleSheet.create({
   subscribedButtonText: {
     color: '#fff',
   },
+  pendingButton: {
+    backgroundColor: '#ff9800',
+    opacity: 0.8,
+  },
+  pendingButtonText: {
+    color: '#fff',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -1720,5 +1838,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#fffbf0',
     padding: 8,
     borderRadius: 6,
+  },
+  renewalInfoBox: {
+    backgroundColor: '#e3f2fd',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196f3',
+  },
+  renewalInfoTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1976d2',
+    marginBottom: 8,
+  },
+  renewalInfoNote: {
+    fontSize: 12,
+    color: '#0d47a1',
+    fontStyle: 'italic',
+    marginTop: 8,
+    lineHeight: 18,
   },
 });

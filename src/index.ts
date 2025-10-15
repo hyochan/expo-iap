@@ -19,6 +19,7 @@ import {ExpoIapConsole} from './utils/debug';
 
 // Types
 import type {
+  ActiveSubscription,
   AndroidSubscriptionOfferInput,
   DeepLinkOptions,
   FetchProductsResult,
@@ -46,12 +47,6 @@ import {createPurchaseError, type PurchaseError} from './utils/errorMapping';
 export * from './types';
 export * from './modules/android';
 export * from './modules/ios';
-
-// Export subscription helpers
-export {
-  getActiveSubscriptions,
-  hasActiveSubscriptions,
-} from './helpers/subscription';
 
 // Get the native constant value
 export enum OpenIapEvent {
@@ -330,6 +325,89 @@ export const getAvailablePurchases: QueryField<
 
   const purchases = await resolvePurchases();
   return normalizePurchaseArray(purchases as Purchase[]);
+};
+
+/**
+ * Get all active subscriptions with detailed information.
+ * Uses native OpenIAP module for accurate subscription status and renewal info.
+ *
+ * On iOS: Returns subscriptions with renewalInfoIOS containing pendingUpgradeProductId,
+ * willAutoRenew, autoRenewPreference, and other renewal details.
+ *
+ * On Android: Not yet implemented - returns empty array.
+ *
+ * @param subscriptionIds - Optional array of subscription product IDs to filter. If not provided, returns all active subscriptions.
+ * @returns Promise resolving to array of active subscriptions with details
+ *
+ * @example
+ * ```typescript
+ * // Get all active subscriptions
+ * const subs = await getActiveSubscriptions();
+ *
+ * // Get specific subscriptions
+ * const premiumSubs = await getActiveSubscriptions(['premium', 'premium_year']);
+ *
+ * // Check for pending upgrades (iOS)
+ * subs.forEach(sub => {
+ *   if (sub.renewalInfoIOS?.pendingUpgradeProductId) {
+ *     console.log(`Upgrade pending to: ${sub.renewalInfoIOS.pendingUpgradeProductId}`);
+ *   }
+ * });
+ * ```
+ */
+export const getActiveSubscriptions: QueryField<
+  'getActiveSubscriptions'
+> = async (subscriptionIds) => {
+  if (Platform.OS === 'ios') {
+    const result = await ExpoIapModule.getActiveSubscriptions(
+      subscriptionIds ?? null,
+    );
+    return (result ?? []) as ActiveSubscription[];
+  } else if (Platform.OS === 'android') {
+    // TODO: Implement Android version using Google Play Billing Library
+    ExpoIapConsole.warn(
+      'getActiveSubscriptions not yet implemented for Android',
+    );
+    return [];
+  }
+
+  return [];
+};
+
+/**
+ * Check if user has any active subscriptions.
+ *
+ * On iOS: Uses native StoreKit 2 to check current entitlements.
+ * On Android: Not yet implemented - returns false.
+ *
+ * @param subscriptionIds - Optional array of subscription product IDs to check. If not provided, checks all subscriptions.
+ * @returns Promise resolving to true if user has at least one active subscription
+ *
+ * @example
+ * ```typescript
+ * // Check any active subscription
+ * const hasAny = await hasActiveSubscriptions();
+ *
+ * // Check specific subscriptions
+ * const hasPremium = await hasActiveSubscriptions(['premium', 'premium_year']);
+ * ```
+ */
+export const hasActiveSubscriptions: QueryField<
+  'hasActiveSubscriptions'
+> = async (subscriptionIds) => {
+  if (Platform.OS === 'ios') {
+    return !!(await ExpoIapModule.hasActiveSubscriptions(
+      subscriptionIds ?? null,
+    ));
+  } else if (Platform.OS === 'android') {
+    // TODO: Implement Android version using Google Play Billing Library
+    ExpoIapConsole.warn(
+      'hasActiveSubscriptions not yet implemented for Android',
+    );
+    return false;
+  }
+
+  return false;
 };
 
 export const getStorefront: QueryField<'getStorefront'> = async () => {
