@@ -334,7 +334,7 @@ export const getAvailablePurchases: QueryField<
  * On iOS: Returns subscriptions with renewalInfoIOS containing pendingUpgradeProductId,
  * willAutoRenew, autoRenewPreference, and other renewal details.
  *
- * On Android: Not yet implemented - returns empty array.
+ * On Android: Filters available purchases to find active subscriptions (fallback implementation).
  *
  * @param subscriptionIds - Optional array of subscription product IDs to filter. If not provided, returns all active subscriptions.
  * @returns Promise resolving to array of active subscriptions with details
@@ -358,27 +358,14 @@ export const getAvailablePurchases: QueryField<
 export const getActiveSubscriptions: QueryField<
   'getActiveSubscriptions'
 > = async (subscriptionIds) => {
-  if (Platform.OS === 'ios') {
-    const result = await ExpoIapModule.getActiveSubscriptions(
-      subscriptionIds ?? null,
-    );
-    return (result ?? []) as ActiveSubscription[];
-  } else if (Platform.OS === 'android') {
-    // TODO: Implement Android version using Google Play Billing Library
-    ExpoIapConsole.warn(
-      'getActiveSubscriptions not yet implemented for Android',
-    );
-    return [];
-  }
-
-  return [];
+  const result = await ExpoIapModule.getActiveSubscriptions(
+    subscriptionIds ?? null,
+  );
+  return (result ?? []) as ActiveSubscription[];
 };
 
 /**
  * Check if user has any active subscriptions.
- *
- * On iOS: Uses native StoreKit 2 to check current entitlements.
- * On Android: Not yet implemented - returns false.
  *
  * @param subscriptionIds - Optional array of subscription product IDs to check. If not provided, checks all subscriptions.
  * @returns Promise resolving to true if user has at least one active subscription
@@ -395,19 +382,9 @@ export const getActiveSubscriptions: QueryField<
 export const hasActiveSubscriptions: QueryField<
   'hasActiveSubscriptions'
 > = async (subscriptionIds) => {
-  if (Platform.OS === 'ios') {
-    return !!(await ExpoIapModule.hasActiveSubscriptions(
-      subscriptionIds ?? null,
-    ));
-  } else if (Platform.OS === 'android') {
-    // TODO: Implement Android version using Google Play Billing Library
-    ExpoIapConsole.warn(
-      'hasActiveSubscriptions not yet implemented for Android',
-    );
-    return false;
-  }
-
-  return false;
+  return !!(await ExpoIapModule.hasActiveSubscriptions(
+    subscriptionIds ?? null,
+  ));
 };
 
 export const getStorefront: QueryField<'getStorefront'> = async () => {

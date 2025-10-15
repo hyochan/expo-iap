@@ -414,6 +414,41 @@ class ExpoIapModule : Module() {
                 }
             }
 
+            AsyncFunction("getActiveSubscriptions") { subscriptionIds: List<String>?, promise: Promise ->
+                ExpoIapLog.payload(
+                    "getActiveSubscriptions",
+                    subscriptionIds?.let { mapOf("subscriptionIds" to it) } ?: emptyMap<String, Any?>(),
+                )
+                scope.launch {
+                    try {
+                        val subscriptions = openIap.getActiveSubscriptions(subscriptionIds)
+                        val result = subscriptions.map { it.toJson() }
+                        ExpoIapLog.result("getActiveSubscriptions", result)
+                        promise.resolve(result)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("getActiveSubscriptions", e)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, e)
+                    }
+                }
+            }
+
+            AsyncFunction("hasActiveSubscriptions") { subscriptionIds: List<String>?, promise: Promise ->
+                ExpoIapLog.payload(
+                    "hasActiveSubscriptions",
+                    subscriptionIds?.let { mapOf("subscriptionIds" to it) } ?: emptyMap<String, Any?>(),
+                )
+                scope.launch {
+                    try {
+                        val hasActive = openIap.hasActiveSubscriptions(subscriptionIds)
+                        ExpoIapLog.result("hasActiveSubscriptions", hasActive)
+                        promise.resolve(hasActive)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("hasActiveSubscriptions", e)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, e)
+                    }
+                }
+            }
+
             OnDestroy {
                 ExpoIapHelper.cleanupListeners(openIap)
                 job.cancel()

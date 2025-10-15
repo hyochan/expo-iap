@@ -80,74 +80,40 @@ function SubscriptionFlow({
   );
   const [purchaseDetailsVisible, setPurchaseDetailsVisible] = useState(false);
 
+  // Helper to get subscription title by product ID
+  const getSubscriptionTitle = useCallback(
+    (productId: string | null | undefined): string => {
+      if (!productId) return 'Unknown';
+      return subscriptions.find((s) => s.id === productId)?.title || productId;
+    },
+    [subscriptions],
+  );
+
   // Check if a product is pending upgrade (scheduled to activate)
   const isPendingUpgrade = useCallback(
     (productId: string): boolean => {
       if (Platform.OS !== 'ios') return false;
 
-      // Debug log all active subscriptions
-      console.log(`[isPendingUpgrade] Checking productId: ${productId}`);
-      console.log(
-        `[isPendingUpgrade] Active subscriptions count: ${activeSubscriptions.length}`,
-      );
-
-      activeSubscriptions.forEach((sub, index) => {
-        console.log(`[isPendingUpgrade] Sub ${index}:`, {
-          productId: sub.productId,
-          isActive: sub.isActive,
-          pendingUpgradeProductId: sub.renewalInfoIOS?.pendingUpgradeProductId,
-          willAutoRenew: sub.renewalInfoIOS?.willAutoRenew,
-          autoRenewPreference: sub.renewalInfoIOS?.autoRenewPreference,
-        });
-      });
-
-      const hasPending = activeSubscriptions.some(
+      return activeSubscriptions.some(
         (sub) =>
           sub.renewalInfoIOS?.pendingUpgradeProductId === productId &&
           sub.productId !== productId,
       );
-
-      console.log(`[isPendingUpgrade] Result for ${productId}: ${hasPending}`);
-
-      return hasPending;
     },
     [activeSubscriptions],
   );
 
   const handleSubscription = useCallback(
     (itemId: string) => {
-      console.log(
-        `\n[handleSubscription] === Button clicked for: ${itemId} ===`,
-      );
-      console.log(
-        '[handleSubscription] Active subscriptions:',
-        JSON.stringify(
-          activeSubscriptions.map((sub) => ({
-            productId: sub.productId,
-            isActive: sub.isActive,
-            renewalInfoIOS: sub.renewalInfoIOS,
-          })),
-          null,
-          2,
-        ),
-      );
-
       // Check if already subscribed to this product
       const isAlreadySubscribed = activeSubscriptions.some(
         (sub) => sub.productId === itemId,
       );
-      console.log(
-        `[handleSubscription] isAlreadySubscribed: ${isAlreadySubscribed}`,
-      );
 
       // Check if this product is pending upgrade
       const isPending = isPendingUpgrade(itemId);
-      console.log(`[handleSubscription] isPending: ${isPending}`);
 
       if (isAlreadySubscribed) {
-        console.log(
-          '[handleSubscription] => Showing "Already Subscribed" alert',
-        );
         Alert.alert(
           'Already Subscribed',
           'You already have an active subscription to this product.',
@@ -157,9 +123,6 @@ function SubscriptionFlow({
       }
 
       if (isPending) {
-        console.log(
-          '[handleSubscription] => Showing "Upgrade Scheduled" alert',
-        );
         Alert.alert(
           'Upgrade Scheduled',
           'This subscription upgrade is already scheduled and will activate on your next renewal date.',
@@ -168,7 +131,6 @@ function SubscriptionFlow({
         return;
       }
 
-      console.log('[handleSubscription] => Calling onSubscribe');
       onSubscribe(itemId);
     },
     [activeSubscriptions, isPendingUpgrade, onSubscribe],
@@ -398,12 +360,9 @@ function SubscriptionFlow({
                           <Text
                             style={[styles.statusValue, styles.highlightText]}
                           >
-                            {subscriptions.find(
-                              (s) =>
-                                s.id ===
-                                sub.renewalInfoIOS?.pendingUpgradeProductId,
-                            )?.title ||
-                              sub.renewalInfoIOS.pendingUpgradeProductId}
+                            {getSubscriptionTitle(
+                              sub.renewalInfoIOS?.pendingUpgradeProductId,
+                            )}
                           </Text>
                         </View>
                         {sub.expirationDateIOS ? (
@@ -510,9 +469,6 @@ function SubscriptionFlow({
                   const currentProduct = subscriptions.find(
                     (s) => s.id === subscription.productId,
                   );
-                  const upgradeProduct = subscriptions.find(
-                    (s) => s.id === renewalInfo?.pendingUpgradeProductId,
-                  );
 
                   return (
                     <View key={idx} style={styles.upgradeInfoBox}>
@@ -530,9 +486,9 @@ function SubscriptionFlow({
                         <Text
                           style={[styles.upgradeValue, styles.highlightText]}
                         >
-                          {upgradeProduct?.title ||
-                            renewalInfo?.pendingUpgradeProductId ||
-                            'Unknown'}
+                          {getSubscriptionTitle(
+                            renewalInfo?.pendingUpgradeProductId,
+                          )}
                         </Text>
                       </View>
                       {subscription.expirationDateIOS ? (
@@ -720,17 +676,10 @@ function SubscriptionFlow({
           <Loading message="Connecting to store..." />
         ) : subscriptions.length > 0 ? (
           subscriptions.map((subscription) => {
-            // Debug log for each subscription
             const isSubscribed = activeSubscriptions.some(
               (sub) => sub.productId === subscription.id,
             );
             const isPending = isPendingUpgrade(subscription.id);
-
-            console.log(`[Render] Subscription: ${subscription.id}`, {
-              isSubscribed,
-              isPending,
-              title: subscription.title,
-            });
 
             return (
               <View key={subscription.id} style={styles.subscriptionCard}>
@@ -767,44 +716,28 @@ function SubscriptionFlow({
                   <TouchableOpacity
                     style={[
                       styles.subscribeButton,
-                      (isProcessing ||
-                        activeSubscriptions.some(
-                          (sub) => sub.productId === subscription.id,
-                        ) ||
-                        isPendingUpgrade(subscription.id)) &&
+                      (isProcessing || isSubscribed || isPending) &&
                         styles.disabledButton,
-                      activeSubscriptions.some(
-                        (sub) => sub.productId === subscription.id,
-                      ) && styles.subscribedButton,
-                      isPendingUpgrade(subscription.id) && styles.pendingButton,
+                      isSubscribed && styles.subscribedButton,
+                      isPending && styles.pendingButton,
                     ]}
                     onPress={() => handleSubscription(subscription.id)}
                     disabled={
-                      isProcessing ||
-                      !connected ||
-                      activeSubscriptions.some(
-                        (sub) => sub.productId === subscription.id,
-                      ) ||
-                      isPendingUpgrade(subscription.id)
+                      isProcessing || !connected || isSubscribed || isPending
                     }
                   >
                     <Text
                       style={[
                         styles.subscribeButtonText,
-                        activeSubscriptions.some(
-                          (sub) => sub.productId === subscription.id,
-                        ) && styles.subscribedButtonText,
-                        isPendingUpgrade(subscription.id) &&
-                          styles.pendingButtonText,
+                        isSubscribed && styles.subscribedButtonText,
+                        isPending && styles.pendingButtonText,
                       ]}
                     >
                       {isProcessing
                         ? 'Processing...'
-                        : activeSubscriptions.some(
-                            (sub) => sub.productId === subscription.id,
-                          )
+                        : isSubscribed
                         ? '✅ Subscribed'
-                        : isPendingUpgrade(subscription.id)
+                        : isPending
                         ? '⏳ Scheduled'
                         : 'Subscribe'}
                     </Text>
