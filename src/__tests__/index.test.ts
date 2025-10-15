@@ -27,6 +27,8 @@ import {
   restorePurchases,
   promotedProductListenerIOS,
   PurchaseInput,
+  getActiveSubscriptions,
+  hasActiveSubscriptions,
 } from '../index';
 import * as iosMod from '../modules/ios';
 import * as androidMod from '../modules/android';
@@ -648,6 +650,236 @@ describe('Public API (index.ts)', () => {
       const res = await getAvailablePurchases();
       expect(res).toEqual([]);
       (Platform as any).select = originalSelect;
+    });
+  });
+
+  describe('getActiveSubscriptions', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('calls native module and returns active subscriptions', async () => {
+      const mockSubscriptions = [
+        {
+          productId: 'premium_monthly',
+          isActive: true,
+          transactionId: 'txn-123',
+          purchaseToken: 'token-abc',
+          transactionDate: 1234567890,
+          autoRenewingAndroid: true,
+        },
+        {
+          productId: 'premium_yearly',
+          isActive: true,
+          transactionId: 'txn-456',
+          purchaseToken: 'token-def',
+          transactionDate: 1234567891,
+          renewalInfoIOS: {
+            pendingUpgradeProductId: 'premium_lifetime',
+            willAutoRenew: true,
+            autoRenewPreference: 'premium_lifetime',
+          },
+        },
+      ];
+
+      (ExpoIapModule.getActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(mockSubscriptions);
+
+      const result = await getActiveSubscriptions();
+
+      expect(ExpoIapModule.getActiveSubscriptions).toHaveBeenCalledWith(null);
+      expect(result).toEqual(mockSubscriptions);
+    });
+
+    it('filters by subscription IDs when provided', async () => {
+      const mockSubscriptions = [
+        {
+          productId: 'premium_monthly',
+          isActive: true,
+          transactionId: 'txn-123',
+          purchaseToken: 'token-abc',
+          transactionDate: 1234567890,
+        },
+      ];
+
+      (ExpoIapModule.getActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(mockSubscriptions);
+
+      const subscriptionIds = ['premium_monthly', 'premium_yearly'];
+      const result = await getActiveSubscriptions(subscriptionIds);
+
+      expect(ExpoIapModule.getActiveSubscriptions).toHaveBeenCalledWith(
+        subscriptionIds,
+      );
+      expect(result).toEqual(mockSubscriptions);
+    });
+
+    it('returns empty array when native module returns null', async () => {
+      (ExpoIapModule.getActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(null);
+
+      const result = await getActiveSubscriptions();
+
+      expect(result).toEqual([]);
+    });
+
+    it('returns empty array when native module returns undefined', async () => {
+      (ExpoIapModule.getActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(undefined);
+
+      const result = await getActiveSubscriptions();
+
+      expect(result).toEqual([]);
+    });
+
+    it('handles iOS subscriptions with renewalInfoIOS', async () => {
+      const mockIOSSubscription = [
+        {
+          productId: 'premium_monthly',
+          isActive: true,
+          transactionId: 'txn-ios-123',
+          purchaseToken: 'ios-token',
+          transactionDate: 1234567890,
+          renewalInfoIOS: {
+            pendingUpgradeProductId: 'premium_yearly',
+            willAutoRenew: true,
+            autoRenewPreference: 'premium_yearly',
+          },
+        },
+      ];
+
+      (ExpoIapModule.getActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(mockIOSSubscription);
+
+      const result = await getActiveSubscriptions(['premium_monthly']);
+
+      expect(result).toEqual(mockIOSSubscription);
+      expect(result[0].renewalInfoIOS?.pendingUpgradeProductId).toBe(
+        'premium_yearly',
+      );
+    });
+
+    it('handles Android subscriptions with autoRenewingAndroid', async () => {
+      const mockAndroidSubscription = [
+        {
+          productId: 'premium_monthly',
+          isActive: true,
+          transactionId: 'txn-android-123',
+          purchaseToken: 'android-token',
+          transactionDate: 1234567890,
+          autoRenewingAndroid: false,
+        },
+      ];
+
+      (ExpoIapModule.getActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(mockAndroidSubscription);
+
+      const result = await getActiveSubscriptions();
+
+      expect(result).toEqual(mockAndroidSubscription);
+      expect(result[0].autoRenewingAndroid).toBe(false);
+    });
+  });
+
+  describe('hasActiveSubscriptions', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('returns true when user has active subscriptions', async () => {
+      (ExpoIapModule.hasActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(true);
+
+      const result = await hasActiveSubscriptions();
+
+      expect(ExpoIapModule.hasActiveSubscriptions).toHaveBeenCalledWith(null);
+      expect(result).toBe(true);
+    });
+
+    it('returns false when user has no active subscriptions', async () => {
+      (ExpoIapModule.hasActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(false);
+
+      const result = await hasActiveSubscriptions();
+
+      expect(result).toBe(false);
+    });
+
+    it('filters by subscription IDs when provided', async () => {
+      (ExpoIapModule.hasActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(true);
+
+      const subscriptionIds = ['premium_monthly', 'premium_yearly'];
+      const result = await hasActiveSubscriptions(subscriptionIds);
+
+      expect(ExpoIapModule.hasActiveSubscriptions).toHaveBeenCalledWith(
+        subscriptionIds,
+      );
+      expect(result).toBe(true);
+    });
+
+    it('returns false when native module returns null', async () => {
+      (ExpoIapModule.hasActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(null);
+
+      const result = await hasActiveSubscriptions();
+
+      expect(result).toBe(false);
+    });
+
+    it('returns false when native module returns undefined', async () => {
+      (ExpoIapModule.hasActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(undefined);
+
+      const result = await hasActiveSubscriptions();
+
+      expect(result).toBe(false);
+    });
+
+    it('handles checking specific premium subscription', async () => {
+      (ExpoIapModule.hasActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(false);
+
+      const result = await hasActiveSubscriptions(['premium_lifetime']);
+
+      expect(ExpoIapModule.hasActiveSubscriptions).toHaveBeenCalledWith([
+        'premium_lifetime',
+      ]);
+      expect(result).toBe(false);
+    });
+
+    it('coerces truthy values correctly', async () => {
+      // Test that the !! coercion works
+      (ExpoIapModule.hasActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(1); // Truthy non-boolean
+
+      const result = await hasActiveSubscriptions();
+
+      expect(result).toBe(true);
+    });
+
+    it('coerces falsy values correctly', async () => {
+      // Test that the !! coercion works
+      (ExpoIapModule.hasActiveSubscriptions as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(0); // Falsy non-boolean
+
+      const result = await hasActiveSubscriptions();
+
+      expect(result).toBe(false);
     });
   });
 });
