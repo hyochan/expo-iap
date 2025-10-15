@@ -361,7 +361,8 @@ function SubscriptionFlow({
           activeSubscriptions.length > 0 &&
           availablePurchases.some((p) => {
             const iosPurchase = p as PurchaseIOS;
-            const pendingProductId = iosPurchase.renewalInfoIOS?.pendingUpgradeProductId;
+            const pendingProductId =
+              iosPurchase.renewalInfoIOS?.pendingUpgradeProductId;
 
             // Show upgrade card if there's a pending upgrade product that's different
             // from the current product. In production, you might want to also check
@@ -369,9 +370,7 @@ function SubscriptionFlow({
             return (
               pendingProductId &&
               pendingProductId !== p.productId &&
-              activeSubscriptions.some(
-                (sub) => sub.productId === p.productId,
-              )
+              activeSubscriptions.some((sub) => sub.productId === p.productId)
             );
           }) ? (
             <View style={styles.upgradeDetectionCard}>
@@ -381,7 +380,8 @@ function SubscriptionFlow({
               {availablePurchases
                 .filter((p) => {
                   const iosPurchase = p as PurchaseIOS;
-                  const pendingProductId = iosPurchase.renewalInfoIOS?.pendingUpgradeProductId;
+                  const pendingProductId =
+                    iosPurchase.renewalInfoIOS?.pendingUpgradeProductId;
 
                   return (
                     pendingProductId &&
@@ -413,10 +413,10 @@ function SubscriptionFlow({
                         <Text style={styles.upgradeArrowText}>⬇️</Text>
                       </View>
                       <View style={styles.upgradeRow}>
-                        <Text style={styles.upgradeLabel}>
-                          Upgrading to:
-                        </Text>
-                        <Text style={[styles.upgradeValue, styles.highlightText]}>
+                        <Text style={styles.upgradeLabel}>Upgrading to:</Text>
+                        <Text
+                          style={[styles.upgradeValue, styles.highlightText]}
+                        >
                           {upgradeProduct?.title ||
                             renewalInfo?.pendingUpgradeProductId ||
                             'Unknown'}
@@ -424,9 +424,7 @@ function SubscriptionFlow({
                       </View>
                       {iosPurchase.expirationDateIOS ? (
                         <View style={styles.upgradeRow}>
-                          <Text style={styles.upgradeLabel}>
-                            Upgrade Date:
-                          </Text>
+                          <Text style={styles.upgradeLabel}>Upgrade Date:</Text>
                           <Text style={styles.upgradeValue}>
                             {new Date(
                               iosPurchase.expirationDateIOS,
@@ -445,13 +443,15 @@ function SubscriptionFlow({
                                 : styles.cancelledStatus,
                             ]}
                           >
-                            {renewalInfo.willAutoRenew ? '✅ Enabled' : '⚠️ Disabled'}
+                            {renewalInfo.willAutoRenew
+                              ? '✅ Enabled'
+                              : '⚠️ Disabled'}
                           </Text>
                         </View>
                       ) : null}
                       <Text style={styles.upgradeNote}>
-                        💡 Your subscription will automatically upgrade when
-                        the current period ends.
+                        💡 Your subscription will automatically upgrade when the
+                        current period ends.
                         {renewalInfo?.willAutoRenew === false
                           ? ' Note: Auto-renew is currently disabled.'
                           : ''}
@@ -485,9 +485,7 @@ function SubscriptionFlow({
             return (
               iosPurchase.renewalInfoIOS?.willAutoRenew === false &&
               !iosPurchase.renewalInfoIOS?.pendingUpgradeProductId &&
-              activeSubscriptions.some(
-                (sub) => sub.productId === p.productId,
-              )
+              activeSubscriptions.some((sub) => sub.productId === p.productId)
             );
           }) ? (
             <View style={styles.cancellationDetectionCard}>
@@ -525,10 +523,10 @@ function SubscriptionFlow({
                       </View>
                       {iosPurchase.expirationDateIOS ? (
                         <View style={styles.upgradeRow}>
-                          <Text style={styles.upgradeLabel}>
-                            Expires:
-                          </Text>
-                          <Text style={[styles.upgradeValue, styles.expiredText]}>
+                          <Text style={styles.upgradeLabel}>Expires:</Text>
+                          <Text
+                            style={[styles.upgradeValue, styles.expiredText]}
+                          >
                             {new Date(
                               iosPurchase.expirationDateIOS,
                             ).toLocaleDateString()}
@@ -536,11 +534,10 @@ function SubscriptionFlow({
                         </View>
                       ) : null}
                       {renewalInfo?.pendingUpgradeProductId &&
-                      renewalInfo.pendingUpgradeProductId !== purchase.productId ? (
+                      renewalInfo.pendingUpgradeProductId !==
+                        purchase.productId ? (
                         <View style={styles.upgradeRow}>
-                          <Text style={styles.upgradeLabel}>
-                            Next Renewal:
-                          </Text>
+                          <Text style={styles.upgradeLabel}>Next Renewal:</Text>
                           <Text style={styles.upgradeValue}>
                             {preferredProduct?.title ||
                               renewalInfo.autoRenewPreference ||
