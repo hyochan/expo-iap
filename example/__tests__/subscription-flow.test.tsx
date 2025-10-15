@@ -262,7 +262,7 @@ describe('SubscriptionFlow Component', () => {
 
     fireEvent.press(retryButton);
     expect(mockFetchProducts).toHaveBeenCalledWith({
-      skus: ['dev.hyo.martie.premium'],
+      skus: ['dev.hyo.martie.premium', 'dev.hyo.martie.premium_year'],
       type: 'subs',
     });
   });

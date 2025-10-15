@@ -357,41 +357,36 @@ function SubscriptionFlow({
           </View>
 
           {/* Subscription Upgrade Detection - iOS renewalInfo */}
-          {Platform.OS === 'ios' &&
-          activeSubscriptions.length > 0 &&
-          availablePurchases.some((p) => {
-            const iosPurchase = p as PurchaseIOS;
-            const pendingProductId =
-              iosPurchase.renewalInfoIOS?.pendingUpgradeProductId;
+          {(() => {
+            if (Platform.OS !== 'ios' || activeSubscriptions.length === 0) {
+              return null;
+            }
 
-            // Show upgrade card if there's a pending upgrade product that's different
-            // from the current product. In production, you might want to also check
-            // willAutoRenew, but Apple Sandbox behavior can be inconsistent.
+            const upgradablePurchases = availablePurchases.filter((p) => {
+              const iosPurchase = p as PurchaseIOS;
+              const pendingProductId =
+                iosPurchase.renewalInfoIOS?.pendingUpgradeProductId;
+
+              // Show upgrade card if there's a pending upgrade product that's different
+              // from the current product. In production, you might want to also check
+              // willAutoRenew, but Apple Sandbox behavior can be inconsistent.
+              return (
+                pendingProductId &&
+                pendingProductId !== p.productId &&
+                activeSubscriptions.some((sub) => sub.productId === p.productId)
+              );
+            });
+
+            if (upgradablePurchases.length === 0) {
+              return null;
+            }
+
             return (
-              pendingProductId &&
-              pendingProductId !== p.productId &&
-              activeSubscriptions.some((sub) => sub.productId === p.productId)
-            );
-          }) ? (
-            <View style={styles.upgradeDetectionCard}>
-              <Text style={styles.upgradeDetectionTitle}>
-                🎉 Subscription Upgrade Detected
-              </Text>
-              {availablePurchases
-                .filter((p) => {
-                  const iosPurchase = p as PurchaseIOS;
-                  const pendingProductId =
-                    iosPurchase.renewalInfoIOS?.pendingUpgradeProductId;
-
-                  return (
-                    pendingProductId &&
-                    pendingProductId !== p.productId &&
-                    activeSubscriptions.some(
-                      (sub) => sub.productId === p.productId,
-                    )
-                  );
-                })
-                .map((purchase, idx) => {
+              <View style={styles.upgradeDetectionCard}>
+                <Text style={styles.upgradeDetectionTitle}>
+                  🎉 Subscription Upgrade Detected
+                </Text>
+                {upgradablePurchases.map((purchase, idx) => {
                   const iosPurchase = purchase as PurchaseIOS;
                   const renewalInfo = iosPurchase.renewalInfoIOS;
                   const currentProduct = subscriptions.find(
@@ -475,35 +470,35 @@ function SubscriptionFlow({
                     </View>
                   );
                 })}
-            </View>
-          ) : null}
+              </View>
+            );
+          })()}
 
           {/* Subscription Cancellation Detection - iOS renewalInfo */}
-          {Platform.OS === 'ios' &&
-          availablePurchases.some((p) => {
-            const iosPurchase = p as PurchaseIOS;
+          {(() => {
+            if (Platform.OS !== 'ios') {
+              return null;
+            }
+
+            const cancelledPurchases = availablePurchases.filter((p) => {
+              const iosPurchase = p as PurchaseIOS;
+              return (
+                iosPurchase.renewalInfoIOS?.willAutoRenew === false &&
+                !iosPurchase.renewalInfoIOS?.pendingUpgradeProductId &&
+                activeSubscriptions.some((sub) => sub.productId === p.productId)
+              );
+            });
+
+            if (cancelledPurchases.length === 0) {
+              return null;
+            }
+
             return (
-              iosPurchase.renewalInfoIOS?.willAutoRenew === false &&
-              !iosPurchase.renewalInfoIOS?.pendingUpgradeProductId &&
-              activeSubscriptions.some((sub) => sub.productId === p.productId)
-            );
-          }) ? (
-            <View style={styles.cancellationDetectionCard}>
-              <Text style={styles.cancellationDetectionTitle}>
-                ⚠️ Subscription Cancelled
-              </Text>
-              {availablePurchases
-                .filter((p) => {
-                  const iosPurchase = p as PurchaseIOS;
-                  return (
-                    iosPurchase.renewalInfoIOS?.willAutoRenew === false &&
-                    !iosPurchase.renewalInfoIOS?.pendingUpgradeProductId &&
-                    activeSubscriptions.some(
-                      (sub) => sub.productId === p.productId,
-                    )
-                  );
-                })
-                .map((purchase, idx) => {
+              <View style={styles.cancellationDetectionCard}>
+                <Text style={styles.cancellationDetectionTitle}>
+                  ⚠️ Subscription Cancelled
+                </Text>
+                {cancelledPurchases.map((purchase, idx) => {
                   const iosPurchase = purchase as PurchaseIOS;
                   const renewalInfo = iosPurchase.renewalInfoIOS;
                   const currentProduct = subscriptions.find(
@@ -568,8 +563,9 @@ function SubscriptionFlow({
                     </View>
                   );
                 })}
-            </View>
-          ) : null}
+              </View>
+            );
+          })()}
 
           <View style={styles.subscriptionActionButtons}>
             <TouchableOpacity
