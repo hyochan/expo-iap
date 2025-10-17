@@ -1,8 +1,8 @@
 import type {ConfigContext, ExpoConfig} from '@expo/config';
 
 const LOCAL_OPENIAP_PATHS = {
-  ios: '/Users/hyo/Github/hyodotdev/openiap-apple',
-  android: '/Users/hyo/Github/hyodotdev/openiap-google',
+  ios: '/Users/hyo/Github/hyodotdev/openiap/packages/apple',
+  android: '/Users/hyo/Github/hyodotdev/openiap/packages/google',
 } as const;
 
 export default ({config}: ConfigContext): ExpoConfig => {
@@ -10,7 +10,7 @@ export default ({config}: ConfigContext): ExpoConfig => {
     [
       '../app.plugin.js',
       {
-        enableLocalDev: true,
+        enableLocalDev: false,
         localPath: {
           ios: LOCAL_OPENIAP_PATHS.ios,
           android: LOCAL_OPENIAP_PATHS.android,

@@ -89,6 +89,56 @@ function SubscriptionFlow({
     [subscriptions],
   );
 
+  // Get subscription tier level (higher number = higher tier)
+  const getSubscriptionTier = useCallback((productId: string): number => {
+    if (
+      productId.includes('year') ||
+      productId.includes('yearly') ||
+      productId.includes('annual')
+    ) {
+      return 2; // Yearly is higher tier
+    } else if (
+      productId.includes('month') ||
+      productId.includes('monthly') ||
+      productId.includes('premium')
+    ) {
+      return 1; // Monthly is lower tier
+    }
+    return 0; // Unknown tier
+  }, []);
+
+  // Get current active subscription
+  const getCurrentSubscription = useCallback((): ActiveSubscription | null => {
+    // Use activeSubscriptions from store (includes renewalInfo)
+    // Include ALL active subscriptions, even cancelled ones (active until expiry)
+    const activeSubs = activeSubscriptions.filter((sub) => sub.isActive);
+
+    // Return the subscription with the highest tier (yearly over monthly)
+    return (
+      activeSubs.find((sub) => sub.productId.includes('year')) ||
+      activeSubs[0] ||
+      null
+    );
+  }, [activeSubscriptions]);
+
+  // Check if subscription is cancelled (active but won't auto-renew)
+  const isCancelled = useCallback(
+    (productId: string): boolean => {
+      if (Platform.OS !== 'ios') return false;
+
+      const subscription = activeSubscriptions.find(
+        (sub) => sub.productId === productId,
+      );
+      if (!subscription || !subscription.renewalInfoIOS) return false;
+
+      return (
+        subscription.isActive &&
+        subscription.renewalInfoIOS.willAutoRenew === false
+      );
+    },
+    [activeSubscriptions],
+  );
+
   // Check if a product is pending upgrade (scheduled to activate)
   const isPendingUpgrade = useCallback(
     (productId: string): boolean => {
@@ -103,17 +153,117 @@ function SubscriptionFlow({
     [activeSubscriptions],
   );
 
+  // Determine upgrade possibilities
+  type UpgradeInfo = {
+    canUpgrade: boolean;
+    isDowngrade: boolean;
+    currentTier: string | null;
+    message?: string;
+    isPending?: boolean;
+  };
+
+  const getUpgradeInfo = useCallback(
+    (targetProductId: string): UpgradeInfo => {
+      const currentSubscription = getCurrentSubscription();
+
+      if (!currentSubscription) {
+        // No active subscription = no upgrade
+        return {canUpgrade: false, isDowngrade: false, currentTier: null};
+      }
+
+      // Check if current subscription is cancelled
+      const isCurrentCancelled = isCancelled(currentSubscription.productId);
+
+      // If trying to subscribe to the same product that's cancelled, it's a reactivation
+      if (currentSubscription.productId === targetProductId) {
+        if (isCurrentCancelled) {
+          // Same product, cancelled = show reactivate option
+          return {
+            canUpgrade: false,
+            isDowngrade: false,
+            currentTier: currentSubscription.productId,
+          };
+        } else {
+          // Same product, active = already subscribed
+          return {
+            canUpgrade: false,
+            isDowngrade: false,
+            currentTier: currentSubscription.productId,
+          };
+        }
+      }
+
+      // Check renewalInfo for pending upgrade (only for active, non-cancelled subscriptions)
+      if (
+        !isCurrentCancelled &&
+        currentSubscription.renewalInfoIOS?.pendingUpgradeProductId ===
+          targetProductId
+      ) {
+        return {
+          canUpgrade: false,
+          isDowngrade: false,
+          currentTier: currentSubscription.productId,
+          message: 'This upgrade will activate on your next renewal date',
+          isPending: true,
+        };
+      }
+
+      // Different product = upgrade or downgrade
+      const currentTier = getSubscriptionTier(currentSubscription.productId);
+      const targetTier = getSubscriptionTier(targetProductId);
+
+      // If cancelled, don't allow tier changes (user should reactivate or wait for expiry)
+      if (isCurrentCancelled) {
+        return {
+          canUpgrade: false,
+          isDowngrade: false,
+          currentTier: currentSubscription.productId,
+          message: 'Reactivate current subscription or wait until it expires',
+        };
+      }
+
+      // Active subscription: allow upgrades and downgrades
+      const canUpgrade = targetTier > currentTier;
+      const isDowngrade = targetTier < currentTier;
+
+      return {
+        canUpgrade,
+        isDowngrade,
+        currentTier: currentSubscription.productId,
+        message: canUpgrade
+          ? 'Upgrade available'
+          : isDowngrade
+          ? 'Downgrade option'
+          : undefined,
+      };
+    },
+    [getCurrentSubscription, getSubscriptionTier, isCancelled],
+  );
+
   const handleSubscription = useCallback(
     (itemId: string) => {
-      // Check if already subscribed to this product
-      const isAlreadySubscribed = activeSubscriptions.some(
+      const upgradeInfo = getUpgradeInfo(itemId);
+      const currentSubscription = getCurrentSubscription();
+      const isSubscribed = activeSubscriptions.some(
         (sub) => sub.productId === itemId,
       );
+      const isProductCancelled = isCancelled(itemId);
 
-      // Check if this product is pending upgrade
-      const isPending = isPendingUpgrade(itemId);
+      // If trying to reactivate cancelled subscription
+      if (isSubscribed && isProductCancelled) {
+        Alert.alert(
+          'Reactivate Subscription',
+          'This subscription is cancelled but still active until expiry. Do you want to reactivate it?',
+          [
+            {text: 'Cancel', style: 'cancel'},
+            {text: 'Reactivate', onPress: () => onSubscribe(itemId)},
+          ],
+        );
+        return;
+      }
 
-      if (isAlreadySubscribed) {
+      // If already subscribed (and not cancelled)
+      if (isSubscribed && !isProductCancelled) {
         Alert.alert(
           'Already Subscribed',
           'You already have an active subscription to this product.',
@@ -122,18 +272,82 @@ function SubscriptionFlow({
         return;
       }
 
-      if (isPending) {
+      // If upgrade is pending
+      if (upgradeInfo.isPending) {
         Alert.alert(
           'Upgrade Scheduled',
-          'This subscription upgrade is already scheduled and will activate on your next renewal date.',
+          upgradeInfo.message ||
+            'This subscription upgrade is already scheduled.',
           [{text: 'OK', style: 'default'}],
         );
         return;
       }
 
+      // If current subscription is cancelled, block tier changes
+      if (
+        currentSubscription &&
+        isCancelled(currentSubscription.productId) &&
+        currentSubscription.productId !== itemId
+      ) {
+        Alert.alert(
+          'Cannot Change Subscription',
+          'Your current subscription is cancelled. Please reactivate it or wait until it expires before changing tiers.',
+          [{text: 'OK', style: 'default'}],
+        );
+        return;
+      }
+
+      // If upgrade available
+      if (upgradeInfo.canUpgrade) {
+        const currentProduct = subscriptions.find(
+          (s) => s.id === currentSubscription?.productId,
+        );
+        const targetProduct = subscriptions.find((s) => s.id === itemId);
+
+        Alert.alert(
+          'Upgrade Subscription',
+          `Upgrade from ${currentProduct?.title || 'current plan'} to ${
+            targetProduct?.title || 'new plan'
+          }?\n\n✅ Takes effect immediately\n💰 Pro-rated refund applied`,
+          [
+            {text: 'Cancel', style: 'cancel'},
+            {text: 'Upgrade Now', onPress: () => onSubscribe(itemId)},
+          ],
+        );
+        return;
+      }
+
+      // If downgrade available
+      if (upgradeInfo.isDowngrade) {
+        const currentProduct = subscriptions.find(
+          (s) => s.id === currentSubscription?.productId,
+        );
+        const targetProduct = subscriptions.find((s) => s.id === itemId);
+
+        Alert.alert(
+          'Downgrade Subscription',
+          `Downgrade from ${currentProduct?.title || 'current plan'} to ${
+            targetProduct?.title || 'new plan'
+          }?\n\n⏰ Takes effect at next renewal date\n📅 Current subscription continues until then`,
+          [
+            {text: 'Cancel', style: 'cancel'},
+            {text: 'Downgrade', onPress: () => onSubscribe(itemId)},
+          ],
+        );
+        return;
+      }
+
+      // Normal subscription (no current subscription)
       onSubscribe(itemId);
     },
-    [activeSubscriptions, isPendingUpgrade, onSubscribe],
+    [
+      activeSubscriptions,
+      getCurrentSubscription,
+      getUpgradeInfo,
+      isCancelled,
+      onSubscribe,
+      subscriptions,
+    ],
   );
 
   const retryLoadSubscriptions = useCallback(() => {
@@ -276,10 +490,25 @@ function SubscriptionFlow({
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Subscription Flow</Text>
-        <Text style={styles.subtitle}>
-          TypeScript-first approach for subscriptions
-        </Text>
+        <View style={styles.headerTop}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.title}>Subscription Flow</Text>
+            <Text style={styles.subtitle}>
+              TypeScript-first approach for subscriptions
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.headerRefreshButton}
+            onPress={handleRefreshStatus}
+            disabled={isCheckingStatus}
+          >
+            {isCheckingStatus ? (
+              <ActivityIndicator size="small" color="#007AFF" />
+            ) : (
+              <Text style={styles.headerRefreshIcon}>🔄</Text>
+            )}
+          </TouchableOpacity>
+        </View>
         <View style={styles.statusContainer}>
           <Text style={styles.statusText}>
             Store: {connected ? '✅ Connected' : '❌ Disconnected'}
@@ -317,6 +546,24 @@ function SubscriptionFlow({
                     <Text style={styles.statusLabel}>Expires:</Text>
                     <Text style={styles.statusValue}>
                       {new Date(sub.expirationDateIOS).toLocaleDateString()}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {Platform.OS === 'ios' && sub.renewalInfoIOS ? (
+                  <View style={styles.statusRow}>
+                    <Text style={styles.statusLabel}>Auto-Renew:</Text>
+                    <Text
+                      style={[
+                        styles.statusValue,
+                        sub.renewalInfoIOS.willAutoRenew
+                          ? styles.activeStatus
+                          : styles.cancelledStatus,
+                      ]}
+                    >
+                      {sub.renewalInfoIOS.willAutoRenew
+                        ? '✅ Enabled'
+                        : '⚠️ Cancelled'}
                     </Text>
                   </View>
                 ) : null}
@@ -680,6 +927,38 @@ function SubscriptionFlow({
               (sub) => sub.productId === subscription.id,
             );
             const isPending = isPendingUpgrade(subscription.id);
+            const upgradeInfo = getUpgradeInfo(subscription.id);
+            const isProductCancelled = isCancelled(subscription.id);
+
+            // Determine button state and text
+            let buttonText = 'Subscribe';
+            let buttonStyles = [styles.subscribeButton];
+            let buttonDisabled = isProcessing || !connected;
+
+            if (isProcessing) {
+              buttonText = 'Processing...';
+              buttonDisabled = true;
+            } else if (isPending) {
+              buttonText = '⏳ Scheduled';
+              buttonStyles = [styles.pendingButton];
+              buttonDisabled = true;
+            } else if (isSubscribed && !isProductCancelled) {
+              buttonText = '✅ Subscribed';
+              buttonStyles = [styles.subscribedButton];
+              buttonDisabled = true;
+            } else if (isSubscribed && isProductCancelled) {
+              buttonText = '🔄 Reactivate';
+              buttonStyles = [styles.reactivateButton];
+              buttonDisabled = false;
+            } else if (upgradeInfo.canUpgrade) {
+              buttonText = '⬆️ Upgrade';
+              buttonStyles = [styles.upgradeButton];
+              buttonDisabled = false;
+            } else if (upgradeInfo.isDowngrade) {
+              buttonText = '⬇️ Downgrade';
+              buttonStyles = [styles.downgradeButton];
+              buttonDisabled = false;
+            }
 
             return (
               <View key={subscription.id} style={styles.subscriptionCard}>
@@ -705,6 +984,21 @@ function SubscriptionFlow({
                       </Text>
                     </View>
                   ) : null}
+                  {/* Show upgrade/downgrade/cancelled info */}
+                  {upgradeInfo.message ? (
+                    <View style={styles.upgradeBadge}>
+                      <Text style={styles.upgradeText}>
+                        {upgradeInfo.message}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {isProductCancelled ? (
+                    <View style={styles.cancelledBadge}>
+                      <Text style={styles.cancelledText}>
+                        ⚠️ Cancelled (active until expiry)
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
                 <View style={styles.subscriptionActions}>
                   <TouchableOpacity
@@ -715,31 +1009,20 @@ function SubscriptionFlow({
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
-                      styles.subscribeButton,
-                      (isProcessing || isSubscribed || isPending) &&
-                        styles.disabledButton,
-                      isSubscribed && styles.subscribedButton,
-                      isPending && styles.pendingButton,
+                      ...buttonStyles,
+                      buttonDisabled && styles.disabledButton,
                     ]}
                     onPress={() => handleSubscription(subscription.id)}
-                    disabled={
-                      isProcessing || !connected || isSubscribed || isPending
-                    }
+                    disabled={buttonDisabled}
                   >
                     <Text
                       style={[
                         styles.subscribeButtonText,
-                        isSubscribed && styles.subscribedButtonText,
-                        isPending && styles.pendingButtonText,
+                        (isSubscribed || isPending) &&
+                          styles.subscribedButtonText,
                       ]}
                     >
-                      {isProcessing
-                        ? 'Processing...'
-                        : isSubscribed
-                        ? '✅ Subscribed'
-                        : isPending
-                        ? '⏳ Scheduled'
-                        : 'Subscribe'}
+                      {buttonText}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1238,6 +1521,7 @@ function SubscriptionFlowContainer() {
   );
 }
 
+// Note: This is the default export required by Expo Router
 export default SubscriptionFlowContainer;
 
 const styles = StyleSheet.create({
@@ -1250,6 +1534,34 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     backgroundColor: '#f8f9fa',
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 15,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerRefreshButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  headerRefreshIcon: {
+    fontSize: 20,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -1258,7 +1570,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 15,
+    marginBottom: 0,
   },
   statusContainer: {
     flexDirection: 'row',
@@ -1575,12 +1887,18 @@ const styles = StyleSheet.create({
   },
   subscribedButton: {
     backgroundColor: '#6c757d',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   subscribedButtonText: {
     color: '#fff',
   },
   pendingButton: {
     backgroundColor: '#ff9800',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
     opacity: 0.8,
   },
   pendingButtonText: {
@@ -1792,5 +2110,51 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 8,
     lineHeight: 18,
+  },
+  upgradeButton: {
+    backgroundColor: '#ff9800',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  downgradeButton: {
+    backgroundColor: '#9e9e9e',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  reactivateButton: {
+    backgroundColor: '#2196f3',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  upgradeBadge: {
+    backgroundColor: '#fff3e0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  upgradeText: {
+    fontSize: 12,
+    color: '#e65100',
+    fontWeight: '600',
+  },
+  cancelledBadge: {
+    backgroundColor: '#fff3cd',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#ffc107',
+  },
+  cancelledText: {
+    fontSize: 12,
+    color: '#856404',
+    fontWeight: '600',
   },
 });

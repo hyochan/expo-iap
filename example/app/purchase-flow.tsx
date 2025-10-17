@@ -765,6 +765,7 @@ function PurchaseFlowContainer() {
   );
 }
 
+// Note: This is the default export required by Expo Router
 export default PurchaseFlowContainer;
 
 const styles = StyleSheet.create({
