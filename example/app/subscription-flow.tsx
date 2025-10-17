@@ -29,6 +29,16 @@ import type {PurchaseError} from '../../src/utils/errorMapping';
 import PurchaseDetails from '../src/components/PurchaseDetails';
 import PurchaseSummaryRow from '../src/components/PurchaseSummaryRow';
 
+// Subscription tier mapping - defined outside component to avoid recreation
+const TIER_MAP: Record<string, number> = {
+  'dev.hyo.martie.premium': 1, // Monthly tier
+  'dev.hyo.martie.premium_year': 2, // Yearly tier (higher)
+};
+
+const getSubscriptionTier = (productId: string): number => {
+  return TIER_MAP[productId] ?? 0;
+};
+
 /**
  * Subscription Flow Example - Subscription Products
  *
@@ -89,36 +99,28 @@ function SubscriptionFlow({
     [subscriptions],
   );
 
-  // Get subscription tier level (higher number = higher tier)
-  const getSubscriptionTier = useCallback((productId: string): number => {
-    if (
-      productId.includes('year') ||
-      productId.includes('yearly') ||
-      productId.includes('annual')
-    ) {
-      return 2; // Yearly is higher tier
-    } else if (
-      productId.includes('month') ||
-      productId.includes('monthly') ||
-      productId.includes('premium')
-    ) {
-      return 1; // Monthly is lower tier
-    }
-    return 0; // Unknown tier
-  }, []);
+  // Note: getSubscriptionTier is now defined outside the component for better performance
 
   // Get current active subscription
   const getCurrentSubscription = useCallback((): ActiveSubscription | null => {
-    // Use activeSubscriptions from store (includes renewalInfo)
-    // Include ALL active subscriptions, even cancelled ones (active until expiry)
     const activeSubs = activeSubscriptions.filter((sub) => sub.isActive);
+    if (activeSubs.length === 0) return null;
 
-    // Return the subscription with the highest tier (yearly over monthly)
-    return (
-      activeSubs.find((sub) => sub.productId.includes('year')) ||
-      activeSubs[0] ||
-      null
-    );
+    // Return the subscription with the highest tier
+    // If tiers are equal, prefer the one with later expiration date
+    return activeSubs.reduce((best, cur) => {
+      const bestTier = getSubscriptionTier(best.productId);
+      const curTier = getSubscriptionTier(cur.productId);
+
+      if (curTier > bestTier) return cur;
+      if (curTier === bestTier) {
+        const bestExp = best.expirationDateIOS ?? 0;
+        const curExp = cur.expirationDateIOS ?? 0;
+        return curExp > bestExp ? cur : best;
+      }
+      return best;
+    }, activeSubs[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSubscriptions]);
 
   // Check if subscription is cancelled (active but won't auto-renew)
@@ -174,23 +176,13 @@ function SubscriptionFlow({
       // Check if current subscription is cancelled
       const isCurrentCancelled = isCancelled(currentSubscription.productId);
 
-      // If trying to subscribe to the same product that's cancelled, it's a reactivation
+      // If trying to subscribe to the same product (whether cancelled or active)
       if (currentSubscription.productId === targetProductId) {
-        if (isCurrentCancelled) {
-          // Same product, cancelled = show reactivate option
-          return {
-            canUpgrade: false,
-            isDowngrade: false,
-            currentTier: currentSubscription.productId,
-          };
-        } else {
-          // Same product, active = already subscribed
-          return {
-            canUpgrade: false,
-            isDowngrade: false,
-            currentTier: currentSubscription.productId,
-          };
-        }
+        return {
+          canUpgrade: false,
+          isDowngrade: false,
+          currentTier: currentSubscription.productId,
+        };
       }
 
       // Check renewalInfo for pending upgrade (only for active, non-cancelled subscriptions)
@@ -237,7 +229,7 @@ function SubscriptionFlow({
           : undefined,
       };
     },
-    [getCurrentSubscription, getSubscriptionTier, isCancelled],
+    [getCurrentSubscription, isCancelled],
   );
 
   const handleSubscription = useCallback(
@@ -278,20 +270,6 @@ function SubscriptionFlow({
           'Upgrade Scheduled',
           upgradeInfo.message ||
             'This subscription upgrade is already scheduled.',
-          [{text: 'OK', style: 'default'}],
-        );
-        return;
-      }
-
-      // If current subscription is cancelled, block tier changes
-      if (
-        currentSubscription &&
-        isCancelled(currentSubscription.productId) &&
-        currentSubscription.productId !== itemId
-      ) {
-        Alert.alert(
-          'Cannot Change Subscription',
-          'Your current subscription is cancelled. Please reactivate it or wait until it expires before changing tiers.',
           [{text: 'OK', style: 'default'}],
         );
         return;
