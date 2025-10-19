@@ -3,12 +3,13 @@ import {
   withDangerousMod,
   withSettingsGradle,
   withAppBuildGradle,
-  withAndroidManifest,
 } from 'expo/config-plugins';
 import * as fs from 'fs';
 import * as path from 'path';
-import type {IOSAlternativeBillingConfig} from './withIAP';
-import {withIosAlternativeBilling} from './withIAP';
+import {
+  withIosAlternativeBilling,
+  type IOSAlternativeBillingConfig,
+} from './withIosAlternativeBilling';
 
 /**
  * Plugin to add local OpenIAP pod dependency for development
@@ -39,41 +40,6 @@ const withLocalOpenIAP: ConfigPlugin<
   // Import and apply iOS alternative billing configuration if provided
   if (props?.iosAlternativeBilling) {
     config = withIosAlternativeBilling(config, props.iosAlternativeBilling);
-  }
-
-  // Apply Android manifest modifications for Horizon if needed
-  if (props?.horizonAppId) {
-    config = withAndroidManifest(config, (config: any) => {
-      const manifest = config.modResults;
-      if (!manifest.manifest.application) {
-        manifest.manifest.application = [];
-      }
-
-      const application = manifest.manifest.application[0];
-      if (!application['meta-data']) {
-        application['meta-data'] = [];
-      }
-
-      const metaData = application['meta-data'];
-      const horizonAppIdMeta = {
-        $: {
-          'android:name': 'com.oculus.vr.APP_ID',
-          'android:value': props.horizonAppId,
-        },
-      };
-
-      const existingIndex = metaData.findIndex(
-        (m: any) => m.$['android:name'] === 'com.oculus.vr.APP_ID',
-      );
-
-      if (existingIndex !== -1) {
-        metaData[existingIndex] = horizonAppIdMeta;
-      } else {
-        metaData.push(horizonAppIdMeta);
-      }
-
-      return config;
-    });
   }
   // Helper to resolve Android module path
   const resolveAndroidModulePath = (p?: string): string | null => {
@@ -267,6 +233,13 @@ const withLocalOpenIAP: ConfigPlugin<
     }
 
     // Add missingDimensionStrategy (required for flavored module)
+    // Remove any existing platform strategies first to avoid duplicates
+    const strategyPattern = /^\s*missingDimensionStrategy\s*\(?\s*["']platform["']\s*,\s*["'](play|horizon)["']\s*\)?\s*$/gm;
+    if (strategyPattern.test(contents)) {
+      contents = contents.replace(strategyPattern, '');
+      logOnce('🧹 Removed existing missingDimensionStrategy for platform');
+    }
+
     if (!contents.includes(strategyLine)) {
       const lines = contents.split('\n');
       const idx = lines.findIndex((line) => line.match(/defaultConfig\s*\{/));
