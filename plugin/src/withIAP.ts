@@ -55,8 +55,12 @@ const addLineToGradle = (
 const modifyAppBuildGradle = (
   gradle: string,
   language: 'groovy' | 'kotlin',
+  isHorizonEnabled?: boolean,
 ): string => {
   let modified = gradle;
+
+  // Determine which flavor to use based on isHorizonEnabled
+  const flavor = isHorizonEnabled ? 'horizon' : 'play';
 
   // Ensure OpenIAP dependency exists at desired version in app-level build.gradle(.kts)
   const impl = (ga: string, v: string) =>
@@ -91,26 +95,57 @@ const modifyAppBuildGradle = (
     );
   }
 
+  // Add flavor dimension and default config for OpenIAP if horizon is enabled
+  if (isHorizonEnabled) {
+    // Add missingDimensionStrategy to select horizon flavor
+    const defaultConfigRegex = /defaultConfig\s*{/;
+    if (defaultConfigRegex.test(modified)) {
+      const strategyLine =
+        language === 'kotlin'
+          ? `        missingDimensionStrategy("platform", "${flavor}")`
+          : `        missingDimensionStrategy "platform", "${flavor}"`;
+
+      // Check if missingDimensionStrategy already exists
+      if (!/missingDimensionStrategy.*platform/.test(modified)) {
+        modified = addLineToGradle(
+          modified,
+          defaultConfigRegex,
+          strategyLine,
+          1,
+        );
+        logOnce(
+          `🛠️ expo-iap: Added missingDimensionStrategy for ${flavor} flavor`,
+        );
+      }
+    }
+  }
+
   return modified;
 };
 
-const withIapAndroid: ConfigPlugin<{addDeps?: boolean} | void> = (
-  config,
-  props,
-) => {
+const withIapAndroid: ConfigPlugin<
+  {
+    addDeps?: boolean;
+    horizonAppId?: string;
+    isHorizonEnabled?: boolean;
+  } | void
+> = (config, props) => {
   const addDeps = props?.addDeps ?? true;
 
+  // Add dependencies if needed (only when not using local module)
   if (addDeps) {
     config = withAppBuildGradle(config, (config) => {
-      // language provided by config-plugins: 'groovy' | 'kotlin'
       const language = (config.modResults as any).language || 'groovy';
       config.modResults.contents = modifyAppBuildGradle(
         config.modResults.contents,
         language,
+        props?.isHorizonEnabled,
       );
       return config;
     });
   }
+
+  // Note: missingDimensionStrategy for local dev is handled in withLocalOpenIAP
 
   config = withAndroidManifest(config, (config) => {
     const manifest = config.modResults;
@@ -131,6 +166,42 @@ const withIapAndroid: ConfigPlugin<{addDeps?: boolean} | void> = (
       logOnce(
         'ℹ️ com.android.vending.BILLING already exists in AndroidManifest.xml',
       );
+    }
+
+    // Add Meta Horizon App ID if provided
+    if (props?.horizonAppId) {
+      if (!manifest.manifest.application) {
+        manifest.manifest.application = [];
+      }
+
+      const application = manifest.manifest.application[0];
+      if (!application['meta-data']) {
+        application['meta-data'] = [];
+      }
+
+      const metaData = application['meta-data'];
+      const horizonAppIdMeta = {
+        $: {
+          'android:name': 'com.oculus.vr.APP_ID',
+          'android:value': props.horizonAppId,
+        },
+      };
+
+      const existingIndex = metaData.findIndex(
+        (m) => m.$['android:name'] === 'com.oculus.vr.APP_ID',
+      );
+
+      if (existingIndex !== -1) {
+        metaData[existingIndex] = horizonAppIdMeta;
+        logOnce(
+          `✅ Updated com.oculus.vr.APP_ID to ${props.horizonAppId} in AndroidManifest.xml`,
+        );
+      } else {
+        metaData.push(horizonAppIdMeta);
+        logOnce(
+          `✅ Added com.oculus.vr.APP_ID: ${props.horizonAppId} to AndroidManifest.xml`,
+        );
+      }
     }
 
     return config;
@@ -310,12 +381,47 @@ export interface ExpoIapPluginOptions {
   /** Enable local development mode */
   enableLocalDev?: boolean;
   /**
-   * iOS Alternative Billing configuration.
-   * Configure external purchase countries, links, and entitlements.
-   * Requires approval from Apple.
+   * Optional modules configuration
+   */
+  modules?: {
+    /**
+     * Onside module for iOS alternative billing (Korea market)
+     * @platform ios
+     */
+    onside?: boolean;
+    /**
+     * Horizon module for Meta Quest/VR devices
+     * @platform android
+     */
+    horizon?: boolean;
+  };
+  /**
+   * iOS-specific configuration
    * @platform ios
    */
+  ios?: {
+    /**
+     * iOS Alternative Billing configuration.
+     * Configure external purchase countries, links, and entitlements.
+     * Requires approval from Apple.
+     */
+    alternativeBilling?: IOSAlternativeBillingConfig;
+  };
+  /**
+   * Android-specific configuration
+   * @platform android
+   */
+  android?: {
+    /**
+     * Meta Horizon App ID for Quest/VR devices.
+     * Required when modules.horizon is true.
+     */
+    horizonAppId?: string;
+  };
+  /** @deprecated Use ios.alternativeBilling instead */
   iosAlternativeBilling?: IOSAlternativeBillingConfig;
+  /** @deprecated Use android.horizonAppId instead */
+  horizonAppId?: string;
 }
 
 const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
@@ -323,10 +429,26 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
   options,
 ) => {
   try {
+    // Read Horizon configuration from modules
+    const isHorizonEnabled = options?.modules?.horizon ?? false;
+
+    const horizonAppId =
+      options?.android?.horizonAppId ?? options?.horizonAppId;
+    const iosAlternativeBilling =
+      options?.ios?.alternativeBilling ?? options?.iosAlternativeBilling;
+
+    logOnce(
+      `🔍 [expo-iap] Config values: horizonAppId=${horizonAppId}, isHorizonEnabled=${isHorizonEnabled}`,
+    );
+
     // Respect explicit flag; fall back to presence of localPath only when flag is unset
     const isLocalDev = options?.enableLocalDev ?? !!options?.localPath;
     // Apply Android modifications (skip adding deps when linking local module)
-    let result = withIapAndroid(config, {addDeps: !isLocalDev});
+    let result = withIapAndroid(config, {
+      addDeps: !isLocalDev,
+      horizonAppId,
+      isHorizonEnabled,
+    });
 
     // iOS: choose one path to avoid overlap
     if (isLocalDev) {
@@ -354,12 +476,14 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
         logOnce(`🔧 [expo-iap] Enabling local OpenIAP: ${preview}`);
         result = withLocalOpenIAP(result, {
           localPath: resolved,
-          iosAlternativeBilling: options?.iosAlternativeBilling,
+          iosAlternativeBilling,
+          horizonAppId,
+          isHorizonEnabled, // Resolved from modules.horizon (line 467)
         });
       }
     } else {
       // Ensure iOS Podfile is set up to resolve public CocoaPods specs
-      result = withIapIOS(result, options?.iosAlternativeBilling);
+      result = withIapIOS(result, iosAlternativeBilling);
       logOnce('📦 [expo-iap] Using OpenIAP from CocoaPods');
     }
 

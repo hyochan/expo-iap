@@ -60,6 +60,11 @@ android {
   defaultConfig {
     versionCode 1
     versionName "0.1.0"
+    // When using local openiap-google with flavors, select the appropriate flavor
+    // Read horizonEnabled from gradle.properties, default to play
+    def horizonEnabled = project.findProperty('horizonEnabled')?.toBoolean() ?: false
+    def flavor = horizonEnabled ? 'horizon' : 'play'
+    missingDimensionStrategy "platform", flavor
   }
   lintOptions {
     abortOnError false
