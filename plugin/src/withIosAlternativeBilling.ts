@@ -1,4 +1,8 @@
-import {ConfigPlugin, withEntitlementsPlist, withInfoPlist} from 'expo/config-plugins';
+import {
+  ConfigPlugin,
+  withEntitlementsPlist,
+  withInfoPlist,
+} from 'expo/config-plugins';
 
 // Log a message only once per Node process
 const logOnce = (() => {
@@ -73,14 +77,18 @@ export const withIosAlternativeBilling: ConfigPlugin<
     // 1. SKExternalPurchase (Required)
     plist.SKExternalPurchase = options.countries;
     logOnce(
-      `✅ Added SKExternalPurchase with countries: ${options.countries?.join(', ')}`,
+      `✅ Added SKExternalPurchase with countries: ${options.countries?.join(
+        ', ',
+      )}`,
     );
 
     // 2. SKExternalPurchaseLink (Optional - iOS 15.4+)
     if (options.links && Object.keys(options.links).length > 0) {
       plist.SKExternalPurchaseLink = options.links;
       logOnce(
-        `✅ Added SKExternalPurchaseLink for ${Object.keys(options.links).length} countries`,
+        `✅ Added SKExternalPurchaseLink for ${
+          Object.keys(options.links).length
+        } countries`,
       );
     }
 
@@ -88,7 +96,9 @@ export const withIosAlternativeBilling: ConfigPlugin<
     if (options.multiLinks && Object.keys(options.multiLinks).length > 0) {
       plist.SKExternalPurchaseMultiLink = options.multiLinks;
       logOnce(
-        `✅ Added SKExternalPurchaseMultiLink for ${Object.keys(options.multiLinks).length} countries`,
+        `✅ Added SKExternalPurchaseMultiLink for ${
+          Object.keys(options.multiLinks).length
+        } countries`,
       );
     }
 
@@ -96,7 +106,9 @@ export const withIosAlternativeBilling: ConfigPlugin<
     if (options.customLinkRegions && options.customLinkRegions.length > 0) {
       plist.SKExternalPurchaseCustomLinkRegions = options.customLinkRegions;
       logOnce(
-        `✅ Added SKExternalPurchaseCustomLinkRegions: ${options.customLinkRegions.join(', ')}`,
+        `✅ Added SKExternalPurchaseCustomLinkRegions: ${options.customLinkRegions.join(
+          ', ',
+        )}`,
       );
     }
 
@@ -108,7 +120,9 @@ export const withIosAlternativeBilling: ConfigPlugin<
       plist.SKExternalPurchaseLinkStreamingRegions =
         options.streamingLinkRegions;
       logOnce(
-        `✅ Added SKExternalPurchaseLinkStreamingRegions: ${options.streamingLinkRegions.join(', ')}`,
+        `✅ Added SKExternalPurchaseLinkStreamingRegions: ${options.streamingLinkRegions.join(
+          ', ',
+        )}`,
       );
     }
 

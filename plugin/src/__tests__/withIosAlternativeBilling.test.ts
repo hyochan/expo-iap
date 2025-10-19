@@ -1,5 +1,5 @@
-import {withIosAlternativeBilling} from '../withIAP';
-import type {IOSAlternativeBillingConfig} from '../withIAP';
+import {withIosAlternativeBilling} from '../withIosAlternativeBilling';
+import type {IOSAlternativeBillingConfig} from '../withIosAlternativeBilling';
 import type {ExpoConfig} from '@expo/config';
 
 describe('withIosAlternativeBilling', () => {

@@ -108,7 +108,8 @@ const modifyAppBuildGradle = (
           : `        missingDimensionStrategy "platform", "${flavor}"`;
 
       // Remove any existing platform strategies first to avoid duplicates
-      const strategyPattern = /^\s*missingDimensionStrategy\s*\(?\s*["']platform["']\s*,\s*["'](play|horizon)["']\s*\)?\s*$/gm;
+      const strategyPattern =
+        /^\s*missingDimensionStrategy\s*\(?\s*["']platform["']\s*,\s*["'](play|horizon)["']\s*\)?\s*$/gm;
       if (strategyPattern.test(modified)) {
         modified = modified.replace(strategyPattern, '');
         logOnce('🧹 Removed existing missingDimensionStrategy for platform');
@@ -179,8 +180,13 @@ const withIapAndroid: ConfigPlugin<
 
     // Add Meta Horizon App ID if provided
     if (props?.horizonAppId) {
-      if (!manifest.manifest.application || manifest.manifest.application.length === 0) {
-        manifest.manifest.application = [{$: {'android:name': '.MainApplication'}}];
+      if (
+        !manifest.manifest.application ||
+        manifest.manifest.application.length === 0
+      ) {
+        manifest.manifest.application = [
+          {$: {'android:name': '.MainApplication'}},
+        ];
       }
 
       const application = manifest.manifest.application![0];

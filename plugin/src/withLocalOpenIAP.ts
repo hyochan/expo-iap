@@ -234,7 +234,8 @@ const withLocalOpenIAP: ConfigPlugin<
 
     // Add missingDimensionStrategy (required for flavored module)
     // Remove any existing platform strategies first to avoid duplicates
-    const strategyPattern = /^\s*missingDimensionStrategy\s*\(?\s*["']platform["']\s*,\s*["'](play|horizon)["']\s*\)?\s*$/gm;
+    const strategyPattern =
+      /^\s*missingDimensionStrategy\s*\(?\s*["']platform["']\s*,\s*["'](play|horizon)["']\s*\)?\s*$/gm;
     if (strategyPattern.test(contents)) {
       contents = contents.replace(strategyPattern, '');
       logOnce('🧹 Removed existing missingDimensionStrategy for platform');

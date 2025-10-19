@@ -3,7 +3,7 @@
  * Tests configuration structure and constraints
  */
 
-import type {IOSAlternativeBillingConfig} from '../withIAP';
+import type {IOSAlternativeBillingConfig} from '../withIosAlternativeBilling';
 
 describe('iOS Alternative Billing Configuration Validation', () => {
   describe('Country Codes', () => {
