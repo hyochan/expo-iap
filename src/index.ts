@@ -1,5 +1,5 @@
 // External dependencies
-import {NativeModulesProxy} from 'expo-modules-core';
+import {requireNativeModule} from 'expo-modules-core';
 import {Platform} from 'react-native';
 
 // Internal modules
@@ -80,7 +80,7 @@ type ExpoIapEmitter = {
 
 // Ensure the emitter has proper EventEmitter interface
 export const emitter = (ExpoIapModule ||
-  NativeModulesProxy.ExpoIap) as ExpoIapEmitter;
+  requireNativeModule('ExpoIap')) as ExpoIapEmitter;
 
 /**
  * TODO(v3.1.0): Remove legacy 'inapp' alias once downstream apps migrate to 'in-app'.
