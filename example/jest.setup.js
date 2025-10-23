@@ -31,7 +31,7 @@ jest.mock('react-native', () => {
 
 // Mock expo-modules-core
 jest.mock('expo-modules-core', () => ({
-  requireNativeModule: {},
+  requireNativeModule: jest.fn(() => ({})),
   EventEmitter: jest.fn(),
 }));
 
