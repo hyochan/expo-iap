@@ -65,5 +65,8 @@
   },
   "expo": {
     "plugin": "./app.plugin.js"
+  },
+  "dependencies": {
+    "expo-onside": "^1.0.2"
   }
 }
