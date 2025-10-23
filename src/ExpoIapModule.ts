@@ -1,4 +1,5 @@
 import {requireNativeModule, UnavailabilityError} from 'expo-modules-core';
+import {installedFromOnside} from 'expo-onside';
 
 type NativeIapModuleName = 'ExpoIapOnside' | 'ExpoIap';
 
@@ -12,6 +13,14 @@ export const NATIVE_ERROR_CODES = ExpoIapModule.ERROR_CODES || {};
 
 export default ExpoIapModule;
 
+/**
+ * Selects and returns the appropriate native IAP module implementation for the current runtime.
+ *
+ * Tries to use 'ExpoIapOnside' when that native module is present and the Onside integration is detected; otherwise falls back to 'ExpoIap'. The returned object contains the resolved native module instance and its name.
+ *
+ * @returns An object with `module` set to the resolved native module instance and `name` set to the resolved native module name (`'ExpoIapOnside'` or `'ExpoIap'`).
+ * @throws UnavailabilityError if neither native module is available.
+ */
 function resolveNativeModule(): {
   module: any;
   name: NativeIapModuleName;
@@ -23,7 +32,7 @@ function resolveNativeModule(): {
       const module = requireNativeModule(name);
       if (
         name === 'ExpoIapOnside' &&
-        module?.IS_ONSIDE_KIT_INSTALLED_IOS === false
+        (module?.IS_ONSIDE_KIT_INSTALLED_IOS === false || !installedFromOnside)
       ) {
         continue;
       }
