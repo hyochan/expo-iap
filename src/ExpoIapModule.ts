@@ -1,4 +1,5 @@
 import {requireNativeModule, UnavailabilityError} from 'expo-modules-core';
+import {installedFromOnside} from './onside';
 
 type NativeIapModuleName = 'ExpoIapOnside' | 'ExpoIap';
 
@@ -23,7 +24,7 @@ function resolveNativeModule(): {
       const module = requireNativeModule(name);
       if (
         name === 'ExpoIapOnside' &&
-        module?.IS_ONSIDE_KIT_INSTALLED_IOS === false
+        (module?.IS_ONSIDE_KIT_INSTALLED_IOS === false || !installedFromOnside)
       ) {
         continue;
       }

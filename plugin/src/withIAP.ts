@@ -6,6 +6,7 @@ import {
   withAppBuildGradle,
   withGradleProperties,
   withPodfile,
+  withDangerousMod,
 } from 'expo/config-plugins';
 import type {ExpoConfig} from '@expo/config-types';
 import * as fs from 'fs';
@@ -263,7 +264,7 @@ const withIapAndroid: ConfigPlugin<
 
 const ensureOnsidePod = (content: string): string => {
   const podLine =
-    "  pod 'OnsideKit', :git => 'https://github.com/onside-io/OnsideKit-iOS.git'";
+    "  pod 'OnsideKit', :podspec => 'https://raw.githubusercontent.com/onside-io/OnsideKit-iOS/0.1.20/OnsideKit.podspec'";
   const podRegex = /^\s*pod\s+'OnsideKit'\b.*$/m;
 
   if (podRegex.test(content)) {
@@ -389,7 +390,154 @@ const syncAutolinking = (state: AutolinkState) => {
 type WithIapIosOptions = {
   enableOnside?: boolean;
   iosAlternativeBilling?: IOSAlternativeBillingConfig;
+  /**
+   * Custom URL scheme used by OnsideKit to return to the app
+   * Example: "com.yourapp.auth" or "onside-yourapp-login"
+   */
+  callbackScheme?: string;
 };
+
+const ONSIDE_CALLBACK_SCHEME_KEY = 'OnsideCallbackScheme';
+
+//TODO: some init stuff for https://docs.onside.io/sdk/installation-guide
+
+// Derive scheme from bundle identifier with ".auth" suffix
+// function deriveOnsideScheme(config: any): string {
+//   const bundleId =
+//     config.ios?.bundleIdentifier ??
+//     config.bundleIdentifier ??
+//     config?.extra?.eas?.projectId /* fallback unlikely to be right */ ??
+//     'com.example.app';
+//   return `${bundleId}.auth`;
+// }
+
+// const withOnsideCallbackSchemeInfoPlist: ConfigPlugin<{scheme: string}> = (
+//   config,
+//   {scheme},
+// ) => {
+//   return withInfoPlist(config, (cfg) => {
+//     const plist = cfg.modResults;
+//
+//     // Ensure CFBundleURLTypes contains our scheme
+//     const arr = (plist.CFBundleURLTypes ??= []);
+//     const hasScheme =
+//       Array.isArray(arr) &&
+//       arr.some(
+//         (it: any) =>
+//           Array.isArray(it?.CFBundleURLSchemes) &&
+//           it.CFBundleURLSchemes.includes(scheme),
+//       );
+//     if (!hasScheme) {
+//       arr.push({
+//         CFBundleURLSchemes: [scheme],
+//         CFBundleURLName: 'onside-callback',
+//       } as any);
+//     }
+//
+//     // Ensure LSApplicationQueriesSchemes contains 'onside'
+//     const queries = (plist.LSApplicationQueriesSchemes ??= []);
+//     if (!queries.includes('onside')) {
+//       queries.push('onside');
+//     }
+//
+//     (plist as any)[ONSIDE_CALLBACK_SCHEME_KEY] = scheme;
+//     return cfg;
+//   });
+// };
+
+// const withOnsideAppDelegate: ConfigPlugin<{scheme: string}> = (
+//   config,
+//   {scheme},
+// ) => {
+//   return withAppDelegate(config, (cfg) => {
+//     const mod = cfg.modResults;
+//     // Ensure `import OnsideKit` is guarded to avoid compile errors when the pod/package isn't present yet
+//     const hasUnguardedImport = /^\s*import\s+OnsideKit/m.test(mod.contents);
+//     const hasGuardedImport =
+//       /#if\s+canImport\(OnsideKit\)[\s\S]*import\s+OnsideKit[\s\S]*#endif/m.test(
+//         mod.contents,
+//       );
+//     if (hasUnguardedImport && !hasGuardedImport) {
+//       // Wrap existing unguarded import with canImport guard
+//       mod.contents = mod.contents.replace(
+//         /^(\s*)import\s+OnsideKit\s*$/m,
+//         `$1#if canImport(OnsideKit)\n$1import OnsideKit\n$1#endif`,
+//       );
+//     } else if (!hasUnguardedImport && !hasGuardedImport) {
+//       // Insert a guarded import at the top of the file
+//       mod.contents = `#if canImport(OnsideKit)\nimport OnsideKit\n#endif\n${mod.contents}`;
+//     }
+//
+//     // Inject Onside.callbackScheme in didFinishLaunchingWithOptions
+//     // 1) Try to find an existing method (works with multiline signatures)
+//     const didFinishRegex =
+//       /func\s+application\s*\([\s\S]*?didFinishLaunchingWithOptions[\s\S]*?\)\s*->\s*Bool\s*\{\s*/m;
+//     if (didFinishRegex.test(mod.contents)) {
+//       const injectLine = `\n        #if canImport(OnsideKit)\n        // Use the exact same URL Scheme you defined in your Info.plist\n        Onside.callbackScheme = "${scheme}"\n        #endif\n`;
+//       if (!mod.contents.includes('Onside.callbackScheme')) {
+//         mod.contents = mod.contents.replace(
+//           didFinishRegex,
+//           (m) => m + injectLine,
+//         );
+//       }
+//     } else {
+//       // 2) If method is missing, create a minimal implementation inside AppDelegate
+//       const classEndRegex = /\n}\s*$/;
+//       if (classEndRegex.test(mod.contents)) {
+//         const createMethod = `
+//
+//     func application(
+//       _ application: UIApplication,
+//       didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+//     ) -> Bool {
+//         // Use the exact same URL Scheme you defined in your Info.plist
+//         #if canImport(OnsideKit)
+//         Onside.callbackScheme = "${scheme}"
+//         #endif
+//         return true
+//     }
+// `;
+//         mod.contents = mod.contents.replace(
+//           classEndRegex,
+//           `${createMethod}\n}\n`,
+//         );
+//       } else {
+//         WarningAggregator.addWarningIOS(
+//           'expo-iap',
+//           'Could not find or create application(_:didFinishLaunchingWithOptions:) in AppDelegate.swift to set Onside.callbackScheme.',
+//         );
+//       }
+//     }
+//
+//     // Ensure application(_:open:options:) forwards URLs to Onside
+//     const openUrlRegex =
+//       /func\s+application\(\s*_?\s*app:\s*UIApplication,\s*open\s+url:\s*URL,\s*options:\s*\[UIApplication\.OpenURLOptionsKey\s*:\s*Any\]\s*=\s*\[:\]\)\s*->\s*Bool\s*{/;
+//     if (!openUrlRegex.test(mod.contents)) {
+//       const classEndRegex = /\n}\s*$/;
+//       if (classEndRegex.test(mod.contents)) {
+//         const openImpl = `
+//
+//     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+//         #if canImport(OnsideKit)
+//         let handledByOnside = Onside.handle(url: url)
+//         if handledByOnside {
+//             return true
+//         }
+//         #endif
+//         return false
+//     }
+// `;
+//         mod.contents = mod.contents.replace(classEndRegex, `${openImpl}\n}\n`);
+//       } else {
+//         WarningAggregator.addWarningIOS(
+//           'expo-iap',
+//           'Could not inject application(_:open:options:) into AppDelegate.swift.',
+//         );
+//       }
+//     }
+//     return cfg;
+//   });
+// };
 
 const withIapIOS: ConfigPlugin<WithIapIosOptions | undefined> = (
   config,
@@ -399,6 +547,18 @@ const withIapIOS: ConfigPlugin<WithIapIosOptions | undefined> = (
   if (options?.iosAlternativeBilling) {
     config = withIosAlternativeBilling(config, options.iosAlternativeBilling);
   }
+
+  //TODO: some init stuff for https://docs.onside.io/sdk/installation-guide
+  // // If Onside enabled, wire URL scheme + AppDelegate injection.
+  // if (options?.enableOnside) {
+  //   const fromConfig = (config as any)?.ios?.onside?.callbackScheme;
+  //   const scheme =
+  //     options?.callbackScheme ??
+  //     fromConfig ??
+  //     deriveOnsideScheme(config as any);
+  //   config = withOnsideCallbackSchemeInfoPlist(config, {scheme});
+  //   config = withOnsideAppDelegate(config, {scheme});
+  // }
 
   return withPodfile(config, (config) => {
     let content = config.modResults.contents;

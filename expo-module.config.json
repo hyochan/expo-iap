@@ -1,7 +1,11 @@
 {
   "platforms": ["ios", "android"],
   "ios": {
-    "modules": ["ExpoIapModule", "OneSideModule"]
+    "modules": [
+      "ExpoIapModule",
+      "ExpoOnsideModule",
+      "OnsideIapModule"
+    ]
   },
   "android": {
     "modules": ["expo.modules.iap.ExpoIapModule"]
