@@ -61,7 +61,7 @@ const withLocalOpenIAP: ConfigPlugin<
     return null;
   };
 
-  // iOS: inject local pod path
+  // iOS: inject local pod path with wrapper podspec
   config = withDangerousMod(config, [
     'ios',
     async (config) => {
@@ -82,8 +82,18 @@ const withLocalOpenIAP: ConfigPlugin<
         console.warn(`⚠️  Podfile not found at ${podfilePath}. Skipping.`);
         return config;
       }
+
+      // Simply use :path option - the openiap.podspec now handles both local and remote paths
+      if (!fs.existsSync(iosPath)) {
+        console.warn(`⚠️  Local openiap path not found: ${iosPath}`);
+        return config;
+      }
+
+      logOnce(`✅ Using local OpenIAP from: ${iosPath}`);
+
       let podfileContent = fs.readFileSync(podfilePath, 'utf8');
 
+      // Check if local OpenIAP pod is already configured
       if (podfileContent.includes("pod 'openiap',")) {
         logOnce('✅ Local OpenIAP pod already configured');
         return config;
@@ -91,13 +101,16 @@ const withLocalOpenIAP: ConfigPlugin<
 
       const targetRegex =
         /target\s+['"][\w]+['"]\s+do\s*\n\s*use_expo_modules!/;
+      const relativePath = path
+        .relative(platformProjectRoot, iosPath)
+        .replace(/\\/g, '/');
 
       if (targetRegex.test(podfileContent)) {
         podfileContent = podfileContent.replace(targetRegex, (match) => {
           return `${match}
-  
+
   # Local OpenIAP pod for development (added by expo-iap plugin)
-  pod 'openiap', :path => '${iosPath}'`;
+  pod 'openiap', :path => '${relativePath}'`;
         });
         fs.writeFileSync(podfilePath, podfileContent);
         logOnce(`✅ Added local OpenIAP pod at: ${iosPath}`);
