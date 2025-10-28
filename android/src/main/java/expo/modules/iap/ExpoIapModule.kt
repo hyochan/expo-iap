@@ -69,9 +69,17 @@ class ExpoIapModule : Module() {
                 scope.launch {
                     connectionMutex.withLock {
                         try {
-                            // Activity may be unavailable in headless/background scenarios.
-                            runCatching { openIap.setActivity(currentActivity) }
-                                .onFailure { Log.w(TAG, "initConnection: Activity missing; proceeding headless", it) }
+                            // CRITICAL: Set Activity BEFORE calling initConnection
+                            // Horizon SDK needs Activity to initialize OVRPlatform with proper returnComponent
+                            // https://github.com/meta-quest/Meta-Spatial-SDK-Samples/issues/82#issuecomment-3452577530
+                            val activity =
+                                runCatching { currentActivity }
+                                    .onSuccess {
+                                        ExpoIapLog.debug("Activity available: ${it.javaClass.name}")
+                                        openIap.setActivity(it)
+                                    }.onFailure {
+                                        ExpoIapLog.warning("Activity not available during initConnection - OpenIAP will use Context")
+                                    }.getOrNull()
 
                             // If already connected, short-circuit
                             if (connectionReady.get()) {
@@ -284,7 +292,8 @@ class ExpoIapModule : Module() {
                 ExpoIapHelper.addPurchasePromise(promise)
                 scope.launch {
                     try {
-                        openIap.setActivity(currentActivity)
+                        val activity = currentActivity
+                        openIap.setActivity(activity)
                         val result = openIap.requestPurchase(requestProps)
                         val purchases =
                             when (result) {
