@@ -3,7 +3,7 @@ import {requireNativeModule} from 'expo-modules-core';
 import {Platform} from 'react-native';
 
 // Internal modules
-import ExpoIapModule from './ExpoIapModule';
+import ExpoIapModule, {checkInstalledFromOnside} from './ExpoIapModule';
 import {
   isProductIOS,
   validateReceiptIOS,
@@ -721,3 +721,4 @@ export type {
   PurchaseErrorProps,
 } from './utils/errorMapping';
 export {ExpoIapConsole} from './utils/debug';
+export {checkInstalledFromOnside};

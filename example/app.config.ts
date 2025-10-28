@@ -17,7 +17,8 @@ export default ({config}: ConfigContext): ExpoConfig => {
         },
         modules: {
           // Onside module: iOS only (alternative billing for Korea)
-          onside: false,
+          // Automatically adds expo-onside to package.json when enabled
+          onside: true,
           // Horizon module: Android only (Meta Quest/VR devices)
           horizon: false,
         },

@@ -347,6 +347,64 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
   options,
 ) => {
   try {
+    // Read Onside configuration from modules
+    const isOnsideEnabled = options?.modules?.onside ?? false;
+
+    // Auto-add expo-onside to package.json when onside is enabled
+    if (isOnsideEnabled) {
+      try {
+        require.resolve('expo-onside');
+        logOnce('✅ [expo-iap] expo-onside package detected');
+      } catch {
+        // expo-onside not installed, add it to package.json
+        const packageJsonPath = path.join(
+          config._internal?.projectRoot || process.cwd(),
+          'package.json',
+        );
+
+        if (fs.existsSync(packageJsonPath)) {
+          try {
+            const packageJson = JSON.parse(
+              fs.readFileSync(packageJsonPath, 'utf8'),
+            );
+            const dependencies = packageJson.dependencies || {};
+
+            if (!dependencies['expo-onside']) {
+              dependencies['expo-onside'] = '1.0.2';
+              packageJson.dependencies = dependencies;
+              fs.writeFileSync(
+                packageJsonPath,
+                JSON.stringify(packageJson, null, 2) + '\n',
+              );
+
+              console.log('\n' + '='.repeat(80));
+              console.log('📦 [expo-iap] Added expo-onside to package.json');
+              console.log('');
+              console.log(
+                '⚠️  ACTION REQUIRED: Please run the following command to install dependencies:',
+              );
+              console.log('');
+              console.log('    bun install');
+              console.log('    (or npm install / yarn install / pnpm install)');
+              console.log('');
+              console.log('Then run prebuild again:');
+              console.log('');
+              console.log('    bunx expo prebuild');
+              console.log('');
+              console.log('='.repeat(80) + '\n');
+
+              WarningAggregator.addWarningIOS(
+                'expo-iap',
+                'expo-onside has been added to package.json. Run "bun install" (or equivalent) and then run prebuild again.',
+              );
+            }
+          } catch (error) {
+            console.error('[expo-iap] Failed to update package.json:', error);
+          }
+        }
+      }
+    }
+
     // Read Horizon configuration from modules
     const isHorizonEnabled = options?.modules?.horizon ?? false;
 
@@ -356,7 +414,7 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
       options?.ios?.alternativeBilling ?? options?.iosAlternativeBilling;
 
     logOnce(
-      `🔍 [expo-iap] Config values: horizonAppId=${horizonAppId}, isHorizonEnabled=${isHorizonEnabled}`,
+      `🔍 [expo-iap] Config values: isOnsideEnabled=${isOnsideEnabled}, horizonAppId=${horizonAppId}, isHorizonEnabled=${isHorizonEnabled}`,
     );
 
     // Respect explicit flag; fall back to presence of localPath only when flag is unset

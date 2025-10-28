@@ -16,6 +16,7 @@ import {
   getAppTransactionIOS,
   getStorefront,
   ExpoIapConsole,
+  checkInstalledFromOnside,
 } from '../../src';
 import Loading from '../src/components/Loading';
 import {
@@ -71,6 +72,7 @@ type PurchaseFlowProps = {
   storefrontError: string | null;
   storefrontLoading: boolean;
   onRefreshStorefront: () => Promise<void>;
+  installSource: string;
 };
 
 /**
@@ -98,6 +100,7 @@ function PurchaseFlow({
   storefrontError,
   storefrontLoading,
   onRefreshStorefront,
+  installSource,
 }: PurchaseFlowProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -268,6 +271,16 @@ function PurchaseFlow({
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Install Source (iOS only) */}
+        {Platform.OS === 'ios' && installSource ? (
+          <View style={styles.installSourceContainer}>
+            <View style={styles.storefrontRow}>
+              <Text style={styles.statusLabel}>Install Source:</Text>
+              <Text style={styles.installSourceValue}>{installSource}</Text>
+            </View>
+          </View>
+        ) : null}
 
         {/* Products List */}
         <View style={styles.section}>
@@ -561,6 +574,34 @@ function PurchaseFlowContainer() {
   const [storefront, setStorefront] = useState('');
   const [storefrontError, setStorefrontError] = useState<string | null>(null);
   const [storefrontLoading, setStorefrontLoading] = useState(false);
+  const [installSource, setInstallSource] = useState<string>('');
+
+  // Check install source when component mounts
+  useEffect(() => {
+    console.log('[PurchaseFlow] ========== CHECKING INSTALL SOURCE ==========');
+    console.log('[PurchaseFlow] Attempting to call checkInstalledFromOnside()');
+
+    const isFromOnside = checkInstalledFromOnside();
+
+    console.log(
+      '[PurchaseFlow] checkInstalledFromOnside() returned:',
+      isFromOnside,
+    );
+    console.log(
+      '[PurchaseFlow] Install source detected:',
+      isFromOnside ? 'Onside' : 'App Store',
+    );
+    console.log(
+      '[PurchaseFlow] ===============================================',
+    );
+
+    ExpoIapConsole.log(
+      '[PurchaseFlow] Install source:',
+      isFromOnside ? 'Onside' : 'App Store',
+    );
+
+    setInstallSource(isFromOnside ? 'Onside' : 'App Store');
+  }, []);
 
   const {
     connected,
@@ -761,6 +802,7 @@ function PurchaseFlowContainer() {
       storefrontError={storefrontError}
       storefrontLoading={storefrontLoading}
       onRefreshStorefront={loadStorefront}
+      installSource={installSource}
     />
   );
 }
@@ -843,6 +885,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '600',
     fontSize: 13,
+  },
+  installSourceContainer: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  installSourceValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6A1B9A',
   },
   section: {
     marginBottom: 20,
