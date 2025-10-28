@@ -476,7 +476,7 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
 
     const payload: MutationRequestPurchaseArgs = {
       type: canonical === 'in-app' ? 'in-app' : 'subs',
-      request,
+      request: {ios: normalizedRequest},
       useAlternativeBilling: args.useAlternativeBilling,
     };
 
