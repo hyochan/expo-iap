@@ -72,14 +72,13 @@ class ExpoIapModule : Module() {
                             // CRITICAL: Set Activity BEFORE calling initConnection
                             // Horizon SDK needs Activity to initialize OVRPlatform with proper returnComponent
                             // https://github.com/meta-quest/Meta-Spatial-SDK-Samples/issues/82#issuecomment-3452577530
-                            val activity =
-                                runCatching { currentActivity }
-                                    .onSuccess {
-                                        ExpoIapLog.debug("Activity available: ${it.javaClass.name}")
-                                        openIap.setActivity(it)
-                                    }.onFailure {
-                                        ExpoIapLog.warning("Activity not available during initConnection - OpenIAP will use Context")
-                                    }.getOrNull()
+                            runCatching { currentActivity }
+                                .onSuccess {
+                                    ExpoIapLog.debug("Activity available: ${it.javaClass.name}")
+                                    openIap.setActivity(it)
+                                }.onFailure {
+                                    ExpoIapLog.warning("Activity not available during initConnection - OpenIAP will use Context")
+                                }
 
                             // If already connected, short-circuit
                             if (connectionReady.get()) {

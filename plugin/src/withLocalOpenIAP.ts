@@ -83,12 +83,6 @@ const withLocalOpenIAP: ConfigPlugin<
         return config;
       }
 
-      // Simply use :path option - the openiap.podspec now handles both local and remote paths
-      if (!fs.existsSync(iosPath)) {
-        console.warn(`⚠️  Local openiap path not found: ${iosPath}`);
-        return config;
-      }
-
       logOnce(`✅ Using local OpenIAP from: ${iosPath}`);
 
       let podfileContent = fs.readFileSync(podfilePath, 'utf8');
@@ -237,12 +231,15 @@ const withLocalOpenIAP: ConfigPlugin<
 
     let contents = gradle.contents;
 
-    // Remove Maven deps (avoid duplicate classes with local module)
+    // Remove Maven deps (both openiap-google and openiap-google-horizon)
+    // to avoid duplicate classes with local module
     const mavenPattern =
-      /^\s*(?:implementation|api)\s*\(?\s*["']io\.github\.hyochan\.openiap:openiap-google:[^"']+["']\s*\)?\s*$/gm;
+      /^\s*(?:implementation|api)\s*\(?\s*["']io\.github\.hyochan\.openiap:openiap-google(?:-horizon)?:[^"']+["']\s*\)?\s*$/gm;
     if (mavenPattern.test(contents)) {
       contents = contents.replace(mavenPattern, '\n');
-      logOnce('🧹 Removed Maven openiap-google (using local module)');
+      logOnce(
+        '🧹 Removed Maven openiap-google* dependencies (using local module)',
+      );
     }
 
     // Add missingDimensionStrategy (required for flavored module)

@@ -136,15 +136,11 @@ const ProductItem = ({product}: {product: Product}) => {
 
 ## Platform Detection
 
-You can detect if your app is running on Horizon OS:
+:::warning Currently, there is no reliable way to detect Horizon OS at runtime using React Native's Platform API. Horizon OS is based on Android and reports the same platform identifiers as standard Android devices.
 
-```tsx
-import {Platform} from 'react-native';
+**Best Practice**: Design your app to work seamlessly on both standard Android and Horizon OS without runtime detection. expo-iap automatically handles the platform differences when Horizon mode is enabled in your configuration. :::
 
-// Check if running on Horizon OS
-const isHorizon = Platform.OS === 'android' && Platform.Version >= 29;
-// Note: Horizon OS is based on Android, but with Meta's Platform SDK
-```
+If you need to conditionally enable features for Horizon OS, configure them at build time using your app.config.ts rather than runtime detection.
 
 ## Differences from Google Play
 
