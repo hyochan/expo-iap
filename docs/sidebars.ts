@@ -25,7 +25,12 @@ const sidebars: SidebarsConfig = {
       label: 'Getting Started',
       items: [
         'getting-started/installation',
-        'getting-started/setup-ios',
+        {
+          type: 'category',
+          label: 'iOS Setup',
+          link: {type: 'doc', id: 'getting-started/setup-ios'},
+          items: ['getting-started/setup-onside'],
+        },
         {
           type: 'category',
           label: 'Android Setup',
