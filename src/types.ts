@@ -166,7 +166,7 @@ export interface ExternalPurchaseNoticeResultIOS {
   result: ExternalPurchaseNoticeAction;
 }
 
-export type FetchProductsResult = Product[] | ProductSubscription[] | null;
+export type FetchProductsResult = Product[] | ProductSubscription[] | (Product | ProductSubscription)[] | null;
 
 export type IapEvent = 'purchase-updated' | 'purchase-error' | 'promoted-product-ios' | 'user-choice-billing-android';
 

@@ -22,7 +22,6 @@ import type {
   ActiveSubscription,
   AndroidSubscriptionOfferInput,
   DeepLinkOptions,
-  FetchProductsResult,
   MutationField,
   MutationRequestPurchaseArgs,
   MutationValidateReceiptArgs,
@@ -281,7 +280,7 @@ export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
 
   const castResult = (
     items: (Product | ProductSubscription)[],
-  ): FetchProductsResult => {
+  ): Product[] | ProductSubscription[] | null => {
     if (canonical === 'in-app') {
       return items as Product[];
     }
@@ -289,7 +288,7 @@ export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
       return items as ProductSubscription[];
     }
     // For 'all' type, items contain both Product and ProductSubscription
-    // The generated FetchProductsResult type is: Product[] | ProductSubscription[] | null
+    // The generated Query.fetchProducts type is: Product[] | ProductSubscription[] | null
     // We cast the mixed array to Product[] to satisfy the type constraint
     return items as Product[];
   };
