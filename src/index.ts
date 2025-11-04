@@ -280,7 +280,11 @@ export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
 
   const castResult = (
     items: (Product | ProductSubscription)[],
-  ): Product[] | ProductSubscription[] | null => {
+  ):
+    | (Product | ProductSubscription)[]
+    | Product[]
+    | ProductSubscription[]
+    | null => {
     if (canonical === 'in-app') {
       return items as Product[];
     }
@@ -288,9 +292,8 @@ export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
       return items as ProductSubscription[];
     }
     // For 'all' type, items contain both Product and ProductSubscription
-    // The generated Query.fetchProducts type is: Product[] | ProductSubscription[] | null
-    // We cast the mixed array to Product[] to satisfy the type constraint
-    return items as Product[];
+    // Return as ProductOrSubscription[] to preserve discriminated union
+    return items;
   };
 
   if (Platform.OS === 'ios') {
