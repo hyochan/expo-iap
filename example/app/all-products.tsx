@@ -15,7 +15,7 @@ import {
   CONSUMABLE_PRODUCT_IDS,
   NON_CONSUMABLE_PRODUCT_IDS,
 } from '../src/utils/constants';
-import type {Product} from '../../src/types';
+import type {Product, ProductSubscription} from '../../src/types';
 
 const ALL_PRODUCT_IDS = [...PRODUCT_IDS, ...SUBSCRIPTION_PRODUCT_IDS];
 
@@ -26,10 +26,43 @@ const ALL_PRODUCT_IDS = [...PRODUCT_IDS, ...SUBSCRIPTION_PRODUCT_IDS];
  * - Uses fetchProducts with 'all' type to get everything
  * - Displays products and subscriptions as they come from the API
  * - Single view for all product types
+ *
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * 🎯 TypeScript Discriminated Union Type Narrowing Examples
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *
+ * This file demonstrates real-world usage of discriminated union type narrowing
+ * with OpenIAP gql 1.2.4+ types. See the following functions for examples:
+ *
+ * Example 1 (Line ~90): handleShowDetails()
+ *   - Demonstrates combining 'platform' and 'type' discriminators
+ *   - Shows how to narrow to specific types like ProductSubscriptionIOS
+ *   - Includes console.log examples showing type-safe field access
+ *
+ * Example 2 (Line ~125): getProductTypeLabel()
+ *   - Shows basic type narrowing using the 'type' discriminator
+ *   - Narrows Product | ProductSubscription -> ProductSubscription
+ *
+ * Key discriminator fields:
+ * - `type`: 'in-app' | 'subs' - Distinguishes products from subscriptions
+ * - `platform`: 'ios' | 'android' - Distinguishes platform-specific types
+ *
+ * Type hierarchy:
+ * - Product = ProductIOS | ProductAndroid (type: 'in-app')
+ * - ProductSubscription = ProductSubscriptionIOS | ProductSubscriptionAndroid (type: 'subs')
+ *
+ * Benefits:
+ * ✅ Type-safe access to platform-specific fields (e.g., discountsIOS, subscriptionOfferDetailsAndroid)
+ * ✅ Compile-time errors prevent accessing non-existent fields
+ * ✅ Better IDE autocomplete and IntelliSense
+ * ✅ Runtime safety - no accessing undefined fields
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
 function AllProducts() {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<
+    Product | ProductSubscription | null
+  >(null);
   const [modalVisible, setModalVisible] = useState(false);
 
   const {connected, products, subscriptions, fetchProducts} = useIAP();
@@ -50,12 +83,73 @@ function AllProducts() {
     }
   }, [connected, fetchProducts]);
 
-  const handleShowDetails = (product: Product) => {
+  /**
+   * 🎯 Type Narrowing Example 1: Platform + Type narrowing
+   *
+   * This demonstrates combining both 'platform' and 'type' discriminators
+   * to narrow down to a specific type (e.g., ProductSubscriptionIOS).
+   */
+  const handleShowDetails = (product: Product | ProductSubscription) => {
+    // Log type narrowing examples
+    ExpoIapConsole.log('\n🎯 Type Narrowing Examples for:', product.id);
+
+    // Example 1: Narrow by type
+    if (product.type === 'subs') {
+      // ✅ Narrowed to: ProductSubscription
+      ExpoIapConsole.log('- This is a subscription');
+
+      // Example 2: Further narrow by platform
+      if (product.platform === 'ios') {
+        // ✅ Narrowed to: ProductSubscriptionIOS
+        ExpoIapConsole.log('- iOS Subscription detected');
+        ExpoIapConsole.log(
+          '- Subscription Period:',
+          product.subscriptionPeriodUnitIOS,
+        );
+        ExpoIapConsole.log(
+          '- Has Discounts:',
+          product.discountsIOS?.length || 0,
+        );
+      } else if (product.platform === 'android') {
+        // ✅ Narrowed to: ProductSubscriptionAndroid
+        ExpoIapConsole.log('- Android Subscription detected');
+        ExpoIapConsole.log(
+          '- Offers:',
+          product.subscriptionOfferDetailsAndroid?.length || 0,
+        );
+      }
+    } else {
+      // ✅ Narrowed to: Product (in-app)
+      ExpoIapConsole.log('- This is an in-app product');
+
+      if (product.platform === 'ios') {
+        // ✅ Narrowed to: ProductIOS
+        ExpoIapConsole.log('- iOS Product');
+        ExpoIapConsole.log('- Family Shareable:', product.isFamilyShareableIOS);
+      } else {
+        // ✅ Narrowed to: ProductAndroid
+        ExpoIapConsole.log('- Android Product');
+        ExpoIapConsole.log('- Name:', product.nameAndroid);
+      }
+    }
+
     setSelectedProduct(product);
     setModalVisible(true);
   };
 
-  const getProductTypeLabel = (product: Product) => {
+  /**
+   * 🎯 Type Narrowing Example 2: Using 'type' discriminator
+   *
+   * This demonstrates how TypeScript narrows the union type
+   * Product | ProductSubscription using the 'type' field.
+   */
+  const getProductTypeLabel = (product: Product | ProductSubscription) => {
+    // Type narrowing using 'type' discriminator
+    if (product.type === 'subs') {
+      // ✅ TypeScript narrows to: ProductSubscription
+      return 'SUBSCRIPTION';
+    }
+    // ✅ TypeScript narrows to: Product (type === 'in-app')
     if (CONSUMABLE_PRODUCT_IDS.includes(product.id)) {
       return 'CONSUMABLE';
     }
@@ -65,7 +159,7 @@ function AllProducts() {
     return 'IN-APP';
   };
 
-  const getProductTypeStyle = (product: Product) => {
+  const getProductTypeStyle = (product: Product | ProductSubscription) => {
     if (CONSUMABLE_PRODUCT_IDS.includes(product.id)) {
       return styles.typeBadgeConsumable;
     }

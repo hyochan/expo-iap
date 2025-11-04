@@ -44,7 +44,6 @@
   "license": "MIT",
   "homepage": "https://github.com/hyochan/expo-iap#readme",
   "devDependencies": {
-    "husky": "^9.0.11",
     "@jest/globals": "^30.0.5",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.1.7",
@@ -54,6 +53,7 @@
     "eslint-plugin-prettier": "^5.4.1",
     "expo-module-scripts": "^4.1.7",
     "expo-modules-core": "^2.4.0",
+    "husky": "^9.0.11",
     "jest": "^29.7.0",
     "ts-jest": "^29.4.1"
   },

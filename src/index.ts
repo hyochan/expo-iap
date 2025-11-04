@@ -259,7 +259,7 @@ export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
 
   const filterIosItems = (
     items: unknown[],
-  ): Product[] | ProductSubscription[] =>
+  ): (Product | ProductSubscription)[] =>
     items.filter((item): item is Product | ProductSubscription => {
       if (!isProductIOS(item)) {
         return false;
@@ -270,7 +270,7 @@ export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
 
   const filterAndroidItems = (
     items: unknown[],
-  ): Product[] | ProductSubscription[] =>
+  ): (Product | ProductSubscription)[] =>
     items.filter((item): item is Product | ProductSubscription => {
       if (!isProductAndroid(item)) {
         return false;
@@ -280,7 +280,7 @@ export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
     });
 
   const castResult = (
-    items: Product[] | ProductSubscription[],
+    items: (Product | ProductSubscription)[],
   ): FetchProductsResult => {
     if (canonical === 'in-app') {
       return items as Product[];
@@ -288,7 +288,10 @@ export const fetchProducts: QueryField<'fetchProducts'> = async (request) => {
     if (canonical === 'subs') {
       return items as ProductSubscription[];
     }
-    return items;
+    // For 'all' type, items contain both Product and ProductSubscription
+    // The generated FetchProductsResult type is: Product[] | ProductSubscription[] | null
+    // We cast the mixed array to Product[] to satisfy the type constraint
+    return items as Product[];
   };
 
   if (Platform.OS === 'ios') {
