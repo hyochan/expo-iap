@@ -12,6 +12,7 @@ import {ErrorCode} from '../types';
 jest.mock('../ExpoIapModule', () => ({
   __esModule: true,
   default: {
+    // Both iOS and Android export 'ERROR_CODES'
     ERROR_CODES: {
       // ErrorCode.AlreadyOwned
       'already-owned': 'ALREADY_OWNED',
@@ -21,6 +22,8 @@ jest.mock('../ExpoIapModule', () => ({
       'network-error': 'NATIVE_NETWORK',
       // ErrorCode.Unknown
       unknown: 'NATIVE_UNKNOWN',
+      // ErrorCode.UserCancelled
+      'user-cancelled': 'USER_CANCELLED',
     },
   },
   NATIVE_ERROR_CODES: {
@@ -32,6 +35,8 @@ jest.mock('../ExpoIapModule', () => ({
     'network-error': 'NATIVE_NETWORK',
     // ErrorCode.Unknown
     unknown: 'NATIVE_UNKNOWN',
+    // ErrorCode.UserCancelled
+    'user-cancelled': 'USER_CANCELLED',
   },
 }));
 

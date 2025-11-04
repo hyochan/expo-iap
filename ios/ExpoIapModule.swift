@@ -13,9 +13,9 @@ public final class ExpoIapModule: Module {
     nonisolated public func definition() -> ModuleDefinition {
         Name("ExpoIap")
 
-        Property("errorCodes") {
-            OpenIapSerialization.errorCodes()
-        }
+        Constants(
+            "ERROR_CODES": OpenIapSerialization.errorCodes()
+        )
 
         Events(
             OpenIapEvent.purchaseUpdated.rawValue,
