@@ -6,7 +6,6 @@ import {
   withAppBuildGradle,
   withGradleProperties,
   withPodfile,
-  withDangerousMod,
 } from 'expo/config-plugins';
 import type {ExpoConfig} from '@expo/config-types';
 import * as fs from 'fs';
@@ -396,8 +395,6 @@ type WithIapIosOptions = {
    */
   callbackScheme?: string;
 };
-
-const ONSIDE_CALLBACK_SCHEME_KEY = 'OnsideCallbackScheme';
 
 //TODO: some init stuff for https://docs.onside.io/sdk/installation-guide
 
