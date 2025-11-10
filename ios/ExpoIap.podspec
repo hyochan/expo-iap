@@ -25,8 +25,8 @@ Pod::Spec.new do |s|
   # Use ~> to allow patch updates (e.g., 1.2.30 -> 1.2.31, but not 1.3.0)
   s.dependency 'openiap', "~> #{versions['apple']}"
 
-  #TODO: optionally
-  s.dependency 'OnsideKit'
+  # OnsideKit is optional and managed by the Expo config plugin
+  # When modules.onside is enabled, the plugin will add OnsideKit to your Podfile
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',

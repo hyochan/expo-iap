@@ -2,8 +2,18 @@ import type {IOS} from '@expo/config-types';
 import type {IOSAlternativeBillingConfig} from './withIAP';
 
 export type ExpoIapModuleOverrides = {
-  expoIap?: boolean;
+  /**
+   * Enable Onside Store support for iOS alternative billing
+   * @platform ios
+   * @default false
+   */
   onside?: boolean;
+  /**
+   * Enable Horizon OS support for Meta Quest devices
+   * @platform android
+   * @default false
+   */
+  horizon?: boolean;
 };
 
 type BaseExpoIapOptions = {
@@ -21,6 +31,23 @@ type BaseExpoIapOptions = {
    * @platform ios
    */
   iosAlternativeBilling?: IOSAlternativeBillingConfig;
+  /**
+   * @deprecated Use ios.alternativeBilling instead
+   */
+  ios?: {
+    alternativeBilling?: IOSAlternativeBillingConfig;
+  };
+  /**
+   * Horizon OS app ID for Quest devices
+   * @platform android
+   */
+  horizonAppId?: string;
+  /**
+   * @deprecated Use modules.horizon and android.horizonAppId instead
+   */
+  android?: {
+    horizonAppId?: string;
+  };
 };
 
 type AutoModuleOptions = BaseExpoIapOptions & {

@@ -9,7 +9,7 @@ import type {ExpoIapPluginCommonOptions} from '../src/expoConfig.augmentation';
 
 // Type-level expectations
 const autoModeOptions: ExpoIapPluginCommonOptions = {
-  modules: {expoIap: false, onside: true},
+  modules: {onside: true},
 };
 
 const explicitModeOptions: ExpoIapPluginCommonOptions = {
@@ -19,7 +19,7 @@ const explicitModeOptions: ExpoIapPluginCommonOptions = {
 const invalidExplicitOptions: ExpoIapPluginCommonOptions = {
   module: 'expo-iap',
   // @ts-expect-error modules overrides are only supported in auto mode
-  modules: {expoIap: false},
+  modules: {onside: false},
 };
 void autoModeOptions;
 void explicitModeOptions;
@@ -69,7 +69,7 @@ describe('ios module selection', () => {
     expect(result).toEqual({
       selection: 'auto',
       includeExpoIap: true,
-      includeOnside: true,
+      includeOnside: false,
     });
   });
 
@@ -105,21 +105,21 @@ describe('ios module selection', () => {
     });
   });
 
-  it('respects explicit modules overrides in auto mode', () => {
+  it('enables Onside when modules.onside is true in auto mode', () => {
     const options: ExpoIapPluginCommonOptions = {
-      modules: {expoIap: false, onside: true},
+      modules: {onside: true},
     };
     const result = resolveModuleSelection(createConfig(), options);
     expect(result).toEqual({
       selection: 'auto',
-      includeExpoIap: false,
+      includeExpoIap: true,
       includeOnside: true,
     });
   });
 
-  it('disables Onside when modules override sets false', () => {
+  it('disables Onside when modules.onside is false', () => {
     const options: ExpoIapPluginCommonOptions = {
-      modules: {expoIap: true, onside: false},
+      modules: {onside: false},
     };
     const result = resolveModuleSelection(createConfig(), options);
     expect(result).toEqual({

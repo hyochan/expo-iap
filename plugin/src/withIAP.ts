@@ -645,37 +645,11 @@ export interface ModuleSelectionResult {
   includeOnside: boolean;
 }
 
-type ModuleKey = 'expoIap' | 'onside';
-
-type ModuleRules = Record<
-  ModuleKey,
-  {
-    when: Partial<Record<ModuleSelectionResult['selection'], boolean>>;
-    default: (args: {
-      config: ExpoConfig;
-      options?: ExpoIapPluginCommonOptions;
-    }) => boolean;
-  }
->;
-
-const MODULE_RULES: ModuleRules = {
-  expoIap: {
-    when: {
-      'expo-iap': true,
-      onside: false,
-    },
-    default: ({options}) => options?.modules?.expoIap ?? true,
-  },
-  onside: {
-    when: {
-      'expo-iap': false,
-      onside: true,
-    },
-    default: ({config, options}) =>
-      options?.modules?.onside ?? config.ios?.onside?.enabled ?? true,
-  },
-};
-
+/**
+ * Determines which modules to include based on configuration.
+ * - ExpoIap: Always included (standard StoreKit 2 support)
+ * - Onside: Only when modules.onside is true (iOS alternative billing)
+ */
 export function resolveModuleSelection(
   config: ExpoConfig,
   options?: ExpoIapPluginCommonOptions | void,
@@ -686,38 +660,28 @@ export function resolveModuleSelection(
 
   const selection = normalizedOptions?.module ?? 'auto';
 
-  const includeExpoIap = pickModuleState(
-    'expoIap',
-    selection,
-    config,
-    normalizedOptions,
-  );
-  const includeOnside = pickModuleState(
-    'onside',
-    selection,
-    config,
-    normalizedOptions,
-  );
+  // Determine includeExpoIap based on explicit module selection
+  let includeExpoIap = true;
+  let includeOnside = false;
+
+  if (selection === 'expo-iap') {
+    // Explicit expo-iap: only ExpoIap, no Onside
+    includeExpoIap = true;
+    includeOnside = false;
+  } else if (selection === 'onside') {
+    // Explicit onside: only Onside, no ExpoIap
+    includeExpoIap = false;
+    includeOnside = true;
+  } else {
+    // Auto mode: ExpoIap always included, Onside based on config
+    includeExpoIap = true;
+    includeOnside =
+      normalizedOptions?.modules?.onside ??
+      config.ios?.onside?.enabled ??
+      false;
+  }
 
   return {selection, includeExpoIap, includeOnside};
-}
-
-function pickModuleState(
-  key: ModuleKey,
-  selection: ModuleSelectionResult['selection'],
-  config: ExpoConfig,
-  options?: ExpoIapPluginCommonOptions,
-): boolean {
-  const rules = MODULE_RULES[key];
-  const explicit = rules.when[selection];
-  if (explicit !== undefined) {
-    return explicit;
-  }
-  const override = options?.modules?.[key];
-  if (override !== undefined) {
-    return override;
-  }
-  return rules.default({config, options});
 }
 
 const withIAP: ConfigPlugin<ExpoIapPluginCommonOptions | void> = (
