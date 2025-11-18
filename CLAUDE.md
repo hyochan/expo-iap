@@ -93,10 +93,9 @@ The library follows the OpenIAP type specifications with platform-specific exten
 ### Hook API Semantics (useIAP)
 
 - Inside the `useIAP` hook, most methods return `Promise<void>` and update internal state. Do not design examples or implementations that expect data from these methods.
-  - Examples: `fetchProducts`, `requestPurchase`, `getAvailablePurchases`.
-  - After calling, consume state from the hook: `products`, `subscriptions`, `availablePurchases`, etc.
+  - Examples: `fetchProducts`, `requestPurchase`, `getAvailablePurchases`, `getActiveSubscriptions`.
+  - After calling, consume state from the hook: `products`, `subscriptions`, `availablePurchases`, `activeSubscriptions`, etc.
 - Defined exceptions that DO return values in the hook:
-  - `getActiveSubscriptions(subscriptionIds?) => Promise<ActiveSubscription[]>` (also updates `activeSubscriptions` state)
   - `hasActiveSubscriptions(subscriptionIds?) => Promise<boolean>`
 - The root (index) API is value-returning and can be awaited to receive data directly. Use root API when not using React state.
 
