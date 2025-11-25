@@ -1,5 +1,23 @@
+import ExpoModulesCore
 import Foundation
 import OpenIAP
+
+/// Exception wrapper for PurchaseError that preserves OpenIAP error codes
+/// This ensures consistent error format between try-catch and onPurchaseError callback
+class IapException: GenericException<(code: String, message: String, productId: String?)> {
+    override var code: String { param.code }
+    override var reason: String { param.message }
+
+    var productId: String? { param.productId }
+
+    static func from(_ error: PurchaseError) -> IapException {
+        let payload = OpenIapSerialization.encode(error)
+        let code = payload["code"] as? String ?? "unknown"
+        let message = payload["message"] as? String ?? error.localizedDescription
+        let productId = payload["productId"] as? String
+        return IapException((code: code, message: message, productId: productId))
+    }
+}
 
 enum ExpoIapHelper {
     private static var listeners: [Subscription] = []
