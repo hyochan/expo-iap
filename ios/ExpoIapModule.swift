@@ -86,10 +86,11 @@ public final class ExpoIapModule: Module {
                 }
             } catch let error as PurchaseError {
                 ExpoIapLog.failure("requestPurchase", error: error)
-                throw error
+                throw IapException.from(error)
             } catch {
                 ExpoIapLog.failure("requestPurchase", error: error)
-                throw PurchaseError.make(code: .purchaseError, message: error.localizedDescription)
+                throw IapException.from(
+                    PurchaseError.make(code: .purchaseError, message: error.localizedDescription))
             }
         }
 
@@ -198,10 +199,10 @@ public final class ExpoIapModule: Module {
                 return sanitized
             } catch let error as PurchaseError {
                 ExpoIapLog.failure("validateReceiptIOS", error: error)
-                throw error
+                throw IapException.from(error)
             } catch {
                 ExpoIapLog.failure("validateReceiptIOS", error: error)
-                throw PurchaseError.make(code: .receiptFailed)
+                throw IapException.from(PurchaseError.make(code: .receiptFailed))
             }
         }
 
@@ -312,10 +313,10 @@ public final class ExpoIapModule: Module {
                 return nil
             } catch let error as PurchaseError {
                 ExpoIapLog.failure("currentEntitlementIOS", error: error)
-                throw error
+                throw IapException.from(error)
             } catch {
                 ExpoIapLog.failure("currentEntitlementIOS", error: error)
-                throw PurchaseError.make(code: .skuNotFound, productId: sku)
+                throw IapException.from(PurchaseError.make(code: .skuNotFound, productId: sku))
             }
         }
 
@@ -332,10 +333,10 @@ public final class ExpoIapModule: Module {
                 return nil
             } catch let error as PurchaseError {
                 ExpoIapLog.failure("latestTransactionIOS", error: error)
-                throw error
+                throw IapException.from(error)
             } catch {
                 ExpoIapLog.failure("latestTransactionIOS", error: error)
-                throw PurchaseError.make(code: .skuNotFound, productId: sku)
+                throw IapException.from(PurchaseError.make(code: .skuNotFound, productId: sku))
             }
         }
 
