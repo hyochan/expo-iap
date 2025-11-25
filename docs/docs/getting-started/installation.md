@@ -14,10 +14,12 @@ This guide will help you install and configure Expo IAP in your React Native or 
 
 Before installing Expo IAP, make sure you have:
 
-- React Native 0.64 or later, or Expo SDK 45 or later
+- **Expo SDK 53+** or **React Native 0.79+** (required for Android - see [Kotlin 2.0+ requirement](#expo-sdk-52-users))
 - Node.js 16 or later
 - iOS 12+ for iOS apps (iOS 15+ required for StoreKit 2 features)
 - Android API level 21+ for Android apps
+
+:::caution Android Kotlin Requirement expo-iap 3.x uses Google Play Billing Library v8, which requires **Kotlin 2.0+**. This is natively supported in Expo SDK 53+ (React Native 0.79+). If you're using Expo SDK 52 or earlier, see the [workaround section](#expo-sdk-52-users) below. :::
 
 ## Package Installation
 
@@ -191,6 +193,57 @@ Now that you have Expo IAP installed, you can:
 - [Set up iOS configuration](./setup-ios)
 - [Set up Android configuration](./setup-android)
 - [Learn basic usage](../guides/purchases)
+
+## Expo SDK 52 Users
+
+:::warning Compatibility Issue Expo SDK 52 (React Native 0.76.x) uses a Gradle plugin compiled against **Kotlin 1.9.x**, which is incompatible with Google Play Billing Library v8 (requires Kotlin 2.0+). This creates a build conflict that cannot be resolved by simply overriding the Kotlin version. :::
+
+If you cannot upgrade to Expo SDK 53+, you have the following options:
+
+### Option 1: Downgrade Billing Library (Recommended for SDK 52)
+
+Create a custom config plugin to force an older billing library version compatible with Kotlin 1.9.x:
+
+```js
+// plugins/withBillingLibraryDowngrade.js
+const {withGradleProperties} = require('@expo/config-plugins');
+
+module.exports = function withBillingLibraryDowngrade(config) {
+  return withGradleProperties(config, (config) => {
+    // Force billing library version compatible with Kotlin 1.9.x
+    config.modResults.push({
+      type: 'property',
+      key: 'billingClientVersion',
+      value: '6.2.1',
+    });
+    return config;
+  });
+};
+```
+
+Then add it to your `app.json`:
+
+```json
+{
+  "expo": {
+    "plugins": ["./plugins/withBillingLibraryDowngrade", "expo-iap"]
+  }
+}
+```
+
+**Note:** This downgrades to Billing Library v6.2.1, which may lack some features available in v8.
+
+### Option 2: Upgrade to Expo SDK 53+ (Recommended)
+
+The cleanest solution is to upgrade your project:
+
+```bash
+npx expo install expo@^53
+npx expo install --fix
+npx expo prebuild --clean
+```
+
+Expo SDK 53+ uses React Native 0.79+ with native Kotlin 2.x support, eliminating the compatibility issue entirely.
 
 ## Troubleshooting
 
