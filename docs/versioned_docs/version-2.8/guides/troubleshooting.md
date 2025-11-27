@@ -4,11 +4,11 @@ sidebar_label: Troubleshooting
 sidebar_position: 5
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Troubleshooting
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-interview-playbook?fpr=hyo73" title="Front End Interview Guidebook" />
 
 This guide covers common issues you might encounter when implementing in-app purchases with expo-iap and how to resolve them.
 

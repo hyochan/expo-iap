@@ -6,11 +6,11 @@ sidebar_position: 2
 
 <!-- This document was renamed from subscription-manager.md to subscription-flow.md -->
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Subscriptions Flow
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/behavioral-interview-playbook?fpr=hyo73" title="Behavioral interview questions" />
 
 This example walks through a practical subscriptions flow with expo-iap. It mirrors the working sample in `example/app/subscription-flow.tsx`, including status checks, renewal handling, and subscription management UI.
 

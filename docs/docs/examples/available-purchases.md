@@ -4,11 +4,11 @@ sidebar_label: Available Purchases
 sidebar_position: 3
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Available Purchases
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/quiz?fpr=hyo73" title="Quiz interview questions" />
 
 This example shows how to list and restore previously purchased items (non‑consumables and active subscriptions) using `getAvailablePurchases()` and `getActiveSubscriptions()`.
 

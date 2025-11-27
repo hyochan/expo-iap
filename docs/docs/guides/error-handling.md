@@ -1,4 +1,8 @@
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+
 # Error Handling
+
+<GreatFrontendBanner link="https://www.greatfrontend.com/behavioral-interview-playbook?fpr=hyo73" title="Behavioral interview questions" />
 
 This guide covers best practices for handling errors in your expo-iap implementation.
 

@@ -4,11 +4,11 @@ sidebar_label: Core Methods
 sidebar_position: 1
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Core Methods
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/prepare/coding?fpr=hyo73" title="Coding interview questions" />
 
 This section covers the core methods available in expo-iap for managing in-app purchases.
 

@@ -1,8 +1,8 @@
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Types
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/js?fpr=hyo73" title="JavaScript interview questions" />
 
 This page contains the TypeScript types and interfaces used throughout the expo-iap library.
 

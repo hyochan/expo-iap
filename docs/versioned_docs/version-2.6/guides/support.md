@@ -4,11 +4,11 @@ sidebar_label: Support
 sidebar_position: 8
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Support & Contributing
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/system-design?fpr=hyo73" title="Front End System design questions" />
 
 We welcome contributions and are here to help you succeed with expo-iap!
 

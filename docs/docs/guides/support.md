@@ -2,6 +2,10 @@
 title: Support
 ---
 
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+
+<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-system-design-playbook?fpr=hyo73" title="Front End System Design Guidebook" />
+
 ## Need Help?
 
 We are committed to providing the best possible support to our community. If you're facing any issues or have questions, here are the best ways to get help:

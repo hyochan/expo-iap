@@ -4,11 +4,11 @@ sidebar_label: Subscriptions
 sidebar_position: 2
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Subscription Management Example
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-interview-playbook?fpr=hyo73" title="Front End Interview Guidebook" />
 
 This example demonstrates how to implement subscription management with expo-iap, including subscription status checking, renewal handling, and subscription management UI.
 

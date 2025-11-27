@@ -4,11 +4,11 @@ sidebar_label: Purchase Flow
 sidebar_position: 1
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Purchase Flow
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-system-design-playbook?fpr=hyo73" title="Front End System Design Guidebook" />
 
 This example walks through a clean purchase flow using expo-iap with the `useIAP` hook and the new platform‑specific request shape. It mirrors the working sample in `example/app/purchase-flow.tsx`.
 

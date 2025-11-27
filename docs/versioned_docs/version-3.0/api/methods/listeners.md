@@ -4,11 +4,11 @@ sidebar_label: Listeners
 sidebar_position: 2
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Purchase Listeners
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/interviews/study-plans?fpr=hyo73" title="Study Plan" />
 
 expo-iap provides event listeners to handle purchase updates and errors. These listeners are essential for handling the asynchronous nature of in-app purchases.
 

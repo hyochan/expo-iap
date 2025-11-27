@@ -2,6 +2,10 @@
 title: Expo Plugin
 ---
 
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+
+<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-interview-playbook?fpr=hyo73" title="Front End Interview Guidebook" />
+
 `expo-iap` comes with a config plugin to automatically configure your project for both iOS and Android. This guide explains how to use it and what it does.
 
 ## Usage

@@ -4,11 +4,11 @@ sidebar_label: FAQ
 sidebar_position: 6
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Frequently Asked Questions
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-system-design-playbook?fpr=hyo73" title="Front End System Design Guidebook" />
 
 ## General Questions
 

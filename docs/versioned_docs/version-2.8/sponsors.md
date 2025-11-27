@@ -4,11 +4,11 @@ title: Sponsors
 description: Support expo-iap development through sponsorship
 ---
 
-import AdFitTopFixed from '@site/src/uis/AdFitTopFixed';
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Sponsors
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-interview-playbook?fpr=hyo73" title="Front End Interview Guidebook" />
 
 For information about our sponsors and sponsorship opportunities, please visit:
 

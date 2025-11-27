@@ -4,11 +4,11 @@ sidebar_label: Getting Started
 sidebar_position: 1
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Getting Started
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/system-design?fpr=hyo73" title="Front End System design questions" />
 
 `expo-iap` is a powerful in-app purchase solution specifically designed for Expo and React Native applications. It provides a unified API for handling in-app purchases across iOS and Android platforms with comprehensive error handling and modern TypeScript support.
 

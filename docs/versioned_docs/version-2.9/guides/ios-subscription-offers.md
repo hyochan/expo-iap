@@ -4,11 +4,11 @@ sidebar_label: iOS Subscription Offers
 sidebar_position: 3
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # iOS Subscription Offers
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/react?fpr=hyo73" title="React interview questions" />
 
 This guide explains how to implement and manage subscription offers (introductory and promotional) for iOS in expo-iap.
 

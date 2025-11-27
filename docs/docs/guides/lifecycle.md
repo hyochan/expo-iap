@@ -4,11 +4,11 @@ sidebar_label: Lifecycle
 sidebar_position: 4
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Lifecycle
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/behavioral-interview-playbook?fpr=hyo73" title="Behavioral interview questions" />
 
 For complete understanding of the in-app purchase lifecycle, flow diagrams, and state management, please visit:
 

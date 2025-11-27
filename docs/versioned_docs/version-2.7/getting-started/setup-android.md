@@ -2,11 +2,11 @@
 sidebar_position: 2
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Android Setup
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/interviews/study-plans?fpr=hyo73" title="Study Plan" />
 
 Setting up in-app purchases for Android requires configuration in Google Play Console and proper Android app setup.
 

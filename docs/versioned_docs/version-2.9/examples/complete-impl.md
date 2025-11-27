@@ -2,11 +2,11 @@
 sidebar_position: 3
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Complete Implementation
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/react?fpr=hyo73" title="React interview questions" />
 
 This example shows a real-world implementation of a complete in-app purchase store with both consumable products (bulb packs) and subscriptions (premium features).
 

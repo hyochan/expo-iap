@@ -4,11 +4,11 @@ sidebar_label: Purchases
 sidebar_position: 2
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Purchases
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/js?fpr=hyo73" title="JavaScript interview questions" />
 
 > :warning: **Purchase Flow Redesign** :warning:
 >

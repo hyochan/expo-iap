@@ -4,11 +4,11 @@ sidebar_label: Lifecycle
 sidebar_position: 4
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Lifecycle
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/react?fpr=hyo73" title="React interview questions" />
 
 Understanding the lifecycle of in-app purchase connections and how to properly manage them is crucial for a robust implementation.
 

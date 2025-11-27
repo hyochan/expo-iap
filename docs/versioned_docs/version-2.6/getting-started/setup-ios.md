@@ -2,11 +2,11 @@
 sidebar_position: 1
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # iOS Setup
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/prepare/coding?fpr=hyo73" title="Coding interview questions" />
 
 Setting up in-app purchases for iOS requires configuration in both Xcode and App Store Connect.
 

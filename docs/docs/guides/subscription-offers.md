@@ -4,11 +4,11 @@ sidebar_label: Subscription Offers
 sidebar_position: 3
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Subscription Offers
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/interviews/study-plans?fpr=hyo73" title="Study Plan" />
 
 This guide explains how to handle subscription offers (pricing plans) when purchasing subscriptions on iOS and Android platforms.
 

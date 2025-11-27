@@ -4,11 +4,11 @@ sidebar_label: FAQ
 sidebar_position: 6
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Frequently Asked Questions
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/react?fpr=hyo73" title="React interview questions" />
 
 ## General Questions
 

@@ -2,11 +2,11 @@
 sidebar_position: 1
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed"; import SponsorSection from '@site/src/components/SponsorSection';
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner"; import SponsorSection from '@site/src/components/SponsorSection';
 
 # Expo IAP
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com?fpr=hyo73" />
 
 **Expo IAP** is a powerful in-app purchase solution for Expo and React Native applications that **conforms to the [Open IAP specification](https://openiap.dev)**. It provides a unified API for handling in-app purchases across iOS and Android platforms with comprehensive error handling and modern TypeScript support.
 

@@ -6,11 +6,11 @@ sidebar_position: 2
 
 <!-- This document was renamed from subscription-manager.md to subscription-flow.md -->
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Subscriptions Flow
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/system-design?fpr=hyo73" title="Front End System design questions" />
 
 This guide demonstrates common subscription scenarios using expo-iap. For the complete implementation, see [example/app/subscription-flow.tsx](https://github.com/hyochan/expo-iap/blob/main/example/app/subscription-flow.tsx).
 

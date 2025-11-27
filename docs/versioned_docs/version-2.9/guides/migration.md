@@ -4,11 +4,11 @@ sidebar_label: Migration Guide
 sidebar_position: 7
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Migration from react-native-iap
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/system-design?fpr=hyo73" title="Front End System design questions" />
 
 This guide helps you migrate from `react-native-iap` to `expo-iap`. While the APIs are similar, there are some key differences and improvements in `expo-iap`.
 

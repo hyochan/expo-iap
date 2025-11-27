@@ -2,11 +2,11 @@
 sidebar_position: 2
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Android Setup
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/react?fpr=hyo73" title="React interview questions" />
 
 For complete Android setup instructions including Google Play Console configuration, app setup, and testing guidelines, please visit:
 

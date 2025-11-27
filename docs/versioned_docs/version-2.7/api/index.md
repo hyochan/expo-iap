@@ -1,8 +1,8 @@
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # API Reference
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/system-design?fpr=hyo73" title="Front End System design questions" />
 
 Welcome to the Expo IAP API documentation. Here you'll find comprehensive guides and references for all the features and functionality available in Expo IAP.
 

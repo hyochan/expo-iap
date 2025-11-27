@@ -4,11 +4,11 @@ sidebar_label: Offer Code
 sidebar_position: 4
 ---
 
-import AdFitTopFixed from "@site/src/uis/AdFitTopFixed";
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 # Offer Code Redemption
 
-<AdFitTopFixed />
+<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-system-design-playbook?fpr=hyo73" title="Front End System Design Guidebook" />
 
 Redeem App Store offer/promo codes using the native iOS sheet. This is useful for subscription promotional codes and requires a real iOS device.
 
