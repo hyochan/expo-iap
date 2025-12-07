@@ -14,6 +14,7 @@
     "ios:log": "idevicesyslog -u 00008101-0006455036D8001E | grep dev.hyo.martie"
   },
   "dependencies": {
+    "@expo/react-native-action-sheet": "^4.1.1",
     "@expo/vector-icons": "^15.0.2",
     "@preact/signals-react": "^3.2.1",
     "@react-navigation/bottom-tabs": "^7.2.0",

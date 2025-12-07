@@ -4,6 +4,7 @@
     "": {
       "name": "expo-iap-example",
       "dependencies": {
+        "@expo/react-native-action-sheet": "^4.1.1",
         "@expo/vector-icons": "^15.0.2",
         "@preact/signals-react": "^3.2.1",
         "@react-navigation/bottom-tabs": "^7.2.0",
@@ -280,6 +281,8 @@
 
     "@expo/prebuild-config": ["@expo/prebuild-config@54.0.3", "", { "dependencies": { "@expo/config": "~12.0.9", "@expo/config-plugins": "~54.0.1", "@expo/config-types": "^54.0.8", "@expo/image-utils": "^0.8.7", "@expo/json-file": "^10.0.7", "@react-native/normalize-colors": "0.81.4", "debug": "^4.3.1", "resolve-from": "^5.0.0", "semver": "^7.6.0", "xml2js": "0.6.0" }, "peerDependencies": { "expo": "*" } }, "sha512-okf6Umaz1VniKmm+pA37QHBzB9XlRHvO1Qh3VbUezy07LTkz87kXUW7uLMmrA319WLavWSVORTXeR0jBRihObA=="],
 
+    "@expo/react-native-action-sheet": ["@expo/react-native-action-sheet@4.1.1", "", { "dependencies": { "@types/hoist-non-react-statics": "^3.3.1", "hoist-non-react-statics": "^3.3.0" }, "peerDependencies": { "react": ">=18.0.0" } }, "sha512-4KRaba2vhqDRR7ObBj6nrD5uJw8ePoNHdIOMETTpgGTX7StUbrF4j/sfrP1YUyaPEa1P8FXdwG6pB+2WtrJd1A=="],
+
     "@expo/schema-utils": ["@expo/schema-utils@0.1.7", "", {}, "sha512-jWHoSuwRb5ZczjahrychMJ3GWZu54jK9ulNdh1d4OzAEq672K9E5yOlnlBsfIHWHGzUAT+0CL7Yt1INiXTz68g=="],
 
     "@expo/sdk-runtime-versions": ["@expo/sdk-runtime-versions@1.0.0", "", {}, "sha512-Doz2bfiPndXYFPMRwPyGa1k5QaKDVpY806UJj570epIiMzWaYyCtobasyfC++qfIXVb5Ocy7r3tP9d62hAQ7IQ=="],
@@ -459,6 +462,8 @@
     "@types/graceful-fs": ["@types/graceful-fs@4.1.9", "", { "dependencies": { "@types/node": "*" } }, "sha512-olP3sd1qOEe5dXTSaFvQG+02VdRXcdytWLAZsAq1PecU8uqQAhkrnbli7DagjtXKW/Bl7YJbUsa8MPcuc8LHEQ=="],
 
     "@types/hammerjs": ["@types/hammerjs@2.0.46", "", {}, "sha512-ynRvcq6wvqexJ9brDMS4BnBLzmr0e14d6ZJTEShTBWKymQiHwlAyGu0ZPEFI2Fh1U53F7tN9ufClWM5KvqkKOw=="],
+
+    "@types/hoist-non-react-statics": ["@types/hoist-non-react-statics@3.3.7", "", { "dependencies": { "hoist-non-react-statics": "^3.3.0" }, "peerDependencies": { "@types/react": "*" } }, "sha512-PQTyIulDkIDro8P+IHbKCsw7U2xxBYflVzW/FgWdCAePD9xGSidgA76/GeJ6lBKoblyhf9pBY763gbrN+1dI8g=="],
 
     "@types/istanbul-lib-coverage": ["@types/istanbul-lib-coverage@2.0.6", "", {}, "sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w=="],
 

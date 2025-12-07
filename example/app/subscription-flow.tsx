@@ -11,6 +11,7 @@ import {
   Modal,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import {useActionSheet} from '@expo/react-native-action-sheet';
 import {
   requestPurchase,
   useIAP,
@@ -24,10 +25,13 @@ import type {
   ActiveSubscription,
   ProductSubscription,
   Purchase,
+  VerifyPurchaseWithProviderProps,
 } from '../../src/types';
 import type {PurchaseError} from '../../src/utils/errorMapping';
 import PurchaseDetails from '../src/components/PurchaseDetails';
 import PurchaseSummaryRow from '../src/components/PurchaseSummaryRow';
+
+type VerificationMethod = 'ignore' | 'local' | 'iapkit';
 
 // Subscription tier mapping - defined outside component to avoid recreation
 const TIER_MAP: Record<string, number> = {
@@ -67,6 +71,8 @@ type SubscriptionFlowProps = {
   onRetryLoadSubscriptions: () => void;
   onRefreshStatus: () => void;
   onManageSubscriptions: () => void;
+  verificationMethod: VerificationMethod;
+  onChangeVerificationMethod: () => void;
 };
 
 function SubscriptionFlow({
@@ -81,6 +87,8 @@ function SubscriptionFlow({
   onRetryLoadSubscriptions,
   onRefreshStatus,
   onManageSubscriptions,
+  verificationMethod,
+  onChangeVerificationMethod,
 }: SubscriptionFlowProps) {
   const [selectedSubscription, setSelectedSubscription] =
     useState<ProductSubscription | null>(null);
@@ -494,6 +502,24 @@ function SubscriptionFlow({
           <Text style={styles.statusText}>
             Platform: {Platform.OS === 'ios' ? '🍎 iOS' : '🤖 Android'}
           </Text>
+        </View>
+
+        {/* Verification Method Selector */}
+        <View style={styles.verificationContainer}>
+          <Text style={styles.statusLabel}>Purchase Verification:</Text>
+          <TouchableOpacity
+            style={styles.verificationButton}
+            onPress={onChangeVerificationMethod}
+          >
+            <Text style={styles.verificationButtonText}>
+              {verificationMethod === 'ignore'
+                ? '❌ None (Skip)'
+                : verificationMethod === 'local'
+                ? '📱 Local (Device)'
+                : '☁️ IAPKit (Server)'}
+            </Text>
+            <Text style={styles.verificationButtonIcon}>▼</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -1145,6 +1171,16 @@ function SubscriptionFlowContainer() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
+  const [verificationMethod, setVerificationMethod] =
+    useState<VerificationMethod>('ignore');
+  const verificationMethodRef = useRef<VerificationMethod>(verificationMethod);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    verificationMethodRef.current = verificationMethod;
+  }, [verificationMethod]);
+
+  const {showActionSheetWithOptions} = useActionSheet();
 
   const isHandlingPurchaseRef = useRef(false);
   const isCheckingStatusRef = useRef(false);
@@ -1161,6 +1197,8 @@ function SubscriptionFlowContainer() {
     finishTransaction,
     getActiveSubscriptions,
     activeSubscriptions,
+    verifyPurchase,
+    verifyPurchaseWithProvider,
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
       const {purchaseToken: tokenToMask, ...rest} = purchase as any;
@@ -1169,12 +1207,18 @@ function SubscriptionFlowContainer() {
         ...(tokenToMask ? {purchaseToken: 'hidden'} : {}),
       };
       ExpoIapConsole.log('Subscription successful:', masked);
+      console.log('[SubscriptionFlow] onPurchaseSuccess called');
+      console.log(
+        '[SubscriptionFlow] Current verificationMethod ref:',
+        verificationMethodRef.current,
+      );
       setLastPurchase(purchase);
 
       if (isHandlingPurchaseRef.current) {
         ExpoIapConsole.log(
           'Already handling a purchase, skipping duplicate callback',
         );
+        console.log('[SubscriptionFlow] Early return: already handling purchase');
         return;
       }
 
@@ -1244,6 +1288,7 @@ function SubscriptionFlowContainer() {
       }
 
       if (isRestoration) {
+        console.log('[SubscriptionFlow] This is a restoration, skipping verification');
         setPurchaseResult('Subscription restored successfully.');
 
         try {
@@ -1269,8 +1314,126 @@ function SubscriptionFlowContainer() {
         resetHandlingState();
         return;
       }
+      console.log('[SubscriptionFlow] Not a restoration, proceeding to verification check');
 
       setPurchaseResult('Subscription activated successfully.');
+
+      const productId = purchase.productId;
+
+      // Verify purchase based on selected method (use ref for current value)
+      const currentVerificationMethod = verificationMethodRef.current;
+      console.log('[SubscriptionFlow] About to verify purchase:', {
+        verificationMethod: currentVerificationMethod,
+        productId,
+        willVerify: currentVerificationMethod !== 'ignore' && !!productId,
+      });
+
+      if (currentVerificationMethod !== 'ignore' && productId) {
+        setIsProcessing(true);
+        try {
+          if (currentVerificationMethod === 'local') {
+            console.log('[SubscriptionFlow] Verifying with local method...');
+            const result = await verifyPurchase({sku: productId});
+            console.log(
+              '[SubscriptionFlow] Local verification result:',
+              result,
+            );
+          } else if (currentVerificationMethod === 'iapkit') {
+            console.log('[SubscriptionFlow] Verifying with IAPKit...');
+            const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+
+            console.log(
+              '[SubscriptionFlow] API Key loaded:',
+              apiKey ? '✓ Present' : '✗ Missing',
+            );
+            console.log(
+              '[SubscriptionFlow] purchase.purchaseToken:',
+              purchase.purchaseToken
+                ? `✓ Present (${purchase.purchaseToken.length} chars)`
+                : '✗ Missing or empty',
+            );
+
+            if (!apiKey) {
+              throw new Error('EXPO_PUBLIC_IAPKIT_API_KEY not configured');
+            }
+
+            const jwsOrToken = purchase.purchaseToken ?? '';
+            if (!jwsOrToken) {
+              console.warn(
+                '[SubscriptionFlow] No purchaseToken/JWS available for verification',
+              );
+              throw new Error('No purchase token available for IAPKit verification');
+            }
+
+            const verifyRequest: VerifyPurchaseWithProviderProps = {
+              provider: 'iapkit',
+              iapkit: {
+                apiKey,
+                apple: {
+                  jws: jwsOrToken,
+                },
+                google: {
+                  purchaseToken: jwsOrToken,
+                },
+              },
+            };
+
+            console.log(
+              '[SubscriptionFlow] Sending IAPKit verification request:',
+              JSON.stringify(
+                {
+                  provider: verifyRequest.provider,
+                  iapkit: {
+                    apiKey: '***hidden***',
+                    ...(Platform.OS === 'ios'
+                      ? {apple: {jws: `${jwsOrToken.substring(0, 50)}...`}}
+                      : {google: {purchaseToken: `${jwsOrToken.substring(0, 50)}...`}}),
+                  },
+                },
+                null,
+                2,
+              ),
+            );
+
+            const result = await verifyPurchaseWithProvider(verifyRequest);
+            console.log(
+              '[SubscriptionFlow] IAPKit verification result:',
+              result,
+            );
+
+            // Show verification result to user
+            if (result.iapkit && result.iapkit.length > 0) {
+              const iapkitResult = result.iapkit[0];
+              const statusEmoji = iapkitResult.isValid ? '✅' : '⚠️';
+              const stateText = iapkitResult.state || 'unknown';
+
+              Alert.alert(
+                `${statusEmoji} IAPKit Verification`,
+                `Valid: ${iapkitResult.isValid}\nState: ${stateText}\nStore: ${iapkitResult.store || 'unknown'}`,
+              );
+            }
+          }
+        } catch (error) {
+          console.warn('[SubscriptionFlow] Verification failed:', error);
+          // Extract error message from various formats
+          let errorMessage = 'Unknown error';
+          if (error instanceof Error) {
+            errorMessage = error.message;
+          } else if (
+            error &&
+            typeof error === 'object' &&
+            'errors' in error &&
+            Array.isArray((error as {errors: unknown[]}).errors)
+          ) {
+            const errors = (error as {errors: {message?: string}[]}).errors;
+            errorMessage =
+              errors[0]?.message || JSON.stringify(errors[0]) || 'Unknown error';
+          }
+          Alert.alert('Verification Failed', `Purchase verification failed: ${errorMessage}`);
+        } finally {
+          setIsProcessing(false);
+        }
+      }
 
       try {
         await finishTransaction({
@@ -1483,6 +1646,37 @@ function SubscriptionFlowContainer() {
     }
   }, [handleRefreshStatus, subscriptions]);
 
+  const handleChangeVerificationMethod = useCallback(() => {
+    const options = ['Ignore Verification', 'Local Verification', 'IAPKit Verification', 'Cancel'];
+    const cancelButtonIndex = 3;
+
+    showActionSheetWithOptions(
+      {
+        title: 'Select Purchase Verification Method',
+        message:
+          'Choose how to verify purchases after successful transactions.\n\n' +
+          '• Ignore: Skip verification (for testing)\n' +
+          '• Local: Verify with Apple/Google directly\n' +
+          '• IAPKit: Verify using IAPKit service',
+        options,
+        cancelButtonIndex,
+      },
+      (selectedIndex?: number) => {
+        switch (selectedIndex) {
+          case 0:
+            setVerificationMethod('ignore');
+            break;
+          case 1:
+            setVerificationMethod('local');
+            break;
+          case 2:
+            setVerificationMethod('iapkit');
+            break;
+        }
+      },
+    );
+  }, [showActionSheetWithOptions]);
+
   return (
     <SubscriptionFlow
       connected={connected}
@@ -1496,6 +1690,8 @@ function SubscriptionFlowContainer() {
       onRetryLoadSubscriptions={handleRetryLoadSubscriptions}
       onRefreshStatus={handleRefreshStatus}
       onManageSubscriptions={handleManageSubscriptions}
+      verificationMethod={verificationMethod}
+      onChangeVerificationMethod={handleChangeVerificationMethod}
     />
   );
 }
@@ -1556,6 +1752,32 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statusText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  verificationContainer: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 15,
+    marginTop: 15,
+  },
+  verificationButton: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 6,
+    padding: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  verificationButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  verificationButtonIcon: {
     fontSize: 12,
     color: '#666',
   },

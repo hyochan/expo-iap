@@ -80,6 +80,9 @@ const COMMON_ERROR_CODE_MAP: Record<ErrorCode, string> = {
   [ErrorCode.BillingUnavailable]: ErrorCode.BillingUnavailable,
   [ErrorCode.FeatureNotSupported]: ErrorCode.FeatureNotSupported,
   [ErrorCode.EmptySkuList]: ErrorCode.EmptySkuList,
+  [ErrorCode.PurchaseVerificationFailed]: ErrorCode.PurchaseVerificationFailed,
+  [ErrorCode.PurchaseVerificationFinishFailed]: ErrorCode.PurchaseVerificationFinishFailed,
+  [ErrorCode.PurchaseVerificationFinished]: ErrorCode.PurchaseVerificationFinished,
 };
 
 export const ErrorCodeMapping = {
