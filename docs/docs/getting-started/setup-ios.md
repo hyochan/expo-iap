@@ -89,14 +89,14 @@ function App() {
 
 ### iOS-Specific Features
 
-#### Receipt Validation
+#### Purchase Verification
 
 ```tsx
-const validateReceiptExample = async (productId: string) => {
+const verifyPurchaseExample = async (productId: string) => {
   try {
     const result = await validateReceipt(productId);
 
-    console.log('Receipt validation result:', {
+    console.log('Purchase verification result:', {
       isValid: result.isValid,
       receiptData: result.receiptData,
       jwsRepresentation: result.jwsRepresentation, // iOS 15+
@@ -104,7 +104,7 @@ const validateReceiptExample = async (productId: string) => {
 
     return result.isValid;
   } catch (error) {
-    console.error('Receipt validation failed:', error);
+    console.error('Purchase verification failed:', error);
     return false;
   }
 };
@@ -163,9 +163,9 @@ const handlePurchaseError = (error: any) => {
 - Verify internet connection
 - Try on a real device (simulator may have issues)
 
-### Receipt Validation Failures
+### Purchase Verification Failures
 
-**Problem**: Receipt validation returns invalid **Solution**:
+**Problem**: Purchase verification returns invalid **Solution**:
 
 - Check if app is properly signed
 - Verify receipt data is not corrupted
@@ -173,7 +173,7 @@ const handlePurchaseError = (error: any) => {
 
 ## Best Practices
 
-1. **Always validate receipts** server-side for production apps
+1. **Always verify purchases** server-side for production apps
 2. **Handle all error cases** gracefully
 3. **Test thoroughly** with sandbox users
 4. **Provide restore functionality** for non-consumable products

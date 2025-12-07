@@ -10,7 +10,9 @@ import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 <GreatFrontendBanner link="https://www.greatfrontend.com/front-end-system-design-playbook?fpr=hyo73" title="Front End System Design Guidebook" />
 
+:::tip What you'll build
 This example walks through a clean purchase flow using expo-iap with the `useIAP` hook and the new platform‑specific request shape. It mirrors the working sample in `example/app/purchase-flow.tsx`.
+:::
 
 View the full example source:
 
@@ -58,10 +60,10 @@ Connect → Fetch Products → Request Purchase → Server Validate → Finish T
 - Use `onPurchaseSuccess`/`onPurchaseError` from `useIAP`
 - Always call `finishTransaction` after server validation
 
-### 4. Receipt Validation
+### 4. Purchase Verification
 
-- Perform validation on your backend (never only on device)
-- iOS: validate the receipt/JWS; Android: validate purchase token + package name
+- Perform verification on your backend (never only on device)
+- iOS: verify the JWS token; Android: verify purchase token + package name
 
 ### 5. User Experience
 
@@ -105,11 +107,11 @@ const token = purchase.purchaseToken; // iOS JWS or Android token
 // const pkg = (purchase as PurchaseAndroid).packageNameAndroid;
 ```
 
-### Receipt Validation
+### Purchase Verification
 
-Receipt validation requires different approaches:
+Purchase verification (aka receipt validation) requires different approaches:
 
-- iOS: verify receipt/JWS on your server against Apple
+- iOS: verify JWS token on your server against Apple
 - Android: verify token and package name against Google Play Developer API
 
 ## Usage
@@ -134,13 +136,147 @@ You can customize this example by:
 
 1. **Styling**: Modify the `styles` object to match your app's design
 2. **Product IDs**: Update `PRODUCT_IDS` with your actual product IDs
-3. **Validation**: Implement proper server-side receipt validation
+3. **Validation**: Implement proper server-side purchase verification
 4. **Error Handling**: Add more specific error handling for your use case
 5. **Features**: Add features like purchase restoration, subscription management, etc.
 
+## IAPKit Server Verification
+
+[IAPKit](https://iapkit.com) is a server-side receipt verification service that simplifies purchase validation. The example app includes built-in support for IAPKit verification.
+
+### Setup
+
+1. **Get your API key** from [IAPKit Dashboard](https://iapkit.com)
+
+2. **Configure environment variable** in your project:
+
+```bash
+# .env or app.config.ts
+EXPO_PUBLIC_IAPKIT_API_KEY=your_iapkit_api_key_here
+```
+
+3. **Select IAPKit verification** in the example app by tapping the "Purchase Verification" button and selecting "☁️ IAPKit (Server)"
+
+### How It Works
+
+When IAPKit verification is enabled, after a successful purchase:
+
+```tsx
+import {useIAP, type VerifyPurchaseWithProviderProps} from 'expo-iap';
+import {Platform, Alert} from 'react-native';
+
+function PurchaseWithIAPKit() {
+  const {verifyPurchaseWithProvider, finishTransaction} = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+
+      if (!apiKey) {
+        console.error('EXPO_PUBLIC_IAPKIT_API_KEY not configured');
+        return;
+      }
+
+      const jwsOrToken = purchase.purchaseToken ?? '';
+
+      const verifyRequest: VerifyPurchaseWithProviderProps = {
+        provider: 'iapkit',
+        iapkit: {
+          apiKey,
+          apple: {
+            jws: jwsOrToken, // iOS: JWS token from StoreKit 2
+          },
+          google: {
+            purchaseToken: jwsOrToken, // Android: purchase token
+          },
+        },
+      };
+
+      try {
+        const result = await verifyPurchaseWithProvider(verifyRequest);
+
+        if (result.iapkit && result.iapkit.length > 0) {
+          const iapkitResult = result.iapkit[0];
+
+          if (iapkitResult.isValid) {
+            // Purchase is valid - grant entitlements
+            console.log('Purchase verified:', iapkitResult.state);
+
+            await finishTransaction({
+              purchase,
+              isConsumable: true, // or false for non-consumables
+            });
+
+            Alert.alert('Success', 'Purchase verified and completed!');
+          } else {
+            Alert.alert(
+              'Verification Failed',
+              'Purchase could not be verified',
+            );
+          }
+        }
+      } catch (error) {
+        console.error('IAPKit verification failed:', error);
+      }
+    },
+  });
+
+  // ... rest of component
+}
+```
+
+### Verification Response
+
+IAPKit returns a standardized response:
+
+```typescript
+import type {IapkitPurchaseState, IapkitStore} from 'expo-iap';
+
+export interface RequestVerifyPurchaseWithIapkitResult {
+  /** Whether the purchase is valid (not falsified). */
+  isValid: boolean;
+  /** The current state of the purchase. */
+  state: IapkitPurchaseState;
+  store: IapkitStore;
+}
+
+// Available states:
+type IapkitPurchaseState =
+  | 'entitled'
+  | 'pending-acknowledgment'
+  | 'pending'
+  | 'canceled'
+  | 'expired'
+  | 'ready-to-consume'
+  | 'consumed'
+  | 'unknown'
+  | 'inauthentic';
+
+// Available stores:
+type IapkitStore = 'apple' | 'google';
+```
+
+### Verification Methods
+
+The example app supports three verification methods:
+
+| Method | Description | Use Case |
+| --- | --- | --- |
+| **None (Skip)** | Skip verification | Testing/Development |
+| **Local (Device)** | Verify with Apple/Google directly | Simple validation |
+| **IAPKit (Server)** | Server-side verification via IAPKit | Production recommended |
+
+### Benefits of IAPKit
+
+- **Unified API**: Same verification flow for iOS and Android
+- **Server-side validation**: More secure than client-only validation
+- **Fraud detection**: Built-in fraud prevention
+- **Webhook support**: Real-time purchase notifications
+- **Dashboard**: Monitor purchases and analytics
+
+For more information, visit [IAPKit Documentation](https://iapkit.com/docs).
+
 ## Next Steps
 
-- Implement proper [receipt validation](../guides/purchases#receipt-validation)
+- Implement proper [purchase verification](../guides/purchases#purchase-verification)
 - Add [purchase restoration](../guides/purchases#purchase-restoration)
 - Handle [subscription management](../api/methods/core-methods#deeplinktosubscriptions)
 - Add comprehensive [error handling](../api/error-handling)

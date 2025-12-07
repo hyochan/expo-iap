@@ -33,508 +33,122 @@ Before you request any purchase, you should set `purchaseUpdatedListener` from `
 
 1. **Event-driven**: Purchases are handled through events rather than promises
 2. **Asynchronous**: Purchases may complete after your app is closed or crashed
-3. **Validation required**: Always validate receipts on your server
+3. **Validation required**: Always validate purchases on your server
 4. **State management**: Use the `useIAP` hook for automatic state management
 
 ## Basic Purchase Flow
 
-### 1. Setup Purchase Listeners
+### 1. Setup Purchase Listeners (Without Hook)
 
 ```tsx
 import {
   initConnection,
-  purchaseErrorListener,
   purchaseUpdatedListener,
+  purchaseErrorListener,
+  finishTransaction,
   type ProductPurchase,
   type PurchaseError,
-  finishTransaction,
 } from 'expo-iap';
 
-class App extends Component {
-  purchaseUpdateSubscription = null;
-  purchaseErrorSubscription = null;
-
-  componentDidMount() {
+function App() {
+  useEffect(() => {
     initConnection().then(() => {
-      this.purchaseUpdateSubscription = purchaseUpdatedListener(
-            (purchase: ProductPurchase) => {
-              console.log('purchaseUpdatedListener', purchase);
-              this.handlePurchaseUpdate(purchase);
-            },
-          );
+      const purchaseUpdate = purchaseUpdatedListener(
+        (purchase: ProductPurchase) => {
+          // Validate on server, then finish transaction
+          finishTransaction({purchase, isConsumable: true});
+        },
+      );
 
-          this.purchaseErrorSubscription = purchaseErrorListener(
-            (error: PurchaseError) => {
-              console.log('purchaseErrorListener', error);
-              this.handlePurchaseError(error);
-            },
-          );
-        });
+      const purchaseError = purchaseErrorListener((error: PurchaseError) => {
+        console.warn('Purchase error:', error);
+      });
+
+      return () => {
+        purchaseUpdate.remove();
+        purchaseError.remove();
+      };
     });
-  }
-
-  componentWillUnmount() {
-    if (this.purchaseUpdateSubscription) {
-      this.purchaseUpdateSubscription.remove();
-      this.purchaseUpdateSubscription = null;
-    }
-    if (this.purchaseErrorSubscription) {
-      this.purchaseErrorSubscription.remove();
-      this.purchaseErrorSubscription = null;
-    }
-  }
-
-  handlePurchaseUpdate = (purchase: ProductPurchase) => {
-    const receipt = purchase.purchaseToken;
-    if (receipt) {
-      yourAPI
-        .deliverOrDownloadFancyInAppPurchase(purchase.purchaseToken)
-        .then(async (deliveryResult) => {
-          if (isSuccess(deliveryResult)) {
-            // Tell the store that you have delivered what has been paid for.
-            // Failure to do this will result in the purchase being refunded on Android and
-            // the purchase event will reappear on every relaunch of the app until you succeed
-            // in doing the below. It will also be impossible for the user to purchase consumables
-            // again until you do this.
-
-            // IMPORTANT: Always validate receipts on your server for both platforms
-            if (Platform.OS === 'ios') {
-              const receiptData = await validateReceipt();
-              // Send to your server for validation with Apple
-              const isValid = await validateReceiptOnServer(receiptData);
-              if (!isValid) {
-                console.error('Invalid receipt');
-                return;
-              }
-            } else if (Platform.OS === 'android') {
-              // Android also requires server-side validation
-              const purchaseToken = purchase.purchaseTokenAndroid;
-              const packageName = purchase.packageNameAndroid;
-
-              // Your server should:
-              // 1. Get Google Play service account credentials
-              // 2. Use Google Play Developer API to verify the purchase
-              const isValid = await validateAndroidPurchaseOnServer({
-                purchaseToken,
-                packageName,
-                productId: purchase.productId,
-              });
-
-              if (!isValid) {
-                console.error('Invalid Android purchase');
-                return;
-              }
-            }
-
-            // IMPORTANT: Always finish the transaction to prevent it from replaying
-            // If consumable (can be purchased again)
-            await finishTransaction({purchase, isConsumable: true});
-            // If not consumable (default: isConsumable = false)
-            await finishTransaction({purchase, isConsumable: false});
-          } else {
-            // Retry / conclude the purchase is fraudulent, etc.
-          }
-        });
-    }
-  };
-
-  handlePurchaseError = (error: PurchaseError) => {
-    console.warn('purchaseErrorListener', error);
-  };
+  }, []);
 }
 ```
 
 ### 2. Using with Hooks (Recommended)
 
-For a more modern approach using React hooks, here's a comprehensive implementation:
-
 ```tsx
-import React, {useEffect, useState, useCallback} from 'react';
-import {Platform, Alert, InteractionManager} from 'react-native';
 import {useIAP, ErrorCode} from 'expo-iap';
 
-// Define your product SKUs
-const bulbPackSkus = ['dev.hyo.martie.10bulbs', 'dev.hyo.martie.30bulbs'];
-const subscriptionSkus = ['dev.hyo.martie.premium'];
-
-export default function PurchaseScreen() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-
-  const handlePurchaseUpdate = async (purchase: any) => {
-    try {
-      setIsLoading(true);
-      console.log('Processing purchase:', purchase);
-
-      const productId = purchase.id;
-
-      // IMPORTANT: Validate receipt on your server before finishing transaction
-      // This is crucial for security and fraud prevention
-      const validationResult = await handleValidateReceipt(productId, purchase);
-
-      if (validationResult.isValid) {
-        // Determine if this is a consumable product
-        const isConsumable = bulbPackSkus.includes(productId);
-
-        // Finish the transaction
-        await finishTransaction({
-          purchase,
-          isConsumable, // Set to true for consumable products
-        });
-
-        // Record purchase in your database
-        await recordPurchaseInDatabase(purchase, productId);
-
-        // Update local state (e.g., add bulbs, enable premium features)
-        await updateLocalState(productId);
-
-        // Show success message
-        showSuccessMessage(productId);
-      } else {
-        Alert.alert(
-          'Validation Error',
-          'Purchase could not be validated. Please contact support.',
-        );
-      }
-    } catch (error) {
-      console.error('Error handling purchase:', error);
-      Alert.alert('Error', 'Failed to process purchase.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+function PurchaseScreen() {
   const {
     connected,
     products,
-    subscriptions,
     fetchProducts,
     requestPurchase,
     finishTransaction,
-    validateReceipt,
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      console.log('Purchase successful:', purchase);
-      await handlePurchaseUpdate(purchase);
+      const isValid = await validateOnServer(purchase);
+      if (!isValid) return;
+      await finishTransaction({purchase, isConsumable: true});
     },
     onPurchaseError: (error) => {
-      setIsLoading(false);
-
-      // Don't show error for user cancellation
-      if (error.code === ErrorCode.UserCancelled) {
-        return;
+      if (error.code !== ErrorCode.UserCancelled) {
+        console.error('Purchase failed:', error);
       }
-
-      Alert.alert(
-        'Purchase Error',
-        'Failed to complete purchase. Please try again.',
-      );
-      console.error('Purchase error:', error);
     },
   });
 
-  // Initialize products when IAP connection is established
   useEffect(() => {
-    if (!connected) return;
-
-    const initializeIAP = async () => {
-      try {
-        // Get both products and subscriptions
-        await fetchProducts({skus: bulbPackSkus, type: 'in-app'});
-        await fetchProducts({skus: subscriptionSkus, type: 'subs'});
-        setIsReady(true);
-      } catch (error) {
-        console.error('Error initializing IAP:', error);
-      }
-    };
-
-    initializeIAP();
-  }, [connected, fetchProducts]);
-
-  // Validate receipt helper
-  const handleValidateReceipt = useCallback(
-    async (sku: string, purchase: any) => {
-      try {
-        if (Platform.OS === 'ios') {
-          return await validateReceipt(sku);
-        } else if (Platform.OS === 'android') {
-          const purchaseToken = purchase.purchaseTokenAndroid;
-          const packageName =
-            purchase.packageNameAndroid || 'your.package.name';
-          const isSub = subscriptionSkus.includes(sku);
-
-          return await validateReceipt(sku, {
-            packageName,
-            productToken: purchaseToken,
-            isSub,
-          });
-        }
-        return {isValid: true}; // Default for unsupported platforms
-      } catch (error) {
-        console.error('Receipt validation failed:', error);
-        return {isValid: false};
-      }
-    },
-    [validateReceipt],
-  );
-
-  // Request purchase for products
-  const handlePurchaseBulbs = async (productId: string) => {
-    if (!connected) {
-      Alert.alert(
-        'Not Connected',
-        'Store connection unavailable. Please try again later.',
-      );
-      return;
+    if (connected) {
+      fetchProducts({skus: ['product.id'], type: 'in-app'});
     }
+  }, [connected]);
 
-    try {
-      setIsLoading(true);
-
-      // Platform-specific purchase request (v2.7.0+)
-      await requestPurchase({
-        request: {
-          ios: {
-            sku: productId,
-            andDangerouslyFinishTransactionAutomatically: false,
-          },
-          android: {
-            skus: [productId],
-          },
-        },
-      });
-    } catch (error) {
-      setIsLoading(false);
-      console.error('Purchase request failed:', error);
-    }
-  };
-
-  // Request purchase for subscriptions
-  const handlePurchaseSubscription = async (subscriptionId: string) => {
-    if (!connected) {
-      Alert.alert(
-        'Not Connected',
-        'Store connection unavailable. Please try again later.',
-      );
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-
-      // Find subscription to get offer details
-      const subscription = subscriptions.find((s) => s.id === subscriptionId);
-      const subscriptionOffers = subscription?.subscriptionOfferDetails?.map(
-        (offer) => ({
-          sku: subscriptionId,
-          offerToken: offer.offerToken,
-        }),
-      ) || [{sku: subscriptionId, offerToken: ''}];
-
-      // Platform-specific subscription request (v2.7.0+)
-      await requestPurchase({
-        request: {
-          ios: {
-            sku: subscriptionId,
-          },
-          android: {
-            skus: [subscriptionId],
-            subscriptionOffers,
-          },
-        },
-        type: 'subs',
-      });
-    } catch (error) {
-      setIsLoading(false);
-      console.error('Subscription request failed:', error);
-    }
-  };
-
-  const recordPurchaseInDatabase = async (purchase: any, productId: string) => {
-    // Implement your database recording logic here
-    console.log('Recording purchase in database:', {purchase, productId});
-  };
-
-  const updateLocalState = async (productId: string) => {
-    // Update your local app state based on the purchase
-    if (bulbPackSkus.includes(productId)) {
-      // Add bulbs to user's account
-      const bulbCount = productId.includes('10bulbs') ? 10 : 30;
-      console.log(`Adding ${bulbCount} bulbs to user account`);
-    } else if (subscriptionSkus.includes(productId)) {
-      // Enable premium features
-      console.log('Enabling premium features');
-    }
-  };
-
-  const showSuccessMessage = (productId: string) => {
-    InteractionManager.runAfterInteractions(() => {
-      if (bulbPackSkus.includes(productId)) {
-        const bulbCount = productId.includes('10bulbs') ? 10 : 30;
-        Alert.alert(
-          'Thank You!',
-          `${bulbCount} bulbs have been added to your account.`,
-        );
-      } else if (subscriptionSkus.includes(productId)) {
-        Alert.alert(
-          'Thank You!',
-          'Premium subscription activated successfully.',
-        );
-      }
+  const handlePurchase = async (productId: string) => {
+    await requestPurchase({
+      request: {
+        ios: {sku: productId},
+        android: {skus: [productId]},
+      },
     });
   };
-
-  return (
-    <View>
-      {/* Your purchase UI components */}
-      <Text>Connection Status: {connected ? 'Connected' : 'Disconnected'}</Text>
-      <Text>Products Ready: {isReady ? 'Yes' : 'No'}</Text>
-      {/* Add your purchase buttons and UI here */}
-    </View>
-  );
 }
 ```
 
+For a complete implementation, see [example/app/purchase-flow.tsx](https://github.com/hyochan/expo-iap/blob/main/example/app/purchase-flow.tsx).
+
 ### 3. Request a Purchase
 
-**Important Platform Difference:**
+**Platform Differences:**
 
-- **iOS**: Can only purchase one product at a time (single SKU)
-- **Android**: Can purchase multiple products at once (array of SKUs)
-
-This fundamental difference requires platform-specific handling. Starting from v2.7.0, we provide a cleaner API:
-
-### New Platform-Specific API (v2.7.0+)
+- **iOS**: Single SKU per purchase
+- **Android**: Array of SKUs (supports multiple)
 
 ```tsx
-import {requestPurchase} from 'expo-iap';
+// Products
+await requestPurchase({
+  request: {
+    ios: {sku: productId},
+    android: {skus: [productId]},
+  },
+});
 
-// Cleaner approach with platform-specific parameters
-const handleBuyProduct = async (productId: string) => {
-  try {
-    await requestPurchase({
-      request: {
-        ios: {
-          sku: productId,
-          appAccountToken: 'user-123', // Optional: for server-side validation
-        },
-        android: {
-          skus: [productId],
-          obfuscatedAccountIdAndroid: 'user-123', // Optional: user identifier
-        },
-      },
-    });
-  } catch (err) {
-    console.warn(err.code, err.message);
-  }
-};
-```
-
-### Legacy API (Still Supported)
-
-```tsx
-import {requestPurchase, Platform} from 'expo-iap';
-
-// For regular products (consumables/non-consumables)
-const handleBuyProduct = async (productId) => {
-  try {
-    if (Platform.OS === 'ios') {
-      // iOS: single product purchase
-      await requestPurchase({
-        request: {sku: productId},
-      });
-    } else if (Platform.OS === 'android') {
-      // Android: array of products (even for single purchase)
-      await requestPurchase({
-        request: {skus: [productId]},
-      });
-    }
-  } catch (err) {
-    console.warn(err.code, err.message);
-  }
-};
-```
-
-**For subscriptions, the platform differences are even more significant:**
-
-### New Subscription API (v2.7.0+)
-
-```tsx
-const handleBuySubscription = async (subscriptionId: string) => {
-  try {
-    // Find the subscription product to get offer details (Android)
-    const subscription = subscriptions.find((s) => s.id === subscriptionId);
-
-    await requestPurchase({
-      request: {
-        ios: {
+// Subscriptions (Android requires offerToken)
+const subscription = subscriptions.find((s) => s.id === subscriptionId);
+await requestPurchase({
+  request: {
+    ios: {sku: subscriptionId},
+    android: {
+      skus: [subscriptionId],
+      subscriptionOffers:
+        subscription?.subscriptionOfferDetailsAndroid?.map((offer) => ({
           sku: subscriptionId,
-          appAccountToken: 'user-123', // Optional: for server-side validation
-        },
-        android: {
-          skus: [subscriptionId],
-          subscriptionOffers:
-            subscription?.subscriptionOfferDetails?.map((offer) => ({
-              sku: subscriptionId,
-              offerToken: offer.offerToken,
-            })) || [],
-          obfuscatedAccountIdAndroid: 'user-123', // Optional: user identifier
-        },
-      },
-      type: 'subs',
-    });
-  } catch (err) {
-    console.warn(err.code, err.message);
-  }
-};
-```
-
-### Legacy Subscription API
-
-```tsx
-const handleBuySubscription = async (subscriptionId: string) => {
-  try {
-    if (Platform.OS === 'ios') {
-      await requestPurchase({
-        request: {sku: subscriptionId},
-        type: 'subs',
-      });
-    } else if (Platform.OS === 'android') {
-      // Find the subscription product to get its offer details
-      const subscription = subscriptions.find((s) => s.id === subscriptionId);
-
-      if (!subscription) {
-        throw new Error(`Subscription with ID ${subscriptionId} not found`);
-      }
-
-      // Check if the subscription has offer details
-      if (subscription.subscriptionOfferDetails?.length > 0) {
-        // Android requires offerToken for each subscription SKU
-        // Use the first available offer or let user choose
-        const firstOffer = subscription.subscriptionOfferDetails[0];
-        const subscriptionOffers = [
-          {
-            sku: subscriptionId,
-            offerToken: firstOffer.offerToken,
-          },
-        ];
-
-        await requestPurchase({
-          request: {
-            skus: [subscriptionId],
-            subscriptionOffers, // Required: Must match number of SKUs
-          },
-          type: 'subs',
-        });
-      } else {
-        // This should not happen with properly configured subscriptions
-        throw new Error('No subscription offers available');
-      }
-    }
-  } catch (err) {
-    console.warn(err.code, err.message);
-  }
-};
+          offerToken: offer.offerToken,
+        })) || [],
+    },
+  },
+  type: 'subs',
+});
 ```
 
 ## Important Notes
@@ -547,7 +161,7 @@ const handleBuySubscription = async (subscriptionId: string) => {
 
 3. **Never rely on promises**: The purchase flow is event-driven, not promise-based. Always use listeners to handle purchase results.
 
-4. **Validate receipts server-side**: Never trust client-side validation. Always validate receipts on your secure server.
+4. **Validate purchases server-side**: Never trust client-side validation. Always validate purchases on your secure server.
 
 5. **Finish transactions**: Always call `finishTransaction` after successful validation to complete the purchase.
 
@@ -569,13 +183,13 @@ On iOS, if you don't call `finishTransaction` after a successful purchase, the t
 const {finishTransaction} = useIAP({
   onPurchaseSuccess: async (purchase) => {
     try {
-      // 1. IMPORTANT: Validate receipt on your server before finishing transaction
+      // 1. IMPORTANT: Validate purchase on your server before finishing transaction
       // This is crucial for security and fraud prevention
       let isValid = false;
 
       if (Platform.OS === 'ios') {
         // Send purchase info to your server for validation with Apple
-        isValid = await validateReceiptOnServer({
+        isValid = await validatePurchaseOnServer({
           transactionId: purchase.transactionId,
           productId: purchase.productId,
         });
@@ -595,7 +209,7 @@ const {finishTransaction} = useIAP({
       }
 
       if (!isValid) {
-        console.error('Invalid receipt - purchase validation failed');
+        console.error('Invalid purchase - validation failed');
         return;
       }
 
@@ -620,23 +234,16 @@ const {finishTransaction} = useIAP({
 **Handle unfinished transactions on startup**:
 
 ```tsx
-// On app initialization
-componentDidMount() {
+useEffect(() => {
   initConnection().then(async () => {
-    // Check for unfinished transactions
     const purchases = await getAvailablePurchases();
-
     for (const purchase of purchases) {
-      // If already processed, just finish the transaction
       if (await isAlreadyProcessed(purchase)) {
-        await finishTransaction({ purchase });
+        await finishTransaction({purchase});
       }
     }
-
-    // Set up purchase listeners
-    this.setupPurchaseListeners();
   });
-}
+}, []);
 ```
 
 ## Getting Product Information
@@ -789,42 +396,37 @@ const buySubscription = async (subscriptionId: string) => {
 - offerToken comes from `subscriptionOfferDetails` in the product details
 - Without offerToken, you'll get: "The number of skus must match the number of offerTokens"
 
-## Receipt Validation
+## Purchase Verification
 
-### Server-Side Validation (Required for Production)
+Purchase verification ensures purchases are legitimate.
 
-**Important**: Always validate receipts on your server in production. Client-side validation is NOT secure and should only be used for development/testing.
+Always validate purchases on a secure server for production apps. Client-side verification is only appropriate for local development and testing because it can be tampered with.
 
-**Note**: The `validateReceipt()` function from the `useIAP` hook performs client-side validation which is vulnerable to tampering. For production apps, ALWAYS implement server-side validation.
+### Server-Side Verification (Required for Production)
 
-#### iOS Receipt Validation
+#### iOS Purchase Verification
 
 ```typescript
-// Development only (NOT SECURE):
-// const { validateReceipt } = useIAP();
-// const receiptData = await validateReceipt(productId);
-
 // Production (RECOMMENDED):
 // Send purchase info directly to your server
-const response = await fetch('https://your-server.com/validate-ios-receipt', {
+const response = await fetch('https://your-server.com/verify-ios-purchase', {
   method: 'POST',
   headers: {'Content-Type': 'application/json'},
   body: JSON.stringify({
     transactionId: purchase.transactionId,
     productId: purchase.productId,
-    // Your server will fetch the receipt from Apple
+    // Your server will verify with Apple
   }),
 });
 ```
 
 Your server should:
 
-1. Send the receipt to Apple's verification endpoint
-2. Verify the receipt's authenticity
-3. Check the bundle ID and product ID
-4. Ensure the receipt hasn't been used before
+1. Verify the transaction with Apple's App Store Server API
+2. Check the bundle ID and product ID
+3. Ensure the transaction hasn't been used before
 
-#### Android Purchase Validation
+#### Android Purchase Verification
 
 ```typescript
 // Client-side: Get purchase details
@@ -854,6 +456,87 @@ Your server should:
 
 **Never expose your Google Play service account credentials in client code!**
 
+### Development-Only Client Verification
+
+Use client-side verification helpers only for development, and prefer the server flows above in production.
+
+**Platform differences:**
+
+- **iOS**: Only requires the SKU for validation
+- **Android**: Requires `packageName`, `productToken`, and optionally `accessToken`
+
+```tsx
+const handlePurchaseVerification = useCallback(
+  async (sku: string, purchase: any) => {
+    try {
+      if (Platform.OS === 'ios') {
+        return await verifyPurchase(sku);
+      } else if (Platform.OS === 'android') {
+        const purchaseToken = purchase.purchaseTokenAndroid;
+        const packageName = purchase.packageNameAndroid || 'your.package.name';
+        const isSub = subscriptionSkus.includes(sku);
+
+        if (!purchaseToken || !packageName) {
+          throw new Error(
+            'Android verification requires packageName and productToken',
+          );
+        }
+
+        return await verifyPurchase(sku, {
+          packageName,
+          productToken: purchaseToken,
+          isSub,
+        });
+      }
+      return {isValid: true};
+    } catch (error) {
+      console.error('Purchase verification failed:', error);
+      return {isValid: false};
+    }
+  },
+  [verifyPurchase],
+);
+```
+
+### Server-Side Verification with IAPKit
+
+[IAPKit](https://iapkit.com) provides a unified server-side verification API for both iOS and Android:
+
+```tsx
+import {verifyPurchaseWithProvider} from 'expo-iap';
+
+const verifyWithIAPKit = async (purchase: Purchase) => {
+  if (!purchase.purchaseToken) {
+    console.error('No purchase token available');
+    return {isValid: false};
+  }
+
+  const result = await verifyPurchaseWithProvider({
+    provider: 'iapkit',
+    iapkit: {
+      apiKey: process.env.EXPO_PUBLIC_IAPKIT_API_KEY!,
+      apple: {jws: purchase.purchaseToken},
+      google: {purchaseToken: purchase.purchaseToken},
+    },
+  });
+
+  const verification = result.iapkit?.[0];
+  return {
+    isValid: verification?.isValid ?? false,
+    state: verification?.state,
+  };
+};
+```
+
+For complete IAPKit integration, see [Purchase Flow Example](../examples/purchase-flow#iapkit-server-verification).
+
+**Best Practices:**
+
+- Always validate on your server, never trust client-side validation alone
+- Store purchase data in your database for future reference
+- Implement retry logic for failed validations due to network issues
+- Log validation failures for fraud detection and analysis
+
 ## Advanced Purchase Handling
 
 ### Purchase Restoration
@@ -870,7 +553,7 @@ const restorePurchases = async () => {
 
     for (const purchase of availablePurchases) {
       // Validate and restore each purchase
-      const isValid = await validateReceiptOnServer(purchase);
+      const isValid = await validatePurchaseOnServer(purchase);
       if (isValid) {
         await grantPurchaseToUser(purchase);
       }
@@ -958,85 +641,6 @@ const openSubscriptionManagement = () => {
   deepLinkToSubscriptions({skuAndroid: 'your_subscription_sku'});
 };
 ```
-
-### Receipt Validation
-
-**Important Platform Differences for Receipt Validation:**
-
-- **iOS**: Only requires the SKU for validation
-- **Android**: Requires additional parameters including `packageName`, `productToken`, and optionally `accessToken`
-
-**Always validate receipts on your server for security and fraud prevention.** Client-side validation is not sufficient for production apps.
-
-```tsx
-const handleValidateReceipt = useCallback(
-  async (sku: string, purchase: any) => {
-    try {
-      if (Platform.OS === 'ios') {
-        // iOS: Simple validation with just SKU
-        return await validateReceipt(sku);
-      } else if (Platform.OS === 'android') {
-        // Android: Requires additional validation parameters
-        const purchaseToken = purchase.purchaseTokenAndroid;
-        const packageName = purchase.packageNameAndroid || 'your.package.name';
-        const isSub = subscriptionSkus.includes(sku);
-
-        // Check required Android parameters before validation
-        if (!purchaseToken || !packageName) {
-          throw new Error(
-            'Android validation requires packageName and productToken',
-          );
-        }
-
-        return await validateReceipt(sku, {
-          packageName,
-          productToken: purchaseToken,
-          isSub,
-          // accessToken may be required for server-side validation
-        });
-      }
-      return {isValid: true}; // Default for unsupported platforms
-    } catch (error) {
-      console.error('Receipt validation failed:', error);
-      return {isValid: false};
-    }
-  },
-  [validateReceipt],
-);
-
-// Use in purchase handler
-const handlePurchaseUpdate = async (purchase: any) => {
-  try {
-    const productId = purchase.id;
-
-    // Validate receipt on your server
-    const validationResult = await handleValidateReceipt(productId, purchase);
-
-    if (validationResult.isValid) {
-      // Process the purchase
-      await finishTransaction({
-        purchase,
-        isConsumable: bulbPackSkus.includes(productId),
-      });
-
-      // Update user's purchase state in your app
-      updateUserPurchases(productId);
-    } else {
-      console.error('Receipt validation failed for:', productId);
-      // Handle invalid receipt
-    }
-  } catch (error) {
-    console.error('Purchase processing failed:', error);
-  }
-};
-```
-
-**Best Practices:**
-
-- Always validate on your server, never trust client-side validation alone
-- Store purchase receipts in your database for future reference
-- Implement retry logic for failed validations due to network issues
-- Log validation failures for fraud detection and analysis
 
 ## Error Handling
 

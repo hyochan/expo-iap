@@ -12,7 +12,9 @@ import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 <GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/system-design?fpr=hyo73" title="Front End System design questions" />
 
+:::tip What you'll build
 This guide demonstrates common subscription scenarios using expo-iap. For the complete implementation, see [example/app/subscription-flow.tsx](https://github.com/hyochan/expo-iap/blob/main/example/app/subscription-flow.tsx).
+:::
 
 ## Overview
 
@@ -692,3 +694,151 @@ See [example/app/subscription-flow.tsx](https://github.com/hyochan/expo-iap/blob
 4. **Clear messaging**: Explain when changes take effect
 5. **Test thoroughly**: Use sandbox/test accounts for both platforms
 6. **Store state properly**: Cache subscription status to reduce API calls
+
+## IAPKit Server Verification
+
+[IAPKit](https://iapkit.com) provides server-side receipt verification for subscriptions. The example app includes built-in support for IAPKit verification.
+
+### Setup
+
+1. **Get your API key** from [IAPKit Dashboard](https://iapkit.com)
+
+2. **Configure environment variable**:
+
+```bash
+# .env or app.config.ts
+EXPO_PUBLIC_IAPKIT_API_KEY=your_iapkit_api_key_here
+```
+
+3. **Select IAPKit verification** in the example app by tapping the "Purchase Verification" dropdown and selecting "☁️ IAPKit (Server)"
+
+### Subscription Verification Flow
+
+When IAPKit verification is enabled, subscriptions are verified after successful purchase:
+
+```tsx
+import {useIAP, type VerifyPurchaseWithProviderProps} from 'expo-iap';
+import {Platform, Alert} from 'react-native';
+
+function SubscriptionWithIAPKit() {
+  const {
+    verifyPurchaseWithProvider,
+    finishTransaction,
+    getActiveSubscriptions,
+  } = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+
+      if (!apiKey) {
+        console.error('EXPO_PUBLIC_IAPKIT_API_KEY not configured');
+        return;
+      }
+
+      // Get the JWS (iOS) or purchase token (Android)
+      const jwsOrToken = purchase.purchaseToken ?? '';
+
+      if (!jwsOrToken) {
+        console.warn('No purchase token available for verification');
+        return;
+      }
+
+      const verifyRequest: VerifyPurchaseWithProviderProps = {
+        provider: 'iapkit',
+        iapkit: {
+          apiKey,
+          apple: {
+            jws: jwsOrToken, // iOS: JWS token from StoreKit 2
+          },
+          google: {
+            purchaseToken: jwsOrToken, // Android: purchase token
+          },
+        },
+      };
+
+      try {
+        const result = await verifyPurchaseWithProvider(verifyRequest);
+
+        if (result.iapkit && result.iapkit.length > 0) {
+          const iapkitResult = result.iapkit[0];
+          const statusEmoji = iapkitResult.isValid ? '✅' : '⚠️';
+
+          Alert.alert(
+            `${statusEmoji} IAPKit Verification`,
+            `Valid: ${iapkitResult.isValid}\nState: ${
+              iapkitResult.state || 'unknown'
+            }\nStore: ${iapkitResult.store || 'unknown'}`,
+          );
+
+          if (iapkitResult.isValid) {
+            // Subscription is valid - grant access
+            await finishTransaction({
+              purchase,
+              isConsumable: false, // Subscriptions are non-consumable
+            });
+
+            // Refresh subscription status
+            await getActiveSubscriptions();
+          }
+        }
+      } catch (error) {
+        console.error('IAPKit verification failed:', error);
+        Alert.alert(
+          'Verification Failed',
+          `Subscription verification failed: ${error.message}`,
+        );
+      }
+    },
+  });
+
+  // ... rest of component
+}
+```
+
+### Verification Response for Subscriptions
+
+IAPKit returns subscription-specific information:
+
+```typescript
+interface IAPKitSubscriptionResult {
+  isValid: boolean; // Whether the subscription is valid
+  state: string; // 'active', 'expired', 'cancelled', 'in_grace_period', etc.
+  store: string; // 'apple' or 'google'
+  expirationDate?: string; // When the subscription expires
+  willRenew?: boolean; // Whether auto-renewal is enabled
+  // Additional platform-specific fields...
+}
+```
+
+### Subscription States
+
+IAPKit provides detailed subscription state information:
+
+| State              | Description                              |
+| ------------------ | ---------------------------------------- |
+| `active`           | Subscription is active and valid         |
+| `expired`          | Subscription has expired                 |
+| `cancelled`        | User cancelled but may still have access |
+| `in_grace_period`  | Payment failed, in grace period          |
+| `in_billing_retry` | Payment failed, retrying                 |
+| `revoked`          | Subscription was refunded/revoked        |
+
+### Verification Methods
+
+The example app supports three verification methods:
+
+| Method              | Description                  | Use Case               |
+| ------------------- | ---------------------------- | ---------------------- |
+| **None (Skip)**     | Skip verification            | Testing/Development    |
+| **Local (Device)**  | Verify with `verifyPurchase` | Simple validation      |
+| **IAPKit (Server)** | Server-side via IAPKit       | Production recommended |
+
+### Why Use IAPKit for Subscriptions?
+
+- **Unified API**: Same verification flow for iOS and Android
+- **Subscription status**: Real-time subscription state tracking
+- **Renewal detection**: Detect auto-renewal changes
+- **Grace period handling**: Know when users are in grace period
+- **Fraud prevention**: Server-side validation prevents tampering
+- **Webhook notifications**: Get notified of subscription changes
+
+For more information, visit [IAPKit Documentation](https://iapkit.com/docs).

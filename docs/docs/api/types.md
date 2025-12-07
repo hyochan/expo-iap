@@ -166,9 +166,9 @@ export type MutationRequestPurchaseArgs =
     };
 ```
 
-## Receipt Validation
+## Purchase Verification
 
-Receipt validation results are platform-specific unions:
+Purchase verification (aka receipt validation) results are platform-specific unions:
 
 ```ts
 export type ReceiptValidationResult =

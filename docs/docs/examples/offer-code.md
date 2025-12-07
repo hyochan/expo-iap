@@ -10,7 +10,9 @@ import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 <GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/quiz?fpr=hyo73" title="Quiz interview questions" />
 
+:::tip What you'll build
 Redeem App Store offer/promo codes using the native iOS sheet. This is useful for subscription promotional codes and requires a real iOS device.
+:::
 
 View the full example source:
 

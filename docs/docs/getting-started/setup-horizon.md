@@ -10,9 +10,17 @@ import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 This guide covers setting up expo-iap for Meta Quest devices running Horizon OS.
 
-:::info Horizon OS Support Horizon OS support is available starting from **expo-iap 3.1.22**. See the [release announcement](/blog/3.1.22) for more details. :::
+:::info Horizon OS Support
 
-:::tip Seamless Integration Horizon OS follows the [OpenIAP specification](https://openiap.dev), which means **you can use the exact same expo-iap API** as you would for iOS and Android. No platform-specific code needed - just enable Horizon mode in your configuration and your existing purchase code works seamlessly! :::
+Horizon OS support is available starting from **expo-iap 3.1.22**. See the [release announcement](/blog/3.1.22) for more details.
+
+:::
+
+:::tip Seamless Integration
+
+Horizon OS follows the [OpenIAP specification](https://openiap.dev), which means **you can use the exact same expo-iap API** as you would for iOS and Android. No platform-specific code needed - just enable Horizon mode in your configuration and your existing purchase code works seamlessly!
+
+:::
 
 Horizon OS uses Meta's Platform SDK for in-app purchases instead of Google Play Billing, but expo-iap handles all the platform differences for you.
 
@@ -68,7 +76,11 @@ This will:
 
 ## Platform Detection
 
-:::warning Currently, there is no reliable way to detect Horizon OS at runtime using React Native's Platform API. Horizon OS is based on Android and reports the same platform identifiers as standard Android devices. :::
+:::warning
+
+Currently, there is no reliable way to detect Horizon OS at runtime using React Native's Platform API. Horizon OS is based on Android and reports the same platform identifiers as standard Android devices.
+
+:::
 
 **Best Practice**: Design your app to work seamlessly on both standard Android and Horizon OS without runtime detection. expo-iap automatically handles the platform differences when Horizon mode is enabled in your configuration.
 

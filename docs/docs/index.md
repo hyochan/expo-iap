@@ -29,7 +29,7 @@ If you're shipping an app with expo-iap, we’d love to hear about it—please s
 
 ## Sponsors & Community Support
 
-We're building the OpenIAP ecosystem—defining the spec at [openiap.dev](https://www.openiap.dev), maintaining [OpenIAP](https://github.com/hyodotdev/openiap) for the shared type system, and shipping native SDKs such as [openiap-apple](https://github.com/hyodotdev/openiap-apple) and [openiap-google](https://github.com/hyodotdev/openiap-google). These modules power [expo-iap](https://github.com/hyochan/expo-iap), [flutter_inapp_purchase](https://github.com/hyochan/flutter_inapp_purchase), [kmp-iap](https://github.com/hyochan/kmp-iap), and [react-native-iap](https://github.com/hyochan/react-native-iap). After simplifying fragmented APIs, the next milestone is a streamlined purchase flow: `initConnection → fetchProducts → requestPurchase → (server receipt validation) → finishTransaction`.
+We're building the OpenIAP ecosystem—defining the spec at [openiap.dev](https://www.openiap.dev), maintaining [OpenIAP](https://github.com/hyodotdev/openiap) for the shared type system, and shipping native SDKs such as [openiap-apple](https://github.com/hyodotdev/openiap-apple) and [openiap-google](https://github.com/hyodotdev/openiap-google). These modules power [expo-iap](https://github.com/hyochan/expo-iap), [flutter_inapp_purchase](https://github.com/hyochan/flutter_inapp_purchase), [kmp-iap](https://github.com/hyochan/kmp-iap), and [react-native-iap](https://github.com/hyochan/react-native-iap). After simplifying fragmented APIs, the next milestone is a streamlined purchase flow: `initConnection → fetchProducts → requestPurchase → (server purchase verification) → finishTransaction`.
 
 Your sponsorship keeps this work moving—ensuring more developers across platforms, OS, and frameworks can implement IAPs without headaches while we expand to additional plugins and payment systems. Sponsors receive shout-outs in each release and, depending on tier, can request tailored support. If you’re interested—or have rollout feedback to share—you can view sponsorship options at [openiap.dev/sponsors](https://www.openiap.dev/sponsors).
 
@@ -160,7 +160,7 @@ const {connected, products, fetchProducts, requestPurchase, finishTransaction} =
         const isValid = await verifyReceiptOnServer(purchase);
 
         if (!isValid) {
-          console.error('Receipt validation failed');
+          console.error('Purchase verification failed');
           return;
         }
 
@@ -182,107 +182,9 @@ const {connected, products, fetchProducts, requestPurchase, finishTransaction} =
   });
 ```
 
-### Complete Basic Example
+### Complete Example
 
-Here's a complete working example:
-
-```tsx
-import React, {useEffect} from 'react';
-import {View, Text, Button, StyleSheet} from 'react-native';
-import {useIAP} from 'expo-iap';
-
-export default function SimpleStore() {
-  const {
-    connected,
-    products,
-    fetchProducts,
-    requestPurchase,
-    finishTransaction,
-  } = useIAP({
-    onPurchaseSuccess: async (purchase) => {
-      try {
-        console.log('Purchase completed:', purchase.id);
-
-        // IMPORTANT: Verify receipt on your backend before finishing transaction
-        const isValid = await verifyReceiptOnServer(purchase);
-
-        if (!isValid) {
-          console.error('Receipt validation failed');
-          return;
-        }
-
-        // Grant purchase to user
-        await grantPurchaseToUser(purchase);
-
-        // Finish the transaction
-        await finishTransaction({
-          purchase,
-          isConsumable: true,
-        });
-      } catch (error) {
-        console.error('Failed to complete purchase:', error);
-      }
-    },
-    onPurchaseError: (error) => {
-      console.error('Purchase failed:', error);
-    },
-  });
-
-  const productIds = ['com.example.coins.pack1', 'com.example.premium'];
-
-  useEffect(() => {
-    if (connected) {
-      fetchProducts({skus: productIds, type: 'in-app'});
-    }
-  }, [connected]);
-
-  const handlePurchase = async (productId: string) => {
-    try {
-      await requestPurchase({
-        request: {
-          ios: {
-            sku: productId,
-          },
-          android: {
-            skus: [productId],
-          },
-        },
-      });
-    } catch (error) {
-      console.error('Purchase failed:', error);
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.status}>
-        Store: {connected ? 'Connected ✅' : 'Connecting...'}
-      </Text>
-
-      {products.map((product) => (
-        <View key={product.id} style={styles.product}>
-          <Text style={styles.title}>{product.title}</Text>
-          <Text style={styles.price}>{product.displayPrice}</Text>
-          <Button title="Buy Now" onPress={() => handlePurchase(product.id)} />
-        </View>
-      ))}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {padding: 20},
-  status: {fontSize: 16, marginBottom: 20},
-  product: {
-    padding: 15,
-    marginVertical: 5,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-  },
-  title: {fontSize: 16, fontWeight: 'bold'},
-  price: {fontSize: 14, color: '#666', marginVertical: 5},
-});
-```
+For a complete working implementation, see [example/app/purchase-flow.tsx](https://github.com/hyochan/expo-iap/blob/main/example/app/purchase-flow.tsx).
 
 ## 🏗️ Architecture
 
@@ -327,7 +229,7 @@ Expo IAP is built with a modern architecture that emphasizes:
 
 ### 🛠️ Advanced Topics
 
-- [**Receipt Validation**](./guides/purchases): Secure purchase validation
+- [**Purchase Verification**](./guides/purchases#purchase-verification): Secure purchase verification
 - [**Error Handling**](./api/error-codes): Comprehensive error management
 - [**Subscriptions Flow Example**](./examples/subscription-flow): Handle recurring subscriptions
 - [**Troubleshooting**](./guides/troubleshooting): Common issues and solutions

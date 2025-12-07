@@ -47,7 +47,7 @@ const handlePurchaseUpdate = async (purchase) => {
 
       console.log('Purchase completed successfully');
     } else {
-      console.error('Receipt validation failed');
+      console.error('Purchase verification failed');
     }
   } catch (error) {
     console.error('Error handling purchase:', error);
@@ -287,7 +287,7 @@ export const usePurchaseHandler = () => {
         // Show success message
         showSuccessMessage('Purchase completed successfully!');
       } else {
-        console.error('Receipt validation failed');
+        console.error('Purchase verification failed');
         showErrorMessage('Purchase validation failed. Please contact support.');
       }
     } catch (error) {

@@ -65,23 +65,10 @@ const sidebars: SidebarsConfig = {
           label: 'Core Methods',
           link: {type: 'doc', id: 'api/methods/core-methods'},
           items: [
-            {
-              type: 'link',
-              label: 'Unified APIs',
-              href: '/api/methods/core-methods#unified-apis',
-            },
-            // Nest the separate Listeners doc under Core Methods
+            'api/methods/unified-apis',
             'api/methods/listeners',
-            {
-              type: 'link',
-              label: 'iOS Specific',
-              href: '/api/methods/core-methods#ios-specific',
-            },
-            {
-              type: 'link',
-              label: 'Android Specific',
-              href: '/api/methods/core-methods#android-specific',
-            },
+            'api/methods/ios-specific',
+            'api/methods/android-specific',
           ],
         },
         'api/use-iap',

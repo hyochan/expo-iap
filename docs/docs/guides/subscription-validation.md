@@ -61,7 +61,7 @@ For each purchase you can inspect fields such as:
 
 ### Limitations
 
-StoreKit does **not** bake "current phase" indicators into these records—`offerIOS.paymentMode` tells you which introductory offer was used initially, but does not tell you whether the user is still inside that offer window. To answer questions like "is the user still in a free trial?" you need either the StoreKit status API or server-side receipt validation.
+StoreKit does **not** bake "current phase" indicators into these records—`offerIOS.paymentMode` tells you which introductory offer was used initially, but does not tell you whether the user is still inside that offer window. To answer questions like "is the user still in a free trial?" you need either the StoreKit status API or server-side purchase verification.
 
 ## Using `getActiveSubscriptions`
 

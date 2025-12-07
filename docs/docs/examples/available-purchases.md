@@ -10,7 +10,9 @@ import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 <GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/quiz?fpr=hyo73" title="Quiz interview questions" />
 
+:::tip What you'll build
 This example shows how to list and restore previously purchased items (non‑consumables and active subscriptions) using `getAvailablePurchases()` and `getActiveSubscriptions()`.
+:::
 
 View the full example source:
 

@@ -259,13 +259,13 @@ const goodPurchaseFlow = async (productId) => {
 
 ## Purchase Flow Best Practices
 
-### Receipt Validation and Security
+### Purchase Verification and Security
 
-1. **Server-side receipt validation is recommended**: For production apps, it's highly recommended to validate receipts on your secure server before granting access to content or features. See [Apple's receipt validation guide](https://developer.apple.com/documentation/storekit/in-app_purchase/validating_receipts_with_the_app_store) and [Google Play's verification guide](https://developer.android.com/google/play/billing/security#verify).
+1. **Server-side purchase verification is recommended**: For production apps, it's highly recommended to verify purchases on your secure server before granting access to content or features. See [Apple's verification guide](https://developer.apple.com/documentation/storekit/in-app_purchase/validating_receipts_with_the_app_store) and [Google Play's verification guide](https://developer.android.com/google/play/billing/security#verify).
 
-2. **Finish transactions after validation**: Always call `finishTransaction` after successfully validating a purchase on your server. Failing to do so will cause the purchase to remain in a pending state and may trigger repeated purchase prompts.
+2. **Finish transactions after verification**: Always call `finishTransaction` after successfully verifying a purchase on your server. Failing to do so will cause the purchase to remain in a pending state and may trigger repeated purchase prompts.
 
-3. **Never trust client-side data**: Always validate receipts server-side before granting premium content or features.
+3. **Never trust client-side data**: Always verify purchases server-side before granting premium content or features.
 
 ### Purchase State Management
 

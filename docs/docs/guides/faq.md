@@ -180,13 +180,15 @@ const restorePurchases = async () => {
 };
 ```
 
-## Receipt Validation
+## Purchase Verification
 
-### Do I need to validate receipts on my server?
+Purchase verification (aka receipt validation) ensures purchases are legitimate.
 
-**Yes, absolutely!** Client-side validation is not secure. Always validate receipts on your secure server to prevent fraud.
+### Do I need to verify purchases on my server?
 
-### What should I do after successful receipt validation?
+**Yes, absolutely!** Client-side verification is not secure. Always verify purchases on your secure server to prevent fraud.
+
+### What should I do after successful purchase verification?
 
 1. Grant the purchase to the user (update database, unlock features, etc.)
 2. Call `finishTransaction()` to complete the purchase
@@ -730,7 +732,7 @@ Common causes:
 
 This usually indicates:
 
-- Receipt validation is failing
+- Purchase verification is failing
 - Purchase handling logic has bugs
 - Database/state updates are not working
 

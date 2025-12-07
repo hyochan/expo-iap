@@ -19,7 +19,11 @@ Before installing Expo IAP, make sure you have:
 - iOS 12+ for iOS apps (iOS 15+ required for StoreKit 2 features)
 - Android API level 21+ for Android apps
 
-:::caution Android Kotlin Requirement expo-iap 3.x uses Google Play Billing Library v8, which requires **Kotlin 2.0+**. This is natively supported in Expo SDK 53+ (React Native 0.79+). If you're using Expo SDK 52 or earlier, see the [workaround section](#expo-sdk-52-users) below. :::
+:::caution Android Kotlin Requirement
+
+expo-iap 3.x uses Google Play Billing Library v8, which requires **Kotlin 2.0+**. This is natively supported in Expo SDK 53+ (React Native 0.79+). If you're using Expo SDK 52 or earlier, see the [workaround section](#expo-sdk-52-users) below.
+
+:::
 
 ## Package Installation
 
@@ -196,7 +200,11 @@ Now that you have Expo IAP installed, you can:
 
 ## Expo SDK 52 Users
 
-:::warning Compatibility Issue Expo SDK 52 (React Native 0.76.x) uses a Gradle plugin compiled against **Kotlin 1.9.x**, which is incompatible with Google Play Billing Library v8 (requires Kotlin 2.0+). This creates a build conflict that cannot be resolved by simply overriding the Kotlin version. :::
+:::warning Compatibility Issue
+
+Expo SDK 52 (React Native 0.76.x) uses a Gradle plugin compiled against **Kotlin 1.9.x**, which is incompatible with Google Play Billing Library v8 (requires Kotlin 2.0+). This creates a build conflict that cannot be resolved by simply overriding the Kotlin version.
+
+:::
 
 If you cannot upgrade to Expo SDK 53+, you have the following options:
 
