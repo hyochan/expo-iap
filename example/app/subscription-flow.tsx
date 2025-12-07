@@ -1218,7 +1218,9 @@ function SubscriptionFlowContainer() {
         ExpoIapConsole.log(
           'Already handling a purchase, skipping duplicate callback',
         );
-        console.log('[SubscriptionFlow] Early return: already handling purchase');
+        console.log(
+          '[SubscriptionFlow] Early return: already handling purchase',
+        );
         return;
       }
 
@@ -1288,7 +1290,9 @@ function SubscriptionFlowContainer() {
       }
 
       if (isRestoration) {
-        console.log('[SubscriptionFlow] This is a restoration, skipping verification');
+        console.log(
+          '[SubscriptionFlow] This is a restoration, skipping verification',
+        );
         setPurchaseResult('Subscription restored successfully.');
 
         try {
@@ -1314,7 +1318,9 @@ function SubscriptionFlowContainer() {
         resetHandlingState();
         return;
       }
-      console.log('[SubscriptionFlow] Not a restoration, proceeding to verification check');
+      console.log(
+        '[SubscriptionFlow] Not a restoration, proceeding to verification check',
+      );
 
       setPurchaseResult('Subscription activated successfully.');
 
@@ -1362,7 +1368,9 @@ function SubscriptionFlowContainer() {
               console.warn(
                 '[SubscriptionFlow] No purchaseToken/JWS available for verification',
               );
-              throw new Error('No purchase token available for IAPKit verification');
+              throw new Error(
+                'No purchase token available for IAPKit verification',
+              );
             }
 
             const verifyRequest: VerifyPurchaseWithProviderProps = {
@@ -1387,7 +1395,11 @@ function SubscriptionFlowContainer() {
                     apiKey: '***hidden***',
                     ...(Platform.OS === 'ios'
                       ? {apple: {jws: `${jwsOrToken.substring(0, 50)}...`}}
-                      : {google: {purchaseToken: `${jwsOrToken.substring(0, 50)}...`}}),
+                      : {
+                          google: {
+                            purchaseToken: `${jwsOrToken.substring(0, 50)}...`,
+                          },
+                        }),
                   },
                 },
                 null,
@@ -1409,7 +1421,9 @@ function SubscriptionFlowContainer() {
 
               Alert.alert(
                 `${statusEmoji} IAPKit Verification`,
-                `Valid: ${iapkitResult.isValid}\nState: ${stateText}\nStore: ${iapkitResult.store || 'unknown'}`,
+                `Valid: ${iapkitResult.isValid}\nState: ${stateText}\nStore: ${
+                  iapkitResult.store || 'unknown'
+                }`,
               );
             }
           }
@@ -1427,9 +1441,14 @@ function SubscriptionFlowContainer() {
           ) {
             const errors = (error as {errors: {message?: string}[]}).errors;
             errorMessage =
-              errors[0]?.message || JSON.stringify(errors[0]) || 'Unknown error';
+              errors[0]?.message ||
+              JSON.stringify(errors[0]) ||
+              'Unknown error';
           }
-          Alert.alert('Verification Failed', `Purchase verification failed: ${errorMessage}`);
+          Alert.alert(
+            'Verification Failed',
+            `Purchase verification failed: ${errorMessage}`,
+          );
         } finally {
           setIsProcessing(false);
         }
@@ -1647,7 +1666,12 @@ function SubscriptionFlowContainer() {
   }, [handleRefreshStatus, subscriptions]);
 
   const handleChangeVerificationMethod = useCallback(() => {
-    const options = ['Ignore Verification', 'Local Verification', 'IAPKit Verification', 'Cancel'];
+    const options = [
+      'Ignore Verification',
+      'Local Verification',
+      'IAPKit Verification',
+      'Cancel',
+    ];
     const cancelButtonIndex = 3;
 
     showActionSheetWithOptions(

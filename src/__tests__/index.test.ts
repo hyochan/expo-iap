@@ -923,9 +923,9 @@ describe('Public API (index.ts)', () => {
     it('throws on unsupported platform', async () => {
       (Platform as any).OS = 'web';
 
-      await expect(verifyPurchase({sku: 'com.example.product'})).rejects.toThrow(
-        /Unsupported platform/,
-      );
+      await expect(
+        verifyPurchase({sku: 'com.example.product'}),
+      ).rejects.toThrow(/Unsupported platform/);
     });
   });
 
@@ -938,9 +938,7 @@ describe('Public API (index.ts)', () => {
       (Platform as any).OS = 'ios';
       const mockResult = {
         provider: 'iapkit',
-        iapkit: [
-          {isValid: true, state: 'entitled', store: 'apple'},
-        ],
+        iapkit: [{isValid: true, state: 'entitled', store: 'apple'}],
       };
       (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
         .fn()
@@ -969,9 +967,7 @@ describe('Public API (index.ts)', () => {
       (Platform as any).OS = 'android';
       const mockResult = {
         provider: 'iapkit',
-        iapkit: [
-          {isValid: true, state: 'ready-to-consume', store: 'google'},
-        ],
+        iapkit: [{isValid: true, state: 'ready-to-consume', store: 'google'}],
       };
       (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
         .fn()
@@ -1013,9 +1009,7 @@ describe('Public API (index.ts)', () => {
       (Platform as any).OS = 'ios';
       const mockResult = {
         provider: 'iapkit',
-        iapkit: [
-          {isValid: false, state: 'inauthentic', store: 'apple'},
-        ],
+        iapkit: [{isValid: false, state: 'inauthentic', store: 'apple'}],
       };
       (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
         .fn()

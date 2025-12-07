@@ -85,9 +85,7 @@ type UseIap = {
   validateReceipt: (
     props: VerifyPurchaseProps,
   ) => Promise<VerifyPurchaseResult>;
-  verifyPurchase: (
-    props: VerifyPurchaseProps,
-  ) => Promise<VerifyPurchaseResult>;
+  verifyPurchase: (props: VerifyPurchaseProps) => Promise<VerifyPurchaseResult>;
   verifyPurchaseWithProvider: (
     props: VerifyPurchaseWithProviderProps,
   ) => Promise<VerifyPurchaseWithProviderResult>;

@@ -235,9 +235,7 @@ export const getTransactionJwsIOS: QueryField<'getTransactionJwsIOS'> = async (
  *   latestTransaction?: Purchase;
  * }>}
  */
-const validateReceiptIOSImpl = async (
-  props: VerifyPurchaseProps | string,
-) => {
+const validateReceiptIOSImpl = async (props: VerifyPurchaseProps | string) => {
   const sku =
     typeof props === 'string' ? props : (props as VerifyPurchaseProps)?.sku;
 

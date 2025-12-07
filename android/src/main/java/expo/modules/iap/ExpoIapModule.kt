@@ -19,8 +19,8 @@ import dev.hyo.openiap.RequestPurchaseResultPurchase
 import dev.hyo.openiap.RequestPurchaseResultPurchases
 import dev.hyo.openiap.RequestSubscriptionAndroidProps
 import dev.hyo.openiap.RequestSubscriptionPropsByPlatforms
-import dev.hyo.openiap.VerifyPurchaseProps
 import dev.hyo.openiap.VerifyPurchaseAndroidOptions
+import dev.hyo.openiap.VerifyPurchaseProps
 import dev.hyo.openiap.VerifyPurchaseWithProviderProps
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.Exceptions
@@ -430,22 +430,25 @@ class ExpoIapModule : Module() {
                 ExpoIapLog.payload("verifyPurchase", params)
                 scope.launch {
                     try {
-                        val sku = params["sku"] as? String
-                            ?: throw IllegalArgumentException("Missing required parameter: sku")
+                        val sku =
+                            params["sku"] as? String
+                                ?: throw IllegalArgumentException("Missing required parameter: sku")
 
-                        val androidOptions = (params["androidOptions"] as? Map<String, Any?>)?.let { opts ->
-                            VerifyPurchaseAndroidOptions(
-                                accessToken = opts["accessToken"] as? String ?: "",
-                                packageName = opts["packageName"] as? String ?: "",
-                                productToken = opts["productToken"] as? String ?: "",
-                                isSub = opts["isSub"] as? Boolean
+                        val androidOptions =
+                            (params["androidOptions"] as? Map<String, Any?>)?.let { opts ->
+                                VerifyPurchaseAndroidOptions(
+                                    accessToken = opts["accessToken"] as? String ?: "",
+                                    packageName = opts["packageName"] as? String ?: "",
+                                    productToken = opts["productToken"] as? String ?: "",
+                                    isSub = opts["isSub"] as? Boolean,
+                                )
+                            }
+
+                        val props =
+                            VerifyPurchaseProps(
+                                sku = sku,
+                                androidOptions = androidOptions,
                             )
-                        }
-
-                        val props = VerifyPurchaseProps(
-                            sku = sku,
-                            androidOptions = androidOptions
-                        )
 
                         val result = openIap.verifyPurchase(props)
                         val resultMap = result.toJson()
