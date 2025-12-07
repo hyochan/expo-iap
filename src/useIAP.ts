@@ -15,6 +15,8 @@ import {
   requestPurchase as requestPurchaseInternal,
   fetchProducts,
   validateReceipt as validateReceiptInternal,
+  verifyPurchase as verifyPurchaseInternal,
+  verifyPurchaseWithProvider as verifyPurchaseWithProviderInternal,
   getActiveSubscriptions,
   hasActiveSubscriptions,
   type ActiveSubscription,
@@ -41,8 +43,10 @@ import type {
   Purchase,
   MutationRequestPurchaseArgs,
   PurchaseInput,
-  ReceiptValidationProps,
-  ReceiptValidationResult,
+  VerifyPurchaseProps,
+  VerifyPurchaseResult,
+  VerifyPurchaseWithProviderProps,
+  VerifyPurchaseWithProviderResult,
   ProductAndroid,
   ProductSubscriptionIOS,
 } from './types';
@@ -77,9 +81,14 @@ type UseIap = {
   requestPurchase: (
     params: MutationRequestPurchaseArgs,
   ) => ReturnType<typeof requestPurchaseInternal>;
+  /** @deprecated Use verifyPurchase instead */
   validateReceipt: (
-    props: ReceiptValidationProps,
-  ) => Promise<ReceiptValidationResult>;
+    props: VerifyPurchaseProps,
+  ) => Promise<VerifyPurchaseResult>;
+  verifyPurchase: (props: VerifyPurchaseProps) => Promise<VerifyPurchaseResult>;
+  verifyPurchaseWithProvider: (
+    props: VerifyPurchaseWithProviderProps,
+  ) => Promise<VerifyPurchaseWithProviderResult>;
   restorePurchases: () => Promise<void>;
   getPromotedProductIOS: () => Promise<Product | null>;
   requestPurchaseOnPromotedProductIOS: () => Promise<boolean>;
@@ -383,9 +392,20 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }
   }, []);
 
-  const validateReceipt = useCallback(async (props: ReceiptValidationProps) => {
+  const validateReceipt = useCallback(async (props: VerifyPurchaseProps) => {
     return validateReceiptInternal(props);
   }, []);
+
+  const verifyPurchase = useCallback(async (props: VerifyPurchaseProps) => {
+    return verifyPurchaseInternal(props);
+  }, []);
+
+  const verifyPurchaseWithProvider = useCallback(
+    async (props: VerifyPurchaseWithProviderProps) => {
+      return verifyPurchaseWithProviderInternal(props);
+    },
+    [],
+  );
 
   const initIapWithSubscriptions = useCallback(async (): Promise<void> => {
     // CRITICAL: Register listeners BEFORE initConnection to avoid race condition
@@ -481,6 +501,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     fetchProducts: fetchProductsInternal,
     requestPurchase: requestPurchaseWithReset,
     validateReceipt,
+    verifyPurchase,
+    verifyPurchaseWithProvider,
     restorePurchases: restorePurchasesInternal,
     // internal getters kept for hook state management
     getPromotedProductIOS,

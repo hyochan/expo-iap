@@ -8,7 +8,7 @@ import ExpoIapModule from '../ExpoIapModule';
 import type {
   DeepLinkOptions,
   MutationField,
-  ReceiptValidationResultAndroid,
+  VerifyPurchaseResultAndroid,
 } from '../types';
 
 type NativeAndroidModule = {
@@ -80,6 +80,8 @@ export const deepLinkToSubscriptionsAndroid = async (
  * Validate receipt for Android. NOTE: This method is here for debugging purposes only. Including
  * your access token in the binary you ship to users is potentially dangerous.
  * Use server side validation instead for your production builds
+ *
+ * @deprecated Use verifyPurchase instead
  * @param {Object} params - The parameters object
  * @param {string} params.packageName - package name of your app.
  * @param {string} params.productId - product id for your in app product.
@@ -100,7 +102,7 @@ export const validateReceiptAndroid = async ({
   productToken: string;
   accessToken: string;
   isSub?: boolean;
-}): Promise<ReceiptValidationResultAndroid> => {
+}): Promise<VerifyPurchaseResultAndroid> => {
   const type = isSub ? 'subscriptions' : 'products';
 
   const url =

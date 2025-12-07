@@ -1,13 +1,18 @@
+// Mock native module and RN (must come before imports)
+jest.mock('../ExpoIapModule');
+jest.mock('react-native', () => ({
+  Platform: {OS: 'ios', select: jest.fn((obj) => obj.ios)},
+  NativeEventEmitter: jest.fn(() => ({
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    removeAllListeners: jest.fn(),
+  })),
+}));
+
+/* eslint-disable import/first */
 import {fetchProducts} from '../index';
 import ExpoIapModule from '../ExpoIapModule';
-
-// Mock the module
-jest.mock('../ExpoIapModule', () => ({
-  __esModule: true,
-  default: {
-    fetchProducts: jest.fn(),
-  },
-}));
+/* eslint-enable import/first */
 
 describe('fetchProducts with discriminated union', () => {
   afterEach(() => {

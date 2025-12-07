@@ -13,9 +13,9 @@ public final class ExpoIapModule: Module {
     nonisolated public func definition() -> ModuleDefinition {
         Name("ExpoIap")
 
-        Constants([
-            "ERROR_CODES": OpenIapSerialization.errorCodes()
-        ])
+        Constant("ERROR_CODES") {
+            OpenIapSerialization.errorCodes()
+        }
 
         Events(
             OpenIapEvent.purchaseUpdated.rawValue,
@@ -61,10 +61,8 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("requestPurchase") { (payload: [String: Any]) async throws -> Any? in
             ExpoIapLog.payload("requestPurchase", payload: payload)
-            print("🔍 [ExpoIap] Raw payload useAlternativeBilling: \(payload["useAlternativeBilling"] ?? "nil")")
             try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let props = try ExpoIapHelper.decodeRequestPurchaseProps(from: payload)
-            print("🔍 [ExpoIap] Decoded props useAlternativeBilling: \(props.useAlternativeBilling ?? false)")
 
             do {
                 guard let result = try await OpenIapModule.shared.requestPurchase(props) else {
@@ -190,10 +188,15 @@ public final class ExpoIapModule: Module {
             ExpoIapLog.payload("validateReceiptIOS", payload: ["sku": sku])
             try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             do {
-                let props = try OpenIapSerialization.receiptValidationProps(from: ["sku": sku])
-                let result = try await OpenIapModule.shared.validateReceiptIOS(props)
+                let props = try OpenIapSerialization.verifyPurchaseProps(from: ["sku": sku])
+                let result = try await OpenIapModule.shared.verifyPurchase(props)
                 var payload = OpenIapSerialization.encode(result)
-                payload["purchaseToken"] = result.jwsRepresentation
+
+                // Extract jwsRepresentation from the result
+                if case .verifyPurchaseResultIos(let iosResult) = result {
+                    payload["purchaseToken"] = iosResult.jwsRepresentation
+                }
+
                 let sanitized = ExpoIapHelper.sanitizeDictionary(payload)
                 ExpoIapLog.result("validateReceiptIOS", value: sanitized)
                 return sanitized
@@ -203,6 +206,43 @@ public final class ExpoIapModule: Module {
             } catch {
                 ExpoIapLog.failure("validateReceiptIOS", error: error)
                 throw IapException.from(PurchaseError.make(code: .receiptFailed))
+            }
+        }
+
+        AsyncFunction("verifyPurchase") { (params: [String: Any]) async throws -> [String: Any] in
+            ExpoIapLog.payload("verifyPurchase", payload: params)
+            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
+            do {
+                let props = try OpenIapSerialization.verifyPurchaseProps(from: params)
+                let result = try await OpenIapModule.shared.verifyPurchase(props)
+                let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(result))
+                ExpoIapLog.result("verifyPurchase", value: sanitized)
+                return sanitized
+            } catch let error as PurchaseError {
+                ExpoIapLog.failure("verifyPurchase", error: error)
+                throw error
+            } catch {
+                ExpoIapLog.failure("verifyPurchase", error: error)
+                throw PurchaseError.make(code: .receiptFailed)
+            }
+        }
+
+        AsyncFunction("verifyPurchaseWithProvider") { (params: [String: Any]) async throws -> [String: Any] in
+            ExpoIapLog.payload("verifyPurchaseWithProvider", payload: params)
+            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: params)
+                let props = try JSONDecoder().decode(VerifyPurchaseWithProviderProps.self, from: jsonData)
+                let result = try await OpenIapModule.shared.verifyPurchaseWithProvider(props)
+                let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(result))
+                ExpoIapLog.result("verifyPurchaseWithProvider", value: sanitized)
+                return sanitized
+            } catch let error as PurchaseError {
+                ExpoIapLog.failure("verifyPurchaseWithProvider", error: error)
+                throw error
+            } catch {
+                ExpoIapLog.failure("verifyPurchaseWithProvider", error: error)
+                throw PurchaseError.make(code: .receiptFailed)
             }
         }
 

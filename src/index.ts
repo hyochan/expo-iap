@@ -708,6 +708,8 @@ export const deepLinkToSubscriptions: MutationField<
  * For production apps, always validate receipts on your secure server:
  * - iOS: Send receipt data to Apple's verification endpoint from your server
  * - Android: Use Google Play Developer API with service account credentials
+ *
+ * @deprecated Use verifyPurchase instead
  */
 export const validateReceipt: MutationField<'validateReceipt'> = async (
   options,
@@ -739,6 +741,60 @@ export const validateReceipt: MutationField<'validateReceipt'> = async (
   }
 
   throw new Error('Platform not supported');
+};
+
+/**
+ * Verify purchase with the configured providers
+ *
+ * This function uses the native OpenIAP verifyPurchase implementation
+ * which validates purchases using platform-specific methods.
+ *
+ * @param options - Receipt validation options containing the SKU
+ * @returns Promise resolving to receipt validation result
+ */
+export const verifyPurchase: MutationField<'verifyPurchase'> = async (
+  options,
+) => {
+  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+    return ExpoIapModule.verifyPurchase(options);
+  }
+
+  throw new Error(`Unsupported platform: ${Platform.OS}`);
+};
+
+/**
+ * Verify purchase with a specific provider (e.g., IAPKit)
+ *
+ * This function allows you to verify purchases using external verification
+ * services like IAPKit, which provide additional validation and security.
+ *
+ * @param options - Verification options including provider and credentials
+ * @returns Promise resolving to provider-specific verification result
+ *
+ * @example
+ * ```typescript
+ * const result = await verifyPurchaseWithProvider({
+ *   provider: 'iapkit',
+ *   iapkit: {
+ *     apiKey: 'your-api-key',
+ *     apple: {
+ *       jws: purchase.purchaseToken // JWS from purchase
+ *     },
+ *     google: {
+ *       purchaseToken: purchase.purchaseToken
+ *     }
+ *   }
+ * });
+ * ```
+ */
+export const verifyPurchaseWithProvider: MutationField<
+  'verifyPurchaseWithProvider'
+> = async (options) => {
+  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+    return ExpoIapModule.verifyPurchaseWithProvider(options);
+  }
+
+  throw new Error(`Unsupported platform: ${Platform.OS}`);
 };
 
 export * from './useIAP';

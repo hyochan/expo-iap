@@ -29,6 +29,8 @@ import {
   PurchaseInput,
   getActiveSubscriptions,
   hasActiveSubscriptions,
+  verifyPurchase,
+  verifyPurchaseWithProvider,
 } from '../index';
 import * as iosMod from '../modules/ios';
 import * as androidMod from '../modules/android';
@@ -880,6 +882,186 @@ describe('Public API (index.ts)', () => {
       const result = await hasActiveSubscriptions();
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('verifyPurchase', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('calls native module on iOS', async () => {
+      (Platform as any).OS = 'ios';
+      const mockResult = {isValid: true, receiptData: 'data'};
+      (ExpoIapModule.verifyPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(mockResult);
+
+      const result = await verifyPurchase({sku: 'com.example.product'});
+
+      expect(ExpoIapModule.verifyPurchase).toHaveBeenCalledWith({
+        sku: 'com.example.product',
+      });
+      expect(result).toEqual(mockResult);
+    });
+
+    it('calls native module on Android', async () => {
+      (Platform as any).OS = 'android';
+      const mockResult = {isValid: true};
+      (ExpoIapModule.verifyPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(mockResult);
+
+      const result = await verifyPurchase({sku: 'com.example.product'});
+
+      expect(ExpoIapModule.verifyPurchase).toHaveBeenCalledWith({
+        sku: 'com.example.product',
+      });
+      expect(result).toEqual(mockResult);
+    });
+
+    it('throws on unsupported platform', async () => {
+      (Platform as any).OS = 'web';
+
+      await expect(
+        verifyPurchase({sku: 'com.example.product'}),
+      ).rejects.toThrow(/Unsupported platform/);
+    });
+  });
+
+  describe('verifyPurchaseWithProvider', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('calls native module with IAPKit provider on iOS', async () => {
+      (Platform as any).OS = 'ios';
+      const mockResult = {
+        provider: 'iapkit',
+        iapkit: [{isValid: true, state: 'entitled', store: 'apple'}],
+      };
+      (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(mockResult);
+
+      const request = {
+        provider: 'iapkit' as const,
+        iapkit: {
+          apiKey: 'test-api-key',
+          apple: {jws: 'jws-token'},
+          google: {purchaseToken: 'purchase-token'},
+        },
+      };
+
+      const result = await verifyPurchaseWithProvider(request);
+
+      expect(ExpoIapModule.verifyPurchaseWithProvider).toHaveBeenCalledWith(
+        request,
+      );
+      expect(result).toEqual(mockResult);
+      expect(result.iapkit?.[0].isValid).toBe(true);
+      expect(result.iapkit?.[0].state).toBe('entitled');
+    });
+
+    it('calls native module on Android', async () => {
+      (Platform as any).OS = 'android';
+      const mockResult = {
+        provider: 'iapkit',
+        iapkit: [{isValid: true, state: 'ready-to-consume', store: 'google'}],
+      };
+      (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(mockResult);
+
+      const request = {
+        provider: 'iapkit' as const,
+        iapkit: {
+          apiKey: 'test-api-key',
+          apple: {jws: 'jws-token'},
+          google: {purchaseToken: 'purchase-token'},
+        },
+      };
+
+      const result = await verifyPurchaseWithProvider(request);
+
+      expect(ExpoIapModule.verifyPurchaseWithProvider).toHaveBeenCalledWith(
+        request,
+      );
+      expect(result.iapkit?.[0].store).toBe('google');
+    });
+
+    it('throws on unsupported platform', async () => {
+      (Platform as any).OS = 'web';
+
+      await expect(
+        verifyPurchaseWithProvider({
+          provider: 'iapkit',
+          iapkit: {
+            apiKey: 'key',
+            apple: {jws: 'jws'},
+            google: {purchaseToken: 'token'},
+          },
+        }),
+      ).rejects.toThrow(/Unsupported platform/);
+    });
+
+    it('handles verification failure response', async () => {
+      (Platform as any).OS = 'ios';
+      const mockResult = {
+        provider: 'iapkit',
+        iapkit: [{isValid: false, state: 'inauthentic', store: 'apple'}],
+      };
+      (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue(mockResult);
+
+      const result = await verifyPurchaseWithProvider({
+        provider: 'iapkit',
+        iapkit: {
+          apiKey: 'key',
+          apple: {jws: 'invalid-jws'},
+          google: {purchaseToken: 'token'},
+        },
+      });
+
+      expect(result.iapkit?.[0].isValid).toBe(false);
+      expect(result.iapkit?.[0].state).toBe('inauthentic');
+    });
+
+    it('handles various IAPKit purchase states', async () => {
+      (Platform as any).OS = 'ios';
+      const states = [
+        'entitled',
+        'pending-acknowledgment',
+        'pending',
+        'canceled',
+        'expired',
+        'ready-to-consume',
+        'consumed',
+        'unknown',
+        'inauthentic',
+      ];
+
+      for (const state of states) {
+        const mockResult = {
+          provider: 'iapkit',
+          iapkit: [{isValid: state !== 'inauthentic', state, store: 'apple'}],
+        };
+        (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
+          .fn()
+          .mockResolvedValue(mockResult);
+
+        const result = await verifyPurchaseWithProvider({
+          provider: 'iapkit',
+          iapkit: {
+            apiKey: 'key',
+            apple: {jws: 'jws'},
+            google: {purchaseToken: 'token'},
+          },
+        });
+
+        expect(result.iapkit?.[0].state).toBe(state);
+      }
     });
   });
 });

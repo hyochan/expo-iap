@@ -13,8 +13,8 @@ import type {
   Purchase,
   PurchaseIOS,
   QueryField,
-  ReceiptValidationProps,
-  ReceiptValidationResultIOS,
+  VerifyPurchaseProps,
+  VerifyPurchaseResultIOS,
   SubscriptionStatusIOS,
 } from '../types';
 import type {PurchaseError} from '../utils/errorMapping';
@@ -226,7 +226,8 @@ export const getTransactionJwsIOS: QueryField<'getTransactionJwsIOS'> = async (
  * NOTE: For proper security, Apple recommends verifying receipts on your server using
  * the verifyReceipt endpoint rather than relying solely on client-side verification.
  *
- * @param {string} sku The product's SKU (on iOS)
+ * @deprecated Use verifyPurchase instead
+ * @param props The product's SKU or verification props
  * @returns {Promise<{
  *   isValid: boolean;
  *   receiptData: string;
@@ -234,11 +235,9 @@ export const getTransactionJwsIOS: QueryField<'getTransactionJwsIOS'> = async (
  *   latestTransaction?: Purchase;
  * }>}
  */
-const validateReceiptIOSImpl = async (
-  props: ReceiptValidationProps | string,
-) => {
+const validateReceiptIOSImpl = async (props: VerifyPurchaseProps | string) => {
   const sku =
-    typeof props === 'string' ? props : (props as ReceiptValidationProps)?.sku;
+    typeof props === 'string' ? props : (props as VerifyPurchaseProps)?.sku;
 
   if (!sku) {
     throw new Error('validateReceiptIOS requires a SKU');
@@ -246,7 +245,7 @@ const validateReceiptIOSImpl = async (
 
   return (await ExpoIapModule.validateReceiptIOS(
     sku,
-  )) as ReceiptValidationResultIOS;
+  )) as VerifyPurchaseResultIOS;
 };
 
 export const validateReceiptIOS =

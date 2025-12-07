@@ -19,6 +19,9 @@ import dev.hyo.openiap.RequestPurchaseResultPurchase
 import dev.hyo.openiap.RequestPurchaseResultPurchases
 import dev.hyo.openiap.RequestSubscriptionAndroidProps
 import dev.hyo.openiap.RequestSubscriptionPropsByPlatforms
+import dev.hyo.openiap.VerifyPurchaseAndroidOptions
+import dev.hyo.openiap.VerifyPurchaseProps
+import dev.hyo.openiap.VerifyPurchaseWithProviderProps
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
@@ -58,14 +61,15 @@ class ExpoIapModule : Module() {
         ModuleDefinition {
             Name("ExpoIap")
 
-            Constants(
-                "ERROR_CODES" to OpenIapError.getAllErrorCodes(),
-            )
+            Constant("ERROR_CODES") {
+                OpenIapError.getAllErrorCodes()
+            }
 
             Events(EVENT_PURCHASE_UPDATED, EVENT_PURCHASE_ERROR, EVENT_USER_CHOICE_BILLING)
 
             AsyncFunction("initConnection") { config: Map<String, Any?>?, promise: Promise ->
                 ExpoIapLog.payload("initConnection", config)
+
                 scope.launch {
                     connectionMutex.withLock {
                         try {
@@ -425,6 +429,57 @@ class ExpoIapModule : Module() {
                     } catch (e: Exception) {
                         ExpoIapLog.failure("createAlternativeBillingTokenAndroid", e)
                         promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, null)
+                    }
+                }
+            }
+
+            AsyncFunction("verifyPurchase") { params: Map<String, Any?>, promise: Promise ->
+                ExpoIapLog.payload("verifyPurchase", params)
+                scope.launch {
+                    try {
+                        val sku =
+                            params["sku"] as? String
+                                ?: throw IllegalArgumentException("Missing required parameter: sku")
+
+                        val androidOptions =
+                            (params["androidOptions"] as? Map<String, Any?>)?.let { opts ->
+                                VerifyPurchaseAndroidOptions(
+                                    accessToken = opts["accessToken"] as? String ?: "",
+                                    packageName = opts["packageName"] as? String ?: "",
+                                    productToken = opts["productToken"] as? String ?: "",
+                                    isSub = opts["isSub"] as? Boolean,
+                                )
+                            }
+
+                        val props =
+                            VerifyPurchaseProps(
+                                sku = sku,
+                                androidOptions = androidOptions,
+                            )
+
+                        val result = openIap.verifyPurchase(props)
+                        val resultMap = result.toJson()
+                        ExpoIapLog.result("verifyPurchase", resultMap)
+                        promise.resolve(resultMap)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("verifyPurchase", e)
+                        promise.reject(OpenIapError.VerificationFailed.CODE, e.message, e)
+                    }
+                }
+            }
+
+            AsyncFunction("verifyPurchaseWithProvider") { params: Map<String, Any?>, promise: Promise ->
+                ExpoIapLog.payload("verifyPurchaseWithProvider", params)
+                scope.launch {
+                    try {
+                        val props = VerifyPurchaseWithProviderProps.fromJson(params)
+                        val result = openIap.verifyPurchaseWithProvider(props)
+                        val resultMap = result.toJson()
+                        ExpoIapLog.result("verifyPurchaseWithProvider", resultMap)
+                        promise.resolve(resultMap)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("verifyPurchaseWithProvider", e)
+                        promise.reject(OpenIapError.VerificationFailed.CODE, e.message, e)
                     }
                 }
             }
