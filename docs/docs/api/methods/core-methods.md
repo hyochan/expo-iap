@@ -20,15 +20,16 @@ Note: expo-iap aligns with the OpenIAP API surface. For canonical cross-SDK API 
 
 These cross‑platform methods work on both iOS and Android. For StoreKit/Play‑specific helpers, see the Platform‑specific APIs section below.
 
-- `initConnection()` — Initialize the store connection
-- `endConnection()` — End the store connection and cleanup
-- `fetchProducts()` — Fetch product and subscription metadata
-- `requestPurchase()` — Start a purchase for products or subscriptions
-- `finishTransaction()` — Complete a transaction after validation
-- `getAvailablePurchases()` — Restore non‑consumables and subscriptions
-- `deepLinkToSubscriptions()` — Open native subscription management UI
-- `getStorefront()` — Get current storefront country code
-- `hasActiveSubscriptions()` — Check if user has active subscriptions
+- [`initConnection()`](#initconnection) — Initialize the store connection
+- [`endConnection()`](#endconnection) — End the store connection and cleanup
+- [`fetchProducts()`](#fetchproducts) — Fetch product and subscription metadata
+- [`requestPurchase()`](#requestpurchase) — Start a purchase for products or subscriptions
+- [`finishTransaction()`](#finishtransaction) — Complete a transaction after validation
+- [`getAvailablePurchases()`](#getavailablepurchases) — Restore non‑consumables and subscriptions
+- [`deepLinkToSubscriptions()`](#deeplinktosubscriptions) — Open native subscription management UI
+- [`getStorefront()`](#getstorefront) — Get current storefront country code
+- [`hasActiveSubscriptions()`](#hasactivesubscriptions) — Check if user has active subscriptions
+- [`verifyPurchaseWithProvider()`](#verifypurchasewithprovider) — Verify purchase with external provider (e.g., IAPKit)
 
 ## initConnection()
 
@@ -447,6 +448,155 @@ const checkIfUserHasSubscription = async () => {
 - `subscriptionIds?` (string[]): Optional array of subscription product IDs to check. If not provided, checks all subscriptions.
 
 **Returns:** `Promise<boolean>` - Returns true if user has at least one active subscription
+
+## verifyPurchaseWithProvider()
+
+Verifies a purchase using an external verification provider. Currently supports [IAPKit](https://iapkit.com) for server-side purchase validation.
+
+### Basic Usage
+
+```tsx
+import {verifyPurchaseWithProvider} from 'expo-iap';
+
+const verifyWithIAPKit = async (purchase: Purchase) => {
+  try {
+    const result = await verifyPurchaseWithProvider({
+      provider: 'iapkit',
+      iapkit: {
+        apiKey: 'your-iapkit-api-key',
+        apple: {
+          jws: purchase.purchaseToken, // JWS from iOS purchase
+        },
+        google: {
+          purchaseToken: purchase.purchaseToken, // Token from Android purchase
+        },
+      },
+    });
+
+    if (result.iapkit && result.iapkit.length > 0) {
+      const verification = result.iapkit[0];
+      console.log('Is Valid:', verification.isValid);
+      console.log('State:', verification.state);
+      console.log('Store:', verification.store);
+    }
+  } catch (error) {
+    console.error('Verification failed:', error);
+  }
+};
+```
+
+### Integration with useIAP Hook
+
+```tsx
+import {useIAP, verifyPurchaseWithProvider} from 'expo-iap';
+import type {VerifyPurchaseWithProviderProps} from 'expo-iap';
+import {Platform} from 'react-native';
+
+function PurchaseScreen() {
+  const {requestPurchase, finishTransaction} = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      // Ensure purchaseToken exists before verification
+      if (!purchase.purchaseToken) {
+        console.error('No purchase token available for verification');
+        // Still finish transaction to avoid stuck state
+        await finishTransaction({purchase, isConsumable: false});
+        return;
+      }
+
+      // Verify with IAPKit before granting entitlement
+      const verifyRequest: VerifyPurchaseWithProviderProps = {
+        provider: 'iapkit',
+        iapkit: {
+          apiKey: process.env.EXPO_PUBLIC_IAPKIT_API_KEY!,
+          apple: {
+            jws: purchase.purchaseToken,
+          },
+          google: {
+            purchaseToken: purchase.purchaseToken,
+          },
+        },
+      };
+
+      try {
+        const result = await verifyPurchaseWithProvider(verifyRequest);
+        const verification = result.iapkit?.[0];
+
+        if (verification?.isValid) {
+          // Grant entitlement to user
+          await grantPurchaseToUser(purchase);
+        } else {
+          console.warn('Purchase verification failed:', verification?.state);
+        }
+      } catch (error) {
+        console.error('Verification error:', error);
+      }
+
+      // Always finish the transaction
+      await finishTransaction({
+        purchase,
+        isConsumable: false,
+      });
+    },
+  });
+
+  // ... rest of component
+}
+```
+
+**Parameters:**
+
+- `options` (object):
+  - `provider` ('iapkit'): The verification provider to use
+  - `iapkit` (object): IAPKit-specific configuration
+    - `apiKey` (string): Your IAPKit API key from [iapkit.com](https://iapkit.com)
+    - `apple` (object): iOS verification data
+      - `jws` (string): The JWS token from the purchase (available as `purchase.purchaseToken` on iOS)
+    - `google` (object): Android verification data
+      - `purchaseToken` (string): The purchase token from the purchase (available as `purchase.purchaseToken` on Android)
+
+**Returns:** `Promise<VerifyPurchaseWithProviderResult>`
+
+```typescript
+interface VerifyPurchaseWithProviderResult {
+  provider: 'iapkit';
+  iapkit?: IapkitPurchaseResult[];
+}
+
+interface IapkitPurchaseResult {
+  isValid: boolean;
+  state: IapkitPurchaseState;
+  store: 'apple' | 'google';
+  // Additional fields may be present based on IAPKit response
+}
+
+type IapkitPurchaseState =
+  | 'entitled' // User is entitled to the product
+  | 'pending-acknowledgment' // Purchase pending acknowledgment (Android)
+  | 'pending' // Purchase is pending
+  | 'canceled' // Purchase was canceled
+  | 'expired' // Subscription has expired
+  | 'ready-to-consume' // Consumable ready to be consumed
+  | 'consumed' // Consumable has been consumed
+  | 'unknown' // Unknown state
+  | 'inauthentic'; // Purchase could not be verified
+```
+
+**Platform Support:**
+
+- **iOS**: Uses the JWS (JSON Web Signature) from StoreKit 2 transactions
+- **Android**: Uses the purchase token from Google Play Billing
+
+**Best Practices:**
+
+1. **Store API key securely**: Use environment variables (e.g., `EXPO_PUBLIC_IAPKIT_API_KEY`) rather than hardcoding
+2. **Handle all states**: The `state` field provides detailed status - handle each appropriately
+3. **Always finish transactions**: Call `finishTransaction()` regardless of verification result to avoid stuck transactions
+4. **Retry on network errors**: Network issues can cause temporary failures - implement retry logic
+
+**See also:**
+
+- [IAPKit](https://iapkit.com)
+- [OpenIAP Verification API](https://www.openiap.dev/docs/apis#verify-purchase-with-provider)
 
 ## Purchase Interface
 
