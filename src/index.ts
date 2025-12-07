@@ -777,11 +777,11 @@ export const verifyPurchase: MutationField<'verifyPurchase'> = async (
  *   provider: 'iapkit',
  *   iapkit: {
  *     apiKey: 'your-api-key',
- *     store: 'apple',
  *     apple: {
- *       receipt: receiptData,
- *       appId: 'your-app-id',
- *       environment: 'production'
+ *       jws: purchase.purchaseToken // JWS from purchase
+ *     },
+ *     google: {
+ *       purchaseToken: purchase.purchaseToken
  *     }
  *   }
  * });

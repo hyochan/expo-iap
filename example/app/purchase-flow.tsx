@@ -32,6 +32,7 @@ import type {
 import type {PurchaseError} from '../../src/utils/errorMapping';
 import PurchaseDetails from '../src/components/PurchaseDetails';
 import PurchaseSummaryRow from '../src/components/PurchaseSummaryRow';
+import {extractErrorMessage} from '../src/utils/errorUtils';
 
 type VerificationMethod = 'ignore' | 'local' | 'iapkit';
 
@@ -751,25 +752,9 @@ function PurchaseFlowContainer() {
           }
         } catch (error) {
           console.warn('[PurchaseFlow] Verification failed:', error);
-          // Extract error message from various formats
-          let errorMessage = 'Unknown error';
-          if (error instanceof Error) {
-            errorMessage = error.message;
-          } else if (
-            error &&
-            typeof error === 'object' &&
-            'errors' in error &&
-            Array.isArray((error as {errors: unknown[]}).errors)
-          ) {
-            const errors = (error as {errors: {message?: string}[]}).errors;
-            errorMessage =
-              errors[0]?.message ||
-              JSON.stringify(errors[0]) ||
-              'Unknown error';
-          }
           Alert.alert(
             'Verification Failed',
-            `Purchase verification failed: ${errorMessage}`,
+            `Purchase verification failed: ${extractErrorMessage(error)}`,
           );
         } finally {
           setIsProcessing(false);
