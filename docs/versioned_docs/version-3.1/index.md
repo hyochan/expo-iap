@@ -129,10 +129,10 @@ const handlePurchase = async (productId: string) => {
   try {
     await requestPurchase({
       request: {
-        apple: {
+        ios: {
           sku: productId,
         },
-        google: {
+        android: {
           skus: [productId],
         },
       },

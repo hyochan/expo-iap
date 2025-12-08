@@ -260,8 +260,8 @@ interface UseIAPOptions {
       // In hook: returns void. Listen via callbacks (onPurchaseSuccess/onPurchaseError)
       await requestPurchase({
         request: {
-          apple: {sku: productId},
-          google: {skus: [productId]},
+          ios: {sku: productId},
+          android: {skus: [productId]},
         },
       });
     } catch (error) {
@@ -297,8 +297,8 @@ const buySubscription = async (subscriptionId: string) => {
   // 3) Request purchase with offers
   await requestPurchase({
     request: {
-      apple: {sku: subscriptionId},
-      google: {
+      ios: {sku: subscriptionId},
+      android: {
         skus: [subscriptionId],
         // Only include subscriptionOffers when offers are available
         ...(subscriptionOffers.length > 0 && {subscriptionOffers}),
@@ -322,12 +322,12 @@ const buySubscriptionWithOffer = async (
 ) => {
   await requestPurchase({
     request: {
-      apple: {
+      ios: {
         sku: subscriptionId,
         // Optional: apply promotional offer
         ...(discountOffer && {withOffer: discountOffer}),
       },
-      google: {skus: [subscriptionId]},
+      android: {skus: [subscriptionId]},
     },
     type: 'subs',
   });
@@ -484,8 +484,8 @@ const IOSPurchaseExample = () => {
   const buyProduct = (product: Product) => {
     requestPurchase({
       request: {
-        apple: {sku: product.id},
-        google: {skus: [product.id]},
+        ios: {sku: product.id},
+        android: {skus: [product.id]},
       },
     });
   };
@@ -520,8 +520,8 @@ const AndroidPurchaseExample = () => {
   const buyProduct = (product: Product) => {
     requestPurchase({
       request: {
-        apple: {sku: product.id},
-        google: {skus: [product.id]},
+        ios: {sku: product.id},
+        android: {skus: [product.id]},
       },
     });
   };
@@ -592,8 +592,8 @@ const {requestPurchase} = useIAP({
      try {
        await requestPurchase({
          request: {
-           apple: {sku: productId},
-           google: {skus: [productId]},
+           ios: {sku: productId},
+           android: {skus: [productId]},
          },
        });
      } finally {

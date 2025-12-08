@@ -107,8 +107,8 @@ function PurchaseScreen() {
   const handlePurchase = async (productId: string) => {
     await requestPurchase({
       request: {
-        apple: {sku: productId},
-        google: {skus: [productId]},
+        ios: {sku: productId},
+        android: {skus: [productId]},
       },
     });
   };
@@ -128,8 +128,8 @@ For a complete implementation, see [example/app/purchase-flow.tsx](https://githu
 // Products
 await requestPurchase({
   request: {
-    apple: {sku: productId},
-    google: {skus: [productId]},
+    ios: {sku: productId},
+    android: {skus: [productId]},
   },
 });
 
@@ -137,8 +137,8 @@ await requestPurchase({
 const subscription = subscriptions.find((s) => s.id === subscriptionId);
 await requestPurchase({
   request: {
-    apple: {sku: subscriptionId},
-    google: {
+    ios: {sku: subscriptionId},
+    android: {
       skus: [subscriptionId],
       subscriptionOffers:
         subscription?.subscriptionOfferDetailsAndroid?.map((offer) => ({

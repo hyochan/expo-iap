@@ -424,24 +424,28 @@ function normalizeRequestProps(
     | RequestSubscriptionPropsByPlatforms,
   platform: 'ios' | 'android',
 ) {
-  // Platform-specific format - directly return the appropriate platform data
-  return platform === 'ios' ? request.ios : request.android;
+  // Support both new (apple/google) and legacy (ios/android) field names
+  // New fields take precedence over deprecated ones
+  if (platform === 'ios') {
+    return request.apple ?? request.ios;
+  }
+  return request.google ?? request.android;
 }
 
 /**
  * Request a purchase for products or subscriptions.
  *
  * @param requestObj - Purchase request configuration
- * @param requestObj.request - Platform-specific purchase parameters
+ * @param requestObj.request - Store-specific purchase parameters
  * @param requestObj.type - Type of purchase: 'in-app' for products (default) or 'subs' for subscriptions
  *
  * @example
  * ```typescript
- * // Product purchase
+ * // Product purchase (recommended: use apple/google)
  * await requestPurchase({
  *   request: {
- *     ios: { sku: productId },
- *     android: { skus: [productId] }
+ *     apple: { sku: productId },
+ *     google: { skus: [productId] }
  *   },
  *   type: 'in-app'
  * });
@@ -449,13 +453,22 @@ function normalizeRequestProps(
  * // Subscription purchase
  * await requestPurchase({
  *   request: {
- *     ios: { sku: subscriptionId },
- *     android: {
+ *     apple: { sku: subscriptionId },
+ *     google: {
  *       skus: [subscriptionId],
  *       subscriptionOffers: [{ sku: subscriptionId, offerToken: 'token' }]
  *     }
  *   },
  *   type: 'subs'
+ * });
+ *
+ * // Legacy format (deprecated, but still supported)
+ * await requestPurchase({
+ *   request: {
+ *     ios: { sku: productId },
+ *     android: { skus: [productId] }
+ *   },
+ *   type: 'in-app'
  * });
  * ```
  */
@@ -471,12 +484,12 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
 
     if (!normalizedRequest?.sku) {
       throw new Error(
-        'Invalid request for iOS. The `sku` property is required and must be a string.\n\n' +
+        'Invalid request for Apple. The `sku` property is required and must be a string.\n\n' +
           'Expected format:\n' +
           '  requestPurchase({\n' +
           '    request: {\n' +
-          '      android: { skus: ["product_id"] },\n' +
-          '      ios: { sku: "product_id" }\n' +
+          '      apple: { sku: "product_id" },\n' +
+          '      google: { skus: ["product_id"] }\n' +
           '    },\n' +
           '    type: "in-app"\n' +
           '  })\n\n' +
@@ -519,12 +532,12 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
 
       if (!normalizedRequest?.skus?.length) {
         throw new Error(
-          'Invalid request for Android. The `skus` property is required and must be a non-empty array.\n\n' +
+          'Invalid request for Google. The `skus` property is required and must be a non-empty array.\n\n' +
             'Expected format:\n' +
             '  requestPurchase({\n' +
             '    request: {\n' +
-            '      android: { skus: ["product_id"] },\n' +
-            '      ios: { sku: "product_id" }\n' +
+            '      apple: { sku: "product_id" },\n' +
+            '      google: { skus: ["product_id"] }\n' +
             '    },\n' +
             '    type: "in-app"\n' +
             '  })\n\n' +
@@ -561,12 +574,12 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
 
       if (!normalizedRequest?.skus?.length) {
         throw new Error(
-          'Invalid request for Android. The `skus` property is required and must be a non-empty array.\n\n' +
+          'Invalid request for Google. The `skus` property is required and must be a non-empty array.\n\n' +
             'Expected format:\n' +
             '  requestPurchase({\n' +
             '    request: {\n' +
-            '      android: { skus: ["subscription_id"] },\n' +
-            '      ios: { sku: "subscription_id" }\n' +
+            '      apple: { sku: "subscription_id" },\n' +
+            '      google: { skus: ["subscription_id"] }\n' +
             '    },\n' +
             '    type: "subs"\n' +
             '  })\n\n' +

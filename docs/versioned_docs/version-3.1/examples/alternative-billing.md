@@ -33,7 +33,7 @@ function IOSAlternativeBilling({product}: {product: Product}) {
     try {
       await requestPurchase({
         request: {
-          apple: {
+          ios: {
             sku: product.id,
             quantity: 1,
           },
@@ -150,7 +150,7 @@ function AndroidUserChoiceBilling({product}: {product: Product}) {
       // Google will show selection dialog automatically
       await requestPurchase({
         request: {
-          google: {
+          android: {
             skus: [product.id],
           },
         },
@@ -208,7 +208,7 @@ function AlternativeBillingScreen() {
   const handleIOSPurchase = useCallback(async (product: Product) => {
     await requestPurchase({
       request: {
-        apple: {
+        ios: {
           sku: product.id,
           quantity: 1,
         },
@@ -238,7 +238,7 @@ function AlternativeBillingScreen() {
   const handleAndroidUserChoice = useCallback(async (product: Product) => {
     await requestPurchase({
       request: {
-        google: {
+        android: {
           skus: [product.id],
         },
       },

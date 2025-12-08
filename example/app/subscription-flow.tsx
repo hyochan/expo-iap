@@ -1415,8 +1415,8 @@ function SubscriptionFlowContainer() {
             );
 
             // Show verification result to user
-            if (result.iapkit && result.iapkit.length > 0) {
-              const iapkitResult = result.iapkit[0];
+            if (result.iapkit) {
+              const iapkitResult = result.iapkit;
               const statusEmoji = iapkitResult.isValid ? '✅' : '⚠️';
               const stateText = iapkitResult.state || 'unknown';
 
@@ -1592,10 +1592,10 @@ function SubscriptionFlowContainer() {
 
       void requestPurchase({
         request: {
-          ios: {
+          apple: {
             sku: itemId,
           },
-          android: {
+          google: {
             skus: [itemId],
             subscriptionOffers:
               androidOffers.length > 0 ? androidOffers : undefined,

@@ -92,7 +92,7 @@ describe('iOS requestPurchase Payload Structure (Issue #254)', () => {
             keyIdentifier: 'key-id',
             nonce: 'nonce-value',
             signature: 'signature-value',
-            timestamp: '123456789',
+            timestamp: 123456789,
           },
         },
         android: {
@@ -167,4 +167,67 @@ describe('iOS requestPurchase Payload Structure (Issue #254)', () => {
    * This prevents the "data couldn't be read" error that occurred when
    * Android data was present in iOS native module calls.
    */
+
+  // New field names (apple/google) - recommended since v3.1.40
+  it('should accept new apple/google field names for in-app purchases', () => {
+    const validRequest = {
+      request: {
+        apple: {
+          sku: 'com.test.product',
+          quantity: 1,
+        },
+        google: {
+          skus: ['com.test.product'],
+        },
+      },
+      type: 'in-app' as const,
+    };
+
+    // Type check: This should compile without errors
+    expect(() => {
+      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+        validRequest;
+    }).not.toThrow();
+  });
+
+  it('should accept new apple/google field names for subscriptions', () => {
+    const validRequest = {
+      request: {
+        apple: {
+          sku: 'com.test.subscription',
+          appAccountToken: 'test-token',
+        },
+        google: {
+          skus: ['com.test.subscription'],
+          subscriptionOffers: [
+            {sku: 'com.test.subscription', offerToken: 'offer-token'},
+          ],
+        },
+      },
+      type: 'subs' as const,
+    };
+
+    // Type check: This should compile without errors
+    expect(() => {
+      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+        validRequest;
+    }).not.toThrow();
+  });
+
+  it('should accept apple-only request without google field', () => {
+    const validRequest = {
+      request: {
+        apple: {
+          sku: 'com.test.product',
+        },
+      },
+      type: 'in-app' as const,
+    };
+
+    // Type check: This should compile without errors
+    expect(() => {
+      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+        validRequest;
+    }).not.toThrow();
+  });
 });
