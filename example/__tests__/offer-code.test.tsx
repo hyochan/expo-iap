@@ -2,13 +2,10 @@ import React from 'react';
 import {render, fireEvent, waitFor} from '@testing-library/react-native';
 import {Platform, Alert} from 'react-native';
 import OfferCode from '../app/offer-code';
+import * as ExpoIap from 'expo-iap';
 
 // Mock Alert
 jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-
-// Mock the functions
-const mockPresentCodeRedemptionSheetIOS = jest.fn();
-const mockOpenRedeemOfferCodeAndroid = jest.fn();
 
 jest.mock('expo-iap', () => ({
   presentCodeRedemptionSheetIOS: jest.fn(() => Promise.resolve(true)),
@@ -73,9 +70,6 @@ describe('OfferCode Component', () => {
       configurable: true,
     });
 
-    const presentCodeRedemptionSheetIOS =
-      require('expo-iap').presentCodeRedemptionSheetIOS;
-
     const {getByText} = render(<OfferCode />);
     // The button text is "🎁 Redeem Offer Code" on iOS
     const redeemButton = getByText('🎁 Redeem Offer Code');
@@ -84,7 +78,7 @@ describe('OfferCode Component', () => {
 
     // Wait for async operation and Alert
     await waitFor(() => {
-      expect(presentCodeRedemptionSheetIOS).toHaveBeenCalled();
+      expect(ExpoIap.presentCodeRedemptionSheetIOS).toHaveBeenCalled();
       expect(Alert.alert).toHaveBeenCalledWith(
         'Success',
         'Code redemption sheet presented. After successful redemption, the purchase will appear in your purchase history.',

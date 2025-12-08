@@ -51,11 +51,10 @@ describe('iOS requestPurchase Payload Structure (Issue #254)', () => {
       type: 'in-app' as const,
     };
 
-    // Type check: This should compile without errors
-    expect(() => {
-      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
-        validRequest;
-    }).not.toThrow();
+    // Type check: validRequest satisfies the requestPurchase parameter type
+    const typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+      validRequest;
+    expect(typeCheck.request).toBeDefined();
   });
 
   it('should accept platform-specific request structure for subscriptions', () => {
@@ -72,11 +71,10 @@ describe('iOS requestPurchase Payload Structure (Issue #254)', () => {
       type: 'subs' as const,
     };
 
-    // Type check: This should compile without errors
-    expect(() => {
-      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
-        validRequest;
-    }).not.toThrow();
+    // Type check: validRequest satisfies the requestPurchase parameter type
+    const typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+      validRequest;
+    expect(typeCheck.request).toBeDefined();
   });
 
   it('should accept iOS-specific fields in request', () => {
@@ -102,11 +100,10 @@ describe('iOS requestPurchase Payload Structure (Issue #254)', () => {
       type: 'in-app' as const,
     };
 
-    // Type check: This should compile without errors
-    expect(() => {
-      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
-        validRequest;
-    }).not.toThrow();
+    // Type check: validRequest satisfies the requestPurchase parameter type
+    const typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+      validRequest;
+    expect(typeCheck.request).toBeDefined();
   });
 
   it('should accept useAlternativeBilling parameter', () => {
@@ -123,11 +120,10 @@ describe('iOS requestPurchase Payload Structure (Issue #254)', () => {
       useAlternativeBilling: true,
     };
 
-    // Type check: This should compile without errors
-    expect(() => {
-      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
-        validRequest;
-    }).not.toThrow();
+    // Type check: validRequest satisfies the requestPurchase parameter type
+    const typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+      validRequest;
+    expect(typeCheck.request).toBeDefined();
   });
 
   it('should accept iOS-only request without android field', () => {
@@ -140,11 +136,10 @@ describe('iOS requestPurchase Payload Structure (Issue #254)', () => {
       type: 'in-app' as const,
     };
 
-    // Type check: This should compile without errors
-    expect(() => {
-      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
-        validRequest;
-    }).not.toThrow();
+    // Type check: validRequest satisfies the requestPurchase parameter type
+    const typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+      validRequest;
+    expect(typeCheck.request).toBeDefined();
   });
 
   /**
@@ -183,11 +178,10 @@ describe('iOS requestPurchase Payload Structure (Issue #254)', () => {
       type: 'in-app' as const,
     };
 
-    // Type check: This should compile without errors
-    expect(() => {
-      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
-        validRequest;
-    }).not.toThrow();
+    // Type check: validRequest satisfies the requestPurchase parameter type
+    const typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+      validRequest;
+    expect(typeCheck.request).toBeDefined();
   });
 
   it('should accept new apple/google field names for subscriptions', () => {
@@ -207,11 +201,10 @@ describe('iOS requestPurchase Payload Structure (Issue #254)', () => {
       type: 'subs' as const,
     };
 
-    // Type check: This should compile without errors
-    expect(() => {
-      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
-        validRequest;
-    }).not.toThrow();
+    // Type check: validRequest satisfies the requestPurchase parameter type
+    const typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+      validRequest;
+    expect(typeCheck.request).toBeDefined();
   });
 
   it('should accept apple-only request without google field', () => {
@@ -224,10 +217,9 @@ describe('iOS requestPurchase Payload Structure (Issue #254)', () => {
       type: 'in-app' as const,
     };
 
-    // Type check: This should compile without errors
-    expect(() => {
-      const _typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
-        validRequest;
-    }).not.toThrow();
+    // Type check: validRequest satisfies the requestPurchase parameter type
+    const typeCheck: Parameters<typeof ExpoIap.requestPurchase>[0] =
+      validRequest;
+    expect(typeCheck.request).toBeDefined();
   });
 });
