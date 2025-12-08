@@ -2,6 +2,7 @@ import React from 'react';
 import {render, waitFor} from '@testing-library/react-native';
 import {Platform} from 'react-native';
 import Home from '../app/index';
+import * as ExpoIap from 'expo-iap';
 
 // Mock expo-router
 jest.mock('expo-router', () => ({
@@ -39,14 +40,12 @@ describe('Home Component', () => {
       configurable: true,
     });
 
-    const getStorefrontMock = require('expo-iap').getStorefront;
-
     const {getByText} = render(<Home />);
     expect(getByText('expo-iap Examples')).toBeDefined();
 
     // Wait for async operations to complete
     await waitFor(() => {
-      expect(getStorefrontMock).toHaveBeenCalled();
+      expect(ExpoIap.getStorefront).toHaveBeenCalled();
     });
   });
 
@@ -63,8 +62,7 @@ describe('Home Component', () => {
     expect(getByText('expo-iap Examples')).toBeDefined();
 
     // getStorefront is called but resolves to empty string on unsupported platforms
-    const getStorefrontMock = require('expo-iap').getStorefront;
-    expect(getStorefrontMock).toHaveBeenCalled();
+    expect(ExpoIap.getStorefront).toHaveBeenCalled();
 
     consoleLog.mockRestore();
   });

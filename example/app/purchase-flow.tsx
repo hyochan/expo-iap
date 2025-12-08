@@ -737,8 +737,8 @@ function PurchaseFlowContainer() {
             console.log('[PurchaseFlow] IAPKit verification result:', result);
 
             // Show verification result to user
-            if (result.iapkit && result.iapkit.length > 0) {
-              const iapkitResult = result.iapkit[0];
+            if (result.iapkit) {
+              const iapkitResult = result.iapkit;
               const statusEmoji = iapkitResult.isValid ? '✅' : '⚠️';
               const stateText = iapkitResult.state || 'unknown';
 
@@ -866,11 +866,11 @@ function PurchaseFlowContainer() {
 
       void requestPurchase({
         request: {
-          ios: {
+          apple: {
             sku: itemId,
             quantity: 1,
           },
-          android: {
+          google: {
             skus: [itemId],
           },
         },

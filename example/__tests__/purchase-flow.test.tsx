@@ -93,11 +93,11 @@ describe('PurchaseFlow Component', () => {
     const purchaseButton = getByText('Purchase');
     fireEvent.press(purchaseButton);
 
-    // The actual call includes platform-specific request structure
+    // The actual call includes store-specific request structure
     expect(requestPurchase).toHaveBeenCalledWith({
       request: {
-        ios: {sku: 'test.product.1', quantity: 1},
-        android: {skus: ['test.product.1']},
+        apple: {sku: 'test.product.1', quantity: 1},
+        google: {skus: ['test.product.1']},
       },
       type: 'in-app',
     });

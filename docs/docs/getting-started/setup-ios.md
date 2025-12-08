@@ -71,7 +71,7 @@ function App() {
           key={product.id}
           onPress={() =>
             requestPurchase({
-              request: {ios: {sku: product.id}},
+              request: {apple: {sku: product.id}},
             })
           }
         >

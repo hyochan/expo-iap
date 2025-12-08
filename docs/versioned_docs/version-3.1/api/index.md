@@ -1,0 +1,56 @@
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+
+# API Reference
+
+<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-system-design-playbook?fpr=hyo73" title="Front End System Design Guidebook" />
+
+Welcome to the Expo IAP API documentation. Here you'll find comprehensive guides and references for all the features and functionality available in Expo IAP.
+
+Note: expo-iap follows the OpenIAP API model for consistency across platforms and SDKs. For the canonical API surface, see OpenIAP APIs:
+
+- [OpenIAP APIs](https://www.openiap.dev/docs/apis)
+
+## Available APIs
+
+### 🎣 [useIAP Hook](./use-iap)
+
+The main React hook for handling in-app purchases in your application.
+
+- Purchase products and subscriptions
+- Restore previous purchases
+- Handle purchase states and loading
+- Complete transactions
+
+### ⚠️ [Error Codes](./error-codes)
+
+Comprehensive list of all error codes that can be returned by Expo IAP.
+
+- Centralized error management
+- Platform-specific error mappings
+- Troubleshooting guidelines
+- Error handling best practices
+
+## Quick Start
+
+```javascript
+import {useIAP} from 'expo-iap';
+
+function MyComponent() {
+  const {connected, products, fetchProducts, requestPurchase, finishTransaction} =
+    useIAP();
+
+  // Your component logic here (e.g., call fetchProducts when connected,
+  // use requestPurchase to start purchases, and finishTransaction after
+  // successful server-side verification).
+}
+```
+
+## TypeScript Support
+
+Expo IAP is built with TypeScript and provides full type safety for all APIs. All types are automatically exported when you install the package.
+
+## Need Help?
+
+- Check our [Getting Started Guide](/)
+- Visit our [GitHub repository](https://github.com/hyochan/expo-iap)
+- Read our [Blog](/blog) for latest updates

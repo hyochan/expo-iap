@@ -291,7 +291,7 @@ function AlternativeBillingScreen() {
 
     requestPurchase({
       request: {
-        android: {
+        google: {
           skus: [product.id],
         },
       },

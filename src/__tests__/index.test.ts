@@ -938,7 +938,7 @@ describe('Public API (index.ts)', () => {
       (Platform as any).OS = 'ios';
       const mockResult = {
         provider: 'iapkit',
-        iapkit: [{isValid: true, state: 'entitled', store: 'apple'}],
+        iapkit: {isValid: true, state: 'entitled', store: 'apple'},
       };
       (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
         .fn()
@@ -959,15 +959,15 @@ describe('Public API (index.ts)', () => {
         request,
       );
       expect(result).toEqual(mockResult);
-      expect(result.iapkit?.[0].isValid).toBe(true);
-      expect(result.iapkit?.[0].state).toBe('entitled');
+      expect(result.iapkit?.isValid).toBe(true);
+      expect(result.iapkit?.state).toBe('entitled');
     });
 
     it('calls native module on Android', async () => {
       (Platform as any).OS = 'android';
       const mockResult = {
         provider: 'iapkit',
-        iapkit: [{isValid: true, state: 'ready-to-consume', store: 'google'}],
+        iapkit: {isValid: true, state: 'ready-to-consume', store: 'google'},
       };
       (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
         .fn()
@@ -987,7 +987,7 @@ describe('Public API (index.ts)', () => {
       expect(ExpoIapModule.verifyPurchaseWithProvider).toHaveBeenCalledWith(
         request,
       );
-      expect(result.iapkit?.[0].store).toBe('google');
+      expect(result.iapkit?.store).toBe('google');
     });
 
     it('throws on unsupported platform', async () => {
@@ -1009,7 +1009,7 @@ describe('Public API (index.ts)', () => {
       (Platform as any).OS = 'ios';
       const mockResult = {
         provider: 'iapkit',
-        iapkit: [{isValid: false, state: 'inauthentic', store: 'apple'}],
+        iapkit: {isValid: false, state: 'inauthentic', store: 'apple'},
       };
       (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
         .fn()
@@ -1024,8 +1024,8 @@ describe('Public API (index.ts)', () => {
         },
       });
 
-      expect(result.iapkit?.[0].isValid).toBe(false);
-      expect(result.iapkit?.[0].state).toBe('inauthentic');
+      expect(result.iapkit?.isValid).toBe(false);
+      expect(result.iapkit?.state).toBe('inauthentic');
     });
 
     it('handles various IAPKit purchase states', async () => {
@@ -1045,7 +1045,7 @@ describe('Public API (index.ts)', () => {
       for (const state of states) {
         const mockResult = {
           provider: 'iapkit',
-          iapkit: [{isValid: state !== 'inauthentic', state, store: 'apple'}],
+          iapkit: {isValid: state !== 'inauthentic', state, store: 'apple'},
         };
         (ExpoIapModule.verifyPurchaseWithProvider as jest.Mock) = jest
           .fn()
@@ -1060,7 +1060,7 @@ describe('Public API (index.ts)', () => {
           },
         });
 
-        expect(result.iapkit?.[0].state).toBe(state);
+        expect(result.iapkit?.state).toBe(state);
       }
     });
   });

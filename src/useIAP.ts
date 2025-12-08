@@ -203,7 +203,9 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       purchaseState: purchase.purchaseState,
       purchaseToken: purchase.purchaseToken ?? null,
       quantity: purchase.quantity,
+      store: purchase.store,
       transactionDate: purchase.transactionDate,
+      transactionId: purchase.transactionId,
     }),
     [],
   );

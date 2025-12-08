@@ -107,8 +107,8 @@ function PurchaseScreen() {
   const handlePurchase = async (productId: string) => {
     await requestPurchase({
       request: {
-        ios: {sku: productId},
-        android: {skus: [productId]},
+        apple: {sku: productId},
+        google: {skus: [productId]},
       },
     });
   };
@@ -128,8 +128,8 @@ For a complete implementation, see [example/app/purchase-flow.tsx](https://githu
 // Products
 await requestPurchase({
   request: {
-    ios: {sku: productId},
-    android: {skus: [productId]},
+    apple: {sku: productId},
+    google: {skus: [productId]},
   },
 });
 
@@ -137,8 +137,8 @@ await requestPurchase({
 const subscription = subscriptions.find((s) => s.id === subscriptionId);
 await requestPurchase({
   request: {
-    ios: {sku: subscriptionId},
-    android: {
+    apple: {sku: subscriptionId},
+    google: {
       skus: [subscriptionId],
       subscriptionOffers:
         subscription?.subscriptionOfferDetailsAndroid?.map((offer) => ({
@@ -520,7 +520,7 @@ const verifyWithIAPKit = async (purchase: Purchase) => {
     },
   });
 
-  const verification = result.iapkit?.[0];
+  const verification = result.iapkit;
   return {
     isValid: verification?.isValid ?? false,
     state: verification?.state,

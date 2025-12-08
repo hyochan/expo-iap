@@ -28,7 +28,7 @@ View the full example source:
 
 - Start purchase:
 
-  `requestPurchase({ request: { ios: { sku }, android: { skus: [sku] } }, type: 'in-app' })`
+  `requestPurchase({ request: { apple: { sku }, google: { skus: [sku] } }, type: 'in-app' })`
 
 - Receive callbacks: `onPurchaseSuccess` / `onPurchaseError` (from `useIAP`)
 
@@ -79,8 +79,8 @@ Use the modern, platform‑specific request container (v2.7.0+). This avoids man
 ```tsx
 await requestPurchase({
   request: {
-    ios: {sku: productId, quantity: 1},
-    android: {skus: [productId]},
+    apple: {sku: productId, quantity: 1},
+    google: {skus: [productId]},
   },
   type: 'in-app',
 });
@@ -193,8 +193,8 @@ function PurchaseWithIAPKit() {
       try {
         const result = await verifyPurchaseWithProvider(verifyRequest);
 
-        if (result.iapkit && result.iapkit.length > 0) {
-          const iapkitResult = result.iapkit[0];
+        if (result.iapkit) {
+          const iapkitResult = result.iapkit;
 
           if (iapkitResult.isValid) {
             // Purchase is valid - grant entitlements

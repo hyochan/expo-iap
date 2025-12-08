@@ -1,14 +1,18 @@
 import React from 'react';
-import {render} from '@testing-library/react-native';
 import RootLayout from '../app/_layout';
 
 // Mock expo-router
 jest.mock('expo-router', () => {
-  const React = require('react');
-  const Stack = ({children}: any) =>
-    React.createElement('View', null, children);
-  Stack.Screen = ({name, options}: any) =>
-    React.createElement('View', {testID: name});
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const ReactMock = require('react');
+  const Stack = function MockStack({children}: {children?: React.ReactNode}) {
+    return ReactMock.createElement('View', null, children);
+  };
+  Stack.displayName = 'MockStack';
+  Stack.Screen = function MockScreen({name}: {name: string; options?: object}) {
+    return ReactMock.createElement('View', {testID: name});
+  };
+  Stack.Screen.displayName = 'MockScreen';
   return {
     Stack,
   };
