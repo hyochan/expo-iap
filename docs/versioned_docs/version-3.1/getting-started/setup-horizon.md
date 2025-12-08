@@ -49,7 +49,7 @@ export default {
           modules: {
             horizon: true, // Enable Horizon OS support
           },
-          android: {
+          google: {
             horizonAppId: 'YOUR_HORIZON_APP_ID', // Required: Your Horizon App ID
           },
         },

@@ -269,27 +269,27 @@ const goodPurchaseFlow = async (productId) => {
 
 ### Purchase State Management
 
-1. **Handle all purchase states**: Including pending, failed, restored, and cancelled purchases. Each state requires different handling logic.
+4. **Handle all purchase states**: Including pending, failed, restored, and cancelled purchases. Each state requires different handling logic.
 
-2. **Handle pending purchases**: Some purchases may require approval (e.g., parental consent) and remain in pending state for extended periods.
+5. **Handle pending purchases**: Some purchases may require approval (e.g., parental consent) and remain in pending state for extended periods.
 
-3. **Restore purchases properly**: Implement purchase restoration for non-consumable products and subscriptions. This is required by app store guidelines.
+6. **Restore purchases properly**: Implement purchase restoration for non-consumable products and subscriptions. This is required by app store guidelines.
 
 ### Error Handling and User Experience
 
-1. **Implement comprehensive error handling**: Provide meaningful feedback to users for different error scenarios including network errors, cancelled purchases, and validation failures.
+7. **Implement comprehensive error handling**: Provide meaningful feedback to users for different error scenarios including network errors, cancelled purchases, and validation failures.
 
-2. **Graceful degradation**: Your app should work even if purchases fail or the store is unavailable. Don't block core functionality.
+8. **Graceful degradation**: Your app should work even if purchases fail or the store is unavailable. Don't block core functionality.
 
-3. **User feedback**: Keep users informed about purchase status with appropriate loading states and success/error messages.
+9. **User feedback**: Keep users informed about purchase status with appropriate loading states and success/error messages.
 
 ### Testing and Development
 
-1. **Test thoroughly**: Use real devices and official test accounts. In-app purchases don't work in simulators/emulators.
+10. **Test thoroughly**: Use real devices and official test accounts. In-app purchases don't work in simulators/emulators.
 
-2. **Monitor purchase flow**: Log important events for debugging, but never log sensitive information like receipts or tokens.
+11. **Monitor purchase flow**: Log important events for debugging, but never log sensitive information like receipts or tokens.
 
-3. **Check server-side validation libraries**: Consider using open-source libraries like [node-app-store-receipt-verify](https://github.com/ladeiko/node-app-store-receipt-verify) for iOS or [google-play-billing-validator](https://github.com/macklinu/google-play-billing-validator) for Android.
+12. **Check server-side validation libraries**: Consider using open-source libraries like [node-app-store-receipt-verify](https://github.com/ladeiko/node-app-store-receipt-verify) for iOS or [google-play-billing-validator](https://github.com/macklinu/google-play-billing-validator) for Android.
 
 ## Common Pitfalls and Solutions
 

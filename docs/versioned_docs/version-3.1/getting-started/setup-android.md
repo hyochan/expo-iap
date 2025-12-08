@@ -91,9 +91,7 @@ const AndroidProductItem = ({product}: {product: Product}) => {
   const handlePurchase = () => {
     if (product.platform === 'android') {
       requestPurchase({
-        request: {
-          google: {skus: [product.id]},
-        },
+        request: {skus: [product.id]},
         type: 'in-app',
       });
     }
@@ -104,13 +102,13 @@ const AndroidProductItem = ({product}: {product: Product}) => {
   return (
     <TouchableOpacity onPress={handlePurchase}>
       <Text>{product.title}</Text>
-      <Text>{product.oneTimePurchaseOfferDetailsAndroid?.formattedPrice}</Text>
+      <Text>{product.oneTimePurchaseOfferDetails?.formattedPrice}</Text>
     </TouchableOpacity>
   );
 };
 ```
 
-> **💡 Cross-Platform Note:** For cross-platform compatibility, provide both `apple: {sku: ...}` and `google: {skus: [...]}` in your request object. See the [Core Methods](/docs/api/methods/core-methods#requestpurchase) documentation for details.
+> **💡 Cross-Platform Note:** This example shows Android-specific usage with `skus`. For cross-platform compatibility, include both `sku` and `skus` in your request object. See the [Core Methods](/docs/api/methods/core-methods#requestpurchase) documentation for details.
 
 ### Android-Specific Subscription Handling
 
@@ -126,15 +124,13 @@ const AndroidSubscriptionItem = ({
     if (subscription.platform === 'android') {
       requestPurchase({
         request: {
-          google: {
-            skus: [subscription.id],
-            subscriptionOffers: [
-              {
-                sku: subscription.id,
-                offerToken: offer.offerToken,
-              },
-            ],
-          },
+          skus: [subscription.id],
+          subscriptionOffers: [
+            {
+              sku: subscription.id,
+              offerToken: offer.offerToken,
+            },
+          ],
         },
         type: 'subs',
       });
@@ -146,7 +142,7 @@ const AndroidSubscriptionItem = ({
   return (
     <View>
       <Text>{subscription.title}</Text>
-      {subscription.subscriptionOfferDetailsAndroid?.map((offer) => (
+      {subscription.subscriptionOfferDetails?.map((offer) => (
         <TouchableOpacity
           key={offer.offerId}
           onPress={() => handleSubscribe(offer)}

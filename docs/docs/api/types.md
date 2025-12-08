@@ -19,6 +19,8 @@ Below is a curated overview of the most commonly used types. Consult `src/types.
 ```ts
 export type IapPlatform = 'android' | 'ios';
 
+export type IapStore = 'unknown' | 'apple' | 'google' | 'horizon';
+
 export type ProductType = 'in-app' | 'subs';
 
 export type PurchaseState =
@@ -47,7 +49,7 @@ Use `createPurchaseError` from `src/utils/errorMapping.ts` to work with typed er
 
 ## Product Types
 
-All products share the generated `ProductCommon` interface. Platform extensions discriminate on the `platform` field via the `IapPlatform` string union.
+All products share the generated `ProductCommon` interface. Platform extensions discriminate on the `store` field via the `IapStore` string union.
 
 ```ts
 export interface ProductCommon {
@@ -59,7 +61,7 @@ export interface ProductCommon {
   displayPrice: string;
   currency: string;
   price?: number | null;
-  platform: IapPlatform;
+  store: IapStore;
 }
 
 export interface ProductAndroid extends ProductCommon {
@@ -86,13 +88,13 @@ export type ProductSubscription =
 
 ## Purchase Types
 
-Purchases share the `PurchaseCommon` shape and discriminate on the same `platform` union. Both variants expose the unified `purchaseToken` field for server validation.
+Purchases share the `PurchaseCommon` shape and discriminate on the `store` union. Both variants expose the unified `purchaseToken` field for server validation.
 
 ```ts
 export interface PurchaseCommon {
   id: string;
   productId: string;
-  platform: IapPlatform;
+  store: IapStore;
   purchaseState: PurchaseState;
   transactionDate: number;
   quantity: number;
@@ -142,17 +144,25 @@ The helper `getActiveSubscriptions` in `src/helpers/subscription.ts` converts `P
 
 ## Request Parameters
 
-The request types have been harmonised to match the schema definitions.
+The request types have been harmonised to match the schema definitions. Use `apple`/`google` for platform-specific parameters (the legacy `ios`/`android` keys are deprecated).
 
 ```ts
 export interface RequestPurchasePropsByPlatforms {
-  android?: RequestPurchaseAndroidProps | null;
+  apple?: RequestPurchaseIosProps | null;
+  google?: RequestPurchaseAndroidProps | null;
+  /** @deprecated Use apple instead */
   ios?: RequestPurchaseIosProps | null;
+  /** @deprecated Use google instead */
+  android?: RequestPurchaseAndroidProps | null;
 }
 
 export interface RequestSubscriptionPropsByPlatforms {
-  android?: RequestSubscriptionAndroidProps | null;
+  apple?: RequestSubscriptionIosProps | null;
+  google?: RequestSubscriptionAndroidProps | null;
+  /** @deprecated Use apple instead */
   ios?: RequestSubscriptionIosProps | null;
+  /** @deprecated Use google instead */
+  android?: RequestSubscriptionAndroidProps | null;
 }
 
 export type MutationRequestPurchaseArgs =

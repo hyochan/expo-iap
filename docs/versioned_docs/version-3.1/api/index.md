@@ -36,12 +36,10 @@ Comprehensive list of all error codes that can be returned by Expo IAP.
 import {useIAP} from 'expo-iap';
 
 function MyComponent() {
-  const {connected, products, fetchProducts, requestPurchase, finishTransaction} =
+  const {products, purchaseProduct, restorePurchases, isLoading, error} =
     useIAP();
 
-  // Your component logic here (e.g., call fetchProducts when connected,
-  // use requestPurchase to start purchases, and finishTransaction after
-  // successful server-side verification).
+  // Your component logic here
 }
 ```
 

@@ -102,8 +102,8 @@ const purchaseSubscription = async (subscriptionId: string) => {
 
   await requestPurchase({
     request: {
-      ios: {sku: subscriptionId},
-      android: {
+      apple: {sku: subscriptionId},
+      google: {
         skus: [subscriptionId],
         subscriptionOffers:
           subscriptionOffers.length > 0 ? subscriptionOffers : undefined,
@@ -139,8 +139,8 @@ For standard subscription purchases, no special offer specification is needed:
 ```tsx
 await requestPurchase({
   request: {
-    ios: {sku: 'premium_monthly'},
-    android: {
+    apple: {sku: 'premium_monthly'},
+    google: {
       skus: [
         'premium_monthly',
       ] /* include subscriptionOffers only if available */,
@@ -242,7 +242,7 @@ const purchaseWithPromotionalOffer = async (
   // 2. Purchase with the promotional offer
   await requestPurchase({
     request: {
-      ios: {
+      apple: {
         sku: subscriptionId,
         withOffer: {
           identifier: offerId,
@@ -252,7 +252,7 @@ const purchaseWithPromotionalOffer = async (
           timestamp: timestamp,
         },
       },
-      android: {skus: [subscriptionId], subscriptionOffers: [...]},
+      google: {skus: [subscriptionId], subscriptionOffers: [...]},
     },
     type: 'subs',
   });
@@ -315,8 +315,8 @@ const purchaseWithSelectedOffer = async (
 
     await requestPurchase({
       request: {
-        ios: {sku: subscriptionId},
-        android: {
+        apple: {sku: subscriptionId},
+        google: {
           skus: [subscriptionId],
           subscriptionOffers:
             subscriptionOffers.length > 0 ? subscriptionOffers : undefined,
@@ -334,8 +334,8 @@ const purchaseWithSelectedOffer = async (
 
     await requestPurchase({
       request: {
-        ios: {sku: subscriptionId},
-        android: {
+        apple: {sku: subscriptionId},
+        google: {
           skus: [
             subscriptionId,
           ] /* include subscriptionOffers only if available */,

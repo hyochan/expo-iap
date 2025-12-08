@@ -19,7 +19,7 @@ import {
   isNetworkError,
   getUserFriendlyErrorMessage,
   ErrorCode,
-} from 'expo-iap';
+} from 'react-native-iap';
 
 try {
   await requestPurchase({request: {sku: 'product_id'}});
@@ -68,7 +68,7 @@ interface PurchaseError extends Error {
 Use the `ErrorCode` enum for type-safe error code comparisons:
 
 ```ts
-import {ErrorCode} from 'expo-iap';
+import {ErrorCode} from 'react-native-iap';
 
 if (error instanceof PurchaseError && error.code === ErrorCode.UserCancelled) {
   // Handle user cancellation
