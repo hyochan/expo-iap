@@ -2,7 +2,7 @@
   "tutorialSidebar": [
     {
       "type": "doc",
-      "id": "intro",
+      "id": "index",
       "label": "Introduction"
     },
     {
@@ -11,7 +11,8 @@
       "items": [
         "installation",
         "getting-started/setup-ios",
-        "getting-started/setup-android"
+        "getting-started/setup-android",
+        "getting-started/setup-horizon"
       ]
     },
     {
@@ -21,9 +22,10 @@
         "guides/purchases",
         "guides/lifecycle",
         "guides/offer-code-redemption",
+        "guides/subscription-offers",
+        "guides/alternative-billing",
         "guides/troubleshooting",
         "guides/faq",
-        "guides/migration",
         "guides/support"
       ]
     },
@@ -44,22 +46,10 @@
             "id": "api/methods/core-methods"
           },
           "items": [
-            {
-              "type": "link",
-              "label": "Unified APIs",
-              "href": "/docs/api/methods/core-methods#unified-apis"
-            },
+            "api/methods/unified-apis",
             "api/methods/listeners",
-            {
-              "type": "link",
-              "label": "iOS Specific",
-              "href": "/docs/api/methods/core-methods#ios-specific"
-            },
-            {
-              "type": "link",
-              "label": "Android Specific",
-              "href": "/docs/api/methods/core-methods#android-specific"
-            }
+            "api/methods/ios-specific",
+            "api/methods/android-specific"
           ]
         },
         "api/use-iap",
@@ -83,7 +73,8 @@
         "examples/purchase-flow",
         "examples/subscription-flow",
         "examples/available-purchases",
-        "examples/offer-code"
+        "examples/offer-code",
+        "examples/alternative-billing"
       ]
     },
     {
