@@ -402,7 +402,7 @@ Android-only listener for User Choice Billing events. This fires when a user sel
 import {initConnection, userChoiceBillingListenerAndroid} from 'expo-iap';
 import {Platform} from 'react-native';
 
-const setupUserChoiceBillingListener = async () => {
+const setupUserChoiceBillingListener = () => {
   if (Platform.OS !== 'android') return;
 
   // Initialize with user-choice mode

@@ -12,12 +12,12 @@ import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
 
 > :warning: **Purchase Flow Redesign** :warning:
 >
-> The `purchase` flow has been updated as a result of the findings in issue [#307](https://github.com/hyochan/react-native-iap/issues/307). The resulting flow has been redesigned to not rely on `Promise` or `Callback`.
+> The `purchase` flow has been updated as a result of the findings in issue [#307](https://github.com/hyochan/react-native-iap/issues/307). The resulting flow has been redesign to not rely on `Promise` or `Callback`.
 >
 > Below are some of the specific reasons for the redesign:
 >
 > 1. There may be more than one response when requesting a payment.
-> 2. Purchases are inter-session `asynchronous` meaning requests that are made may take several hours to complete and continue to exist even after the app has been closed or crashed.
+> 2. Purchases are inter-session `asynchronuous` meaning requests that are made may take several hours to complete and continue to exist even after the app has been closed or crashed.
 > 3. The purchase may be pending and hard to track what has been done (for [example](https://github.com/hyochan/react-native-iap/issues/307)).
 > 4. The Billing Flow is an `event` pattern rather than a `callback` pattern.
 
@@ -107,8 +107,8 @@ function PurchaseScreen() {
   const handlePurchase = async (productId: string) => {
     await requestPurchase({
       request: {
-        ios: {sku: productId},
-        android: {skus: [productId]},
+        apple: {sku: productId},
+        google: {skus: [productId]},
       },
     });
   };
@@ -128,8 +128,8 @@ For a complete implementation, see [example/app/purchase-flow.tsx](https://githu
 // Products
 await requestPurchase({
   request: {
-    ios: {sku: productId},
-    android: {skus: [productId]},
+    apple: {sku: productId},
+    google: {skus: [productId]},
   },
 });
 
@@ -137,8 +137,8 @@ await requestPurchase({
 const subscription = subscriptions.find((s) => s.id === subscriptionId);
 await requestPurchase({
   request: {
-    ios: {sku: subscriptionId},
-    android: {
+    apple: {sku: subscriptionId},
+    google: {
       skus: [subscriptionId],
       subscriptionOffers:
         subscription?.subscriptionOfferDetailsAndroid?.map((offer) => ({
@@ -268,7 +268,7 @@ const getProductPrice = (productId: string): string => {
     // Android
     const androidProduct = product as ProductAndroid;
     return (
-      androidProduct.oneTimePurchaseOfferDetailsAndroid?.formattedPrice ?? '₩1,200'
+      androidProduct.oneTimePurchaseOfferDetails?.formattedPrice || '₩1,200'
     );
   }
 };
@@ -286,13 +286,15 @@ const getSubscriptionPrice = (subscriptionId: string): string => {
     return subscription.displayPrice || '$9.99';
   } else {
     // Android
-    const androidSubscription = subscription as ProductSubscriptionAndroid;
-    const firstOffer = androidSubscription.subscriptionOfferDetailsAndroid?.[0];
-    if (firstOffer?.pricingPhases.pricingPhaseList.length > 0) {
-      return (
-        firstOffer.pricingPhases.pricingPhaseList[0].formattedPrice ??
-        '₩11,000'
-      );
+    const androidSubscription = subscription as ProductAndroid;
+    if (androidSubscription.subscriptionOfferDetails?.length > 0) {
+      const firstOffer = androidSubscription.subscriptionOfferDetails[0];
+      if (firstOffer.pricingPhases.pricingPhaseList.length > 0) {
+        return (
+          firstOffer.pricingPhases.pricingPhaseList[0].formattedPrice ||
+          '₩11,000'
+        );
+      }
     }
     return '₩11,000'; // Default Android price
   }
@@ -429,7 +431,7 @@ Your server should:
 ```typescript
 // Client-side: Get purchase details
 const purchaseDetails = {
-  purchaseToken: purchase.purchaseToken,
+  purchaseToken: purchase.purchaseTokenAndroid,
   packageName: purchase.packageNameAndroid,
   productId: purchase.productId,
 };
@@ -468,9 +470,9 @@ const handlePurchaseVerification = useCallback(
   async (sku: string, purchase: any) => {
     try {
       if (Platform.OS === 'ios') {
-        return await verifyPurchase({sku});
+        return await verifyPurchase(sku);
       } else if (Platform.OS === 'android') {
-        const purchaseToken = purchase.purchaseToken;
+        const purchaseToken = purchase.purchaseTokenAndroid;
         const packageName = purchase.packageNameAndroid || 'your.package.name';
         const isSub = subscriptionSkus.includes(sku);
 
@@ -480,13 +482,10 @@ const handlePurchaseVerification = useCallback(
           );
         }
 
-        return await verifyPurchase({
-          sku,
-          androidOptions: {
-            packageName,
-            productToken: purchaseToken,
-            isSub,
-          },
+        return await verifyPurchase(sku, {
+          packageName,
+          productToken: purchaseToken,
+          isSub,
         });
       }
       return {isValid: true};
@@ -596,9 +595,9 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
 
   if (Platform.OS === 'ios') {
     // iOS: Check expiration date
-    if (purchase.expirationDateIOS) {
-      // expirationDateIOS is in milliseconds
-      return purchase.expirationDateIOS > currentTime;
+    if (purchase.expirationDateIos) {
+      // expirationDateIos is in milliseconds
+      return purchase.expirationDateIos > currentTime;
     }
 
     // For Sandbox environment, consider recent purchases as active
@@ -611,12 +610,14 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
     }
   } else if (Platform.OS === 'android') {
     // Android: Check auto-renewal status
-    if (purchase.autoRenewingAndroid != null) {
+    if (purchase.autoRenewingAndroid !== undefined) {
       return purchase.autoRenewingAndroid;
     }
 
-    // Check purchase state
-    return purchase.purchaseState === 'purchased';
+    // Check purchase state (0 = purchased, 1 = canceled)
+    if (purchase.purchaseStateAndroid === 0) {
+      return true;
+    }
   }
 
   return false;
@@ -625,7 +626,7 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
 
 **Key Properties for Subscription Status:**
 
-- **iOS**: `expirationDateIOS` - Unix timestamp when subscription expires
+- **iOS**: `expirationDateIos` - Unix timestamp when subscription expires
 - **Android**: `autoRenewingAndroid` - Boolean indicating if subscription will renew
 
 #### Managing Subscriptions

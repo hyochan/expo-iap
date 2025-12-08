@@ -67,11 +67,11 @@ function SubscriptionPurchase() {
       // Platform-specific purchase request
       await requestPurchase({
         request: {
-          ios: {
+          apple: {
             sku: productId,
             andDangerouslyFinishTransactionAutomatically: false,
           },
-          android: {
+          google: {
             skus: [productId],
             // Android requires subscriptionOffers for subscriptions
             subscriptionOffers:
@@ -151,11 +151,11 @@ function SubscriptionManager() {
 
     await requestPurchase({
       request: {
-        ios: {
+        apple: {
           sku: productId,
           andDangerouslyFinishTransactionAutomatically: false,
         },
-        android: {
+        google: {
           skus: [productId],
           subscriptionOffers:
             subscription.subscriptionOfferDetailsAndroid?.map((offer) => ({
@@ -321,11 +321,11 @@ async function handleIOSSubscriptionChange(newProductId: string) {
     // 3. Handle any necessary proration
     await requestPurchase({
       request: {
-        ios: {
+        apple: {
           sku: newProductId,
           andDangerouslyFinishTransactionAutomatically: false,
         },
-        android: {
+        google: {
           skus: [newProductId],
         },
       },
@@ -406,10 +406,10 @@ async function handleAndroidSubscriptionChange(
     // Step 4: Request purchase with the old purchase token for replacement
     await requestPurchase({
       request: {
-        ios: {
+        apple: {
           sku: newProductId,
         },
-        android: {
+        google: {
           skus: [newProductId],
           subscriptionOffers,
           // IMPORTANT: Include purchase token for subscription replacement
@@ -536,11 +536,11 @@ function SubscriptionPlanManager() {
         // iOS: Simple purchase - automatic replacement in same group
         await requestPurchase({
           request: {
-            ios: {
+            apple: {
               sku: newProductId,
               andDangerouslyFinishTransactionAutomatically: false,
             },
-            android: {
+            google: {
               skus: [newProductId],
             },
           },
@@ -575,10 +575,10 @@ function SubscriptionPlanManager() {
           // Purchase with replacement
           await requestPurchase({
             request: {
-              ios: {
+              apple: {
                 sku: newProductId,
               },
-              android: {
+              google: {
                 skus: [newProductId],
                 subscriptionOffers: offers,
                 purchaseTokenAndroid: currentPurchase.purchaseToken,
@@ -599,10 +599,10 @@ function SubscriptionPlanManager() {
 
           await requestPurchase({
             request: {
-              ios: {
+              apple: {
                 sku: newProductId,
               },
-              android: {
+              google: {
                 skus: [newProductId],
                 subscriptionOffers: offers,
               },

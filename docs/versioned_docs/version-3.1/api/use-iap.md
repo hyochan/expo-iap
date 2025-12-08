@@ -260,8 +260,8 @@ interface UseIAPOptions {
       // In hook: returns void. Listen via callbacks (onPurchaseSuccess/onPurchaseError)
       await requestPurchase({
         request: {
-          ios: {sku: productId},
-          android: {skus: [productId]},
+          apple: {sku: productId},
+          google: {skus: [productId]},
         },
       });
     } catch (error) {
@@ -297,8 +297,8 @@ const buySubscription = async (subscriptionId: string) => {
   // 3) Request purchase with offers
   await requestPurchase({
     request: {
-      ios: {sku: subscriptionId},
-      android: {
+      apple: {sku: subscriptionId},
+      google: {
         skus: [subscriptionId],
         // Only include subscriptionOffers when offers are available
         ...(subscriptionOffers.length > 0 && {subscriptionOffers}),
@@ -322,12 +322,12 @@ const buySubscriptionWithOffer = async (
 ) => {
   await requestPurchase({
     request: {
-      ios: {
+      apple: {
         sku: subscriptionId,
         // Optional: apply promotional offer
         ...(discountOffer && {withOffer: discountOffer}),
       },
-      android: {skus: [subscriptionId]},
+      google: {skus: [subscriptionId]},
     },
     type: 'subs',
   });
@@ -336,10 +336,10 @@ const buySubscriptionWithOffer = async (
 
 #### Subscription helpers (hook)
 
-- `getActiveSubscriptions(subscriptionIds?) => Promise<void>`
+- `getActiveSubscriptions(subscriptionIds?) => Promise<ActiveSubscription[]>`
 
-  - Fetches active subscription info and updates `activeSubscriptions` state.
-  - Does not return a value; read from `activeSubscriptions` state after calling.
+  - Returns active subscription info and also updates `activeSubscriptions` state.
+  - Exception to the hook’s void-return design: this method returns data for convenience.
   - Example:
 
     ```tsx
@@ -348,13 +348,11 @@ const buySubscriptionWithOffer = async (
     useEffect(() => {
       if (!connected) return;
       (async () => {
-        await getActiveSubscriptions(['premium_monthly']);
-        // Read from state after calling
+        const subs = await getActiveSubscriptions(['premium_monthly']);
+        console.log('Subs from return:', subs.length);
+        console.log('Subs from state:', activeSubscriptions.length);
       })();
     }, [connected]);
-
-    // Use activeSubscriptions state in render
-    console.log('Active subscriptions:', activeSubscriptions.length);
     ```
 
 - `hasActiveSubscriptions(subscriptionIds?) => Promise<boolean>`
@@ -383,20 +381,54 @@ const buySubscriptionWithOffer = async (
 
 #### validateReceipt
 
-> **Deprecated:** Use `verifyPurchase` instead. This method will be removed in a future version.
-
-- **Type**: `(props: VerifyPurchaseProps) => Promise<VerifyPurchaseResult>`
-- **Description**: Validate a purchase receipt (deprecated, use `verifyPurchase`)
+- **Type**: `(productId: string, params?: ValidationParams) => Promise<ValidationResult>`
+- **Description**: Validate a purchase receipt
 - **Parameters**:
-  - `props.sku`: Product SKU to validate
-  - `props.androidOptions`: Android-specific validation options (optional)
+  - `productId`: ID of the product to validate
+  - `params`: **Required for Android**, optional for iOS:
+    - `packageName` (string, Android): Package name of your app
+    - `productToken` (string, Android): Purchase token from the purchase
+    - `accessToken` (string, Android): Optional access token for server validation
+    - `isSub` (boolean, Android): Whether this is a subscription
 - **Returns**: Promise resolving to validation result
+
+**Important Platform Differences:**
+
+- **iOS**: Only requires the product ID
+- **Android**: Requires additional parameters (packageName, productToken)
 
 - **Example**:
 
   ```tsx
-  // Deprecated - use verifyPurchase instead
-  const result = await validateReceipt({sku: 'com.example.product'});
+  const validatePurchase = async (productId: string, purchase: any) => {
+    try {
+      if (Platform.OS === 'ios') {
+        // iOS: Simple validation with just product ID
+        const result = await validateReceipt(productId);
+        return result;
+      } else if (Platform.OS === 'android') {
+        // Android: Requires additional parameters
+        const purchaseToken = purchase.purchaseToken;
+        const packageName = purchase.packageNameAndroid;
+
+        if (!purchaseToken || !packageName) {
+          throw new Error(
+            'Android validation requires packageName and productToken',
+          );
+        }
+
+        const result = await validateReceipt(productId, {
+          packageName,
+          productToken: purchaseToken,
+          isSub: false, // Set to true for subscriptions
+        });
+        return result;
+      }
+    } catch (error) {
+      console.error('Validation failed:', error);
+      throw error;
+    }
+  };
   ```
 
 #### getPromotedProductIOS
@@ -439,11 +471,11 @@ const buySubscriptionWithOffer = async (
 
 ```tsx
 const IOSPurchaseExample = () => {
-  const {connected, products, requestPurchase, verifyPurchase} = useIAP({
+  const {connected, products, requestPurchase, validateReceipt} = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      // Verify purchase on iOS
-      const verification = await verifyPurchase({sku: purchase.productId});
-      if (verification.isValid) {
+      // Validate receipt on iOS
+      const validation = await validateReceipt(purchase.productId);
+      if (validation.isValid) {
         unlockContent(purchase.productId);
       }
     },
@@ -488,8 +520,8 @@ const AndroidPurchaseExample = () => {
   const buyProduct = (product: Product) => {
     requestPurchase({
       request: {
-        ios: {sku: product.id},
-        android: {skus: [product.id]},
+        apple: {sku: product.id},
+        google: {skus: [product.id]},
       },
     });
   };
@@ -560,8 +592,8 @@ const {requestPurchase} = useIAP({
      try {
        await requestPurchase({
          request: {
-           ios: {sku: productId},
-           android: {skus: [productId]},
+           apple: {sku: productId},
+           google: {skus: [productId]},
          },
        });
      } finally {
