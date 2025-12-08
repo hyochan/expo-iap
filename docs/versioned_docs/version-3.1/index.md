@@ -2,7 +2,8 @@
 sidebar_position: 1
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner"; import SponsorSection from '@site/src/components/SponsorSection';
+import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import SponsorSection from '@site/src/components/SponsorSection';
 
 # Expo IAP
 

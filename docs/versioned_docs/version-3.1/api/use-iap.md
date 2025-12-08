@@ -336,10 +336,10 @@ const buySubscriptionWithOffer = async (
 
 #### Subscription helpers (hook)
 
-- `getActiveSubscriptions(subscriptionIds?) => Promise<ActiveSubscription[]>`
+- `getActiveSubscriptions(subscriptionIds?) => Promise<void>`
 
-  - Returns active subscription info and also updates `activeSubscriptions` state.
-  - Exception to the hook’s void-return design: this method returns data for convenience.
+  - Fetches active subscription info and updates `activeSubscriptions` state.
+  - Does not return a value; read from `activeSubscriptions` state after calling.
   - Example:
 
     ```tsx
@@ -348,11 +348,13 @@ const buySubscriptionWithOffer = async (
     useEffect(() => {
       if (!connected) return;
       (async () => {
-        const subs = await getActiveSubscriptions(['premium_monthly']);
-        console.log('Subs from return:', subs.length);
-        console.log('Subs from state:', activeSubscriptions.length);
+        await getActiveSubscriptions(['premium_monthly']);
+        // Read from state after calling
       })();
     }, [connected]);
+
+    // Use activeSubscriptions state in render
+    console.log('Active subscriptions:', activeSubscriptions.length);
     ```
 
 - `hasActiveSubscriptions(subscriptionIds?) => Promise<boolean>`
@@ -381,54 +383,20 @@ const buySubscriptionWithOffer = async (
 
 #### validateReceipt
 
-- **Type**: `(productId: string, params?: ValidationParams) => Promise<ValidationResult>`
-- **Description**: Validate a purchase receipt
+> **Deprecated:** Use `verifyPurchase` instead. This method will be removed in a future version.
+
+- **Type**: `(props: VerifyPurchaseProps) => Promise<VerifyPurchaseResult>`
+- **Description**: Validate a purchase receipt (deprecated, use `verifyPurchase`)
 - **Parameters**:
-  - `productId`: ID of the product to validate
-  - `params`: **Required for Android**, optional for iOS:
-    - `packageName` (string, Android): Package name of your app
-    - `productToken` (string, Android): Purchase token from the purchase
-    - `accessToken` (string, Android): Optional access token for server validation
-    - `isSub` (boolean, Android): Whether this is a subscription
+  - `props.sku`: Product SKU to validate
+  - `props.androidOptions`: Android-specific validation options (optional)
 - **Returns**: Promise resolving to validation result
-
-**Important Platform Differences:**
-
-- **iOS**: Only requires the product ID
-- **Android**: Requires additional parameters (packageName, productToken)
 
 - **Example**:
 
   ```tsx
-  const validatePurchase = async (productId: string, purchase: any) => {
-    try {
-      if (Platform.OS === 'ios') {
-        // iOS: Simple validation with just product ID
-        const result = await validateReceipt(productId);
-        return result;
-      } else if (Platform.OS === 'android') {
-        // Android: Requires additional parameters
-        const purchaseToken = purchase.purchaseToken;
-        const packageName = purchase.packageNameAndroid;
-
-        if (!purchaseToken || !packageName) {
-          throw new Error(
-            'Android validation requires packageName and productToken',
-          );
-        }
-
-        const result = await validateReceipt(productId, {
-          packageName,
-          productToken: purchaseToken,
-          isSub: false, // Set to true for subscriptions
-        });
-        return result;
-      }
-    } catch (error) {
-      console.error('Validation failed:', error);
-      throw error;
-    }
-  };
+  // Deprecated - use verifyPurchase instead
+  const result = await validateReceipt({sku: 'com.example.product'});
   ```
 
 #### getPromotedProductIOS
@@ -471,11 +439,11 @@ const buySubscriptionWithOffer = async (
 
 ```tsx
 const IOSPurchaseExample = () => {
-  const {connected, products, requestPurchase, validateReceipt} = useIAP({
+  const {connected, products, requestPurchase, verifyPurchase} = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      // Validate receipt on iOS
-      const validation = await validateReceipt(purchase.productId);
-      if (validation.isValid) {
+      // Verify purchase on iOS
+      const verification = await verifyPurchase({sku: purchase.productId});
+      if (verification.isValid) {
         unlockContent(purchase.productId);
       }
     },
@@ -484,8 +452,8 @@ const IOSPurchaseExample = () => {
   const buyProduct = (product: Product) => {
     requestPurchase({
       request: {
-        ios: {sku: product.id},
-        android: {skus: [product.id]},
+        apple: {sku: product.id},
+        google: {skus: [product.id]},
       },
     });
   };

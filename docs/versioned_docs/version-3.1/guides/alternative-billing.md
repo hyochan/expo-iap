@@ -208,7 +208,7 @@ const purchaseWithExternalUrl = async () => {
   try {
     await requestPurchase({
       request: {
-        ios: {
+        apple: {
           sku: 'com.example.product',
           quantity: 1,
         },
@@ -246,7 +246,7 @@ function MyComponent() {
     try {
       await requestPurchase({
         request: {
-          ios: {
+          apple: {
             sku: productId,
             quantity: 1,
           },
@@ -344,7 +344,7 @@ const handleUserChoicePurchase = async (productId: string) => {
     // Google will show selection dialog automatically
     await requestPurchase({
       request: {
-        android: {
+        google: {
           skus: [productId],
         },
       },
@@ -417,7 +417,7 @@ function AlternativeBillingComponent() {
       // iOS: External URL
       await requestPurchase({
         request: {
-          ios: {
+          apple: {
             sku: productId,
             quantity: 1,
           },
@@ -444,7 +444,7 @@ function AlternativeBillingComponent() {
         // Android: User Choice
         await requestPurchase({
           request: {
-            android: {
+            google: {
               skus: [productId],
             },
           },

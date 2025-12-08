@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # iOS Specific APIs
 
-The following iOS‑only helpers expose StoreKit and App Store specific capabilities. Most day‑to‑day flows are covered by the cross‑platform [Unified APIs](./unified-apis); use these only when you need iOS features.
+The following iOS-only helpers expose StoreKit and App Store specific capabilities. Most day-to-day flows are covered by the cross-platform [Unified APIs](./unified-apis); use these only when you need iOS features.
 
 ## Alternative Billing (iOS 16.0+)
 
