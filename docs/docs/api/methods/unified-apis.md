@@ -17,6 +17,7 @@ These cross‑platform methods work on both iOS and Android. For StoreKit/Play�
 - [`deepLinkToSubscriptions()`](#deeplinktosubscriptions) — Open native subscription management UI
 - [`getStorefront()`](#getstorefront) — Get current storefront country code
 - [`hasActiveSubscriptions()`](#hasactivesubscriptions) — Check if user has active subscriptions
+- [`verifyPurchase()`](#verifypurchase) — Verify purchase with native OpenIAP implementation
 - [`verifyPurchaseWithProvider()`](#verifypurchasewithprovider) — Verify purchase with external provider (e.g., IAPKit)
 
 ## initConnection()
@@ -437,11 +438,43 @@ const checkIfUserHasSubscription = async () => {
 
 **Returns:** `Promise<boolean>` - Returns true if user has at least one active subscription
 
+## verifyPurchase()
+
+Verifies a purchase using the native OpenIAP implementation. This validates purchases using platform-specific methods.
+
+```tsx
+import {verifyPurchase} from 'expo-iap';
+
+const verify = async (sku: string) => {
+  try {
+    const result = await verifyPurchase({sku});
+
+    console.log('Verification result:', result);
+  } catch (error) {
+    console.error('Verification failed:', error);
+  }
+};
+```
+
+**Parameters:**
+
+- `options` (object):
+  - `sku` (string): Product SKU to validate
+  - `androidOptions?` (object): Android-specific validation options
+    - `accessToken` (string): Access token for Google Play API
+    - `packageName` (string): Android package name
+    - `productToken` (string): Product token
+    - `isSub?` (boolean): Whether the product is a subscription
+
+**Returns:** `Promise<VerifyPurchaseResult>` - Platform-specific verification result
+
+For external verification services with additional security, use [`verifyPurchaseWithProvider()`](#verifypurchasewithprovider) instead.
+
 ## verifyPurchaseWithProvider()
 
 Verifies a purchase using an external verification provider. Currently supports [IAPKit](https://iapkit.com) for server-side purchase validation.
 
-### Basic Usage
+### Verification Basic Usage {#verification-basic-usage}
 
 ```tsx
 import {verifyPurchaseWithProvider} from 'expo-iap';
@@ -473,7 +506,7 @@ const verifyWithIAPKit = async (purchase: Purchase) => {
 };
 ```
 
-### Integration with useIAP Hook
+### Verification with useIAP Hook {#verification-with-useiap}
 
 ```tsx
 import {useIAP, verifyPurchaseWithProvider} from 'expo-iap';
@@ -574,17 +607,15 @@ type IapkitPurchaseState =
 - **iOS**: Uses the JWS (JSON Web Signature) from StoreKit 2 transactions
 - **Android**: Uses the purchase token from Google Play Billing
 
-**Best Practices:**
+### Verification Error Handling {#verification-error-handling}
 
-1. **Store API key securely**: Use environment variables (e.g., `EXPO_PUBLIC_IAPKIT_API_KEY`) rather than hardcoding
-2. **Handle all states**: The `state` field provides detailed status - handle each appropriately
-3. **Always finish transactions**: Call `finishTransaction()` regardless of verification result to avoid stuck transactions
-4. **Retry on network errors**: Network issues can cause temporary failures - implement retry logic
+For error handling patterns, purchase states, and best practices when using `verifyPurchaseWithProvider()`, see the [OpenIAP Verification Error Handling](https://www.openiap.dev/docs/apis#verification-error-handling) documentation.
 
 **See also:**
 
 - [IAPKit](https://iapkit.com)
-- [OpenIAP Verification API](https://www.openiap.dev/docs/apis#verify-purchase-with-provider)
+- [IAPKit Purchase States](https://www.openiap.dev/docs/apis#iapkit-purchase-states)
+- [Error Codes Reference](../error-codes)
 
 ## Purchase Interface
 

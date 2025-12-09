@@ -54,6 +54,10 @@ export enum ErrorCode {
   BillingUnavailable = 'billing-unavailable',
   FeatureNotSupported = 'feature-not-supported',
   EmptySkuList = 'empty-sku-list',
+  // Verification-specific errors
+  PurchaseVerificationFailed = 'purchase-verification-failed',
+  PurchaseVerificationFinished = 'purchase-verification-finished',
+  PurchaseVerificationFinishFailed = 'purchase-verification-finish-failed',
 }
 ```
 
@@ -205,6 +209,9 @@ The `getUserFriendlyErrorMessage` function provides localized and user-friendly 
 | `EmptySkuList` | 'No product IDs provided' |
 | `InitConnection` | 'Failed to initialize billing connection' |
 | `QueryProduct` | 'Failed to query products. Please try again later.' |
+| `PurchaseVerificationFailed` | 'Purchase verification failed' |
+| `PurchaseVerificationFinished` | 'Purchase verification already finished' |
+| `PurchaseVerificationFinishFailed` | 'Failed to finish purchase verification' |
 | _default_ | 'An unexpected error occurred' |
 
 ## See Also
@@ -213,3 +220,4 @@ The `getUserFriendlyErrorMessage` function provides localized and user-friendly 
 - [useIAP Hook](./use-iap)
 - [Types Reference](./types)
 - [Troubleshooting](../guides/troubleshooting)
+- [Verification Error Handling](./methods/unified-apis#verification-error-handling)

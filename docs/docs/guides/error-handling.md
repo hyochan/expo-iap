@@ -219,3 +219,4 @@ const handlePlatformSpecificError = (error: IapError) => {
 - [Error Codes Reference](../api/error-codes) - Complete list of error codes
 - [Use IAP Hook](../api/use-iap) - Main API documentation
 - [Troubleshooting](./troubleshooting) - Common issues and solutions
+- [Verification Error Handling](../api/methods/unified-apis#verification-error-handling) - Error handling for `verifyPurchaseWithProvider()`
