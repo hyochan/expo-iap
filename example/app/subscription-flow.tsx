@@ -453,8 +453,245 @@ function SubscriptionFlow({
 
     return (
       <View style={styles.modalContent}>
-        <ScrollView style={styles.jsonContainer}>
-          <Text style={styles.jsonText}>{jsonString}</Text>
+        <ScrollView style={styles.subscriptionDetailsScroll}>
+          {/* Basic Info */}
+          <View style={styles.detailSection}>
+            <Text style={styles.detailSectionTitle}>Basic Info</Text>
+            <Text style={styles.detailRow}>ID: {subscription.id}</Text>
+            <Text style={styles.detailRow}>Title: {subscription.title}</Text>
+            <Text style={styles.detailRow}>
+              Price: {subscription.displayPrice}
+            </Text>
+            <Text style={styles.detailRow}>
+              Platform: {subscription.platform}
+            </Text>
+          </View>
+
+          {/* iOS Discounts */}
+          {'discountsIOS' in subscription &&
+            subscription.discountsIOS &&
+            subscription.discountsIOS.length > 0 && (
+              <View style={styles.detailSection}>
+                <Text style={styles.detailSectionTitle}>
+                  iOS Discounts ({subscription.discountsIOS.length})
+                </Text>
+                {subscription.discountsIOS.map((discount, idx) => (
+                  <View key={idx} style={styles.offerCard}>
+                    <Text style={styles.offerTitle}>{discount.identifier}</Text>
+                    <Text style={styles.offerDetail}>
+                      Type: {discount.type}
+                    </Text>
+                    <Text style={styles.offerDetail}>
+                      Price: {discount.localizedPrice || discount.price}
+                    </Text>
+                    <Text style={styles.offerDetail}>
+                      Payment Mode: {discount.paymentMode}
+                    </Text>
+                    <Text style={styles.offerDetail}>
+                      Periods: {discount.numberOfPeriods}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+          {/* iOS Subscription Info */}
+          {'subscriptionInfoIOS' in subscription &&
+            subscription.subscriptionInfoIOS && (
+              <View style={styles.detailSection}>
+                <Text style={styles.detailSectionTitle}>
+                  iOS Subscription Info
+                </Text>
+                <View style={styles.offerCard}>
+                  {subscription.subscriptionInfoIOS.subscriptionPeriod && (
+                    <Text style={styles.offerDetail}>
+                      Period:{' '}
+                      {
+                        subscription.subscriptionInfoIOS.subscriptionPeriod
+                          .value
+                      }{' '}
+                      {subscription.subscriptionInfoIOS.subscriptionPeriod.unit}
+                    </Text>
+                  )}
+                  {subscription.subscriptionInfoIOS.introductoryOffer && (
+                    <>
+                      <Text style={styles.offerSubtitle}>
+                        Introductory Offer:
+                      </Text>
+                      <Text style={styles.offerDetail}>
+                        Price:{' '}
+                        {
+                          subscription.subscriptionInfoIOS.introductoryOffer
+                            .displayPrice
+                        }
+                      </Text>
+                      <Text style={styles.offerDetail}>
+                        Mode:{' '}
+                        {
+                          subscription.subscriptionInfoIOS.introductoryOffer
+                            .paymentMode
+                        }
+                      </Text>
+                      <Text style={styles.offerDetail}>
+                        Periods:{' '}
+                        {
+                          subscription.subscriptionInfoIOS.introductoryOffer
+                            .periodCount
+                        }
+                      </Text>
+                    </>
+                  )}
+                  {subscription.subscriptionInfoIOS.promotionalOffers &&
+                    subscription.subscriptionInfoIOS.promotionalOffers.length >
+                      0 && (
+                      <>
+                        <Text style={styles.offerSubtitle}>
+                          Promotional Offers (
+                          {
+                            subscription.subscriptionInfoIOS.promotionalOffers
+                              .length
+                          }
+                          ):
+                        </Text>
+                        {subscription.subscriptionInfoIOS.promotionalOffers.map(
+                          (promo, idx) => (
+                            <View key={idx} style={styles.nestedOfferCard}>
+                              <Text style={styles.offerDetail}>
+                                ID: {promo.id}
+                              </Text>
+                              <Text style={styles.offerDetail}>
+                                Price: {promo.displayPrice}
+                              </Text>
+                              <Text style={styles.offerDetail}>
+                                Mode: {promo.paymentMode}
+                              </Text>
+                            </View>
+                          ),
+                        )}
+                      </>
+                    )}
+                </View>
+              </View>
+            )}
+
+          {/* Android Subscription Offer Details */}
+          {'subscriptionOfferDetailsAndroid' in subscription &&
+            subscription.subscriptionOfferDetailsAndroid &&
+            subscription.subscriptionOfferDetailsAndroid.length > 0 && (
+              <View style={styles.detailSection}>
+                <Text style={styles.detailSectionTitle}>
+                  Android Subscription Offers (
+                  {subscription.subscriptionOfferDetailsAndroid.length})
+                </Text>
+                {subscription.subscriptionOfferDetailsAndroid.map(
+                  (offer, idx) => (
+                    <View key={idx} style={styles.offerCard}>
+                      <Text style={styles.offerTitle}>
+                        {offer.basePlanId}
+                        {offer.offerId ? ` - ${offer.offerId}` : ''}
+                      </Text>
+                      {offer.pricingPhases?.pricingPhaseList?.map(
+                        (phase, phaseIdx) => (
+                          <View key={phaseIdx} style={styles.nestedOfferCard}>
+                            <Text style={styles.offerDetail}>
+                              Price: {phase.formattedPrice}
+                            </Text>
+                            <Text style={styles.offerDetail}>
+                              Period: {phase.billingPeriod}
+                            </Text>
+                            <Text style={styles.offerDetail}>
+                              Cycles: {phase.billingCycleCount}
+                            </Text>
+                            <Text style={styles.offerDetail}>
+                              Recurrence: {phase.recurrenceMode}
+                            </Text>
+                          </View>
+                        ),
+                      )}
+                      {offer.offerTags.length > 0 && (
+                        <Text style={styles.offerDetail}>
+                          Tags: {offer.offerTags.join(', ')}
+                        </Text>
+                      )}
+                    </View>
+                  ),
+                )}
+              </View>
+            )}
+
+          {/* Android One-Time Purchase Offer Details (if subscription has them) */}
+          {'oneTimePurchaseOfferDetailsAndroid' in subscription &&
+            subscription.oneTimePurchaseOfferDetailsAndroid &&
+            subscription.oneTimePurchaseOfferDetailsAndroid.length > 0 && (
+              <View style={styles.detailSection}>
+                <Text style={styles.detailSectionTitle}>
+                  Android One-Time Purchase Offers (
+                  {subscription.oneTimePurchaseOfferDetailsAndroid.length})
+                </Text>
+                {subscription.oneTimePurchaseOfferDetailsAndroid.map(
+                  (offer, idx) => (
+                    <View key={idx} style={styles.offerCard}>
+                      <Text style={styles.offerTitle}>
+                        {offer.offerId || `Offer ${idx + 1}`}
+                      </Text>
+                      <Text style={styles.offerDetail}>
+                        Price: {offer.formattedPrice}
+                      </Text>
+                      {offer.fullPriceMicros && (
+                        <Text style={styles.offerDetail}>
+                          Full Price (micros): {offer.fullPriceMicros}
+                        </Text>
+                      )}
+                      {offer.discountDisplayInfo && (
+                        <>
+                          <Text style={styles.offerSubtitle}>Discount:</Text>
+                          {offer.discountDisplayInfo.percentageDiscount && (
+                            <Text style={styles.offerDetail}>
+                              {offer.discountDisplayInfo.percentageDiscount}%
+                              off
+                            </Text>
+                          )}
+                          {offer.discountDisplayInfo.discountAmount && (
+                            <Text style={styles.offerDetail}>
+                              Discount:{' '}
+                              {
+                                offer.discountDisplayInfo.discountAmount
+                                  .formattedDiscountAmount
+                              }
+                            </Text>
+                          )}
+                        </>
+                      )}
+                      {offer.validTimeWindow && (
+                        <Text style={styles.offerDetail}>
+                          Valid:{' '}
+                          {new Date(
+                            Number(offer.validTimeWindow.startTimeMillis),
+                          ).toLocaleDateString()}{' '}
+                          -{' '}
+                          {new Date(
+                            Number(offer.validTimeWindow.endTimeMillis),
+                          ).toLocaleDateString()}
+                        </Text>
+                      )}
+                      {offer.offerTags.length > 0 && (
+                        <Text style={styles.offerDetail}>
+                          Tags: {offer.offerTags.join(', ')}
+                        </Text>
+                      )}
+                    </View>
+                  ),
+                )}
+              </View>
+            )}
+
+          {/* Raw JSON section */}
+          <View style={styles.detailSection}>
+            <Text style={styles.detailSectionTitle}>Raw JSON</Text>
+            <View style={styles.jsonContainer}>
+              <Text style={styles.jsonText}>{jsonString}</Text>
+            </View>
+          </View>
         </ScrollView>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -2366,5 +2603,59 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#856404',
     fontWeight: '600',
+  },
+  subscriptionDetailsScroll: {
+    flex: 1,
+    marginBottom: 12,
+  },
+  detailSection: {
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    paddingBottom: 12,
+  },
+  detailSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  detailRow: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 4,
+  },
+  offerCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
+  },
+  nestedOfferCard: {
+    backgroundColor: '#e9ecef',
+    borderRadius: 6,
+    padding: 8,
+    marginTop: 6,
+    marginLeft: 8,
+  },
+  offerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginBottom: 6,
+  },
+  offerSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#495057',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  offerDetail: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
   },
 });

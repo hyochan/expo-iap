@@ -67,7 +67,7 @@ const handlePurchaseUpdate = async (purchase) => {
 Listens for purchase errors from the store.
 
 ```tsx
-import {purchaseErrorListener} from 'expo-iap';
+import {purchaseErrorListener, ErrorCode} from 'expo-iap';
 
 const setupErrorListener = () => {
   const subscription = purchaseErrorListener((error) => {
@@ -181,6 +181,7 @@ const handlePromotedProduct = async (product) => {
 
 ```tsx
 import React, {useEffect} from 'react';
+import {View} from 'react-native';
 import {purchaseUpdatedListener, purchaseErrorListener} from 'expo-iap';
 
 export default function PurchaseManager() {
@@ -217,6 +218,7 @@ export default function PurchaseManager() {
 
 ```tsx
 import React, {Component} from 'react';
+import {View} from 'react-native';
 import {purchaseUpdatedListener, purchaseErrorListener} from 'expo-iap';
 
 class PurchaseManager extends Component {
@@ -265,10 +267,12 @@ You can create a custom hook to encapsulate purchase listener logic:
 
 ```tsx
 import {useEffect, useCallback} from 'react';
+import {View} from 'react-native';
 import {
   purchaseUpdatedListener,
   purchaseErrorListener,
   finishTransaction,
+  ErrorCode,
 } from 'expo-iap';
 
 export const usePurchaseHandler = () => {
@@ -402,7 +406,7 @@ Android-only listener for User Choice Billing events. This fires when a user sel
 import {initConnection, userChoiceBillingListenerAndroid} from 'expo-iap';
 import {Platform} from 'react-native';
 
-const setupUserChoiceBillingListener = () => {
+const setupUserChoiceBillingListener = async () => {
   if (Platform.OS !== 'android') return;
 
   // Initialize with user-choice mode
