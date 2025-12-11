@@ -534,7 +534,9 @@ class ExpoIapModule : Module() {
                 scope.launch {
                     try {
                         val openIapProgram = mapBillingProgram(program)
-                        openIapStore.enableBillingProgram(openIapProgram)
+                        // Note: enableBillingProgram should be called before initConnection
+                        // for proper BillingClient configuration. Here it's called as a fallback
+                        // but may have no effect if BillingClient is already initialized.
                         val result = openIapStore.isBillingProgramAvailable(openIapProgram)
                         val response =
                             mapOf(

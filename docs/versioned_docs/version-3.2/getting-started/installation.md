@@ -87,7 +87,7 @@ If you're using Expo managed workflow, you'll need to create a [custom developme
 npm install -g eas-cli
 ```
 
-1. **Create a development build**:
+2. **Create a development build**:
 
 ```bash
 eas build --platform ios --profile development

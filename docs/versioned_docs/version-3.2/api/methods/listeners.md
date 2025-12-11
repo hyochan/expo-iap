@@ -209,7 +209,7 @@ export default function PurchaseManager() {
     // Handle error logic
   };
 
-  return <div>{/* Your component JSX */}</div>;
+  return <View>{/* Your component JSX */}</View>;
 }
 ```
 
@@ -254,7 +254,7 @@ class PurchaseManager extends Component {
   };
 
   render() {
-    return <div>{/* Your component JSX */}</div>;
+    return <View>{/* Your component JSX */}</View>;
   }
 }
 ```
@@ -328,7 +328,7 @@ export const usePurchaseHandler = () => {
 export default function MyStoreComponent() {
   usePurchaseHandler(); // Sets up listeners automatically
 
-  return <div>{/* Your store UI */}</div>;
+  return <View>{/* Your store UI */}</View>;
 }
 ```
 

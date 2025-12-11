@@ -16,7 +16,7 @@ Redeem App Store offer/promo codes using the native iOS sheet. This is useful fo
 
 View the full example source:
 
-- GitHub: https://github.com/hyochan/expo-iap/blob/main/example/app/offer-code.tsx
+- GitHub: [example/app/offer-code.tsx](https://github.com/hyochan/expo-iap/blob/main/example/app/offer-code.tsx)
 
 ## Usage
 

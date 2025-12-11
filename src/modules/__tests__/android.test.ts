@@ -212,8 +212,9 @@ describe('Android Module Functions', () => {
           ExpoIapModule.isBillingProgramAvailableAndroid as jest.Mock
         ).mockResolvedValue(mockResult);
 
-        const result =
-          await isBillingProgramAvailableAndroid('external-content-link');
+        const result = await isBillingProgramAvailableAndroid(
+          'external-content-link',
+        );
 
         expect(
           ExpoIapModule.isBillingProgramAvailableAndroid,
@@ -252,9 +253,9 @@ describe('Android Module Functions', () => {
 
     describe('launchExternalLinkAndroid', () => {
       it('delegates to native module with valid params', async () => {
-        (ExpoIapModule.launchExternalLinkAndroid as jest.Mock).mockResolvedValue(
-          undefined,
-        );
+        (
+          ExpoIapModule.launchExternalLinkAndroid as jest.Mock
+        ).mockResolvedValue(undefined);
 
         await launchExternalLinkAndroid({
           billingProgram: 'external-offer',
@@ -272,9 +273,9 @@ describe('Android Module Functions', () => {
       });
 
       it('supports external-content-link billing program', async () => {
-        (ExpoIapModule.launchExternalLinkAndroid as jest.Mock).mockResolvedValue(
-          undefined,
-        );
+        (
+          ExpoIapModule.launchExternalLinkAndroid as jest.Mock
+        ).mockResolvedValue(undefined);
 
         await launchExternalLinkAndroid({
           billingProgram: 'external-content-link',
@@ -293,9 +294,9 @@ describe('Android Module Functions', () => {
 
       it('propagates errors from native module', async () => {
         const error = new Error('Activity not available');
-        (ExpoIapModule.launchExternalLinkAndroid as jest.Mock).mockRejectedValue(
-          error,
-        );
+        (
+          ExpoIapModule.launchExternalLinkAndroid as jest.Mock
+        ).mockRejectedValue(error);
 
         await expect(
           launchExternalLinkAndroid({
@@ -309,9 +310,9 @@ describe('Android Module Functions', () => {
 
       it('rejects when billingProgram is missing (native validation)', async () => {
         const error = new Error('`billingProgram` is a required parameter.');
-        (ExpoIapModule.launchExternalLinkAndroid as jest.Mock).mockRejectedValue(
-          error,
-        );
+        (
+          ExpoIapModule.launchExternalLinkAndroid as jest.Mock
+        ).mockRejectedValue(error);
 
         await expect(
           launchExternalLinkAndroid({
@@ -327,9 +328,9 @@ describe('Android Module Functions', () => {
         const error = new Error(
           '`linkUri` is a required and non-empty parameter.',
         );
-        (ExpoIapModule.launchExternalLinkAndroid as jest.Mock).mockRejectedValue(
-          error,
-        );
+        (
+          ExpoIapModule.launchExternalLinkAndroid as jest.Mock
+        ).mockRejectedValue(error);
 
         await expect(
           launchExternalLinkAndroid({
@@ -352,8 +353,9 @@ describe('Android Module Functions', () => {
           ExpoIapModule.createBillingProgramReportingDetailsAndroid as jest.Mock
         ).mockResolvedValue(mockResult);
 
-        const result =
-          await createBillingProgramReportingDetailsAndroid('external-offer');
+        const result = await createBillingProgramReportingDetailsAndroid(
+          'external-offer',
+        );
 
         expect(
           ExpoIapModule.createBillingProgramReportingDetailsAndroid,
@@ -371,10 +373,9 @@ describe('Android Module Functions', () => {
           ExpoIapModule.createBillingProgramReportingDetailsAndroid as jest.Mock
         ).mockResolvedValue(mockResult);
 
-        const result =
-          await createBillingProgramReportingDetailsAndroid(
-            'external-content-link',
-          );
+        const result = await createBillingProgramReportingDetailsAndroid(
+          'external-content-link',
+        );
 
         expect(
           ExpoIapModule.createBillingProgramReportingDetailsAndroid,

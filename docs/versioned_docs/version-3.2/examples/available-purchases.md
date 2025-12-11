@@ -16,7 +16,7 @@ This example shows how to list and restore previously purchased items (non‑con
 
 View the full example source:
 
-- GitHub: https://github.com/hyochan/expo-iap/blob/main/example/app/available-purchases.tsx
+- GitHub: [example/app/available-purchases.tsx](https://github.com/hyochan/expo-iap/blob/main/example/app/available-purchases.tsx)
 
 ## Restore Flow
 

@@ -24,6 +24,8 @@ The guide covers:
 ### Basic Setup
 
 ```tsx
+import React from 'react';
+import {View, TouchableOpacity, Text} from 'react-native';
 import {useIAP, ErrorCode} from 'expo-iap';
 
 const productIds = [
