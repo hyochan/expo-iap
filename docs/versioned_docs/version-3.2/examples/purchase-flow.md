@@ -150,10 +150,10 @@ You can customize this example by:
 
 2. **Configure environment variable** in your project:
 
-```bash
-# .env or app.config.ts
-EXPO_PUBLIC_IAPKIT_API_KEY=your_iapkit_api_key_here
-```
+   ```bash
+   # .env or app.config.ts
+   EXPO_PUBLIC_IAPKIT_API_KEY=your_iapkit_api_key_here
+   ```
 
 3. **Select IAPKit verification** in the example app by tapping the "Purchase Verification" button and selecting "☁️ IAPKit (Server)"
 
