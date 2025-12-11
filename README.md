@@ -50,28 +50,7 @@ Both libraries will continue to be maintained in parallel going forward.
 npx expo install expo-iap
 ```
 
-### Android Configuration
-
-**Important:** For Android, `expo-iap` uses Google Play Billing Library v8.0.0 which requires Kotlin 2.0+. Since `expo-modules-core` doesn't support Kotlin v2 yet, you need to configure your project with `expo-build-properties`:
-
-```json
-{
-  "expo": {
-    "plugins": [
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "kotlinVersion": "2.1.20"
-          }
-        }
-      ]
-    ]
-  }
-}
-```
-
-If you're targeting Expo SDK 54 or newer, please confirm whether this manual override is still required and share findings with the community at [github.com/hyochan/expo-iap/discussions](https://github.com/hyochan/expo-iap/discussions).
+For platform-specific configuration (Android Kotlin version, iOS deployment target, etc.), see the [Installation Guide](https://hyochan.github.io/expo-iap/getting-started/installation#important-for-expo-managed-workflow).
 
 ## Contributing
 

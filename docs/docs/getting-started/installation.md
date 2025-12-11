@@ -54,7 +54,7 @@ After installing the package, you need to:
            "expo-build-properties",
            {
              "android": {
-               "kotlinVersion": "2.1.20"
+               "kotlinVersion": "2.2.0"
                // If you're targeting Expo SDK 54 or newer, confirm whether this manual override is still required.
                // Please share findings with the community at https://github.com/hyochan/expo-iap/discussions.
              }
@@ -135,7 +135,7 @@ Add the following to your `app.json`:
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.1.20"
+            "kotlinVersion": "2.2.0"
           }
         }
       ]
