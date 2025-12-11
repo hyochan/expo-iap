@@ -22,6 +22,11 @@ import dev.hyo.openiap.RequestSubscriptionPropsByPlatforms
 import dev.hyo.openiap.VerifyPurchaseAndroidOptions
 import dev.hyo.openiap.VerifyPurchaseProps
 import dev.hyo.openiap.VerifyPurchaseWithProviderProps
+import dev.hyo.openiap.BillingProgramAndroid as OpenIapBillingProgram
+import dev.hyo.openiap.LaunchExternalLinkParamsAndroid as OpenIapLaunchExternalLinkParams
+import dev.hyo.openiap.ExternalLinkLaunchModeAndroid as OpenIapExternalLinkLaunchMode
+import dev.hyo.openiap.ExternalLinkTypeAndroid as OpenIapExternalLinkType
+import dev.hyo.openiap.store.OpenIapStore
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
@@ -52,6 +57,7 @@ class ExpoIapModule : Module() {
         get() = appContext.activityProvider?.currentActivity ?: throw Exceptions.MissingActivity()
 
     private val openIap: OpenIapModule by lazy { OpenIapModule(context) }
+    private val openIapStore: OpenIapStore by lazy { OpenIapStore(context) }
     private var listenersAttached = false
     private val pendingEvents = ConcurrentLinkedQueue<Pair<String, Map<String, Any?>>>()
     private val connectionReady = AtomicBoolean(false)
@@ -519,9 +525,115 @@ class ExpoIapModule : Module() {
                 }
             }
 
+            // -------------------------------------------------------------------------
+            // Billing Programs API (Android 8.2.0+)
+            // -------------------------------------------------------------------------
+
+            AsyncFunction("isBillingProgramAvailableAndroid") { program: String, promise: Promise ->
+                ExpoIapLog.payload("isBillingProgramAvailableAndroid", mapOf("program" to program))
+                scope.launch {
+                    try {
+                        val openIapProgram = mapBillingProgram(program)
+                        openIapStore.enableBillingProgram(openIapProgram)
+                        val result = openIapStore.isBillingProgramAvailable(openIapProgram)
+                        val response = mapOf(
+                            "billingProgram" to program,
+                            "isAvailable" to result.isAvailable
+                        )
+                        ExpoIapLog.result("isBillingProgramAvailableAndroid", response)
+                        promise.resolve(response)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("isBillingProgramAvailableAndroid", e)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, e)
+                    }
+                }
+            }
+
+            AsyncFunction("createBillingProgramReportingDetailsAndroid") { program: String, promise: Promise ->
+                ExpoIapLog.payload("createBillingProgramReportingDetailsAndroid", mapOf("program" to program))
+                scope.launch {
+                    try {
+                        val openIapProgram = mapBillingProgram(program)
+                        val result = openIapStore.createBillingProgramReportingDetails(openIapProgram)
+                        val response = mapOf(
+                            "billingProgram" to program,
+                            "externalTransactionToken" to result.externalTransactionToken
+                        )
+                        ExpoIapLog.result("createBillingProgramReportingDetailsAndroid", response)
+                        promise.resolve(response)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("createBillingProgramReportingDetailsAndroid", e)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, e)
+                    }
+                }
+            }
+
+            AsyncFunction("launchExternalLinkAndroid") { params: Map<String, Any?>, promise: Promise ->
+                ExpoIapLog.payload("launchExternalLinkAndroid", params)
+                scope.launch {
+                    try {
+                        val activity =
+                            runCatching { currentActivity }
+                                .onFailure {
+                                    Log.e(TAG, "launchExternalLinkAndroid: Activity missing", it)
+                                }.getOrNull() ?: run {
+                                promise.reject(OpenIapError.ServiceUnavailable.CODE, "Activity not available", null)
+                                return@launch
+                            }
+
+                        val billingProgram = params["billingProgram"] as? String ?: "unspecified"
+                        val launchMode = params["launchMode"] as? String ?: "unspecified"
+                        val linkType = params["linkType"] as? String ?: "unspecified"
+                        val linkUri = params["linkUri"] as? String ?: ""
+
+                        val openIapParams = OpenIapLaunchExternalLinkParams(
+                            billingProgram = mapBillingProgram(billingProgram),
+                            launchMode = mapExternalLinkLaunchMode(launchMode),
+                            linkType = mapExternalLinkType(linkType),
+                            linkUri = linkUri
+                        )
+
+                        val result = openIapStore.launchExternalLink(activity, openIapParams)
+                        ExpoIapLog.result("launchExternalLinkAndroid", result)
+                        promise.resolve(result)
+                    } catch (e: Exception) {
+                        ExpoIapLog.failure("launchExternalLinkAndroid", e)
+                        promise.reject(OpenIapError.ServiceUnavailable.CODE, e.message, e)
+                    }
+                }
+            }
+
             OnDestroy {
                 ExpoIapHelper.cleanupListeners(openIap)
                 job.cancel()
             }
         }
+
+    // -------------------------------------------------------------------------
+    // Billing Programs API Helper Functions
+    // -------------------------------------------------------------------------
+
+    private fun mapBillingProgram(program: String): OpenIapBillingProgram {
+        return when (program) {
+            "external-offer" -> OpenIapBillingProgram.ExternalOffer
+            "external-content-link" -> OpenIapBillingProgram.ExternalContentLink
+            else -> OpenIapBillingProgram.Unspecified
+        }
+    }
+
+    private fun mapExternalLinkLaunchMode(mode: String): OpenIapExternalLinkLaunchMode {
+        return when (mode) {
+            "launch-in-external-browser-or-app" -> OpenIapExternalLinkLaunchMode.LaunchInExternalBrowserOrApp
+            "caller-will-launch-link" -> OpenIapExternalLinkLaunchMode.CallerWillLaunchLink
+            else -> OpenIapExternalLinkLaunchMode.Unspecified
+        }
+    }
+
+    private fun mapExternalLinkType(type: String): OpenIapExternalLinkType {
+        return when (type) {
+            "link-to-digital-content-offer" -> OpenIapExternalLinkType.LinkToDigitalContentOffer
+            "link-to-app-download" -> OpenIapExternalLinkType.LinkToAppDownload
+            else -> OpenIapExternalLinkType.Unspecified
+        }
+    }
 }

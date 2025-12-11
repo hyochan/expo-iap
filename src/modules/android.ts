@@ -6,7 +6,11 @@ import ExpoIapModule from '../ExpoIapModule';
 
 // Types
 import type {
+  BillingProgramAndroid,
+  BillingProgramAvailabilityResultAndroid,
+  BillingProgramReportingDetailsAndroid,
   DeepLinkOptions,
+  LaunchExternalLinkParamsAndroid,
   MutationField,
   VerifyPurchaseResultAndroid,
 } from '../types';
@@ -247,4 +251,75 @@ export const createAlternativeBillingTokenAndroid: MutationField<
   'createAlternativeBillingTokenAndroid'
 > = async (sku?: string) => {
   return ExpoIapModule.createAlternativeBillingTokenAndroid(sku);
+};
+
+// ============================================================================
+// Billing Programs API (Google Play Billing Library 8.2.0+)
+// ============================================================================
+
+/**
+ * Check if a specific billing program is available for this user/device (Android only).
+ * Available in Google Play Billing Library 8.2.0+.
+ *
+ * @param program - The billing program to check ('external-offer' or 'external-content-link')
+ * @returns Promise resolving to availability result
+ *
+ * @example
+ * ```typescript
+ * const result = await isBillingProgramAvailableAndroid('external-offer');
+ * if (result.isAvailable) {
+ *   // Proceed with billing program flow
+ * }
+ * ```
+ */
+export const isBillingProgramAvailableAndroid = async (
+  program: BillingProgramAndroid,
+): Promise<BillingProgramAvailabilityResultAndroid> => {
+  return ExpoIapModule.isBillingProgramAvailableAndroid(program);
+};
+
+/**
+ * Launch an external link for the specified billing program (Android only).
+ * Available in Google Play Billing Library 8.2.0+.
+ *
+ * @param params - The external link parameters
+ * @returns Promise resolving when the link is launched
+ *
+ * @example
+ * ```typescript
+ * await launchExternalLinkAndroid({
+ *   billingProgram: 'external-offer',
+ *   launchMode: 'launch-in-external-browser-or-app',
+ *   linkType: 'link-to-digital-content-offer',
+ *   linkUri: 'https://your-payment-site.com',
+ * });
+ * ```
+ */
+export const launchExternalLinkAndroid = async (
+  params: LaunchExternalLinkParamsAndroid,
+): Promise<void> => {
+  return ExpoIapModule.launchExternalLinkAndroid(params);
+};
+
+/**
+ * Create billing program reporting details for Google Play reporting (Android only).
+ * Available in Google Play Billing Library 8.2.0+.
+ *
+ * Must be called AFTER successful payment in your payment system.
+ * Token must be reported to Google Play backend within 24 hours.
+ *
+ * @param program - The billing program type
+ * @returns Promise resolving to reporting details including the external transaction token
+ *
+ * @example
+ * ```typescript
+ * const details = await createBillingProgramReportingDetailsAndroid('external-offer');
+ * // Report details.externalTransactionToken to Google Play within 24 hours
+ * await reportToGooglePlay(details.externalTransactionToken);
+ * ```
+ */
+export const createBillingProgramReportingDetailsAndroid = async (
+  program: BillingProgramAndroid,
+): Promise<BillingProgramReportingDetailsAndroid> => {
+  return ExpoIapModule.createBillingProgramReportingDetailsAndroid(program);
 };
