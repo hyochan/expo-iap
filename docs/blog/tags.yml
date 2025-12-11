@@ -155,3 +155,33 @@ tooling:
   label: Tooling
   permalink: /tooling
   description: Tooling and build pipeline updates
+
+iapkit:
+  label: IAPKit
+  permalink: /iapkit
+  description: IAPKit integration
+
+verification:
+  label: Verification
+  permalink: /verification
+  description: Purchase verification
+
+backend:
+  label: Backend
+  permalink: /backend
+  description: Backend services
+
+security:
+  label: Security
+  permalink: /security
+  description: Security features
+
+discounts:
+  label: Discounts
+  permalink: /discounts
+  description: Discount and pricing features
+
+billing-programs:
+  label: Billing Programs
+  permalink: /billing-programs
+  description: External billing programs

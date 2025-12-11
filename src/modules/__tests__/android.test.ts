@@ -17,6 +17,9 @@ import {
   validateReceiptAndroid,
   acknowledgePurchaseAndroid,
   openRedeemOfferCodeAndroid,
+  isBillingProgramAvailableAndroid,
+  launchExternalLinkAndroid,
+  createBillingProgramReportingDetailsAndroid,
 } from '../android';
 /* eslint-enable import/first */
 
@@ -178,6 +181,218 @@ describe('Android Module Functions', () => {
       expect(Linking.openURL).toHaveBeenCalledWith(
         'https://play.google.com/redeem?code=',
       );
+    });
+  });
+
+  describe('Billing Programs API (8.2.0+)', () => {
+    describe('isBillingProgramAvailableAndroid', () => {
+      it('delegates to native module with external-offer', async () => {
+        const mockResult = {
+          billingProgram: 'external-offer',
+          isAvailable: true,
+        };
+        (
+          ExpoIapModule.isBillingProgramAvailableAndroid as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await isBillingProgramAvailableAndroid('external-offer');
+
+        expect(
+          ExpoIapModule.isBillingProgramAvailableAndroid,
+        ).toHaveBeenCalledWith('external-offer');
+        expect(result).toEqual(mockResult);
+      });
+
+      it('delegates to native module with external-content-link', async () => {
+        const mockResult = {
+          billingProgram: 'external-content-link',
+          isAvailable: false,
+        };
+        (
+          ExpoIapModule.isBillingProgramAvailableAndroid as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await isBillingProgramAvailableAndroid(
+          'external-content-link',
+        );
+
+        expect(
+          ExpoIapModule.isBillingProgramAvailableAndroid,
+        ).toHaveBeenCalledWith('external-content-link');
+        expect(result).toEqual(mockResult);
+      });
+
+      it('handles unspecified billing program', async () => {
+        const mockResult = {
+          billingProgram: 'unspecified',
+          isAvailable: false,
+        };
+        (
+          ExpoIapModule.isBillingProgramAvailableAndroid as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await isBillingProgramAvailableAndroid('unspecified');
+
+        expect(
+          ExpoIapModule.isBillingProgramAvailableAndroid,
+        ).toHaveBeenCalledWith('unspecified');
+        expect(result).toEqual(mockResult);
+      });
+
+      it('propagates errors from native module', async () => {
+        const error = new Error('Billing program not supported');
+        (
+          ExpoIapModule.isBillingProgramAvailableAndroid as jest.Mock
+        ).mockRejectedValue(error);
+
+        await expect(
+          isBillingProgramAvailableAndroid('external-offer'),
+        ).rejects.toThrow('Billing program not supported');
+      });
+    });
+
+    describe('launchExternalLinkAndroid', () => {
+      it('delegates to native module with valid params', async () => {
+        (
+          ExpoIapModule.launchExternalLinkAndroid as jest.Mock
+        ).mockResolvedValue(undefined);
+
+        await launchExternalLinkAndroid({
+          billingProgram: 'external-offer',
+          launchMode: 'launch-in-external-browser-or-app',
+          linkType: 'link-to-digital-content-offer',
+          linkUri: 'https://example.com/purchase',
+        });
+
+        expect(ExpoIapModule.launchExternalLinkAndroid).toHaveBeenCalledWith({
+          billingProgram: 'external-offer',
+          launchMode: 'launch-in-external-browser-or-app',
+          linkType: 'link-to-digital-content-offer',
+          linkUri: 'https://example.com/purchase',
+        });
+      });
+
+      it('supports external-content-link billing program', async () => {
+        (
+          ExpoIapModule.launchExternalLinkAndroid as jest.Mock
+        ).mockResolvedValue(undefined);
+
+        await launchExternalLinkAndroid({
+          billingProgram: 'external-content-link',
+          launchMode: 'caller-will-launch-link',
+          linkType: 'link-to-app-download',
+          linkUri: 'https://example.com/app',
+        });
+
+        expect(ExpoIapModule.launchExternalLinkAndroid).toHaveBeenCalledWith({
+          billingProgram: 'external-content-link',
+          launchMode: 'caller-will-launch-link',
+          linkType: 'link-to-app-download',
+          linkUri: 'https://example.com/app',
+        });
+      });
+
+      it('propagates errors from native module', async () => {
+        const error = new Error('Activity not available');
+        (
+          ExpoIapModule.launchExternalLinkAndroid as jest.Mock
+        ).mockRejectedValue(error);
+
+        await expect(
+          launchExternalLinkAndroid({
+            billingProgram: 'external-offer',
+            launchMode: 'launch-in-external-browser-or-app',
+            linkType: 'link-to-digital-content-offer',
+            linkUri: 'https://example.com/purchase',
+          }),
+        ).rejects.toThrow('Activity not available');
+      });
+
+      it('rejects when billingProgram is missing (native validation)', async () => {
+        const error = new Error('`billingProgram` is a required parameter.');
+        (
+          ExpoIapModule.launchExternalLinkAndroid as jest.Mock
+        ).mockRejectedValue(error);
+
+        await expect(
+          launchExternalLinkAndroid({
+            billingProgram: '' as any,
+            launchMode: 'launch-in-external-browser-or-app',
+            linkType: 'link-to-digital-content-offer',
+            linkUri: 'https://example.com/purchase',
+          }),
+        ).rejects.toThrow('`billingProgram` is a required parameter.');
+      });
+
+      it('rejects when linkUri is missing (native validation)', async () => {
+        const error = new Error(
+          '`linkUri` is a required and non-empty parameter.',
+        );
+        (
+          ExpoIapModule.launchExternalLinkAndroid as jest.Mock
+        ).mockRejectedValue(error);
+
+        await expect(
+          launchExternalLinkAndroid({
+            billingProgram: 'external-offer',
+            launchMode: 'launch-in-external-browser-or-app',
+            linkType: 'link-to-digital-content-offer',
+            linkUri: '' as any,
+          }),
+        ).rejects.toThrow('`linkUri` is a required and non-empty parameter.');
+      });
+    });
+
+    describe('createBillingProgramReportingDetailsAndroid', () => {
+      it('delegates to native module and returns reporting details', async () => {
+        const mockResult = {
+          billingProgram: 'external-offer',
+          externalTransactionToken: 'token-abc-123-xyz',
+        };
+        (
+          ExpoIapModule.createBillingProgramReportingDetailsAndroid as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await createBillingProgramReportingDetailsAndroid(
+          'external-offer',
+        );
+
+        expect(
+          ExpoIapModule.createBillingProgramReportingDetailsAndroid,
+        ).toHaveBeenCalledWith('external-offer');
+        expect(result).toEqual(mockResult);
+        expect(result.externalTransactionToken).toBe('token-abc-123-xyz');
+      });
+
+      it('handles external-content-link program', async () => {
+        const mockResult = {
+          billingProgram: 'external-content-link',
+          externalTransactionToken: 'content-link-token',
+        };
+        (
+          ExpoIapModule.createBillingProgramReportingDetailsAndroid as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await createBillingProgramReportingDetailsAndroid(
+          'external-content-link',
+        );
+
+        expect(
+          ExpoIapModule.createBillingProgramReportingDetailsAndroid,
+        ).toHaveBeenCalledWith('external-content-link');
+        expect(result.billingProgram).toBe('external-content-link');
+      });
+
+      it('propagates errors from native module', async () => {
+        const error = new Error('Failed to create reporting details');
+        (
+          ExpoIapModule.createBillingProgramReportingDetailsAndroid as jest.Mock
+        ).mockRejectedValue(error);
+
+        await expect(
+          createBillingProgramReportingDetailsAndroid('external-offer'),
+        ).rejects.toThrow('Failed to create reporting details');
+      });
     });
   });
 });

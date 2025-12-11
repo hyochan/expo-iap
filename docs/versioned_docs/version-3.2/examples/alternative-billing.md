@@ -64,76 +64,7 @@ function IOSAlternativeBilling({product}: {product: Product}) {
 - **No Callback**: `onPurchaseUpdated` will NOT fire when using external URLs
 - **Deep Linking**: Implement deep linking to return users to your app
 
-## Android - Billing Programs API (8.2.0+)
-
-The new Billing Programs API provides a unified way to handle external billing:
-
-```tsx
-import {Platform, Button, Alert} from 'react-native';
-import {
-  isBillingProgramAvailableAndroid,
-  launchExternalLinkAndroid,
-  createBillingProgramReportingDetailsAndroid,
-  type Product,
-} from 'expo-iap';
-
-function AndroidBillingPrograms({product}: {product: Product}) {
-  const handlePurchase = async () => {
-    if (Platform.OS !== 'android') return;
-
-    try {
-      // Step 1: Check availability
-      const availability = await isBillingProgramAvailableAndroid('external-offer');
-      if (!availability.isAvailable) {
-        Alert.alert('Error', 'External offer program not available');
-        return;
-      }
-
-      // Step 2: Launch external link
-      await launchExternalLinkAndroid({
-        billingProgram: 'external-offer',
-        launchMode: 'launch-in-external-browser-or-app',
-        linkType: 'link-to-digital-content-offer',
-        linkUri: `https://your-payment-site.com/purchase/${product.id}`,
-      });
-
-      // Step 3: After payment completes externally, get reporting token
-      const details = await createBillingProgramReportingDetailsAndroid('external-offer');
-      console.log('Token:', details.externalTransactionToken);
-
-      // Step 4: Report token to Google Play backend within 24 hours
-      // await reportToGoogleBackend(details.externalTransactionToken);
-
-      Alert.alert('Success', 'Billing program flow completed');
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
-    }
-  };
-
-  return <Button title="Buy (Billing Programs)" onPress={handlePurchase} />;
-}
-```
-
-### Billing Program Types
-
-- `external-offer` - External offer programs
-- `external-content-link` - External content link programs
-
-### Launch Modes
-
-- `launch-in-external-browser-or-app` - Opens in external browser
-- `caller-will-launch-link` - App handles the launch
-
-### Link Types
-
-- `link-to-digital-content-offer` - Digital content offers
-- `link-to-app-download` - App download links
-
-## Android - Alternative Billing (Legacy)
-
-:::warning Deprecated
-The legacy alternative billing API is deprecated. Use the [Billing Programs API](#android---billing-programs-api-820) instead.
-:::
+## Android - Alternative Billing Only
 
 Manual 3-step flow for alternative billing only:
 
@@ -252,23 +183,20 @@ import {Platform, View, Button, Alert} from 'react-native';
 import {
   useIAP,
   requestPurchase,
-  isBillingProgramAvailableAndroid,
-  launchExternalLinkAndroid,
-  createBillingProgramReportingDetailsAndroid,
+  checkAlternativeBillingAvailabilityAndroid,
+  showAlternativeBillingDialogAndroid,
+  createAlternativeBillingTokenAndroid,
   type Product,
   type AlternativeBillingModeAndroid,
 } from 'expo-iap';
 
-type BillingMode = 'billing-programs' | 'user-choice' | 'legacy';
-
 function AlternativeBillingScreen() {
-  const [billingMode, setBillingMode] = useState<BillingMode>('billing-programs');
+  const [billingMode, setBillingMode] =
+    useState<AlternativeBillingModeAndroid>('alternative-only');
 
-  const {connected, products} = useIAP({
+  const {connected, products, fetchProducts} = useIAP({
     alternativeBillingModeAndroid:
-      Platform.OS === 'android' && billingMode === 'user-choice'
-        ? 'user-choice'
-        : undefined,
+      Platform.OS === 'android' ? billingMode : undefined,
     onPurchaseSuccess: (purchase) => {
       console.log('Purchase successful:', purchase);
     },
@@ -292,22 +220,19 @@ function AlternativeBillingScreen() {
     Alert.alert('Redirected', 'Complete purchase on external website');
   }, []);
 
-  const handleAndroidBillingPrograms = useCallback(async (product: Product) => {
-    const availability = await isBillingProgramAvailableAndroid('external-offer');
-    if (!availability.isAvailable) {
-      Alert.alert('Error', 'Billing program not available');
+  const handleAndroidAlternativeOnly = useCallback(async (product: Product) => {
+    const isAvailable = await checkAlternativeBillingAvailabilityAndroid();
+    if (!isAvailable) {
+      Alert.alert('Error', 'Alternative billing not available');
       return;
     }
 
-    await launchExternalLinkAndroid({
-      billingProgram: 'external-offer',
-      launchMode: 'launch-in-external-browser-or-app',
-      linkType: 'link-to-digital-content-offer',
-      linkUri: `https://your-payment-site.com/purchase/${product.id}`,
-    });
+    const userAccepted = await showAlternativeBillingDialogAndroid();
+    if (!userAccepted) return;
 
-    const details = await createBillingProgramReportingDetailsAndroid('external-offer');
-    Alert.alert('Success', `Token: ${details.externalTransactionToken.substring(0, 20)}...`);
+    // Process payment...
+    const token = await createAlternativeBillingTokenAndroid(product.id);
+    Alert.alert('Success', `Token created: ${token?.substring(0, 20)}...`);
   }, []);
 
   const handleAndroidUserChoice = useCallback(async (product: Product) => {
@@ -326,26 +251,29 @@ function AlternativeBillingScreen() {
     if (Platform.OS === 'ios') {
       handleIOSPurchase(product);
     } else if (Platform.OS === 'android') {
-      if (billingMode === 'billing-programs') {
-        handleAndroidBillingPrograms(product);
+      if (billingMode === 'alternative-only') {
+        handleAndroidAlternativeOnly(product);
       } else {
         handleAndroidUserChoice(product);
       }
     }
   };
 
-  const cycleBillingMode = () => {
-    const modes: BillingMode[] = ['billing-programs', 'user-choice', 'legacy'];
-    const currentIndex = modes.indexOf(billingMode);
-    setBillingMode(modes[(currentIndex + 1) % modes.length]);
-  };
-
   return (
     <View>
       {/* Android: Mode selector */}
-      {Platform.OS === 'android' ? (
-        <Button title={`Mode: ${billingMode}`} onPress={cycleBillingMode} />
-      ) : null}
+      {Platform.OS === 'android' && (
+        <Button
+          title={`Mode: ${billingMode}`}
+          onPress={() =>
+            setBillingMode(
+              billingMode === 'alternative-only'
+                ? 'user-choice'
+                : 'alternative-only',
+            )
+          }
+        />
+      )}
 
       {/* Products list */}
       {products.map((product) => (
@@ -390,23 +318,20 @@ await initConnection({
 
 ### Android
 
-- Configure billing programs in Google Play Console
-- Test Billing Programs API (8.2.0+) first
-- Fall back to legacy API if needed
-- Verify token generation and reporting
+- Configure alternative billing in Google Play Console
+- Test both modes separately
+- Verify token generation
 
 ## Best Practices
 
-1. **Use Billing Programs API** - Prefer the new 8.2.0+ API over legacy methods
-2. **Backend Validation** - Always validate on server
-3. **Clear UI** - Show users they're leaving the app
-4. **Error Handling** - Handle all error cases
-5. **Token Reporting** - Report within 24 hours (Android)
-6. **Deep Linking** - Essential for iOS return flow
+1. **Backend Validation** - Always validate on server
+2. **Clear UI** - Show users they're leaving the app
+3. **Error Handling** - Handle all error cases
+4. **Token Reporting** - Report within 24 hours (Android)
+5. **Deep Linking** - Essential for iOS return flow
 
 ## See Also
 
 - [Alternative Billing Guide](/docs/guides/alternative-billing)
-- [Android-Specific APIs](/docs/api/methods/android-specific)
 - [Error Handling](/docs/guides/error-handling)
 - [Purchase Flow](/docs/examples/purchase-flow)

@@ -488,53 +488,193 @@ function PurchaseFlow({
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Product Details</Text>
-            {selectedProduct && (
-              <>
-                <Text style={styles.modalLabel}>Product ID:</Text>
-                <Text style={styles.modalValue}>{selectedProduct.id}</Text>
+          <ScrollView style={styles.modalScrollContent}>
+            <View style={styles.modalInnerContent}>
+              <Text style={styles.modalTitle}>Product Details</Text>
+              {selectedProduct ? (
+                <>
+                  <Text style={styles.modalLabel}>Product ID:</Text>
+                  <Text style={styles.modalValue}>{selectedProduct.id}</Text>
 
-                <Text style={styles.modalLabel}>Title:</Text>
-                <Text style={styles.modalValue}>{selectedProduct.title}</Text>
+                  <Text style={styles.modalLabel}>Title:</Text>
+                  <Text style={styles.modalValue}>{selectedProduct.title}</Text>
 
-                <Text style={styles.modalLabel}>Description:</Text>
-                <Text style={styles.modalValue}>
-                  {selectedProduct.description}
-                </Text>
+                  <Text style={styles.modalLabel}>Description:</Text>
+                  <Text style={styles.modalValue}>
+                    {selectedProduct.description}
+                  </Text>
 
-                <Text style={styles.modalLabel}>Price:</Text>
-                <Text style={styles.modalValue}>
-                  {selectedProduct.displayPrice}
-                </Text>
+                  <Text style={styles.modalLabel}>Price:</Text>
+                  <Text style={styles.modalValue}>
+                    {selectedProduct.displayPrice}
+                  </Text>
 
-                <Text style={styles.modalLabel}>Currency:</Text>
-                <Text style={styles.modalValue}>
-                  {selectedProduct.currency || 'N/A'}
-                </Text>
+                  <Text style={styles.modalLabel}>Currency:</Text>
+                  <Text style={styles.modalValue}>
+                    {selectedProduct.currency || 'N/A'}
+                  </Text>
 
-                <Text style={styles.modalLabel}>Type:</Text>
-                <Text style={styles.modalValue}>
-                  {selectedProduct.type || 'N/A'}
-                </Text>
+                  <Text style={styles.modalLabel}>Type:</Text>
+                  <Text style={styles.modalValue}>
+                    {selectedProduct.type || 'N/A'}
+                  </Text>
 
-                {'isFamilyShareableIOS' in selectedProduct && (
-                  <>
-                    <Text style={styles.modalLabel}>Is Family Shareable:</Text>
-                    <Text style={styles.modalValue}>
-                      {selectedProduct.isFamilyShareableIOS ? 'Yes' : 'No'}
-                    </Text>
-                  </>
-                )}
-              </>
-            )}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
+                  {'isFamilyShareableIOS' in selectedProduct && (
+                    <>
+                      <Text style={styles.modalLabel}>
+                        Is Family Shareable:
+                      </Text>
+                      <Text style={styles.modalValue}>
+                        {selectedProduct.isFamilyShareableIOS ? 'Yes' : 'No'}
+                      </Text>
+                    </>
+                  )}
+
+                  {/* iOS Discounts */}
+                  {'discountsIOS' in selectedProduct &&
+                    selectedProduct.discountsIOS &&
+                    selectedProduct.discountsIOS.length > 0 && (
+                      <View style={styles.offersSection}>
+                        <Text style={styles.offersSectionTitle}>
+                          iOS Discounts ({selectedProduct.discountsIOS.length})
+                        </Text>
+                        {selectedProduct.discountsIOS.map((discount, idx) => (
+                          <View key={idx} style={styles.offerCard}>
+                            <Text style={styles.offerTitle}>
+                              {discount.identifier}
+                            </Text>
+                            <Text style={styles.offerDetail}>
+                              Type: {discount.type}
+                            </Text>
+                            <Text style={styles.offerDetail}>
+                              Price: {discount.localizedPrice || discount.price}
+                            </Text>
+                            <Text style={styles.offerDetail}>
+                              Payment Mode: {discount.paymentMode}
+                            </Text>
+                            <Text style={styles.offerDetail}>
+                              Periods: {discount.numberOfPeriods}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                  {/* Android One-Time Purchase Offer Details */}
+                  {'oneTimePurchaseOfferDetailsAndroid' in selectedProduct &&
+                    selectedProduct.oneTimePurchaseOfferDetailsAndroid &&
+                    selectedProduct.oneTimePurchaseOfferDetailsAndroid.length >
+                      0 && (
+                      <View style={styles.offersSection}>
+                        <Text style={styles.offersSectionTitle}>
+                          Android One-Time Purchase Offers (
+                          {
+                            selectedProduct.oneTimePurchaseOfferDetailsAndroid
+                              .length
+                          }
+                          )
+                        </Text>
+                        {selectedProduct.oneTimePurchaseOfferDetailsAndroid.map(
+                          (offer, idx) => (
+                            <View key={idx} style={styles.offerCard}>
+                              <Text style={styles.offerTitle}>
+                                {offer.offerId || `Offer ${idx + 1}`}
+                              </Text>
+                              <Text style={styles.offerDetail}>
+                                Price: {offer.formattedPrice}
+                              </Text>
+                              {offer.fullPriceMicros && (
+                                <Text style={styles.offerDetail}>
+                                  Full Price (micros): {offer.fullPriceMicros}
+                                </Text>
+                              )}
+                              {offer.discountDisplayInfo && (
+                                <>
+                                  <Text style={styles.offerSubtitle}>
+                                    Discount:
+                                  </Text>
+                                  {offer.discountDisplayInfo
+                                    .percentageDiscount && (
+                                    <Text style={styles.offerDetail}>
+                                      {
+                                        offer.discountDisplayInfo
+                                          .percentageDiscount
+                                      }
+                                      % off
+                                    </Text>
+                                  )}
+                                  {offer.discountDisplayInfo.discountAmount && (
+                                    <Text style={styles.offerDetail}>
+                                      Discount:{' '}
+                                      {
+                                        offer.discountDisplayInfo.discountAmount
+                                          .formattedDiscountAmount
+                                      }
+                                    </Text>
+                                  )}
+                                </>
+                              )}
+                              {offer.validTimeWindow && (
+                                <Text style={styles.offerDetail}>
+                                  Valid:{' '}
+                                  {new Date(
+                                    Number(
+                                      offer.validTimeWindow.startTimeMillis,
+                                    ),
+                                  ).toLocaleDateString()}{' '}
+                                  -{' '}
+                                  {new Date(
+                                    Number(offer.validTimeWindow.endTimeMillis),
+                                  ).toLocaleDateString()}
+                                </Text>
+                              )}
+                              {offer.limitedQuantityInfo && (
+                                <Text style={styles.offerDetail}>
+                                  Remaining:{' '}
+                                  {offer.limitedQuantityInfo.remainingQuantity}{' '}
+                                  / {offer.limitedQuantityInfo.maximumQuantity}
+                                </Text>
+                              )}
+                              {offer.preorderDetailsAndroid && (
+                                <Text style={styles.offerDetail}>
+                                  Release:{' '}
+                                  {new Date(
+                                    Number(
+                                      offer.preorderDetailsAndroid
+                                        .preorderReleaseTimeMillis,
+                                    ),
+                                  ).toLocaleDateString()}
+                                </Text>
+                              )}
+                              {offer.rentalDetailsAndroid && (
+                                <Text style={styles.offerDetail}>
+                                  Rental Period:{' '}
+                                  {
+                                    offer.rentalDetailsAndroid
+                                      .rentalExpirationPeriod
+                                  }
+                                </Text>
+                              )}
+                              {offer.offerTags.length > 0 && (
+                                <Text style={styles.offerDetail}>
+                                  Tags: {offer.offerTags.join(', ')}
+                                </Text>
+                              )}
+                            </View>
+                          ),
+                        )}
+                      </View>
+                    )}
+                </>
+              ) : null}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
         </View>
       </Modal>
 
@@ -1260,6 +1400,15 @@ const styles = StyleSheet.create({
     width: '90%',
     maxHeight: '80%',
   },
+  modalScrollContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    width: '90%',
+    maxHeight: '85%',
+  },
+  modalInnerContent: {
+    padding: 20,
+  },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -1309,5 +1458,43 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '600',
     fontSize: 16,
+  },
+  offersSection: {
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    paddingTop: 12,
+  },
+  offersSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  offerCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
+  },
+  offerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginBottom: 6,
+  },
+  offerSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#495057',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  offerDetail: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
   },
 });
