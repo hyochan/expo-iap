@@ -25,6 +25,10 @@ module.exports = {
     // Android-specific methods
     acknowledgePurchaseAndroid: jest.fn(),
     consumeProductAndroid: jest.fn(),
+    // Billing Programs API (8.2.0+)
+    isBillingProgramAvailableAndroid: jest.fn(),
+    launchExternalLinkAndroid: jest.fn(),
+    createBillingProgramReportingDetailsAndroid: jest.fn(),
     addListener: jest.fn(),
     removeListeners: jest.fn(),
   })),
