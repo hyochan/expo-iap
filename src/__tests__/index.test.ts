@@ -564,9 +564,14 @@ describe('Public API (index.ts)', () => {
       const mock = jest
         .spyOn(iosMod as any, 'validateReceiptIOS')
         .mockResolvedValue({isValid: true});
-      const res = await validateReceipt({sku: 'sku'});
+      const res = await validateReceipt({apple: {sku: 'sku'}});
       expect(res).toEqual({isValid: true});
       mock.mockRestore();
+    });
+
+    it('validateReceipt iOS throws without apple.sku', async () => {
+      (Platform as any).OS = 'ios';
+      await expect(validateReceipt({})).rejects.toThrow(/requires apple.sku/);
     });
 
     it('validateReceipt Android path and param checks', async () => {
@@ -574,14 +579,14 @@ describe('Public API (index.ts)', () => {
       const spy = jest
         .spyOn(androidMod as any, 'validateReceiptAndroid')
         .mockResolvedValue({});
-      await expect(
-        validateReceipt({sku: 'sku', androidOptions: {} as any}),
-      ).rejects.toThrow(/requires packageName/);
+      await expect(validateReceipt({google: {} as any})).rejects.toThrow(
+        /requires google.sku/,
+      );
       await validateReceipt({
-        sku: 'sku',
-        androidOptions: {
+        google: {
+          sku: 'sku',
           packageName: 'com.app',
-          productToken: 'tok',
+          purchaseToken: 'tok',
           accessToken: 'acc',
           isSub: true,
         },
@@ -592,7 +597,7 @@ describe('Public API (index.ts)', () => {
 
     it('validateReceipt throws on unsupported platform', async () => {
       (Platform as any).OS = 'web';
-      await expect(validateReceipt({sku: 'sku'})).rejects.toThrow(
+      await expect(validateReceipt({apple: {sku: 'sku'}})).rejects.toThrow(
         /Platform not supported/,
       );
     });
@@ -897,10 +902,12 @@ describe('Public API (index.ts)', () => {
         .fn()
         .mockResolvedValue(mockResult);
 
-      const result = await verifyPurchase({sku: 'com.example.product'});
+      const result = await verifyPurchase({
+        apple: {sku: 'com.example.product'},
+      });
 
       expect(ExpoIapModule.verifyPurchase).toHaveBeenCalledWith({
-        sku: 'com.example.product',
+        apple: {sku: 'com.example.product'},
       });
       expect(result).toEqual(mockResult);
     });
@@ -912,10 +919,22 @@ describe('Public API (index.ts)', () => {
         .fn()
         .mockResolvedValue(mockResult);
 
-      const result = await verifyPurchase({sku: 'com.example.product'});
+      const result = await verifyPurchase({
+        google: {
+          sku: 'com.example.product',
+          packageName: 'com.example',
+          purchaseToken: 'token',
+          accessToken: 'access',
+        },
+      });
 
       expect(ExpoIapModule.verifyPurchase).toHaveBeenCalledWith({
-        sku: 'com.example.product',
+        google: {
+          sku: 'com.example.product',
+          packageName: 'com.example',
+          purchaseToken: 'token',
+          accessToken: 'access',
+        },
       });
       expect(result).toEqual(mockResult);
     });
@@ -924,7 +943,7 @@ describe('Public API (index.ts)', () => {
       (Platform as any).OS = 'web';
 
       await expect(
-        verifyPurchase({sku: 'com.example.product'}),
+        verifyPurchase({apple: {sku: 'com.example.product'}}),
       ).rejects.toThrow(/Unsupported platform/);
     });
   });

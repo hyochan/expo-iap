@@ -206,7 +206,7 @@ describe('iOS Module Functions', () => {
         mockValidationResult,
       );
 
-      const result = (await validateReceiptIOS({sku: mockSku})) as any;
+      const result = (await validateReceiptIOS({apple: {sku: mockSku}})) as any;
 
       expect(ExpoIapModule.validateReceiptIOS).toHaveBeenCalledWith(mockSku);
       expect(result.isValid).toBe(true);
@@ -218,6 +218,10 @@ describe('iOS Module Functions', () => {
     it('should throw when SKU missing', async () => {
       // @ts-expect-error runtime guard
       await expect(validateReceiptIOS(undefined)).rejects.toThrow(
+        /requires a SKU/,
+      );
+      // Also test with empty apple options
+      await expect(validateReceiptIOS({apple: {sku: ''}})).rejects.toThrow(
         /requires a SKU/,
       );
     });
@@ -238,7 +242,7 @@ describe('iOS Module Functions', () => {
         mockResult,
       );
 
-      const result = await validateReceiptIOS({sku: 'product.id'});
+      const result = await validateReceiptIOS({apple: {sku: 'product.id'}});
 
       expect(result).toBe(mockResult);
     });

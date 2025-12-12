@@ -470,6 +470,7 @@ function SubscriptionFlow({
           {/* iOS Discounts */}
           {'discountsIOS' in subscription &&
             subscription.discountsIOS &&
+            Array.isArray(subscription.discountsIOS) &&
             subscription.discountsIOS.length > 0 && (
               <View style={styles.detailSection}>
                 <Text style={styles.detailSectionTitle}>
@@ -1473,7 +1474,9 @@ function SubscriptionFlowContainer() {
 
       if (Platform.OS === 'ios' && purchasePlatform === 'ios') {
         const hasValidToken = !!(
-          purchase.purchaseToken && purchase.purchaseToken.length > 0
+          purchase.purchaseToken &&
+          typeof purchase.purchaseToken === 'string' &&
+          purchase.purchaseToken.length > 0
         );
         const hasValidTransactionId = !!(purchase.id && purchase.id.length > 0);
 
@@ -1577,7 +1580,21 @@ function SubscriptionFlowContainer() {
         try {
           if (currentVerificationMethod === 'local') {
             console.log('[SubscriptionFlow] Verifying with local method...');
-            const result = await verifyPurchase({sku: productId});
+            // Platform-specific verification options
+            const result = await verifyPurchase({
+              apple: Platform.OS === 'ios' ? {sku: productId} : undefined,
+              google:
+                Platform.OS === 'android'
+                  ? {
+                      sku: productId,
+                      packageName: 'dev.anthropic.iapexample',
+                      purchaseToken: purchase.purchaseToken ?? '',
+                      accessToken: '', // Would be obtained from your server
+                      isSub: true,
+                    }
+                  : undefined,
+              // horizon: For Meta Quest, would include sku, userId, accessToken
+            });
             console.log(
               '[SubscriptionFlow] Local verification result:',
               result,
@@ -1592,7 +1609,8 @@ function SubscriptionFlowContainer() {
             );
             console.log(
               '[SubscriptionFlow] purchase.purchaseToken:',
-              purchase.purchaseToken
+              purchase.purchaseToken &&
+                typeof purchase.purchaseToken === 'string'
                 ? `✓ Present (${purchase.purchaseToken.length} chars)`
                 : '✗ Missing or empty',
             );

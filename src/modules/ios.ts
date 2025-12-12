@@ -237,10 +237,12 @@ export const getTransactionJwsIOS: QueryField<'getTransactionJwsIOS'> = async (
  */
 const validateReceiptIOSImpl = async (props: VerifyPurchaseProps | string) => {
   const sku =
-    typeof props === 'string' ? props : (props as VerifyPurchaseProps)?.sku;
+    typeof props === 'string'
+      ? props
+      : (props as VerifyPurchaseProps)?.apple?.sku;
 
   if (!sku) {
-    throw new Error('validateReceiptIOS requires a SKU');
+    throw new Error('validateReceiptIOS requires a SKU (via apple.sku)');
   }
 
   return (await ExpoIapModule.validateReceiptIOS(

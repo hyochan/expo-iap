@@ -444,10 +444,27 @@ Verifies a purchase using the native OpenIAP implementation. This validates purc
 
 ```tsx
 import {verifyPurchase} from 'expo-iap';
+import {Platform} from 'react-native';
 
-const verify = async (sku: string) => {
+const verify = async (productId: string, purchase: Purchase) => {
   try {
-    const result = await verifyPurchase({sku});
+    const result = await verifyPurchase({
+      // iOS App Store verification
+      apple: Platform.OS === 'ios' ? {sku: productId} : undefined,
+      // Google Play Store verification
+      google:
+        Platform.OS === 'android'
+          ? {
+              sku: productId,
+              packageName: 'com.example.app',
+              purchaseToken: purchase.purchaseToken ?? '',
+              accessToken: 'your-oauth-access-token', // From your server
+              isSub: true, // Set to true for subscriptions
+            }
+          : undefined,
+      // Meta Horizon (Quest) verification
+      // horizon: { sku: productId, userId: 'user-id', accessToken: 'token' }
+    });
 
     console.log('Verification result:', result);
   } catch (error) {
@@ -459,12 +476,18 @@ const verify = async (sku: string) => {
 **Parameters:**
 
 - `options` (object):
-  - `sku` (string): Product SKU to validate
-  - `androidOptions?` (object): Android-specific validation options
-    - `accessToken` (string): Access token for Google Play API
-    - `packageName` (string): Android package name
-    - `productToken` (string): Product token
+  - `apple?` (object): Apple App Store verification parameters
+    - `sku` (string): Product SKU to validate
+  - `google?` (object): Google Play Store verification parameters
+    - `sku` (string): Product SKU to validate
+    - `packageName` (string): Android package name (e.g., com.example.app)
+    - `purchaseToken` (string): Purchase token from the purchase response
+    - `accessToken` (string): OAuth2 access token for Google Play API
     - `isSub?` (boolean): Whether the product is a subscription
+  - `horizon?` (object): Meta Horizon (Quest) verification parameters
+    - `sku` (string): Product SKU to validate
+    - `userId` (string): Meta user ID
+    - `accessToken` (string): Access token for Meta S2S API
 
 **Returns:** `Promise<VerifyPurchaseResult>` - Platform-specific verification result
 

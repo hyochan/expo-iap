@@ -727,29 +727,33 @@ export const deepLinkToSubscriptions: MutationField<
 export const validateReceipt: MutationField<'validateReceipt'> = async (
   options,
 ) => {
-  const {sku, androidOptions} = options as MutationValidateReceiptArgs;
+  const {apple, google} = options as MutationValidateReceiptArgs;
 
   if (Platform.OS === 'ios') {
-    return validateReceiptIOS({sku});
+    if (!apple?.sku) {
+      throw new Error('iOS validation requires apple.sku');
+    }
+    return validateReceiptIOS({apple: {sku: apple.sku}});
   }
 
   if (Platform.OS === 'android') {
     if (
-      !androidOptions ||
-      !androidOptions.packageName ||
-      !androidOptions.productToken ||
-      !androidOptions.accessToken
+      !google ||
+      !google.sku ||
+      !google.packageName ||
+      !google.purchaseToken ||
+      !google.accessToken
     ) {
       throw new Error(
-        'Android validation requires packageName, productToken, and accessToken',
+        'Android validation requires google.sku, google.packageName, google.purchaseToken, and google.accessToken',
       );
     }
     return validateReceiptAndroid({
-      packageName: androidOptions.packageName,
-      productId: sku,
-      productToken: androidOptions.productToken,
-      accessToken: androidOptions.accessToken,
-      isSub: androidOptions.isSub ?? undefined,
+      packageName: google.packageName,
+      productId: google.sku,
+      productToken: google.purchaseToken,
+      accessToken: google.accessToken,
+      isSub: google.isSub ?? undefined,
     });
   }
 
