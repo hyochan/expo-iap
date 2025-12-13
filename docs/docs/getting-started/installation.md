@@ -30,7 +30,7 @@ expo-iap 3.3+ uses Google Play Billing Library v8.2, which requires **Kotlin 2.0
 Install the package using your favorite package manager:
 
 ```bash
-npm install expo-iap
+npm install expo-iap@next
 ```
 
 ### Important for Expo Managed Workflow
