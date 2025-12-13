@@ -6,7 +6,14 @@ const LOCAL_OPENIAP_PATHS = {
 } as const;
 
 export default ({config}: ConfigContext): ExpoConfig => {
+  // Check if building for TV (set EXPO_TV=1 before prebuild)
+  const isTV = process.env.EXPO_TV === '1';
+
   const pluginEntries: NonNullable<ExpoConfig['plugins']> = [
+    // TV config plugin (must be first for TV builds)
+    ...(isTV
+      ? [['@react-native-tvos/config-tv', {isTV: true}] as [string, any]]
+      : []),
     [
       '../app.plugin.js',
       {
@@ -90,7 +97,7 @@ export default ({config}: ConfigContext): ExpoConfig => {
           kotlinVersion: '2.0.21',
         },
         ios: {
-          deploymentTarget: '15.1',
+          deploymentTarget: isTV ? '16.0' : '15.1',
         },
       },
     ],

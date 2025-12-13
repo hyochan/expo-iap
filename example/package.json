@@ -7,6 +7,8 @@
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "tvos": "EXPO_TV=1 npx expo run:ios",
+    "tvos:prebuild": "EXPO_TV=1 npx expo prebuild --platform ios --clean",
     "eas:preview:android": "eas build --profile preview --platform android --local",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -19,6 +21,7 @@
     "@preact/signals-react": "^3.2.1",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
+    "@react-native-tvos/config-tv": "^0.1.4",
     "expo": "^54.0.0",
     "expo-blur": "~15.0.7",
     "expo-build-properties": "~1.0.9",
@@ -33,7 +36,7 @@
     "expo-symbols": "~1.0.7",
     "expo-system-ui": "~6.0.7",
     "react": "19.1.0",
-    "react-native": "0.81.4",
+    "react-native": "npm:react-native-tvos@0.81.5-1",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
@@ -58,6 +61,9 @@
   "expo": {
     "autolinking": {
       "nativeModulesDir": ".."
+    },
+    "install": {
+      "exclude": ["react-native"]
     }
   }
 }
