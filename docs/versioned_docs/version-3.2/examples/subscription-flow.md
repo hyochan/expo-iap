@@ -502,6 +502,10 @@ function AndroidSubscriptionManager() {
 
 ### Android Replacement Modes
 
+:::warning Deprecated in v3.3.0+
+The `replacementModeAndroid` parameter is deprecated. Use `subscriptionProductReplacementParams` instead for item-level replacement (Google Play Billing Library 8.1.0+). See the [v3.3.0 release notes](/blog/3.3.0#deprecated-methods) for migration details.
+:::
+
 These constants match [Android's BillingFlowParams.SubscriptionUpdateParams.ReplacementMode](https://developer.android.com/reference/com/android/billingclient/api/BillingFlowParams.SubscriptionUpdateParams.ReplacementMode):
 
 - `1` (WITH_TIME_PRORATION): Immediate change with prorated credit

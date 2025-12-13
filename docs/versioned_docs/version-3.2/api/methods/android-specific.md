@@ -10,6 +10,16 @@ The following Android‑only helpers expose Google Play Billing specific capabil
 
 ## Alternative Billing
 
+:::warning Deprecated in v3.3.0+
+The following methods are deprecated in favor of the new [Billing Programs API](/docs/api/methods/android-specific#billing-programs-api-820) (available in v3.3.0+):
+
+- `checkAlternativeBillingAvailabilityAndroid()` → Use [`isBillingProgramAvailableAndroid()`](/docs/api/methods/android-specific#isbillingprogramavailableandroid)
+- `showAlternativeBillingDialogAndroid()` → Use [`launchExternalLinkAndroid()`](/docs/api/methods/android-specific#launchexternallinkandroid)
+- `createAlternativeBillingTokenAndroid()` → Use [`createBillingProgramReportingDetailsAndroid()`](/docs/api/methods/android-specific#createbillingprogramreportingdetailsandroid)
+
+These legacy methods will continue to work but we recommend upgrading to v3.3.0+ and using the new Billing Programs API.
+:::
+
 - [`checkAlternativeBillingAvailabilityAndroid()`](#checkalternativebillingavailabilityandroid) — Check if alternative billing is available
 - [`showAlternativeBillingDialogAndroid()`](#showalternativebillingdialogandroid) — Show required information dialog
 - [`createAlternativeBillingTokenAndroid()`](#createalternativebillingtokenandroid) — Generate reporting token
@@ -17,6 +27,10 @@ The following Android‑only helpers expose Google Play Billing specific capabil
 ## Purchase Management
 
 ### checkAlternativeBillingAvailabilityAndroid()
+
+:::warning Deprecated
+Use [`isBillingProgramAvailableAndroid()`](/docs/api/methods/android-specific#isbillingprogramavailableandroid) instead (v3.3.0+).
+:::
 
 Check if alternative billing is available for the current user. This must be called before showing the alternative billing dialog.
 
@@ -44,6 +58,10 @@ if (isAvailable) {
 
 ### showAlternativeBillingDialogAndroid()
 
+:::warning Deprecated
+Use [`launchExternalLinkAndroid()`](/docs/api/methods/android-specific#launchexternallinkandroid) instead (v3.3.0+).
+:::
+
 Show Google's required information dialog to inform users about alternative billing. This must be called after checking availability and before processing payment.
 
 ```ts
@@ -65,6 +83,10 @@ if (userAccepted) {
 **Note:** This dialog is required by Google Play's alternative billing policy. You must show this before redirecting users to your payment system.
 
 ### createAlternativeBillingTokenAndroid()
+
+:::warning Deprecated
+Use [`createBillingProgramReportingDetailsAndroid()`](/docs/api/methods/android-specific#createbillingprogramreportingdetailsandroid) instead (v3.3.0+).
+:::
 
 Generate a reporting token after successfully processing payment through your payment system. This token must be reported to Google Play within 24 hours.
 
