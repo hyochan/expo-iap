@@ -457,8 +457,8 @@ const verify = async (productId: string, purchase: Purchase) => {
           ? {
               sku: productId,
               packageName: 'com.example.app',
-              purchaseToken: purchase.purchaseToken ?? '',
-              accessToken: 'your-oauth-access-token', // From your server
+              purchaseToken: purchase.purchaseToken!, // Required - throws if missing
+              accessToken: await getAccessTokenFromServer(), // ⚠️ Must be fetched from your backend
               isSub: true, // Set to true for subscriptions
             }
           : undefined,

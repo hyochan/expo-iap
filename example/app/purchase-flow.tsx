@@ -820,8 +820,8 @@ function PurchaseFlowContainer() {
                   ? {
                       sku: productId,
                       packageName: 'dev.anthropic.iapexample',
-                      purchaseToken: purchase.purchaseToken ?? '',
-                      accessToken: '', // Would be obtained from your server
+                      purchaseToken: purchase.purchaseToken ?? '', // Required for production
+                      accessToken: '', // ⚠️ Android local verification requires server-issued OAuth token
                     }
                   : undefined,
               // horizon: For Meta Quest, would include sku, userId, accessToken
