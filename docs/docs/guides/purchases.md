@@ -400,105 +400,11 @@ const buySubscription = async (subscriptionId: string) => {
 
 Purchase verification ensures purchases are legitimate.
 
-Always validate purchases on a secure server for production apps. Client-side verification is only appropriate for local development and testing because it can be tampered with.
+:::warning Production Requirement
+Always validate purchases on a secure server for production apps. Client-side verification can be tampered with and should only be used for local development and testing.
+:::
 
-### Server-Side Verification (Required for Production)
-
-#### iOS Purchase Verification
-
-```typescript
-// Production (RECOMMENDED):
-// Send purchase info directly to your server
-const response = await fetch('https://your-server.com/verify-ios-purchase', {
-  method: 'POST',
-  headers: {'Content-Type': 'application/json'},
-  body: JSON.stringify({
-    transactionId: purchase.transactionId,
-    productId: purchase.productId,
-    // Your server will verify with Apple
-  }),
-});
-```
-
-Your server should:
-
-1. Verify the transaction with Apple's App Store Server API
-2. Check the bundle ID and product ID
-3. Ensure the transaction hasn't been used before
-
-#### Android Purchase Verification
-
-```typescript
-// Client-side: Get purchase details
-const purchaseDetails = {
-  purchaseToken: purchase.purchaseTokenAndroid,
-  packageName: purchase.packageNameAndroid,
-  productId: purchase.productId,
-};
-
-// Send to your server
-const response = await fetch(
-  'https://your-server.com/validate-android-purchase',
-  {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(purchaseDetails),
-  },
-);
-```
-
-Your server should:
-
-1. Use Google Play Developer API with service account credentials
-2. Call `purchases.products.get()` or `purchases.subscriptions.get()`
-3. Verify the purchase state and consumption state
-4. Check that the purchase hasn't been refunded
-
-**Never expose your Google Play service account credentials in client code!**
-
-### Development-Only Client Verification
-
-Use client-side verification helpers only for development, and prefer the server flows above in production.
-
-**Platform differences:**
-
-- **iOS**: Only requires the SKU for validation
-- **Android**: Requires `packageName`, `productToken`, and optionally `accessToken`
-
-```tsx
-const handlePurchaseVerification = useCallback(
-  async (sku: string, purchase: any) => {
-    try {
-      if (Platform.OS === 'ios') {
-        return await verifyPurchase(sku);
-      } else if (Platform.OS === 'android') {
-        const purchaseToken = purchase.purchaseTokenAndroid;
-        const packageName = purchase.packageNameAndroid || 'your.package.name';
-        const isSub = subscriptionSkus.includes(sku);
-
-        if (!purchaseToken || !packageName) {
-          throw new Error(
-            'Android verification requires packageName and productToken',
-          );
-        }
-
-        return await verifyPurchase(sku, {
-          packageName,
-          productToken: purchaseToken,
-          isSub,
-        });
-      }
-      return {isValid: true};
-    } catch (error) {
-      console.error('Purchase verification failed:', error);
-      return {isValid: false};
-    }
-  },
-  [verifyPurchase],
-);
-```
-
-### Server-Side Verification with IAPKit
+### Server-Side Verification with IAPKit (Recommended)
 
 [IAPKit](https://iapkit.com) provides a unified server-side verification API for both iOS and Android:
 
@@ -528,7 +434,7 @@ const verifyWithIAPKit = async (purchase: Purchase) => {
 };
 ```
 
-For complete IAPKit integration, see [Purchase Flow Example](../examples/purchase-flow#iapkit-server-verification).
+For complete IAPKit integration, see [Purchase Flow Example](../examples/purchase-flow#iapkit-server-verification) and [API Reference](/docs/api/methods/unified-apis#verifypurchasewithprovider).
 
 **Best Practices:**
 

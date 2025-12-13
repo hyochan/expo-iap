@@ -21,7 +21,7 @@ Before installing Expo IAP, make sure you have:
 
 :::caution Android Kotlin Requirement
 
-expo-iap 3.x uses Google Play Billing Library v8, which requires **Kotlin 2.0+**. This is natively supported in Expo SDK 53+ (React Native 0.79+). If you're using Expo SDK 52 or earlier, see the [workaround section](#expo-sdk-52-users) below.
+expo-iap 3.2 uses Google Play Billing Library v8.1, which requires **Kotlin 2.0+**. This is natively supported in Expo SDK 53+ (React Native 0.79+). If you're using Expo SDK 52 or earlier, see the [workaround section](#expo-sdk-52-users) below.
 
 :::
 
@@ -41,7 +41,7 @@ After installing the package, you need to:
 
 1. **Configure expo-build-properties for Android** (required for Kotlin 2.0+ support):
 
-   Starting from version 2.7, expo-iap supports Google Play Billing Library v8, which requires Kotlin 2.0+. Since `expo-modules-core` doesn't support Kotlin 2.0 yet, you need to manually configure the Kotlin version.
+   expo-iap 3.2 uses Google Play Billing Library v8.1, which requires Kotlin 2.0+. You need to manually configure the Kotlin version via `expo-build-properties`.
 
    Add the following to your `app.json`:
 
@@ -122,7 +122,7 @@ Then install the native dependencies:
 
 #### Android
 
-**Important:** Starting from version 2.7, expo-iap supports Google Play Billing Library v8, which requires Kotlin 2.0+. Since `expo-modules-core` doesn't support Kotlin 2.0 yet, you need to configure your project with `expo-build-properties`.
+**Important:** expo-iap 3.2 uses Google Play Billing Library v8.1, which requires Kotlin 2.0+. You need to configure your project with `expo-build-properties`.
 
 Add the following to your `app.json`:
 
@@ -150,7 +150,7 @@ After adding this configuration, run:
 npx expo prebuild --clean
 ```
 
-This configuration ensures compatibility with Google Play Billing Library v8.0.0.
+This configuration ensures compatibility with Google Play Billing Library v8.1.
 
 ## Configuration
 
@@ -202,7 +202,7 @@ Now that you have Expo IAP installed, you can:
 
 :::warning Compatibility Issue
 
-Expo SDK 52 (React Native 0.76.x) uses a Gradle plugin compiled against **Kotlin 1.9.x**, which is incompatible with Google Play Billing Library v8 (requires Kotlin 2.0+). This creates a build conflict that cannot be resolved by simply overriding the Kotlin version.
+Expo SDK 52 (React Native 0.76.x) uses a Gradle plugin compiled against **Kotlin 1.9.x**, which is incompatible with Google Play Billing Library v8.1 (requires Kotlin 2.0+). This creates a build conflict that cannot be resolved by simply overriding the Kotlin version.
 
 :::
 

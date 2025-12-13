@@ -21,7 +21,7 @@ Before installing Expo IAP, make sure you have:
 
 :::caution Android Kotlin Requirement
 
-expo-iap 3.x uses Google Play Billing Library v8, which requires **Kotlin 2.0+**. This is natively supported in Expo SDK 53+ (React Native 0.79+). If you're using Expo SDK 52 or earlier, see the [workaround section](#expo-sdk-52-users) below.
+expo-iap 3.3+ uses Google Play Billing Library v8.2, which requires **Kotlin 2.0+**. This is natively supported in Expo SDK 53+ (React Native 0.79+). If you're using Expo SDK 52 or earlier, see the [workaround section](#expo-sdk-52-users) below.
 
 :::
 
@@ -41,7 +41,7 @@ After installing the package, you need to:
 
 1. **Configure expo-build-properties for Android** (required for Kotlin 2.0+ support):
 
-   Starting from version 2.7, expo-iap supports Google Play Billing Library v8, which requires Kotlin 2.0+. Since `expo-modules-core` doesn't support Kotlin 2.0 yet, you need to manually configure the Kotlin version.
+   expo-iap 3.3+ uses Google Play Billing Library v8.2, which requires Kotlin 2.0+. You need to manually configure the Kotlin version via `expo-build-properties`.
 
    Add the following to your `app.json`:
 

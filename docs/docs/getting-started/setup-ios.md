@@ -33,36 +33,22 @@ const productIds = [
 ];
 
 function App() {
-  const {connected, products, fetchProducts, requestPurchase, validateReceipt} =
-    useIAP({
-      onPurchaseSuccess: (purchase) => {
-        console.log('Purchase successful:', purchase);
-        // Handle successful purchase
-        validatePurchase(purchase);
-      },
-      onPurchaseError: (error) => {
-        console.error('Purchase failed:', error);
-        // Handle purchase error
-      },
-    });
+  const {connected, products, fetchProducts, requestPurchase} = useIAP({
+    onPurchaseSuccess: (purchase) => {
+      console.log('Purchase successful:', purchase);
+      // For production apps, verify purchases server-side.
+      // See verifyPurchaseWithProvider: /blog/3.2.0
+    },
+    onPurchaseError: (error) => {
+      console.error('Purchase failed:', error);
+    },
+  });
 
   React.useEffect(() => {
     if (connected) {
       fetchProducts({skus: productIds, type: 'in-app'});
     }
   }, [connected]);
-
-  const validatePurchase = async (purchase) => {
-    try {
-      const result = await validateReceipt({sku: purchase.transactionId});
-      if (result.isValid) {
-        // Grant user the purchased content
-        console.log('Receipt is valid');
-      }
-    } catch (error) {
-      console.error('Validation failed:', error);
-    }
-  };
 
   return (
     <View>
@@ -86,49 +72,6 @@ function App() {
 ```
 
 > **💡 Cross-Platform Note:** This example shows iOS-specific usage with `sku`. For cross-platform compatibility, include both `sku` and `skus` in your request object. See the [Core Methods](/docs/api/methods/core-methods#requestpurchase) documentation for details.
-
-### iOS-Specific Features
-
-#### Purchase Verification
-
-```tsx
-const verifyPurchaseExample = async (productId: string) => {
-  try {
-    const result = await validateReceipt(productId);
-
-    console.log('Purchase verification result:', {
-      isValid: result.isValid,
-      receiptData: result.receiptData,
-      jwsRepresentation: result.jwsRepresentation, // iOS 15+
-    });
-
-    return result.isValid;
-  } catch (error) {
-    console.error('Purchase verification failed:', error);
-    return false;
-  }
-};
-```
-
-#### Handling StoreKit Errors
-
-```tsx
-const handlePurchaseError = (error: any) => {
-  switch (error.code) {
-    case ErrorCode.UserCancelled:
-      // User cancelled - don't show error
-      break;
-    case ErrorCode.BillingUnavailable:
-      Alert.alert('Purchases are not allowed on this device');
-      break;
-    case ErrorCode.PurchaseError:
-      Alert.alert('Invalid payment information');
-      break;
-    default:
-      Alert.alert('Purchase failed', error.message);
-  }
-};
-```
 
 ## Common Issues
 
