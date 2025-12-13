@@ -173,25 +173,20 @@ When IAPKit verification is enabled, after a successful purchase:
 
 ```tsx
 import {useIAP, type VerifyPurchaseWithProviderProps} from 'expo-iap';
-import {Platform, Alert} from 'react-native';
-import Constants from 'expo-constants';
+import {Alert} from 'react-native';
+
+// Note: apiKey is automatically injected from config plugin (iapkitApiKey)
+// No need to manually pass it - expo-iap reads it from Constants.expoConfig.extra.iapkitApiKey
 
 function PurchaseWithIAPKit() {
   const {verifyPurchaseWithProvider, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey;
-
-      if (!apiKey) {
-        console.error('iapkitApiKey not configured in expo-iap config plugin');
-        return;
-      }
-
       const jwsOrToken = purchase.purchaseToken ?? '';
 
+      // apiKey is auto-filled from config plugin - no need to specify it
       const verifyRequest: VerifyPurchaseWithProviderProps = {
         provider: 'iapkit',
         iapkit: {
-          apiKey,
           apple: {
             jws: jwsOrToken, // iOS: JWS token from StoreKit 2
           },

@@ -4,7 +4,7 @@ import OpenIAP
 
 /// Exception wrapper for PurchaseError that preserves OpenIAP error codes
 /// This ensures consistent error format between try-catch and onPurchaseError callback
-class IapException: GenericException<(code: String, message: String, productId: String?)> {
+final class IapException: GenericException<(code: String, message: String, productId: String?)>, @unchecked Sendable {
     override var code: String { param.code }
     override var reason: String { param.message }
 

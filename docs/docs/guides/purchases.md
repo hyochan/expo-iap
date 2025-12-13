@@ -425,29 +425,24 @@ First, configure your IAPKit API key in the expo-iap config plugin:
 }
 ```
 
-Then use it in your code:
+Then use it in your code. The `apiKey` is automatically injected from the config plugin:
 
 ```tsx
 import {verifyPurchaseWithProvider} from 'expo-iap';
-import Constants from 'expo-constants';
+
+// Note: apiKey is automatically injected from config plugin (iapkitApiKey)
+// No need to manually pass it - expo-iap reads it from Constants.expoConfig.extra.iapkitApiKey
 
 const verifyWithIAPKit = async (purchase: Purchase) => {
-  const apiKey = Constants.expoConfig?.extra?.iapkitApiKey;
-
-  if (!apiKey) {
-    console.error('iapkitApiKey not configured in expo-iap config plugin');
-    return {isValid: false};
-  }
-
   if (!purchase.purchaseToken) {
     console.error('No purchase token available');
     return {isValid: false};
   }
 
+  // apiKey is auto-filled from config plugin - no need to specify it
   const result = await verifyPurchaseWithProvider({
     provider: 'iapkit',
     iapkit: {
-      apiKey,
       apple: {jws: purchase.purchaseToken},
       google: {purchaseToken: purchase.purchaseToken},
     },

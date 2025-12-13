@@ -808,6 +808,33 @@ export const verifyPurchaseWithProvider: MutationField<
   'verifyPurchaseWithProvider'
 > = async (options) => {
   if (Platform.OS === 'ios' || Platform.OS === 'android') {
+    // Auto-fill apiKey from config if not provided and provider is iapkit
+    if (
+      options.provider === 'iapkit' &&
+      options.iapkit &&
+      !options.iapkit.apiKey
+    ) {
+      try {
+        // Dynamically import expo-constants to avoid hard dependency
+        const {default: Constants} = await import('expo-constants');
+        const configApiKey = Constants.expoConfig?.extra?.iapkitApiKey;
+        if (configApiKey) {
+          options = {
+            ...options,
+            iapkit: {
+              ...options.iapkit,
+              apiKey: configApiKey,
+            },
+          };
+        }
+      } catch {
+        throw new Error(
+          'expo-constants is required for auto-filling iapkitApiKey from config. ' +
+            'Please install it: npx expo install expo-constants\n' +
+            'Or provide apiKey directly in verifyPurchaseWithProvider options.',
+        );
+      }
+    }
     return ExpoIapModule.verifyPurchaseWithProvider(options);
   }
 

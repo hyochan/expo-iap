@@ -499,12 +499,15 @@ Verifies a purchase using an external verification provider. Currently supports 
 ```tsx
 import {verifyPurchaseWithProvider} from 'expo-iap';
 
+// Note: apiKey is automatically injected from config plugin (iapkitApiKey)
+// No need to manually pass it - expo-iap reads it from Constants.expoConfig.extra.iapkitApiKey
+
 const verifyWithIAPKit = async (purchase: Purchase) => {
   try {
     const result = await verifyPurchaseWithProvider({
       provider: 'iapkit',
       iapkit: {
-        apiKey: 'your-iapkit-api-key',
+        // apiKey is auto-filled from config plugin
         apple: {
           jws: purchase.purchaseToken, // JWS from iOS purchase
         },
@@ -545,25 +548,15 @@ First, configure your IAPKit API key in the expo-iap config plugin:
 }
 ```
 
-Then use it in your code:
+Then use it in your code. The `apiKey` is automatically injected from the config plugin:
 
 ```tsx
 import {useIAP, verifyPurchaseWithProvider} from 'expo-iap';
 import type {VerifyPurchaseWithProviderProps} from 'expo-iap';
-import {Platform} from 'react-native';
-import Constants from 'expo-constants';
 
 function PurchaseScreen() {
   const {requestPurchase, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey;
-
-      if (!apiKey) {
-        console.error('iapkitApiKey not configured in expo-iap config plugin');
-        await finishTransaction({purchase, isConsumable: false});
-        return;
-      }
-
       // Ensure purchaseToken exists before verification
       if (!purchase.purchaseToken) {
         console.error('No purchase token available for verification');
@@ -573,10 +566,10 @@ function PurchaseScreen() {
       }
 
       // Verify with IAPKit before granting entitlement
+      // apiKey is auto-filled from config plugin - no need to specify it
       const verifyRequest: VerifyPurchaseWithProviderProps = {
         provider: 'iapkit',
         iapkit: {
-          apiKey,
           apple: {
             jws: purchase.purchaseToken,
           },
@@ -617,7 +610,7 @@ function PurchaseScreen() {
 - `options` (object):
   - `provider` ('iapkit'): The verification provider to use
   - `iapkit` (object): IAPKit-specific configuration
-    - `apiKey` (string): Your IAPKit API key from [iapkit.com](https://iapkit.com)
+    - `apiKey` (string, optional): Your IAPKit API key. Auto-filled from config plugin if `iapkitApiKey` is configured.
     - `apple` (object): iOS verification data
       - `jws` (string): The JWS token from the purchase (available as `purchase.purchaseToken` on iOS)
     - `google` (object): Android verification data

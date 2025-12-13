@@ -10,7 +10,6 @@ import {
   ScrollView,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import Constants from 'expo-constants';
 import {useActionSheet} from '@expo/react-native-action-sheet';
 import {
   requestPurchase,
@@ -854,14 +853,9 @@ function PurchaseFlowContainer() {
             // Option 2: IAPKit verification (server-based)
           } else if (currentVerificationMethod === 'iapkit') {
             console.log('[PurchaseFlow] Verifying with IAPKit...');
-            const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as
-              | string
-              | undefined;
+            // Note: apiKey is automatically injected from config plugin (iapkitApiKey)
+            // No need to manually pass it - expo-iap reads it from Constants.expoConfig.extra.iapkitApiKey
 
-            console.log(
-              '[PurchaseFlow] API Key loaded:',
-              apiKey ? '✓ Present' : '✗ Missing',
-            );
             console.log(
               '[PurchaseFlow] purchase.purchaseToken:',
               purchase.purchaseToken &&
@@ -869,12 +863,6 @@ function PurchaseFlowContainer() {
                 ? `✓ Present (${purchase.purchaseToken.length} chars)`
                 : '✗ Missing or empty',
             );
-
-            if (!apiKey) {
-              throw new Error(
-                'iapkitApiKey not configured in expo-iap config plugin',
-              );
-            }
 
             const jwsOrToken = purchase.purchaseToken ?? '';
             if (!jwsOrToken) {
@@ -886,10 +874,10 @@ function PurchaseFlowContainer() {
               );
             }
 
+            // apiKey is auto-filled from config plugin - no need to specify it
             const verifyRequest: VerifyPurchaseWithProviderProps = {
               provider: 'iapkit',
               iapkit: {
-                apiKey,
                 apple: {
                   jws: jwsOrToken,
                 },
@@ -905,7 +893,6 @@ function PurchaseFlowContainer() {
                 {
                   provider: verifyRequest.provider,
                   iapkit: {
-                    apiKey: '***hidden***',
                     ...(Platform.OS === 'ios'
                       ? {apple: {jws: `${jwsOrToken.substring(0, 50)}...`}}
                       : {

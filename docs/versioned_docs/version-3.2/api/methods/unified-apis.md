@@ -445,9 +445,23 @@ Verifies a purchase using the native OpenIAP implementation. This validates purc
 ```tsx
 import {verifyPurchase} from 'expo-iap';
 
-const verify = async (sku: string) => {
+const verify = async (productId: string, purchase: Purchase) => {
   try {
-    const result = await verifyPurchase({sku});
+    // All platform options can be provided - the library handles platform detection internally
+    const result = await verifyPurchase({
+      // iOS App Store verification
+      apple: {sku: productId},
+      // Google Play Store verification
+      google: {
+        sku: productId,
+        packageName: 'com.example.app',
+        purchaseToken: purchase.purchaseToken!, // Required - throws if missing
+        accessToken: await getAccessTokenFromServer(), // ⚠️ Must be fetched from your backend
+        isSub: true, // Set to true for subscriptions
+      },
+      // Meta Horizon (Quest) verification
+      // horizon: { sku: productId, userId: 'user-id', accessToken: 'token' }
+    });
 
     console.log('Verification result:', result);
   } catch (error) {
@@ -459,12 +473,18 @@ const verify = async (sku: string) => {
 **Parameters:**
 
 - `options` (object):
-  - `sku` (string): Product SKU to validate
-  - `androidOptions?` (object): Android-specific validation options
-    - `accessToken` (string): Access token for Google Play API
-    - `packageName` (string): Android package name
-    - `productToken` (string): Product token
+  - `apple?` (object): Apple App Store verification parameters
+    - `sku` (string): Product SKU to validate
+  - `google?` (object): Google Play Store verification parameters
+    - `sku` (string): Product SKU to validate
+    - `packageName` (string): Android package name (e.g., com.example.app)
+    - `purchaseToken` (string): Purchase token from the purchase response
+    - `accessToken` (string): OAuth2 access token for Google Play API
     - `isSub?` (boolean): Whether the product is a subscription
+  - `horizon?` (object): Meta Horizon (Quest) verification parameters
+    - `sku` (string): Product SKU to validate
+    - `userId` (string): Meta user ID
+    - `accessToken` (string): Access token for Meta S2S API
 
 **Returns:** `Promise<VerifyPurchaseResult>` - Platform-specific verification result
 
@@ -476,34 +496,18 @@ Verifies a purchase using an external verification provider. Currently supports 
 
 ### Verification Basic Usage {#verification-basic-usage}
 
-:::tip Config Plugin (v3.2.1+)
-Starting from **v3.2.1**, you can provide your IAPKit API key through the config plugin. See [Installation](/docs/getting-started/installation#config-plugin-options) for details.
-:::
-
-:::info v3.2.0 Users
-If you are using **v3.2.0**, use the environment variable approach (`EXPO_PUBLIC_IAPKIT_API_KEY`). We recommend upgrading to **v3.2.1+** to use the config plugin approach.
-:::
-
 ```tsx
 import {verifyPurchaseWithProvider} from 'expo-iap';
-import Constants from 'expo-constants';
+
+// Note: apiKey is automatically injected from config plugin (iapkitApiKey)
+// No need to manually pass it - expo-iap reads it from Constants.expoConfig.extra.iapkitApiKey
 
 const verifyWithIAPKit = async (purchase: Purchase) => {
   try {
-    // v3.2.1+: Use config plugin
-    const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string | undefined;
-    // v3.2.0: Use environment variable
-    // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
-
-    if (!apiKey) {
-      console.error('iapkitApiKey not configured in expo-iap config plugin');
-      return;
-    }
-
     const result = await verifyPurchaseWithProvider({
       provider: 'iapkit',
       iapkit: {
-        apiKey,
+        // apiKey is auto-filled from config plugin
         apple: {
           jws: purchase.purchaseToken, // JWS from iOS purchase
         },
@@ -527,10 +531,28 @@ const verifyWithIAPKit = async (purchase: Purchase) => {
 
 ### Verification with useIAP Hook {#verification-with-useiap}
 
+First, configure your IAPKit API key in the expo-iap config plugin:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-iap",
+        {
+          "iapkitApiKey": "your_iapkit_api_key_here"
+        }
+      ]
+    ]
+  }
+}
+```
+
+Then use it in your code. The `apiKey` is automatically injected from the config plugin:
+
 ```tsx
 import {useIAP, verifyPurchaseWithProvider} from 'expo-iap';
 import type {VerifyPurchaseWithProviderProps} from 'expo-iap';
-import Constants from 'expo-constants';
 
 function PurchaseScreen() {
   const {requestPurchase, finishTransaction} = useIAP({
@@ -543,22 +565,11 @@ function PurchaseScreen() {
         return;
       }
 
-      // v3.2.1+: Use config plugin
-      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string | undefined;
-      // v3.2.0: Use environment variable
-      // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
-
-      if (!apiKey) {
-        console.error('iapkitApiKey not configured in expo-iap config plugin');
-        await finishTransaction({purchase, isConsumable: false});
-        return;
-      }
-
       // Verify with IAPKit before granting entitlement
+      // apiKey is auto-filled from config plugin - no need to specify it
       const verifyRequest: VerifyPurchaseWithProviderProps = {
         provider: 'iapkit',
         iapkit: {
-          apiKey,
           apple: {
             jws: purchase.purchaseToken,
           },
@@ -599,7 +610,7 @@ function PurchaseScreen() {
 - `options` (object):
   - `provider` ('iapkit'): The verification provider to use
   - `iapkit` (object): IAPKit-specific configuration
-    - `apiKey` (string): Your IAPKit API key from [iapkit.com](https://iapkit.com)
+    - `apiKey` (string, optional): Your IAPKit API key. Auto-filled from config plugin if `iapkitApiKey` is configured.
     - `apple` (object): iOS verification data
       - `jws` (string): The JWS token from the purchase (available as `purchase.purchaseToken` on iOS)
     - `google` (object): Android verification data

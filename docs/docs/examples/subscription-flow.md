@@ -728,8 +728,10 @@ When IAPKit verification is enabled, subscriptions are verified after successful
 
 ```tsx
 import {useIAP, type VerifyPurchaseWithProviderProps} from 'expo-iap';
-import {Platform, Alert} from 'react-native';
-import Constants from 'expo-constants';
+import {Alert} from 'react-native';
+
+// Note: apiKey is automatically injected from config plugin (iapkitApiKey)
+// No need to manually pass it - expo-iap reads it from Constants.expoConfig.extra.iapkitApiKey
 
 function SubscriptionWithIAPKit() {
   const {
@@ -738,13 +740,6 @@ function SubscriptionWithIAPKit() {
     getActiveSubscriptions,
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey;
-
-      if (!apiKey) {
-        console.error('iapkitApiKey not configured in expo-iap config plugin');
-        return;
-      }
-
       // Get the JWS (iOS) or purchase token (Android)
       const jwsOrToken = purchase.purchaseToken ?? '';
 
@@ -753,10 +748,10 @@ function SubscriptionWithIAPKit() {
         return;
       }
 
+      // apiKey is auto-filled from config plugin - no need to specify it
       const verifyRequest: VerifyPurchaseWithProviderProps = {
         provider: 'iapkit',
         iapkit: {
-          apiKey,
           apple: {
             jws: jwsOrToken, // iOS: JWS token from StoreKit 2
           },

@@ -485,7 +485,7 @@ const buySubscriptionWithOffer = async (
 - **Parameters**:
   - `props.provider`: Provider name (`'iapkit'`)
   - `props.iapkit`: IAPKit-specific options
-    - `apiKey`: Your IAPKit API key
+    - `apiKey`: (Optional) Your IAPKit API key. Auto-filled from config plugin if `iapkitApiKey` is configured.
     - `apple`: Apple-specific options (`{jws: string}`)
     - `google`: Google-specific options (`{purchaseToken: string}`)
 - **Returns**: Promise resolving to provider-specific verification result
@@ -494,22 +494,16 @@ const buySubscriptionWithOffer = async (
 
   ```tsx
   import {useIAP} from 'expo-iap';
-  import Constants from 'expo-constants';
+
+  // Note: apiKey is automatically injected from config plugin (iapkitApiKey)
+  // No need to manually pass it - expo-iap reads it from Constants.expoConfig.extra.iapkitApiKey
 
   const {verifyPurchaseWithProvider, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as
-        | string
-        | undefined;
-
-      if (typeof apiKey !== 'string' || !apiKey) {
-        throw new Error('iapkitApiKey not configured');
-      }
-
       const result = await verifyPurchaseWithProvider({
         provider: 'iapkit',
         iapkit: {
-          apiKey,
+          // apiKey is auto-filled from config plugin
           apple: {jws: purchase.purchaseToken ?? ''},
           google: {purchaseToken: purchase.purchaseToken ?? ''},
         },
