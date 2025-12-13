@@ -185,3 +185,28 @@ billing-programs:
   label: Billing Programs
   permalink: /billing-programs
   description: External billing programs
+
+alternative-billing:
+  label: Alternative Billing
+  permalink: /alternative-billing
+  description: Alternative billing and external purchases
+
+storekit:
+  label: StoreKit
+  permalink: /storekit
+  description: Apple StoreKit framework
+
+horizon-os:
+  label: Horizon OS
+  permalink: /horizon-os
+  description: Meta Horizon OS platform
+
+meta-quest:
+  label: Meta Quest
+  permalink: /meta-quest
+  description: Meta Quest VR devices
+
+vr:
+  label: VR
+  permalink: /vr
+  description: Virtual reality platforms
