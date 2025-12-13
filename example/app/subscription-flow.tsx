@@ -1580,20 +1580,17 @@ function SubscriptionFlowContainer() {
         try {
           if (currentVerificationMethod === 'local') {
             console.log('[SubscriptionFlow] Verifying with local method...');
-            // Platform-specific verification options
+            // All platform options can be provided - the library handles platform detection internally
             const result = await verifyPurchase({
-              apple: Platform.OS === 'ios' ? {sku: productId} : undefined,
-              google:
-                Platform.OS === 'android'
-                  ? {
-                      sku: productId,
-                      packageName: 'dev.anthropic.iapexample',
-                      purchaseToken: purchase.purchaseToken ?? '',
-                      accessToken: '', // Would be obtained from your server
-                      isSub: true,
-                    }
-                  : undefined,
-              // horizon: For Meta Quest, would include sku, userId, accessToken
+              apple: {sku: productId},
+              google: {
+                sku: productId,
+                packageName: 'dev.anthropic.iapexample',
+                purchaseToken: purchase.purchaseToken ?? '',
+                accessToken: '', // ⚠️ Requires server-issued OAuth token
+                isSub: true,
+              },
+              // horizon: { sku: productId, userId: '', accessToken: '' }
             });
             console.log(
               '[SubscriptionFlow] Local verification result:',

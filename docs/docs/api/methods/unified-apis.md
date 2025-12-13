@@ -444,24 +444,21 @@ Verifies a purchase using the native OpenIAP implementation. This validates purc
 
 ```tsx
 import {verifyPurchase} from 'expo-iap';
-import {Platform} from 'react-native';
 
 const verify = async (productId: string, purchase: Purchase) => {
   try {
+    // All platform options can be provided - the library handles platform detection internally
     const result = await verifyPurchase({
       // iOS App Store verification
-      apple: Platform.OS === 'ios' ? {sku: productId} : undefined,
+      apple: {sku: productId},
       // Google Play Store verification
-      google:
-        Platform.OS === 'android'
-          ? {
-              sku: productId,
-              packageName: 'com.example.app',
-              purchaseToken: purchase.purchaseToken!, // Required - throws if missing
-              accessToken: await getAccessTokenFromServer(), // ⚠️ Must be fetched from your backend
-              isSub: true, // Set to true for subscriptions
-            }
-          : undefined,
+      google: {
+        sku: productId,
+        packageName: 'com.example.app',
+        purchaseToken: purchase.purchaseToken!, // Required - throws if missing
+        accessToken: await getAccessTokenFromServer(), // ⚠️ Must be fetched from your backend
+        isSub: true, // Set to true for subscriptions
+      },
       // Meta Horizon (Quest) verification
       // horizon: { sku: productId, userId: 'user-id', accessToken: 'token' }
     });

@@ -812,19 +812,16 @@ function PurchaseFlowContainer() {
         try {
           if (currentVerificationMethod === 'local') {
             console.log('[PurchaseFlow] Verifying with local method...');
-            // Platform-specific verification options
+            // All platform options can be provided - the library handles platform detection internally
             const result = await verifyPurchase({
-              apple: Platform.OS === 'ios' ? {sku: productId} : undefined,
-              google:
-                Platform.OS === 'android'
-                  ? {
-                      sku: productId,
-                      packageName: 'dev.anthropic.iapexample',
-                      purchaseToken: purchase.purchaseToken ?? '', // Required for production
-                      accessToken: '', // ⚠️ Android local verification requires server-issued OAuth token
-                    }
-                  : undefined,
-              // horizon: For Meta Quest, would include sku, userId, accessToken
+              apple: {sku: productId},
+              google: {
+                sku: productId,
+                packageName: 'dev.anthropic.iapexample',
+                purchaseToken: purchase.purchaseToken ?? '', // Required for production
+                accessToken: '', // ⚠️ Requires server-issued OAuth token
+              },
+              // horizon: { sku: productId, userId: '', accessToken: '' }
             });
             console.log('[PurchaseFlow] Local verification result:', result);
           } else if (currentVerificationMethod === 'iapkit') {
