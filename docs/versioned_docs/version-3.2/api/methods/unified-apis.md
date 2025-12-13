@@ -491,9 +491,14 @@ import Constants from 'expo-constants';
 const verifyWithIAPKit = async (purchase: Purchase) => {
   try {
     // v3.2.1+: Use config plugin
-    const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string;
+    const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string | undefined;
     // v3.2.0: Use environment variable
     // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+
+    if (!apiKey) {
+      console.error('iapkitApiKey not configured in expo-iap config plugin');
+      return;
+    }
 
     const result = await verifyPurchaseWithProvider({
       provider: 'iapkit',
@@ -539,9 +544,15 @@ function PurchaseScreen() {
       }
 
       // v3.2.1+: Use config plugin
-      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string;
+      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string | undefined;
       // v3.2.0: Use environment variable
       // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+
+      if (!apiKey) {
+        console.error('iapkitApiKey not configured in expo-iap config plugin');
+        await finishTransaction({purchase, isConsumable: false});
+        return;
+      }
 
       // Verify with IAPKit before granting entitlement
       const verifyRequest: VerifyPurchaseWithProviderProps = {

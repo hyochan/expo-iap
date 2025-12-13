@@ -769,7 +769,7 @@ function SubscriptionWithIAPKit() {
       // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
 
       if (!apiKey) {
-        console.error('iapkitApiKey not configured');
+        console.error('iapkitApiKey not configured in expo-iap config plugin');
         return;
       }
 

@@ -444,9 +444,14 @@ const verifyWithIAPKit = async (purchase: Purchase) => {
   }
 
   // v3.2.1+: Use config plugin
-  const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string;
+  const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string | undefined;
   // v3.2.0: Use environment variable
   // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+
+  if (!apiKey) {
+    console.error('iapkitApiKey not configured in expo-iap config plugin');
+    return {isValid: false};
+  }
 
   const result = await verifyPurchaseWithProvider({
     provider: 'iapkit',

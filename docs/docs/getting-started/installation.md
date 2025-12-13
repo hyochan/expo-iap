@@ -193,6 +193,7 @@ import { verifyPurchaseWithProvider } from 'expo-iap';
 
 const iapkitApiKey = Constants.expoConfig?.extra?.iapkitApiKey;
 
+// The `purchase` object is typically received from the `onPurchaseSuccess` callback of the `useIAP` hook.
 // Use with verifyPurchaseWithProvider
 const result = await verifyPurchaseWithProvider({
   provider: 'iapkit',
