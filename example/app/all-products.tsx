@@ -7,7 +7,7 @@ import {
   Modal,
   ScrollView,
 } from 'react-native';
-import {useIAP, ExpoIapConsole} from '../../src';
+import {useIAP} from '../../src';
 import Loading from '../src/components/Loading';
 import {
   PRODUCT_IDS,
@@ -68,17 +68,17 @@ function AllProducts() {
   const {connected, products, subscriptions, fetchProducts} = useIAP();
 
   useEffect(() => {
-    ExpoIapConsole.log('[AllProducts] useEffect - connected:', connected);
+    console.log('[AllProducts] useEffect - connected:', connected);
     if (connected) {
-      ExpoIapConsole.log('[AllProducts] Fetching all products');
+      console.log('[AllProducts] Fetching all products');
 
       // Fetch all products with type 'all'
       fetchProducts({skus: ALL_PRODUCT_IDS, type: 'all'})
         .then(() => {
-          ExpoIapConsole.log('[AllProducts] fetchProducts completed');
+          console.log('[AllProducts] fetchProducts completed');
         })
         .catch((error) => {
-          ExpoIapConsole.error('[AllProducts] fetchProducts error:', error);
+          console.error('[AllProducts] fetchProducts error:', error);
         });
     }
   }, [connected, fetchProducts]);
@@ -91,45 +91,42 @@ function AllProducts() {
    */
   const handleShowDetails = (product: Product | ProductSubscription) => {
     // Log type narrowing examples
-    ExpoIapConsole.log('\n🎯 Type Narrowing Examples for:', product.id);
+    console.log('\n🎯 Type Narrowing Examples for:', product.id);
 
     // Example 1: Narrow by type
     if (product.type === 'subs') {
       // ✅ Narrowed to: ProductSubscription
-      ExpoIapConsole.log('- This is a subscription');
+      console.log('- This is a subscription');
 
       // Example 2: Further narrow by platform
       if (product.platform === 'ios') {
         // ✅ Narrowed to: ProductSubscriptionIOS
-        ExpoIapConsole.log('- iOS Subscription detected');
-        ExpoIapConsole.log(
+        console.log('- iOS Subscription detected');
+        console.log(
           '- Subscription Period:',
           product.subscriptionPeriodUnitIOS,
         );
-        ExpoIapConsole.log(
-          '- Has Discounts:',
-          product.discountsIOS?.length || 0,
-        );
+        console.log('- Has Discounts:', product.discountsIOS?.length || 0);
       } else if (product.platform === 'android') {
         // ✅ Narrowed to: ProductSubscriptionAndroid
-        ExpoIapConsole.log('- Android Subscription detected');
-        ExpoIapConsole.log(
+        console.log('- Android Subscription detected');
+        console.log(
           '- Offers:',
           product.subscriptionOfferDetailsAndroid?.length || 0,
         );
       }
     } else {
       // ✅ Narrowed to: Product (in-app)
-      ExpoIapConsole.log('- This is an in-app product');
+      console.log('- This is an in-app product');
 
       if (product.platform === 'ios') {
         // ✅ Narrowed to: ProductIOS
-        ExpoIapConsole.log('- iOS Product');
-        ExpoIapConsole.log('- Family Shareable:', product.isFamilyShareableIOS);
+        console.log('- iOS Product');
+        console.log('- Family Shareable:', product.isFamilyShareableIOS);
       } else {
         // ✅ Narrowed to: ProductAndroid
-        ExpoIapConsole.log('- Android Product');
-        ExpoIapConsole.log('- Name:', product.nameAndroid);
+        console.log('- Android Product');
+        console.log('- Name:', product.nameAndroid);
       }
     }
 

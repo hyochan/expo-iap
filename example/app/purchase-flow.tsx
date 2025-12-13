@@ -17,7 +17,6 @@ import {
   useIAP,
   getAppTransactionIOS,
   getStorefront,
-  ExpoIapConsole,
 } from '../../src';
 import Loading from '../src/components/Loading';
 import {
@@ -727,7 +726,23 @@ function PurchaseFlow({
   );
 }
 
+/**
+ * PurchaseFlowContainer - Main IAP Flow Controller
+ *
+ * IAP Flow Steps:
+ * ============================================================
+ * 1. initConnection     - Store connection (handled by useIAP)
+ * 2. subscribeEvent     - Event subscription (onPurchaseSuccess/onPurchaseError)
+ * 3. requestPurchase    - 3 options: Apple, Google, Google with offers
+ * 4. verifyPurchase     - 3 methods: ignore, local, iapkit
+ * 5. grant entitlement  - Update availablePurchases state
+ * 6. finish transaction - Call finishTransaction to complete
+ * ============================================================
+ */
 function PurchaseFlowContainer() {
+  // ============================================================
+  // State Management
+  // ============================================================
   const [purchaseResult, setPurchaseResult] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
@@ -748,6 +763,10 @@ function PurchaseFlowContainer() {
 
   const {showActionSheetWithOptions} = useActionSheet();
 
+  // ============================================================
+  // Step 1: initConnection
+  // Step 2: subscribeEvent (onPurchaseSuccess, onPurchaseError)
+  // ============================================================
   const {
     connected,
     products,
@@ -758,6 +777,10 @@ function PurchaseFlowContainer() {
     verifyPurchase,
     verifyPurchaseWithProvider,
   } = useIAP({
+    // ------------------------------------------------------------
+    // Step 2: subscribeEvent - onPurchaseSuccess callback
+    // This handles the purchase flow after user completes payment
+    // ------------------------------------------------------------
     onPurchaseSuccess: async (purchase: Purchase) => {
       // Prevent duplicate handling
       if (isHandlingPurchaseRef.current) {
@@ -773,10 +796,7 @@ function PurchaseFlowContainer() {
         ...(tokenToMask ? {purchaseToken: 'hidden'} : {}),
       };
       console.log('Purchase successful:', masked);
-      ExpoIapConsole.log(
-        '[PurchaseFlow] purchaseState:',
-        purchase.purchaseState,
-      );
+      console.log('[PurchaseFlow] purchaseState:', purchase.purchaseState);
       setLastPurchase(purchase);
       setIsProcessing(false);
 
@@ -788,19 +808,24 @@ function PurchaseFlowContainer() {
       const isConsumablePurchase = CONSUMABLE_PRODUCT_ID_SET.has(productId);
       if (!isConsumablePurchase && productId) {
         if (NON_CONSUMABLE_PRODUCT_ID_SET.has(productId)) {
-          ExpoIapConsole.log(
+          console.log(
             '[PurchaseFlow] Non-consumable purchase recorded:',
             productId,
           );
         } else {
-          ExpoIapConsole.warn(
+          console.warn(
             '[PurchaseFlow] Purchase for product not listed in constants:',
             productId,
           );
         }
       }
 
-      // Verify purchase based on selected method (use ref for current value)
+      // ------------------------------------------------------------
+      // Step 4: verifyPurchase - 3 methods available
+      //   - ignore: Skip verification (for testing)
+      //   - local: Verify with Apple/Google directly
+      //   - iapkit: Verify using IAPKit service
+      // ------------------------------------------------------------
       const currentVerificationMethod = verificationMethodRef.current;
       console.log('[PurchaseFlow] About to verify purchase:', {
         verificationMethod: currentVerificationMethod,
@@ -811,6 +836,7 @@ function PurchaseFlowContainer() {
       if (currentVerificationMethod !== 'ignore' && productId) {
         setIsProcessing(true);
         try {
+          // Option 1: Local verification (device-based)
           if (currentVerificationMethod === 'local') {
             console.log('[PurchaseFlow] Verifying with local method...');
             // All platform options can be provided - the library handles platform detection internally
@@ -820,11 +846,12 @@ function PurchaseFlowContainer() {
                 sku: productId,
                 packageName: 'dev.anthropic.iapexample',
                 purchaseToken: purchase.purchaseToken ?? '', // Required for production
-                accessToken: '', // ⚠️ Requires server-issued OAuth token
+                accessToken: '', // Requires server-issued OAuth token
               },
               // horizon: { sku: productId, userId: '', accessToken: '' }
             });
             console.log('[PurchaseFlow] Local verification result:', result);
+            // Option 2: IAPKit verification (server-based)
           } else if (currentVerificationMethod === 'iapkit') {
             console.log('[PurchaseFlow] Verifying with IAPKit...');
             const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as
@@ -921,20 +948,28 @@ function PurchaseFlowContainer() {
         }
       }
 
+      // ------------------------------------------------------------
+      // Step 6: finish transaction
+      // IMPORTANT: Must call finishTransaction to complete the purchase
+      // ------------------------------------------------------------
       try {
         await finishTransaction({
           purchase,
           isConsumable: isConsumablePurchase,
         });
       } catch (error) {
-        ExpoIapConsole.warn('[PurchaseFlow] finishTransaction failed:', error);
+        console.warn('[PurchaseFlow] finishTransaction failed:', error);
       }
 
+      // ------------------------------------------------------------
+      // Step 5: grant entitlement
+      // Refresh available purchases to update UI state
+      // ------------------------------------------------------------
       try {
         await getAvailablePurchases();
-        ExpoIapConsole.log('[PurchaseFlow] Available purchases refreshed');
+        console.log('[PurchaseFlow] Available purchases refreshed');
       } catch (error) {
-        ExpoIapConsole.warn(
+        console.warn(
           '[PurchaseFlow] Failed to refresh available purchases:',
           error,
         );
@@ -945,6 +980,9 @@ function PurchaseFlowContainer() {
       // Reset handling state after all operations complete
       isHandlingPurchaseRef.current = false;
     },
+    // ------------------------------------------------------------
+    // Step 2: subscribeEvent - onPurchaseError callback
+    // ------------------------------------------------------------
     onPurchaseError: (error: PurchaseError) => {
       console.error('Purchase failed:', error);
       setIsProcessing(false);
@@ -956,37 +994,29 @@ function PurchaseFlowContainer() {
   const didFetchRef = useRef(false);
 
   useEffect(() => {
-    ExpoIapConsole.log('[PurchaseFlow] useEffect - connected:', connected);
-    ExpoIapConsole.log('[PurchaseFlow] PRODUCT_IDS:', PRODUCT_IDS);
+    console.log('[PurchaseFlow] useEffect - connected:', connected);
+    console.log('[PurchaseFlow] PRODUCT_IDS:', PRODUCT_IDS);
     if (connected && !didFetchRef.current) {
       didFetchRef.current = true;
-      ExpoIapConsole.log(
-        '[PurchaseFlow] Calling fetchProducts with:',
-        PRODUCT_IDS,
-      );
+      console.log('[PurchaseFlow] Calling fetchProducts with:', PRODUCT_IDS);
       fetchProducts({skus: PRODUCT_IDS, type: 'in-app'})
         .then(() => {
-          ExpoIapConsole.log('[PurchaseFlow] fetchProducts completed');
+          console.log('[PurchaseFlow] fetchProducts completed');
         })
         .catch((error) => {
-          ExpoIapConsole.error('[PurchaseFlow] fetchProducts error:', error);
+          console.error('[PurchaseFlow] fetchProducts error:', error);
         });
 
       getAvailablePurchases()
         .then(() => {
-          ExpoIapConsole.log('[PurchaseFlow] getAvailablePurchases completed');
+          console.log('[PurchaseFlow] getAvailablePurchases completed');
         })
         .catch((error) => {
-          ExpoIapConsole.warn(
-            '[PurchaseFlow] getAvailablePurchases error:',
-            error,
-          );
+          console.warn('[PurchaseFlow] getAvailablePurchases error:', error);
         });
     } else if (!connected) {
       didFetchRef.current = false;
-      ExpoIapConsole.log(
-        '[PurchaseFlow] Not fetching products - not connected',
-      );
+      console.log('[PurchaseFlow] Not fetching products - not connected');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connected]);
@@ -1000,7 +1030,7 @@ function PurchaseFlowContainer() {
     try {
       await getAvailablePurchases();
     } catch (error) {
-      ExpoIapConsole.warn(
+      console.warn(
         '[PurchaseFlow] Failed to refresh available purchases manually:',
         error,
       );
@@ -1010,15 +1040,19 @@ function PurchaseFlowContainer() {
     }
   }, [getAvailablePurchases, refreshingAvailablePurchases]);
 
+  // ============================================================
+  // Step 3: requestPurchase - 3 options available
+  //   - Apple: { sku, quantity, ... }
+  //   - Google: { skus: [...] }
+  //   - Google with offers: { skus: [...], subscriptionOffers: [...] }
+  // ============================================================
   const handlePurchase = useCallback(
     (itemId: string) => {
       setIsProcessing(true);
       setPurchaseResult('Processing purchase...');
 
       if (typeof requestPurchase !== 'function') {
-        ExpoIapConsole.warn(
-          '[PurchaseFlow] requestPurchase missing (test/mock env)',
-        );
+        console.warn('[PurchaseFlow] requestPurchase missing (test/mock env)');
         setIsProcessing(false);
         setPurchaseResult('Cannot start purchase in test/mock environment.');
         return;
@@ -1026,13 +1060,20 @@ function PurchaseFlowContainer() {
 
       void requestPurchase({
         request: {
+          // Option 1: Apple purchase request
           apple: {
             sku: itemId,
             quantity: 1,
           },
+          // Option 2: Google purchase request
           google: {
             skus: [itemId],
           },
+          // Option 3: Google with subscription offers (for subs)
+          // google: {
+          //   skus: [itemId],
+          //   subscriptionOffers: [{ sku: itemId, offerToken: '...' }],
+          // },
         },
         type: 'in-app',
       });
@@ -1075,7 +1116,7 @@ function PurchaseFlowContainer() {
       const code = await getStorefront();
       setStorefront(code ?? '');
     } catch (error) {
-      ExpoIapConsole.warn('[PurchaseFlow] getStorefront error:', error);
+      console.warn('[PurchaseFlow] getStorefront error:', error);
       setStorefrontError(
         error instanceof Error ? error.message : 'Failed to load storefront',
       );

@@ -40,13 +40,6 @@ jest.mock('../../src', () => ({
   requestPurchase: jest.fn(),
   getAppTransactionIOS: jest.fn(),
   getStorefront: jest.fn(),
-  ExpoIapConsole: {
-    log: jest.fn(),
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  },
 }));
 
 describe('PurchaseFlow Component', () => {

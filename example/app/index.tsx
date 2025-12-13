@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, FlatList} from 'react-native';
 import {Link} from 'expo-router';
-import {getStorefront, ExpoIapConsole} from 'expo-iap';
+import {getStorefront} from 'expo-iap';
 
 type MenuItem = {
   id: string;
@@ -79,7 +79,7 @@ export default function Home() {
       })
       .catch((error) => {
         // Silently fail on unsupported platforms
-        ExpoIapConsole.log('Storefront not available:', error.message);
+        console.log('Storefront not available:', error.message);
       });
   }, []);
 
