@@ -3,6 +3,15 @@ import {render, fireEvent} from '@testing-library/react-native';
 import {Alert, Platform} from 'react-native';
 import SubscriptionFlow from '../app/subscription-flow';
 
+// Mock expo-constants
+jest.mock('expo-constants', () => ({
+  expoConfig: {
+    extra: {
+      iapkitApiKey: 'test-api-key',
+    },
+  },
+}));
+
 // Mock Alert
 jest.spyOn(Alert, 'alert');
 

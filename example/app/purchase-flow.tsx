@@ -10,6 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import Constants from 'expo-constants';
 import {useActionSheet} from '@expo/react-native-action-sheet';
 import {
   requestPurchase,
@@ -826,7 +827,9 @@ function PurchaseFlowContainer() {
             console.log('[PurchaseFlow] Local verification result:', result);
           } else if (currentVerificationMethod === 'iapkit') {
             console.log('[PurchaseFlow] Verifying with IAPKit...');
-            const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+            const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as
+              | string
+              | undefined;
 
             console.log(
               '[PurchaseFlow] API Key loaded:',
@@ -841,7 +844,9 @@ function PurchaseFlowContainer() {
             );
 
             if (!apiKey) {
-              throw new Error('EXPO_PUBLIC_IAPKIT_API_KEY not configured');
+              throw new Error(
+                'iapkitApiKey not configured in expo-iap config plugin',
+              );
             }
 
             const jwsOrToken = purchase.purchaseToken ?? '';

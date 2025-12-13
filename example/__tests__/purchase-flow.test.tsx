@@ -3,6 +3,15 @@ import {render, fireEvent, waitFor} from '@testing-library/react-native';
 import PurchaseFlow from '../app/purchase-flow';
 import {requestPurchase, getStorefront} from '../../src';
 
+// Mock expo-constants
+jest.mock('expo-constants', () => ({
+  expoConfig: {
+    extra: {
+      iapkitApiKey: 'test-api-key',
+    },
+  },
+}));
+
 // Mock the useIAP hook
 const mockFetchProducts = jest.fn();
 const mockGetAvailablePurchases = jest.fn();

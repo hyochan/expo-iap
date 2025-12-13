@@ -703,11 +703,21 @@ See [example/app/subscription-flow.tsx](https://github.com/hyochan/expo-iap/blob
 
 1. **Get your API key** from [IAPKit Dashboard](https://iapkit.com)
 
-2. **Configure environment variable**:
+2. **Configure your API key** via the expo-iap config plugin:
 
-```bash
-# .env or app.config.ts
-EXPO_PUBLIC_IAPKIT_API_KEY=your_iapkit_api_key_here
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-iap",
+        {
+          "iapkitApiKey": "your_iapkit_api_key_here"
+        }
+      ]
+    ]
+  }
+}
 ```
 
 3. **Select IAPKit verification** in the example app by tapping the "Purchase Verification" dropdown and selecting "☁️ IAPKit (Server)"
@@ -719,6 +729,7 @@ When IAPKit verification is enabled, subscriptions are verified after successful
 ```tsx
 import {useIAP, type VerifyPurchaseWithProviderProps} from 'expo-iap';
 import {Platform, Alert} from 'react-native';
+import Constants from 'expo-constants';
 
 function SubscriptionWithIAPKit() {
   const {
@@ -727,10 +738,10 @@ function SubscriptionWithIAPKit() {
     getActiveSubscriptions,
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey;
 
       if (!apiKey) {
-        console.error('EXPO_PUBLIC_IAPKIT_API_KEY not configured');
+        console.error('iapkitApiKey not configured in expo-iap config plugin');
         return;
       }
 

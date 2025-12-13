@@ -289,6 +289,12 @@ const withIapIOS: ConfigPlugin<IOSAlternativeBillingConfig | undefined> = (
 };
 
 export interface ExpoIapPluginOptions {
+  /**
+   * IAPKit API key for server-side receipt verification.
+   * Get your API key from https://iapkit.com
+   * This will be available via `Constants.expoConfig?.extra?.iapkitApiKey`
+   */
+  iapkitApiKey?: string;
   /** Local development path for OpenIAP library */
   localPath?:
     | string
@@ -336,10 +342,6 @@ export interface ExpoIapPluginOptions {
      */
     horizonAppId?: string;
   };
-  /** @deprecated Use ios.alternativeBilling instead */
-  iosAlternativeBilling?: IOSAlternativeBillingConfig;
-  /** @deprecated Use android.horizonAppId instead */
-  horizonAppId?: string;
 }
 
 const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
@@ -347,13 +349,20 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
   options,
 ) => {
   try {
+    // Add iapkitApiKey to extra if provided
+    if (options?.iapkitApiKey) {
+      config.extra = {
+        ...config.extra,
+        iapkitApiKey: options.iapkitApiKey,
+      };
+      logOnce('🔑 [expo-iap] Added iapkitApiKey to config.extra');
+    }
+
     // Read Horizon configuration from modules
     const isHorizonEnabled = options?.modules?.horizon ?? false;
 
-    const horizonAppId =
-      options?.android?.horizonAppId ?? options?.horizonAppId;
-    const iosAlternativeBilling =
-      options?.ios?.alternativeBilling ?? options?.iosAlternativeBilling;
+    const horizonAppId = options?.android?.horizonAppId;
+    const iosAlternativeBilling = options?.ios?.alternativeBilling;
 
     logOnce(
       `🔍 [expo-iap] Config values: horizonAppId=${horizonAppId}, isHorizonEnabled=${isHorizonEnabled}`,
@@ -416,5 +425,5 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
   }
 };
 
-export {withIosAlternativeBilling};
+export {withIosAlternativeBilling, withIap};
 export default createRunOncePlugin(withIap, pkg.name, pkg.version);
