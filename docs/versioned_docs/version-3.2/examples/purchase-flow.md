@@ -148,12 +148,47 @@ You can customize this example by:
 
 1. **Get your API key** from [IAPKit Dashboard](https://iapkit.com)
 
-2. **Configure environment variable** in your project:
+2. **Configure your API key** in your project:
+
+   :::tip Config Plugin (v3.2.1+)
+   Starting from **v3.2.1**, you can provide your IAPKit API key through the config plugin:
+
+   ```json
+   {
+     "expo": {
+       "plugins": [
+         [
+           "expo-iap",
+           {
+             "iapkitApiKey": "your-iapkit-api-key"
+           }
+         ]
+       ]
+     }
+   }
+   ```
+
+   Then access it in your app using `expo-constants`:
+
+   ```tsx
+   import Constants from 'expo-constants';
+
+   const iapkitApiKey = Constants.expoConfig?.extra?.iapkitApiKey;
+   ```
+
+   This approach keeps your API key out of source code and allows easy configuration per environment.
+   :::
+
+   :::info v3.2.0 Users
+   If you are using **v3.2.0**, use the environment variable approach:
 
    ```bash
    # .env or app.config.ts
    EXPO_PUBLIC_IAPKIT_API_KEY=your_iapkit_api_key_here
    ```
+
+   We recommend upgrading to **v3.2.1+** to use the config plugin approach.
+   :::
 
 3. **Select IAPKit verification** in the example app by tapping the "Purchase Verification" button and selecting "☁️ IAPKit (Server)"
 
@@ -163,15 +198,19 @@ When IAPKit verification is enabled, after a successful purchase:
 
 ```tsx
 import {useIAP, type VerifyPurchaseWithProviderProps} from 'expo-iap';
-import {Platform, Alert} from 'react-native';
+import {Alert} from 'react-native';
+import Constants from 'expo-constants';
 
 function PurchaseWithIAPKit() {
   const {verifyPurchaseWithProvider, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+      // v3.2.1+: Use config plugin
+      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string | undefined;
+      // v3.2.0: Use environment variable
+      // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
 
       if (!apiKey) {
-        console.error('EXPO_PUBLIC_IAPKIT_API_KEY not configured');
+        console.error('iapkitApiKey not configured in expo-iap config plugin');
         return;
       }
 

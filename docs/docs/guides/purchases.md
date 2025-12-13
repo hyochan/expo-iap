@@ -408,10 +408,37 @@ Always validate purchases on a secure server for production apps. Client-side ve
 
 [IAPKit](https://iapkit.com) provides a unified server-side verification API for both iOS and Android:
 
+First, configure your IAPKit API key in the expo-iap config plugin:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-iap",
+        {
+          "iapkitApiKey": "your_iapkit_api_key_here"
+        }
+      ]
+    ]
+  }
+}
+```
+
+Then use it in your code:
+
 ```tsx
 import {verifyPurchaseWithProvider} from 'expo-iap';
+import Constants from 'expo-constants';
 
 const verifyWithIAPKit = async (purchase: Purchase) => {
+  const apiKey = Constants.expoConfig?.extra?.iapkitApiKey;
+
+  if (!apiKey) {
+    console.error('iapkitApiKey not configured in expo-iap config plugin');
+    return {isValid: false};
+  }
+
   if (!purchase.purchaseToken) {
     console.error('No purchase token available');
     return {isValid: false};
@@ -420,7 +447,7 @@ const verifyWithIAPKit = async (purchase: Purchase) => {
   const result = await verifyPurchaseWithProvider({
     provider: 'iapkit',
     iapkit: {
-      apiKey: process.env.EXPO_PUBLIC_IAPKIT_API_KEY!,
+      apiKey,
       apple: {jws: purchase.purchaseToken},
       google: {purchaseToken: purchase.purchaseToken},
     },

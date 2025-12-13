@@ -11,6 +11,7 @@ import {
   Modal,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import Constants from 'expo-constants';
 import {useActionSheet} from '@expo/react-native-action-sheet';
 import {
   requestPurchase,
@@ -1598,7 +1599,9 @@ function SubscriptionFlowContainer() {
             );
           } else if (currentVerificationMethod === 'iapkit') {
             console.log('[SubscriptionFlow] Verifying with IAPKit...');
-            const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+            const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as
+              | string
+              | undefined;
 
             console.log(
               '[SubscriptionFlow] API Key loaded:',
@@ -1613,7 +1616,9 @@ function SubscriptionFlowContainer() {
             );
 
             if (!apiKey) {
-              throw new Error('EXPO_PUBLIC_IAPKIT_API_KEY not configured');
+              throw new Error(
+                'iapkitApiKey not configured in expo-iap config plugin',
+              );
             }
 
             const jwsOrToken = purchase.purchaseToken ?? '';

@@ -528,14 +528,42 @@ const verifyWithIAPKit = async (purchase: Purchase) => {
 
 ### Verification with useIAP Hook {#verification-with-useiap}
 
+First, configure your IAPKit API key in the expo-iap config plugin:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-iap",
+        {
+          "iapkitApiKey": "your_iapkit_api_key_here"
+        }
+      ]
+    ]
+  }
+}
+```
+
+Then use it in your code:
+
 ```tsx
 import {useIAP, verifyPurchaseWithProvider} from 'expo-iap';
 import type {VerifyPurchaseWithProviderProps} from 'expo-iap';
 import {Platform} from 'react-native';
+import Constants from 'expo-constants';
 
 function PurchaseScreen() {
   const {requestPurchase, finishTransaction} = useIAP({
     onPurchaseSuccess: async (purchase) => {
+      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey;
+
+      if (!apiKey) {
+        console.error('iapkitApiKey not configured in expo-iap config plugin');
+        await finishTransaction({purchase, isConsumable: false});
+        return;
+      }
+
       // Ensure purchaseToken exists before verification
       if (!purchase.purchaseToken) {
         console.error('No purchase token available for verification');
@@ -548,7 +576,7 @@ function PurchaseScreen() {
       const verifyRequest: VerifyPurchaseWithProviderProps = {
         provider: 'iapkit',
         iapkit: {
-          apiKey: process.env.EXPO_PUBLIC_IAPKIT_API_KEY!,
+          apiKey,
           apple: {
             jws: purchase.purchaseToken,
           },

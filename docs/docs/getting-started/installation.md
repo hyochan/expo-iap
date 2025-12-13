@@ -152,7 +152,73 @@ npx expo prebuild --clean
 
 This configuration ensures compatibility with Google Play Billing Library v8.0.0.
 
-## Configuration
+## Config Plugin Options
+
+The expo-iap config plugin supports the following options:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-iap",
+        {
+          "iapkitApiKey": "your_iapkit_api_key_here"
+        }
+      ]
+    ]
+  }
+}
+```
+
+### Available Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `iapkitApiKey` | `string` | IAPKit API key for server-side receipt verification. Get your key from [iapkit.com](https://iapkit.com). Available via `Constants.expoConfig?.extra?.iapkitApiKey`. |
+| `enableLocalDev` | `boolean` | Enable local development mode for OpenIAP library. |
+| `localPath` | `string \| {ios?: string, android?: string}` | Local development path for OpenIAP library. |
+| `modules.onside` | `boolean` | Enable Onside module for iOS alternative billing (Korea market). |
+| `modules.horizon` | `boolean` | Enable Horizon module for Meta Quest/VR devices (Android). |
+| `ios.alternativeBilling` | `object` | iOS Alternative Billing configuration for external purchases. |
+| `android.horizonAppId` | `string` | Meta Horizon App ID for Quest/VR devices. |
+
+### Using IAPKit API Key
+
+After configuring the plugin, access the API key in your app using `expo-constants`:
+
+```tsx
+import Constants from 'expo-constants';
+import { verifyPurchaseWithProvider } from 'expo-iap';
+
+const iapkitApiKey = Constants.expoConfig?.extra?.iapkitApiKey;
+
+if (typeof iapkitApiKey !== 'string' || !iapkitApiKey) {
+  throw new Error('iapkitApiKey not configured in expo-iap config plugin');
+}
+
+// The `purchase` object is typically received from the `onPurchaseSuccess` callback of the `useIAP` hook.
+// Use with verifyPurchaseWithProvider
+const result = await verifyPurchaseWithProvider({
+  provider: 'iapkit',
+  iapkit: {
+    apiKey: iapkitApiKey,
+    apple: {
+      jws: purchase.purchaseToken, // JWS from purchase (iOS)
+    },
+    google: {
+      purchaseToken: purchase.purchaseToken, // Purchase token (Android)
+    },
+  },
+});
+
+if (result.iapkit?.isValid) {
+  // Purchase verified - grant entitlement
+  console.log('Purchase state:', result.iapkit.state);
+}
+```
+
+## App Store Configuration
 
 ### App Store Connect (iOS)
 

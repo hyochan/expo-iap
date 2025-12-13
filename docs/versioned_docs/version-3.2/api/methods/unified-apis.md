@@ -476,15 +476,34 @@ Verifies a purchase using an external verification provider. Currently supports 
 
 ### Verification Basic Usage {#verification-basic-usage}
 
+:::tip Config Plugin (v3.2.1+)
+Starting from **v3.2.1**, you can provide your IAPKit API key through the config plugin. See [Installation](/docs/getting-started/installation#config-plugin-options) for details.
+:::
+
+:::info v3.2.0 Users
+If you are using **v3.2.0**, use the environment variable approach (`EXPO_PUBLIC_IAPKIT_API_KEY`). We recommend upgrading to **v3.2.1+** to use the config plugin approach.
+:::
+
 ```tsx
 import {verifyPurchaseWithProvider} from 'expo-iap';
+import Constants from 'expo-constants';
 
 const verifyWithIAPKit = async (purchase: Purchase) => {
   try {
+    // v3.2.1+: Use config plugin
+    const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string | undefined;
+    // v3.2.0: Use environment variable
+    // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+
+    if (!apiKey) {
+      console.error('iapkitApiKey not configured in expo-iap config plugin');
+      return;
+    }
+
     const result = await verifyPurchaseWithProvider({
       provider: 'iapkit',
       iapkit: {
-        apiKey: 'your-iapkit-api-key',
+        apiKey,
         apple: {
           jws: purchase.purchaseToken, // JWS from iOS purchase
         },
@@ -511,7 +530,7 @@ const verifyWithIAPKit = async (purchase: Purchase) => {
 ```tsx
 import {useIAP, verifyPurchaseWithProvider} from 'expo-iap';
 import type {VerifyPurchaseWithProviderProps} from 'expo-iap';
-import {Platform} from 'react-native';
+import Constants from 'expo-constants';
 
 function PurchaseScreen() {
   const {requestPurchase, finishTransaction} = useIAP({
@@ -524,11 +543,22 @@ function PurchaseScreen() {
         return;
       }
 
+      // v3.2.1+: Use config plugin
+      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string | undefined;
+      // v3.2.0: Use environment variable
+      // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+
+      if (!apiKey) {
+        console.error('iapkitApiKey not configured in expo-iap config plugin');
+        await finishTransaction({purchase, isConsumable: false});
+        return;
+      }
+
       // Verify with IAPKit before granting entitlement
       const verifyRequest: VerifyPurchaseWithProviderProps = {
         provider: 'iapkit',
         iapkit: {
-          apiKey: process.env.EXPO_PUBLIC_IAPKIT_API_KEY!,
+          apiKey,
           apple: {
             jws: purchase.purchaseToken,
           },

@@ -502,6 +502,10 @@ function AndroidSubscriptionManager() {
 
 ### Android Replacement Modes
 
+:::warning Deprecated in v3.3.0+
+The `replacementModeAndroid` parameter is deprecated. Use `subscriptionProductReplacementParams` instead for item-level replacement (Google Play Billing Library 8.1.0+). See the [v3.3.0 release notes](/blog/3.3.0#deprecated-methods) for migration details.
+:::
+
 These constants match [Android's BillingFlowParams.SubscriptionUpdateParams.ReplacementMode](https://developer.android.com/reference/com/android/billingclient/api/BillingFlowParams.SubscriptionUpdateParams.ReplacementMode):
 
 - `1` (WITH_TIME_PRORATION): Immediate change with prorated credit
@@ -703,12 +707,47 @@ See [example/app/subscription-flow.tsx](https://github.com/hyochan/expo-iap/blob
 
 1. **Get your API key** from [IAPKit Dashboard](https://iapkit.com)
 
-2. **Configure environment variable**:
+2. **Configure your API key** in your project:
+
+:::tip Config Plugin (v3.2.1+)
+Starting from **v3.2.1**, you can provide your IAPKit API key through the config plugin:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-iap",
+        {
+          "iapkitApiKey": "your-iapkit-api-key"
+        }
+      ]
+    ]
+  }
+}
+```
+
+Then access it in your app using `expo-constants`:
+
+```tsx
+import Constants from 'expo-constants';
+
+const iapkitApiKey = Constants.expoConfig?.extra?.iapkitApiKey;
+```
+
+This approach keeps your API key out of source code and allows easy configuration per environment.
+:::
+
+:::info v3.2.0 Users
+If you are using **v3.2.0**, use the environment variable approach:
 
 ```bash
 # .env or app.config.ts
 EXPO_PUBLIC_IAPKIT_API_KEY=your_iapkit_api_key_here
 ```
+
+We recommend upgrading to **v3.2.1+** to use the config plugin approach.
+:::
 
 3. **Select IAPKit verification** in the example app by tapping the "Purchase Verification" dropdown and selecting "☁️ IAPKit (Server)"
 
@@ -718,7 +757,8 @@ When IAPKit verification is enabled, subscriptions are verified after successful
 
 ```tsx
 import {useIAP, type VerifyPurchaseWithProviderProps} from 'expo-iap';
-import {Platform, Alert} from 'react-native';
+import {Alert} from 'react-native';
+import Constants from 'expo-constants';
 
 function SubscriptionWithIAPKit() {
   const {
@@ -727,10 +767,13 @@ function SubscriptionWithIAPKit() {
     getActiveSubscriptions,
   } = useIAP({
     onPurchaseSuccess: async (purchase) => {
-      const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+      // v3.2.1+: Use config plugin
+      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string | undefined;
+      // v3.2.0: Use environment variable
+      // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
 
       if (!apiKey) {
-        console.error('EXPO_PUBLIC_IAPKIT_API_KEY not configured');
+        console.error('iapkitApiKey not configured in expo-iap config plugin');
         return;
       }
 

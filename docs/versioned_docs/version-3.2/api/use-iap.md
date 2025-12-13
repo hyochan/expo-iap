@@ -381,6 +381,10 @@ const buySubscriptionWithOffer = async (
 
 #### validateReceipt
 
+:::warning Deprecated
+`validateReceipt` is deprecated. Use [`verifyPurchase`](#verifypurchase) or [`verifyPurchaseWithProvider`](./methods/unified-apis#verifypurchasewithprovider) instead.
+:::
+
 - **Type**: `(productId: string, params?: ValidationParams) => Promise<ValidationResult>`
 - **Description**: Validate a purchase receipt
 - **Parameters**:
@@ -430,6 +434,96 @@ const buySubscriptionWithOffer = async (
     }
   };
   ```
+
+#### verifyPurchase
+
+- **Type**: `(props: VerifyPurchaseProps) => Promise<VerifyPurchaseResult>`
+- **Description**: Verify a purchase using native platform APIs (recommended)
+- **Parameters**:
+  - `props.apple`: Apple verification options (iOS)
+    - `sku`: Product ID to verify
+  - `props.google`: Google verification options (Android)
+    - `purchaseToken`: Purchase token from the purchase
+    - `productId`: Product ID
+    - `packageName`: Package name of your app
+  - `props.horizon`: Meta Horizon verification options (Quest/VR)
+    - `sku`: Product SKU
+    - `userId`: User ID
+- **Returns**: Promise resolving to platform-specific verification result
+
+- **Example**:
+
+  ```tsx
+  import {useIAP} from 'expo-iap';
+  import {Platform} from 'react-native';
+
+  const {verifyPurchase} = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      const result = await verifyPurchase({
+        apple: Platform.OS === 'ios' ? {sku: purchase.productId} : undefined,
+        google:
+          Platform.OS === 'android'
+            ? {
+                purchaseToken: purchase.purchaseToken,
+                productId: purchase.productId,
+                packageName: purchase.packageNameAndroid ?? '',
+              }
+            : undefined,
+      });
+
+      if (result.isValid) {
+        console.log('Purchase verified successfully');
+      }
+    },
+  });
+  ```
+
+#### verifyPurchaseWithProvider
+
+- **Type**: `(props: VerifyPurchaseWithProviderProps) => Promise<VerifyPurchaseWithProviderResult>`
+- **Description**: Verify a purchase using an external provider like IAPKit (recommended for production)
+- **Parameters**:
+  - `props.provider`: Provider name (`'iapkit'`)
+  - `props.iapkit`: IAPKit-specific options
+    - `apiKey`: Your IAPKit API key
+    - `apple`: Apple-specific options (`{jws: string}`)
+    - `google`: Google-specific options (`{purchaseToken: string}`)
+- **Returns**: Promise resolving to provider-specific verification result
+
+- **Example**:
+
+  ```tsx
+  import {useIAP} from 'expo-iap';
+  import Constants from 'expo-constants';
+
+  const {verifyPurchaseWithProvider, finishTransaction} = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as
+        | string
+        | undefined;
+
+      if (typeof apiKey !== 'string' || !apiKey) {
+        throw new Error('iapkitApiKey not configured');
+      }
+
+      const result = await verifyPurchaseWithProvider({
+        provider: 'iapkit',
+        iapkit: {
+          apiKey,
+          apple: {jws: purchase.purchaseToken ?? ''},
+          google: {purchaseToken: purchase.purchaseToken ?? ''},
+        },
+      });
+
+      if (result.iapkit?.isValid) {
+        console.log('Purchase verified:', result.iapkit.state);
+        await finishTransaction({purchase, isConsumable: true});
+      }
+    },
+  });
+  ```
+
+See [verifyPurchaseWithProvider API](./methods/unified-apis#verifypurchasewithprovider) for more details.
 
 #### getPromotedProductIOS
 

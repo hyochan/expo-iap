@@ -406,10 +406,36 @@ Always validate purchases on a secure server for production apps. Client-side ve
 
 ### Server-Side Verification with IAPKit (Recommended)
 
-[IAPKit](https://iapkit.com) provides a unified server-side verification API for both iOS and Android:
+[IAPKit](https://iapkit.com) provides a unified server-side verification API for both iOS and Android.
+
+:::tip Config Plugin (v3.2.1+)
+Starting from **v3.2.1**, you can provide your IAPKit API key through the config plugin:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-iap",
+        {
+          "iapkitApiKey": "your-iapkit-api-key"
+        }
+      ]
+    ]
+  }
+}
+```
+
+Then access it via `Constants.expoConfig?.extra?.iapkitApiKey`.
+:::
+
+:::info v3.2.0 Users
+If you are using **v3.2.0**, use the environment variable approach (`EXPO_PUBLIC_IAPKIT_API_KEY`). We recommend upgrading to **v3.2.1+** to use the config plugin approach.
+:::
 
 ```tsx
 import {verifyPurchaseWithProvider} from 'expo-iap';
+import Constants from 'expo-constants';
 
 const verifyWithIAPKit = async (purchase: Purchase) => {
   if (!purchase.purchaseToken) {
@@ -417,10 +443,20 @@ const verifyWithIAPKit = async (purchase: Purchase) => {
     return {isValid: false};
   }
 
+  // v3.2.1+: Use config plugin
+  const apiKey = Constants.expoConfig?.extra?.iapkitApiKey as string | undefined;
+  // v3.2.0: Use environment variable
+  // const apiKey = process.env.EXPO_PUBLIC_IAPKIT_API_KEY;
+
+  if (!apiKey) {
+    console.error('iapkitApiKey not configured in expo-iap config plugin');
+    return {isValid: false};
+  }
+
   const result = await verifyPurchaseWithProvider({
     provider: 'iapkit',
     iapkit: {
-      apiKey: process.env.EXPO_PUBLIC_IAPKIT_API_KEY!,
+      apiKey,
       apple: {jws: purchase.purchaseToken},
       google: {purchaseToken: purchase.purchaseToken},
     },
