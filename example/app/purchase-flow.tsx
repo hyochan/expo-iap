@@ -532,7 +532,7 @@ function PurchaseFlow({
 
                   {/* iOS Discounts */}
                   {'discountsIOS' in selectedProduct &&
-                    selectedProduct.discountsIOS &&
+                    Array.isArray(selectedProduct.discountsIOS) &&
                     selectedProduct.discountsIOS.length > 0 && (
                       <View style={styles.offersSection}>
                         <Text style={styles.offersSectionTitle}>
@@ -563,6 +563,9 @@ function PurchaseFlow({
                   {/* Android One-Time Purchase Offer Details */}
                   {'oneTimePurchaseOfferDetailsAndroid' in selectedProduct &&
                     selectedProduct.oneTimePurchaseOfferDetailsAndroid &&
+                    Array.isArray(
+                      selectedProduct.oneTimePurchaseOfferDetailsAndroid,
+                    ) &&
                     selectedProduct.oneTimePurchaseOfferDetailsAndroid.length >
                       0 && (
                       <View style={styles.offersSection}>
@@ -655,11 +658,12 @@ function PurchaseFlow({
                                   }
                                 </Text>
                               )}
-                              {offer.offerTags.length > 0 && (
-                                <Text style={styles.offerDetail}>
-                                  Tags: {offer.offerTags.join(', ')}
-                                </Text>
-                              )}
+                              {Array.isArray(offer.offerTags) &&
+                                offer.offerTags.length > 0 && (
+                                  <Text style={styles.offerDetail}>
+                                    Tags: {offer.offerTags.join(', ')}
+                                  </Text>
+                                )}
                             </View>
                           ),
                         )}
@@ -808,7 +812,17 @@ function PurchaseFlowContainer() {
         try {
           if (currentVerificationMethod === 'local') {
             console.log('[PurchaseFlow] Verifying with local method...');
-            const result = await verifyPurchase({sku: productId});
+            // All platform options can be provided - the library handles platform detection internally
+            const result = await verifyPurchase({
+              apple: {sku: productId},
+              google: {
+                sku: productId,
+                packageName: 'dev.anthropic.iapexample',
+                purchaseToken: purchase.purchaseToken ?? '', // Required for production
+                accessToken: '', // ⚠️ Requires server-issued OAuth token
+              },
+              // horizon: { sku: productId, userId: '', accessToken: '' }
+            });
             console.log('[PurchaseFlow] Local verification result:', result);
           } else if (currentVerificationMethod === 'iapkit') {
             console.log('[PurchaseFlow] Verifying with IAPKit...');
@@ -820,7 +834,8 @@ function PurchaseFlowContainer() {
             );
             console.log(
               '[PurchaseFlow] purchase.purchaseToken:',
-              purchase.purchaseToken
+              purchase.purchaseToken &&
+                typeof purchase.purchaseToken === 'string'
                 ? `✓ Present (${purchase.purchaseToken.length} chars)`
                 : '✗ Missing or empty',
             );

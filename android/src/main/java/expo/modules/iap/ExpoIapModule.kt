@@ -19,7 +19,7 @@ import dev.hyo.openiap.RequestPurchaseResultPurchase
 import dev.hyo.openiap.RequestPurchaseResultPurchases
 import dev.hyo.openiap.RequestSubscriptionAndroidProps
 import dev.hyo.openiap.RequestSubscriptionPropsByPlatforms
-import dev.hyo.openiap.VerifyPurchaseAndroidOptions
+import dev.hyo.openiap.VerifyPurchaseGoogleOptions
 import dev.hyo.openiap.VerifyPurchaseProps
 import dev.hyo.openiap.VerifyPurchaseWithProviderProps
 import dev.hyo.openiap.store.OpenIapStore
@@ -443,24 +443,28 @@ class ExpoIapModule : Module() {
                 ExpoIapLog.payload("verifyPurchase", params)
                 scope.launch {
                     try {
-                        val sku =
-                            params["sku"] as? String
-                                ?: throw IllegalArgumentException("Missing required parameter: sku")
-
-                        val androidOptions =
-                            (params["androidOptions"] as? Map<String, Any?>)?.let { opts ->
-                                VerifyPurchaseAndroidOptions(
-                                    accessToken = opts["accessToken"] as? String ?: "",
-                                    packageName = opts["packageName"] as? String ?: "",
-                                    productToken = opts["productToken"] as? String ?: "",
+                        val googleOptions =
+                            (params["google"] as? Map<String, Any?>)?.let { opts ->
+                                VerifyPurchaseGoogleOptions(
+                                    sku =
+                                        (opts["sku"] as? String)?.takeIf { it.isNotEmpty() }
+                                            ?: throw IllegalArgumentException("Missing or empty required parameter: google.sku"),
+                                    accessToken =
+                                        (opts["accessToken"] as? String)?.takeIf { it.isNotEmpty() }
+                                            ?: throw IllegalArgumentException("Missing or empty required parameter: google.accessToken"),
+                                    packageName =
+                                        (opts["packageName"] as? String)?.takeIf { it.isNotEmpty() }
+                                            ?: throw IllegalArgumentException("Missing or empty required parameter: google.packageName"),
+                                    purchaseToken =
+                                        (opts["purchaseToken"] as? String)?.takeIf { it.isNotEmpty() }
+                                            ?: throw IllegalArgumentException("Missing or empty required parameter: google.purchaseToken"),
                                     isSub = opts["isSub"] as? Boolean,
                                 )
                             }
 
                         val props =
                             VerifyPurchaseProps(
-                                sku = sku,
-                                androidOptions = androidOptions,
+                                google = googleOptions,
                             )
 
                         val result = openIap.verifyPurchase(props)

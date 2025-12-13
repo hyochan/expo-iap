@@ -10,6 +10,9 @@ else
   npm run lint:ci || { echo "Lint failed. Aborting commit." >&2; exit 1; }
 fi
 
+# Re-add files that were modified by linting
+git add -u
+
 # Run tests with coverage before committing to reduce CI failures
 echo "Running test coverage (pre-commit)…"
 if command -v bun >/dev/null 2>&1; then
