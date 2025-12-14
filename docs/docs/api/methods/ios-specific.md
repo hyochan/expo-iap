@@ -213,47 +213,103 @@ Returns: `Promise<boolean>`
 
 ### getAppTransactionIOS()
 
-Gets app transaction information for iOS apps (iOS 16.0+). AppTransaction represents the initial purchase that unlocked the app, useful for premium apps or apps that were previously paid.
+Gets app transaction information for iOS apps (iOS 16.0+). AppTransaction represents the **initial purchase that unlocked the app** - Apple's way of proving the app was legitimately downloaded from the App Store.
 
 > Runtime: iOS 16.0+; Build: Xcode 15.0+ with iOS 16.0 SDK. Older SDKs will throw.
 
+:::warning Important
+AppTransaction is **not** for payment verification. It is a **trust/authenticity layer**. For payment verification, use [Transaction verification](../../guides/subscription-validation) or server-side receipt validation.
+:::
+
+#### When to Use AppTransaction
+
+Most apps do **not** need this. Use only when:
+
+| Scenario | Why It Helps |
+|----------|--------------|
+| Free app with IAP + cracking concerns | Verifies app was installed via App Store, not side-loaded |
+| Enterprise/Compliance requirements | Apple-signed proof of app ownership for audits |
+| Anti-fraud signal in high-value apps | Additional trust signal for fraud detection |
+| Games with cheating concerns | Helps identify modified/unofficial builds |
+
+**Do NOT use for:**
+
+- Paid apps (purchase already verified at download)
+- Standard subscription apps (Transaction verification is sufficient)
+- "Better payment verification" (AppTransaction has no payment data)
+
+#### Basic Usage
+
 ```tsx
 import {getAppTransactionIOS} from 'expo-iap';
+import {Platform} from 'react-native';
 
-const fetchAppTransaction = async () => {
+const verifyAppAuthenticity = async () => {
+  if (Platform.OS !== 'ios') return null;
+
   try {
     const appTransaction = await getAppTransactionIOS();
-    if (appTransaction) {
-      console.log('App Transaction ID:', appTransaction.appTransactionId);
-      console.log(
-        'Original Purchase Date:',
-        new Date(appTransaction.originalPurchaseDate),
-      );
-      console.log('Device Verification:', appTransaction.deviceVerification);
+
+    if (!appTransaction) {
+      // Unverified - could be sandbox, TestFlight, or tampered
+      console.warn('App transaction could not be verified');
+      return null;
     }
+
+    console.log('App verified:', {
+      bundleId: appTransaction.bundleId,
+      environment: appTransaction.environment,
+      originalPurchaseDate: new Date(appTransaction.originalPurchaseDate),
+    });
+
+    return appTransaction;
   } catch (error) {
     console.error('Failed to get app transaction:', error);
+    return null;
   }
 };
 ```
+
+#### Server-Side Verification
+
+For robust anti-fraud, send `deviceVerification` and `deviceVerificationNonce` to your server:
+
+```typescript
+const appTransaction = await getAppTransactionIOS();
+
+if (appTransaction) {
+  await fetch('https://your-server.com/verify-app', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      deviceVerification: appTransaction.deviceVerification,
+      deviceVerificationNonce: appTransaction.deviceVerificationNonce,
+      bundleId: appTransaction.bundleId,
+      environment: appTransaction.environment,
+    }),
+  });
+}
+```
+
+On your server: verify the signature using Apple's public key, check bundleId matches, validate environment, and store the nonce to prevent replay attacks.
 
 **Returns:** `Promise<AppTransaction | null>`
 
 ```ts
 interface AppTransaction {
-  appTransactionId?: string; // iOS 18.4+
-  originalPlatform?: string; // iOS 18.4+
-  bundleId: string;
-  appVersion: string;
-  originalAppVersion: string;
-  originalPurchaseDate: number; // ms since epoch
-  deviceVerification: string;
-  deviceVerificationNonce: string;
-  environment: string;
-  signedDate: number;
-  appId?: number;
-  appVersionId?: number;
-  preorderDate?: number;
+  appId: number;                    // App Store app identifier
+  appTransactionId?: string;        // Unique transaction ID (iOS 18.4+)
+  appVersion: string;               // Current app version
+  appVersionId: number;             // App version identifier
+  bundleId: string;                 // App bundle identifier
+  deviceVerification: string;       // Base64 device verification data
+  deviceVerificationNonce: string;  // UUID for server verification
+  environment: string;              // "Production" or "Sandbox"
+  originalAppVersion: string;       // First installed version
+  originalPlatform?: string;        // Original purchase platform (iOS 18.4+)
+  originalPurchaseDate: number;     // Initial download timestamp (ms)
+  preorderDate?: number;            // Pre-order date if applicable (ms)
+  signedDate: number;               // When data was signed (ms)
 }
 ```
 

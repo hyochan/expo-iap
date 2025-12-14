@@ -291,6 +291,14 @@ public final class ExpoIapModule: Module {
             return nil
         }
 
+        AsyncFunction("requestPurchaseOnPromotedProductIOS") { () async throws -> Bool in
+            ExpoIapLog.payload("requestPurchaseOnPromotedProductIOS", payload: nil)
+            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
+            let success = try await OpenIapModule.shared.requestPurchaseOnPromotedProductIOS()
+            ExpoIapLog.result("requestPurchaseOnPromotedProductIOS", value: success)
+            return success
+        }
+
         AsyncFunction("getStorefront") { () async throws -> String in
             ExpoIapLog.payload("getStorefront", payload: nil)
             try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
@@ -423,6 +431,20 @@ public final class ExpoIapModule: Module {
             let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(result))
             ExpoIapLog.result("presentExternalPurchaseLinkIOS", value: sanitized)
             return sanitized
+        }
+
+        // MARK: - App Transaction (iOS 16.0+)
+
+        AsyncFunction("getAppTransactionIOS") { () async throws -> [String: Any]? in
+            ExpoIapLog.payload("getAppTransactionIOS", payload: nil)
+            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
+            if let transaction = try await OpenIapModule.shared.getAppTransactionIOS() {
+                let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(transaction))
+                ExpoIapLog.result("getAppTransactionIOS", value: sanitized)
+                return sanitized
+            }
+            ExpoIapLog.result("getAppTransactionIOS", value: nil)
+            return nil
         }
     }
 }
