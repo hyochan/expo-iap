@@ -45,17 +45,55 @@ function getReleaseUrl(tag) {
   return `https://github.com/hyodotdev/openiap/releases/download/${tag}/openiap-typescript.zip`;
 }
 
+function resolveCandidateTags(tag) {
+  if (tag.startsWith('gql-')) {
+    return [tag];
+  }
+
+  // Prefer the new gql-<version> scheme but fall back to legacy bare tags
+  return [`gql-${tag}`, tag];
+}
+
+function downloadTypesArchive(zipPath, tags) {
+  let resolvedTag = null;
+  let lastError = null;
+
+  for (const [index, candidate] of tags.entries()) {
+    const releaseUrl = getReleaseUrl(candidate);
+    console.log(`Downloading OpenIAP types (tag: ${candidate}) from ${releaseUrl}`);
+
+    try {
+      execFileSync('curl', ['-L', '-o', zipPath, releaseUrl], {
+        stdio: 'inherit',
+      });
+      resolvedTag = candidate;
+      break;
+    } catch (error) {
+      lastError = error;
+      const hasFallback = index < tags.length - 1;
+      console.warn(
+        `Failed to download for tag ${candidate}; ${
+          hasFallback ? 'trying fallback' : 'no fallback available'
+        }.`,
+      );
+    }
+  }
+
+  if (!resolvedTag) {
+    throw lastError ?? new Error('Unable to download OpenIAP types archive.');
+  }
+
+  return resolvedTag;
+}
+
 function main() {
   const {tag} = parseArgs();
-  const releaseUrl = getReleaseUrl(tag);
+  const candidateTags = resolveCandidateTags(tag);
   const tempDir = mkdtempSync(join(tmpdir(), 'openiap-types-'));
   const zipPath = join(tempDir, 'openiap-typescript.zip');
 
   try {
-    console.log(`Downloading OpenIAP types (tag: ${tag}) from ${releaseUrl}`);
-    execFileSync('curl', ['-L', '-o', zipPath, releaseUrl], {
-      stdio: 'inherit',
-    });
+    const resolvedTag = downloadTypesArchive(zipPath, candidateTags);
 
     console.log('Extracting types.ts from archive');
     execFileSync('unzip', ['-o', zipPath, 'types.ts', '-d', tempDir], {
@@ -71,7 +109,7 @@ function main() {
 
     const destination = join(PROJECT_ROOT, 'src', 'types.ts');
     writeFileSync(destination, contents);
-    console.log('Updated src/types.ts');
+    console.log(`Updated src/types.ts from tag ${resolvedTag}`);
   } finally {
     rmSync(tempDir, {recursive: true, force: true});
   }
