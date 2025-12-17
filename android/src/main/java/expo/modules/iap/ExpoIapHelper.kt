@@ -170,6 +170,7 @@ object ExpoIapHelper {
             }
         }
         openIap.addPurchaseErrorListener { e ->
+            val errorJson = e.toJSON()
             runCatching {
                 emitOrQueue(
                     module,
@@ -177,7 +178,7 @@ object ExpoIapHelper {
                     connectionReady,
                     pendingEvents,
                     eventPurchaseError,
-                    e.toJSON(),
+                    errorJson,
                 )
             }.onFailure { error ->
                 android.util.Log.e(TAG, "Failed to buffer/send PURCHASE_ERROR", error)
@@ -198,6 +199,10 @@ object ExpoIapHelper {
                     )
                 }.onFailure { android.util.Log.e(TAG, "Failed to send fallback error event", it) }
             }
+            // Also reject any pending purchase promises to match iOS behavior
+            val errorCode = errorJson["code"] as? String ?: "purchase-error"
+            val errorMessage = errorJson["message"] as? String ?: "Purchase failed"
+            rejectPurchasePromises(errorCode, errorMessage, null)
         }
         openIap.addUserChoiceBillingListener { details ->
             runCatching {
