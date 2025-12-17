@@ -438,10 +438,12 @@ public final class ExpoIapModule: Module {
         AsyncFunction("getAppTransactionIOS") { () async throws -> [String: Any]? in
             ExpoIapLog.payload("getAppTransactionIOS", payload: nil)
             try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
-            if let transaction = try await OpenIapModule.shared.getAppTransactionIOS() {
-                let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(transaction))
-                ExpoIapLog.result("getAppTransactionIOS", value: sanitized)
-                return sanitized
+            if #available(iOS 16.0, tvOS 16.0, *) {
+                if let transaction = try await OpenIapModule.shared.getAppTransactionIOS() {
+                    let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(transaction))
+                    ExpoIapLog.result("getAppTransactionIOS", value: sanitized)
+                    return sanitized
+                }
             }
             ExpoIapLog.result("getAppTransactionIOS", value: nil)
             return nil
