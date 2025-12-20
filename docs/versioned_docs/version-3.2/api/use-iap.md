@@ -460,15 +460,12 @@ const buySubscriptionWithOffer = async (
   const {verifyPurchase} = useIAP({
     onPurchaseSuccess: async (purchase) => {
       const result = await verifyPurchase({
-        apple: Platform.OS === 'ios' ? {sku: purchase.productId} : undefined,
-        google:
-          Platform.OS === 'android'
-            ? {
-                purchaseToken: purchase.purchaseToken,
-                productId: purchase.productId,
-                packageName: purchase.packageNameAndroid ?? '',
-              }
-            : undefined,
+        apple: {sku: purchase.productId},
+        google: {
+          purchaseToken: purchase.purchaseToken,
+          productId: purchase.productId,
+          packageName: purchase.packageNameAndroid ?? '',
+        },
       });
 
       if (result.isValid) {
