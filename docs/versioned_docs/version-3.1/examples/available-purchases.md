@@ -4,11 +4,11 @@ sidebar_label: Available Purchases
 sidebar_position: 3
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Available Purchases
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/quiz?fpr=hyo73" title="Quiz interview questions" />
+<IapKitBanner />
 
 :::tip What you'll build
 This example shows how to list and restore previously purchased items (non‑consumables and active subscriptions) using `getAvailablePurchases()` and `getActiveSubscriptions()`.

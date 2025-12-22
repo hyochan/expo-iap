@@ -2,11 +2,11 @@
 sidebar_position: 1
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # iOS Setup
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/behavioral-interview-playbook?fpr=hyo73" title="Behavioral interview questions" />
+<IapKitBanner />
 
 For complete iOS setup instructions including App Store Connect configuration, Xcode setup, and testing guidelines, please visit:
 

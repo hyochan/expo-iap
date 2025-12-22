@@ -2,11 +2,11 @@
 sidebar_position: 4
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Horizon OS
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/system-design?fpr=hyo73" title="Front End System design questions" />
+<IapKitBanner />
 
 This guide covers setting up expo-iap for Meta Quest devices running Horizon OS.
 

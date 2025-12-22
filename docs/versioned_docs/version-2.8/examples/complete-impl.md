@@ -2,11 +2,11 @@
 sidebar_position: 3
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Complete Implementation
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions?fpr=hyo73" title="Framework-specific practice questions" />
+<IapKitBanner />
 
 This example shows a real-world implementation of a complete in-app purchase store with both consumable products (bulb packs) and subscriptions (premium features).
 

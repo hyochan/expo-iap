@@ -1,8 +1,8 @@
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # API Reference
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/prepare/coding?fpr=hyo73" title="Coding interview questions" />
+<IapKitBanner />
 
 Welcome to the Expo IAP API documentation. Here you'll find comprehensive guides and references for all the features and functionality available in Expo IAP.
 

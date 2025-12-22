@@ -2,11 +2,11 @@
 sidebar_position: 1
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # iOS Setup
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/prepare/coding?fpr=hyo73" title="Coding interview questions" />
+<IapKitBanner />
 
 Setting up in-app purchases for iOS requires configuration in both Xcode and App Store Connect.
 

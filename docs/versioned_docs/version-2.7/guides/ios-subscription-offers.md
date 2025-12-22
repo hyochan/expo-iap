@@ -4,11 +4,11 @@ sidebar_label: iOS Subscription Offers
 sidebar_position: 3
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # iOS Subscription Offers
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/behavioral-interview-playbook?fpr=hyo73" title="Behavioral interview questions" />
+<IapKitBanner />
 
 This guide explains how to implement and manage subscription offers (introductory and promotional) for iOS in expo-iap.
 

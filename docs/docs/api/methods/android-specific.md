@@ -4,7 +4,11 @@ sidebar_label: Android Specific
 sidebar_position: 5
 ---
 
+import IapKitBanner from "@site/src/uis/IapKitBanner";
+
 # Android Specific APIs
+
+<IapKitBanner />
 
 The following Android‑only helpers expose Google Play Billing specific capabilities. Most day‑to‑day flows are covered by the cross‑platform [Unified APIs](./unified-apis); use these only when you need Android-specific features.
 

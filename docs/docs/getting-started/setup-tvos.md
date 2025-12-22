@@ -2,7 +2,11 @@
 sidebar_position: 2
 ---
 
+import IapKitBanner from "@site/src/uis/IapKitBanner";
+
 # tvOS Setup
+
+<IapKitBanner />
 
 Expo IAP supports Apple TV (tvOS) through the [react-native-tvos](https://github.com/react-native-tvos/react-native-tvos) project. This guide explains how to configure your Expo project for tvOS.
 

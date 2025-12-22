@@ -4,11 +4,11 @@ sidebar_label: FAQ
 sidebar_position: 6
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Frequently Asked Questions
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/interviews/study-plans?fpr=hyo73" title="Study Plan" />
+<IapKitBanner />
 
 ## General Questions
 

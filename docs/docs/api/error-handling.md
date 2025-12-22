@@ -3,11 +3,11 @@ title: Error Handling
 sidebar_label: Error Handling
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Error Handling
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/quiz?fpr=hyo73" title="Quiz interview questions" />
+<IapKitBanner />
 
 All methods can throw errors that should be handled appropriately. Use the `PurchaseError` type and helper functions for consistent, cross‑platform error information.
 

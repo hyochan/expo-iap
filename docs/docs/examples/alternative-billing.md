@@ -4,11 +4,11 @@ sidebar_label: Alternative Billing
 sidebar_position: 5
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Alternative Billing
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-system-design-playbook?fpr=hyo73" title="Front End System Design Guidebook" />
+<IapKitBanner />
 
 :::tip What you'll build
 Use alternative billing to redirect users to external payment systems or offer payment choices alongside platform billing.

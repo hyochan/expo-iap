@@ -2,11 +2,11 @@
 sidebar_position: 2
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Android Setup
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/interviews/study-plans?fpr=hyo73" title="Study Plan" />
+<IapKitBanner />
 
 Setting up in-app purchases for Android requires configuration in Google Play Console and proper Android app setup.
 

@@ -4,11 +4,11 @@ sidebar_label: Offer Code
 sidebar_position: 4
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Offer Code Redemption
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/quiz?fpr=hyo73" title="Quiz interview questions" />
+<IapKitBanner />
 
 :::tip What you'll build
 Redeem App Store offer/promo codes using the native iOS sheet. This is useful for subscription promotional codes and requires a real iOS device.

@@ -4,11 +4,11 @@ sidebar_label: useIAP Hook
 sidebar_position: 1
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # useIAP Hook
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/prepare/coding?fpr=hyo73" title="Coding interview questions" />
+<IapKitBanner />
 
 The `useIAP` hook is the main interface for interacting with in-app purchases in Expo IAP. It provides a comprehensive API for managing purchases, subscriptions, and error handling.
 

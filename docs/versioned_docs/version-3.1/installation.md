@@ -5,8 +5,8 @@ sidebar_label: Installation (Moved)
 unlisted: true
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/react?fpr=hyo73" title="React interview questions" />
+<IapKitBanner />
 
 > This page has moved to [Installation](./getting-started/installation).

@@ -2,11 +2,11 @@
 sidebar_position: 2
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Installation
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/react?fpr=hyo73" title="React interview questions" />
+<IapKitBanner />
 
 This guide will help you install and configure Expo IAP in your React Native or Expo project.
 

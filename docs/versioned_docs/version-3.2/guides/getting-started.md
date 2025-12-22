@@ -4,8 +4,8 @@ sidebar_label: Getting Started (Deprecated)
 unlisted: true
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions?fpr=hyo73" title="Framework-specific practice questions" />
+<IapKitBanner />
 
 > This guide has been merged into [Installation](../getting-started/installation).

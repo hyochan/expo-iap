@@ -3,11 +3,11 @@ title: Offer Code Redemption
 sidebar_label: Offer Code Redemption
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Offer Code Redemption
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-system-design-playbook?fpr=hyo73" title="Front End System Design Guidebook" />
+<IapKitBanner />
 
 This guide explains how to implement offer code redemption functionality in your app using expo-iap.
 

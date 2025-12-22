@@ -3,11 +3,11 @@ title: Alternative Billing
 sidebar_label: Alternative Billing
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Alternative Billing
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-system-design-playbook?fpr=hyo73" title="Front End System Design Guidebook" />
+<IapKitBanner />
 
 This guide explains how to implement alternative billing functionality in your app using expo-iap, allowing you to use external payment systems alongside or instead of the App Store/Google Play billing.
 

@@ -4,11 +4,11 @@ sidebar_label: Basic Store
 sidebar_position: 1
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Basic Store Implementation
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/system-design?fpr=hyo73" title="Front End System design questions" />
+<IapKitBanner />
 
 This example shows how to implement a basic in-app purchase store using expo-iap.
 

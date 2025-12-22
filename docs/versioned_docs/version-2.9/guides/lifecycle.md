@@ -4,11 +4,11 @@ sidebar_label: Lifecycle
 sidebar_position: 4
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Lifecycle
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions?fpr=hyo73" title="Framework-specific practice questions" />
+<IapKitBanner />
 
 For complete understanding of the in-app purchase lifecycle, flow diagrams, and state management, please visit:
 

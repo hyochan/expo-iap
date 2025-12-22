@@ -4,11 +4,11 @@ sidebar_label: Getting Started
 sidebar_position: 1
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Getting Started
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/js?fpr=hyo73" title="JavaScript interview questions" />
+<IapKitBanner />
 
 `expo-iap` is a powerful in-app purchase solution specifically designed for Expo and React Native applications. It provides a unified API for handling in-app purchases across iOS and Android platforms with comprehensive error handling and modern TypeScript support.
 

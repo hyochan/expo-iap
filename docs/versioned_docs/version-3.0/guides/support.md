@@ -4,11 +4,11 @@ sidebar_label: Support
 sidebar_position: 8
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Support & Contributing
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/react?fpr=hyo73" title="React interview questions" />
+<IapKitBanner />
 
 We welcome contributions and are here to help you succeed with expo-iap!
 

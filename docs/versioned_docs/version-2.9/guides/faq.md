@@ -4,11 +4,11 @@ sidebar_label: FAQ
 sidebar_position: 6
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Frequently Asked Questions
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/behavioral-interview-playbook?fpr=hyo73" title="Behavioral interview questions" />
+<IapKitBanner />
 
 ## General Questions
 

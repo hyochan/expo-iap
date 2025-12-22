@@ -4,11 +4,11 @@ sidebar_label: Troubleshooting
 sidebar_position: 5
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Troubleshooting
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/react?fpr=hyo73" title="React interview questions" />
+<IapKitBanner />
 
 This guide covers common issues you might encounter when implementing in-app purchases with expo-iap and how to resolve them.
 

@@ -5,9 +5,9 @@ sidebar_label: Subscription Validation
 description: Understand how React Native IAP surfaces StoreKit 2 subscription data, from getAvailablePurchases to the StoreKit status API.
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/formats/quiz?fpr=hyo73" title="Quiz interview questions" />
+<IapKitBanner />
 
 React Native IAP exposes modern StoreKit&nbsp;2 (iOS) and Google Play Billing (Android) pipelines. This guide walks through the data that is available on the JavaScript side, how it maps to the underlying native APIs, and practical strategies to answer common lifecycle questions such as _"is the user currently inside their free trial?"_
 

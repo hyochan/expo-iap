@@ -4,11 +4,11 @@ sidebar_label: Core Methods
 sidebar_position: 1
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Core Methods
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-system-design-playbook?fpr=hyo73" title="Front End System Design Guidebook" />
+<IapKitBanner />
 
 This section covers the core methods available in expo-iap for managing in-app purchases.
 

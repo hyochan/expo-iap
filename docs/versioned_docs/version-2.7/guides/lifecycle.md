@@ -4,11 +4,11 @@ sidebar_label: Lifecycle
 sidebar_position: 4
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Lifecycle
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/react?fpr=hyo73" title="React interview questions" />
+<IapKitBanner />
 
 Understanding the lifecycle of in-app purchase connections and how to properly manage them is crucial for a robust implementation.
 

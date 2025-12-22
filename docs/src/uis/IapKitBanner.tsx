@@ -1,16 +1,20 @@
 import React from 'react';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-interface GreatFrontendBannerProps {
-  link: string;
+const TRACKING_URL = 'https://www.hyo.dev/api/ad-banner/cmjf0l1830000249hfa3h249z';
+
+interface IapKitBannerProps {
   title?: string;
 }
 
-export default function GreatFrontendBanner({
-  link,
-  title,
-}: GreatFrontendBannerProps) {
-  const imageUrl = useBaseUrl('/img/greatfrontend-js.gif');
+export default function IapKitBanner({title}: IapKitBannerProps) {
+  const imageUrl = useBaseUrl('/img/iapkit-banner.gif');
+
+  const handleClick = () => {
+    fetch(TRACKING_URL, {method: 'POST'}).catch(() => {
+      // Silently ignore tracking errors
+    });
+  };
 
   return (
     <div
@@ -20,24 +24,28 @@ export default function GreatFrontendBanner({
         marginBottom: 24,
       }}
     >
-      <a href={link} target="_blank" rel="noopener noreferrer">
+      <a
+        href="https://iapkit.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={handleClick}
+      >
         <img
           src={imageUrl}
-          alt="GreatFrontEnd"
+          alt="IAPKit - In-App Purchase Solution"
           style={{
-            width: '100%',
-            maxWidth: '728px',
-            height: 'auto',
             display: 'block',
             margin: '0 auto',
+            objectFit: 'contain',
           }}
         />
       </a>
       {title ? (
         <a
-          href={link}
+          href="https://iapkit.com"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={handleClick}
           style={{
             display: 'block',
             fontSize: '0.875rem',

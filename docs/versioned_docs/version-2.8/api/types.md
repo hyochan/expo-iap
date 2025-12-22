@@ -1,8 +1,8 @@
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Types
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions?fpr=hyo73" title="Framework-specific practice questions" />
+<IapKitBanner />
 
 This page contains the TypeScript types and interfaces used throughout the expo-iap library.
 

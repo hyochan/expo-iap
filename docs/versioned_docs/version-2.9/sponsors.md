@@ -4,11 +4,11 @@ title: Sponsors
 description: Support expo-iap development through sponsorship
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Sponsors
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/js?fpr=hyo73" title="JavaScript interview questions" />
+<IapKitBanner />
 
 For information about our sponsors and sponsorship opportunities, please visit:
 

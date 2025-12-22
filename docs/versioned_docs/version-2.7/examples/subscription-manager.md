@@ -4,11 +4,11 @@ sidebar_label: Subscriptions
 sidebar_position: 2
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Subscription Management Example
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/questions/js?fpr=hyo73" title="JavaScript interview questions" />
+<IapKitBanner />
 
 This example demonstrates how to implement subscription management with expo-iap, including subscription status checking, renewal handling, and subscription management UI.
 

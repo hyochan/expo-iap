@@ -4,11 +4,11 @@ sidebar_label: Purchases
 sidebar_position: 2
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Purchases
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/front-end-interview-playbook?fpr=hyo73" title="Front End Interview Guidebook" />
+<IapKitBanner />
 
 > :warning: **Purchase Flow Redesign** :warning:
 >

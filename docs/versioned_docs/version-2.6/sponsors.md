@@ -4,11 +4,11 @@ title: Sponsors
 description: Support expo-iap development through sponsorship
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
 # Sponsors
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/behavioral-interview-playbook?fpr=hyo73" title="Behavioral interview questions" />
+<IapKitBanner />
 
 <h2 style={{color: 'gold'}}>Gold Tier</h2>
 

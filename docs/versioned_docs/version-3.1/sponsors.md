@@ -2,9 +2,9 @@
 title: Sponsors
 ---
 
-import GreatFrontendBanner from "@site/src/uis/GreatFrontendBanner";
+import IapKitBanner from "@site/src/uis/IapKitBanner";
 
-<GreatFrontendBanner link="https://www.greatfrontend.com/prepare/coding?fpr=hyo73" title="Coding interview questions" />
+<IapKitBanner />
 
 import SponsorSection from '@site/src/components/SponsorSection';
 

@@ -4,7 +4,11 @@ sidebar_label: iOS Specific
 sidebar_position: 4
 ---
 
+import IapKitBanner from "@site/src/uis/IapKitBanner";
+
 # iOS Specific APIs
+
+<IapKitBanner />
 
 The following iOS‑only helpers expose StoreKit and App Store specific capabilities. Most day‑to‑day flows are covered by the cross‑platform [Unified APIs](./unified-apis); use these only when you need iOS features.
 
