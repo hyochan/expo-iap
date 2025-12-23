@@ -373,7 +373,7 @@ describe('Public API (index.ts)', () => {
       });
     });
 
-    it('iOS passes advancedCommerceDataIOS for attribution tracking', async () => {
+    it('iOS passes advancedCommerceData for attribution tracking', async () => {
       (Platform as any).OS = 'ios';
       (ExpoIapModule.requestPurchase as jest.Mock) = jest
         .fn()
@@ -383,7 +383,7 @@ describe('Public API (index.ts)', () => {
         request: {
           apple: {
             sku: 'com.example.premium',
-            advancedCommerceDataIOS: 'campaign_summer_2025',
+            advancedCommerceData: 'campaign_summer_2025',
           },
         },
         type: 'in-app',
@@ -395,7 +395,7 @@ describe('Public API (index.ts)', () => {
         request: {
           ios: {
             sku: 'com.example.premium',
-            advancedCommerceDataIOS: 'campaign_summer_2025',
+            advancedCommerceData: 'campaign_summer_2025',
           },
         },
         useAlternativeBilling: undefined,
@@ -403,7 +403,7 @@ describe('Public API (index.ts)', () => {
       expect(res).toEqual({id: 'purchase-123'});
     });
 
-    it('iOS passes advancedCommerceDataIOS for subscription purchase', async () => {
+    it('iOS passes advancedCommerceData for subscription purchase', async () => {
       (Platform as any).OS = 'ios';
       (ExpoIapModule.requestPurchase as jest.Mock) = jest
         .fn()
@@ -413,7 +413,7 @@ describe('Public API (index.ts)', () => {
         request: {
           apple: {
             sku: 'com.example.subscription.monthly',
-            advancedCommerceDataIOS: 'affiliate_partner_123',
+            advancedCommerceData: 'affiliate_partner_123',
             appAccountToken: 'user-uuid-456',
           },
         },
@@ -426,7 +426,7 @@ describe('Public API (index.ts)', () => {
         request: {
           ios: {
             sku: 'com.example.subscription.monthly',
-            advancedCommerceDataIOS: 'affiliate_partner_123',
+            advancedCommerceData: 'affiliate_partner_123',
             appAccountToken: 'user-uuid-456',
           },
         },
@@ -435,7 +435,7 @@ describe('Public API (index.ts)', () => {
       expect(res).toEqual([{id: 'sub-123', platform: 'ios'}]);
     });
 
-    it('iOS works without advancedCommerceDataIOS (optional field)', async () => {
+    it('iOS works without advancedCommerceData (optional field)', async () => {
       (Platform as any).OS = 'ios';
       (ExpoIapModule.requestPurchase as jest.Mock) = jest
         .fn()
