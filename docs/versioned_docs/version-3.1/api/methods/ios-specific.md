@@ -66,9 +66,12 @@ const subscription = promotedProductListenerIOS(async (productId) => {
     type: 'in-app',
   });
 });
+
+// Clean up the listener when done
+subscription.remove();
 ```
 
-Returns: `Promise<boolean>`
+Returns: `Subscription` (with `remove()` method)
 
 ### getPendingTransactionsIOS()
 
