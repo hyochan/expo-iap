@@ -321,8 +321,8 @@ export const getPromotedProductIOS: QueryField<
  */
 export const requestPurchaseOnPromotedProductIOS =
   async (): Promise<boolean> => {
-    await ExpoIapModule.requestPurchaseOnPromotedProductIOS();
-    return true;
+    const result = await ExpoIapModule.requestPurchaseOnPromotedProductIOS();
+    return result ?? true;
   };
 
 /**

@@ -62,7 +62,7 @@ import {promotedProductListenerIOS, requestPurchase} from 'expo-iap';
 const subscription = promotedProductListenerIOS(async (productId) => {
   // Purchase directly using requestPurchase with the received SKU
   await requestPurchase({
-    params: {apple: {sku: productId}},
+    request: {apple: {sku: productId}},
     type: 'in-app',
   });
 });
