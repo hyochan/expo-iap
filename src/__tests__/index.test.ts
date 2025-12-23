@@ -372,6 +372,96 @@ describe('Public API (index.ts)', () => {
         },
       });
     });
+
+    it('iOS passes advancedCommerceDataIOS for attribution tracking', async () => {
+      (Platform as any).OS = 'ios';
+      (ExpoIapModule.requestPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue({id: 'purchase-123'});
+
+      const res: any = await requestPurchase({
+        request: {
+          apple: {
+            sku: 'com.example.premium',
+            advancedCommerceDataIOS: 'campaign_summer_2025',
+          },
+        },
+        type: 'in-app',
+      });
+
+      // Note: apple is normalized to ios internally
+      expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith({
+        type: 'in-app',
+        request: {
+          ios: {
+            sku: 'com.example.premium',
+            advancedCommerceDataIOS: 'campaign_summer_2025',
+          },
+        },
+        useAlternativeBilling: undefined,
+      });
+      expect(res).toEqual({id: 'purchase-123'});
+    });
+
+    it('iOS passes advancedCommerceDataIOS for subscription purchase', async () => {
+      (Platform as any).OS = 'ios';
+      (ExpoIapModule.requestPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue([{id: 'sub-123', platform: 'ios'}]);
+
+      const res = await requestPurchase({
+        request: {
+          apple: {
+            sku: 'com.example.subscription.monthly',
+            advancedCommerceDataIOS: 'affiliate_partner_123',
+            appAccountToken: 'user-uuid-456',
+          },
+        },
+        type: 'subs',
+      });
+
+      // Note: apple is normalized to ios internally
+      expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith({
+        type: 'subs',
+        request: {
+          ios: {
+            sku: 'com.example.subscription.monthly',
+            advancedCommerceDataIOS: 'affiliate_partner_123',
+            appAccountToken: 'user-uuid-456',
+          },
+        },
+        useAlternativeBilling: undefined,
+      });
+      expect(res).toEqual([{id: 'sub-123', platform: 'ios'}]);
+    });
+
+    it('iOS works without advancedCommerceDataIOS (optional field)', async () => {
+      (Platform as any).OS = 'ios';
+      (ExpoIapModule.requestPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue({id: 'purchase-no-acd'});
+
+      const res: any = await requestPurchase({
+        request: {
+          apple: {
+            sku: 'com.example.product',
+          },
+        },
+        type: 'in-app',
+      });
+
+      // Note: apple is normalized to ios internally
+      expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith({
+        type: 'in-app',
+        request: {
+          ios: {
+            sku: 'com.example.product',
+          },
+        },
+        useAlternativeBilling: undefined,
+      });
+      expect(res).toEqual({id: 'purchase-no-acd'});
+    });
   });
 
   describe('legacy wrappers and getters', () => {

@@ -535,7 +535,8 @@ describe('iOS Module Functions', () => {
       expect(result).toBeNull();
     });
 
-    it('should call requestPurchaseOnPromotedProductIOS', async () => {
+    it('should call requestPurchaseOnPromotedProductIOS (deprecated)', async () => {
+      // Note: This function is deprecated. Use promotedProductListenerIOS + requestPurchase instead.
       (
         ExpoIapModule.requestPurchaseOnPromotedProductIOS as jest.Mock
       ).mockResolvedValue(undefined);
@@ -546,6 +547,27 @@ describe('iOS Module Functions', () => {
         ExpoIapModule.requestPurchaseOnPromotedProductIOS,
       ).toHaveBeenCalledTimes(1);
       expect(result).toBe(true);
+    });
+
+    it('requestPurchaseOnPromotedProductIOS returns true on success', async () => {
+      (
+        ExpoIapModule.requestPurchaseOnPromotedProductIOS as jest.Mock
+      ).mockResolvedValue(true);
+
+      const result = await requestPurchaseOnPromotedProductIOS();
+
+      expect(result).toBe(true);
+    });
+
+    it('requestPurchaseOnPromotedProductIOS propagates errors', async () => {
+      const mockError = new Error('Feature not supported');
+      (
+        ExpoIapModule.requestPurchaseOnPromotedProductIOS as jest.Mock
+      ).mockRejectedValue(mockError);
+
+      await expect(requestPurchaseOnPromotedProductIOS()).rejects.toThrow(
+        'Feature not supported',
+      );
     });
 
     it('normalizes pending transactions list', async () => {
