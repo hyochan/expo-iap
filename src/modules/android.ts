@@ -6,11 +6,7 @@ import ExpoIapModule from '../ExpoIapModule';
 
 // Types
 import type {
-  BillingProgramAndroid,
-  BillingProgramAvailabilityResultAndroid,
-  BillingProgramReportingDetailsAndroid,
   DeepLinkOptions,
-  LaunchExternalLinkParamsAndroid,
   MutationField,
   VerifyPurchaseResultAndroid,
 } from '../types';
@@ -272,9 +268,9 @@ export const createAlternativeBillingTokenAndroid: MutationField<
  * }
  * ```
  */
-export const isBillingProgramAvailableAndroid = async (
-  program: BillingProgramAndroid,
-): Promise<BillingProgramAvailabilityResultAndroid> => {
+export const isBillingProgramAvailableAndroid: MutationField<
+  'isBillingProgramAvailableAndroid'
+> = async (program) => {
   return ExpoIapModule.isBillingProgramAvailableAndroid(program);
 };
 
@@ -283,7 +279,7 @@ export const isBillingProgramAvailableAndroid = async (
  * Available in Google Play Billing Library 8.2.0+.
  *
  * @param params - The external link parameters
- * @returns Promise resolving when the link is launched
+ * @returns Promise resolving to true if the link was launched successfully
  *
  * @example
  * ```typescript
@@ -295,9 +291,9 @@ export const isBillingProgramAvailableAndroid = async (
  * });
  * ```
  */
-export const launchExternalLinkAndroid = async (
-  params: LaunchExternalLinkParamsAndroid,
-): Promise<void> => {
+export const launchExternalLinkAndroid: MutationField<
+  'launchExternalLinkAndroid'
+> = async (params) => {
   return ExpoIapModule.launchExternalLinkAndroid(params);
 };
 
@@ -318,8 +314,8 @@ export const launchExternalLinkAndroid = async (
  * await reportToGooglePlay(details.externalTransactionToken);
  * ```
  */
-export const createBillingProgramReportingDetailsAndroid = async (
-  program: BillingProgramAndroid,
-): Promise<BillingProgramReportingDetailsAndroid> => {
+export const createBillingProgramReportingDetailsAndroid: MutationField<
+  'createBillingProgramReportingDetailsAndroid'
+> = async (program) => {
   return ExpoIapModule.createBillingProgramReportingDetailsAndroid(program);
 };
