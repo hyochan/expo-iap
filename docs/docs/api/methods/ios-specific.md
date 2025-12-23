@@ -51,18 +51,31 @@ if (promoted) {
 
 Returns: `Promise<Product | null>`
 
-### requestPurchaseOnPromotedProductIOS()
+### ~~requestPurchaseOnPromotedProductIOS()~~ (deprecated)
 
-Initiates the purchase flow for the currently promoted product. Requires iOS 11+.
+:::warning Deprecated
+Use `promotedProductListenerIOS` to receive the productId, then call `requestPurchase` with that SKU instead.
+:::
+
+In StoreKit 2, promoted products can be purchased directly via the standard purchase flow:
 
 ```ts
-import {requestPurchaseOnPromotedProductIOS} from 'expo-iap';
+import {promotedProductListenerIOS, requestPurchase} from 'expo-iap';
 
-await requestPurchaseOnPromotedProductIOS();
-// Purchase result is delivered via purchase listeners/useIAP callbacks
+// Recommended approach
+const subscription = promotedProductListenerIOS(async (productId) => {
+  // Purchase directly using requestPurchase with the received SKU
+  await requestPurchase({
+    request: {apple: {sku: productId}},
+    type: 'in-app',
+  });
+});
+
+// Clean up the listener when done
+subscription.remove();
 ```
 
-Returns: `Promise<void>`
+Returns: `Subscription` (with `remove()` method)
 
 ### getPendingTransactionsIOS()
 

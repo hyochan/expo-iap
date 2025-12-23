@@ -311,17 +311,19 @@ export const getPromotedProductIOS: QueryField<
  * Complete the purchase of a promoted product (iOS only).
  * This should be called after showing your purchase UI for a promoted product.
  *
+ * @deprecated Use promotedProductListenerIOS to receive the productId,
+ * then call requestPurchase with that SKU instead.
+ *
  * @returns Promise resolving when the purchase is initiated
  * @throws Error if called on non-iOS platform or no promoted product is available
  *
  * @platform iOS
  */
-export const requestPurchaseOnPromotedProductIOS: MutationField<
-  'requestPurchaseOnPromotedProductIOS'
-> = async () => {
-  await ExpoIapModule.requestPurchaseOnPromotedProductIOS();
-  return true;
-};
+export const requestPurchaseOnPromotedProductIOS =
+  async (): Promise<boolean> => {
+    const result = await ExpoIapModule.requestPurchaseOnPromotedProductIOS();
+    return result ?? true;
+  };
 
 /**
  * Get pending transactions that haven't been finished yet (iOS only).

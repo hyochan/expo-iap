@@ -183,6 +183,22 @@ await requestPurchase({
 });
 ```
 
+#### iOS with Advanced Commerce Data (iOS 15+)
+
+Use `advancedCommerceData` to pass attribution data (campaign tokens, affiliate IDs) during purchase:
+
+```tsx
+await requestPurchase({
+  request: {
+    apple: {
+      sku: productId,
+      advancedCommerceData: 'campaign_summer_2025',
+    },
+  },
+  type: 'in-app',
+});
+```
+
 #### Android Only
 
 ```tsx
@@ -205,6 +221,7 @@ await requestPurchase({
     - **Cross-platform**: Include both `sku` and `skus` for compatibility
     - `quantity?` (number, iOS only): Purchase quantity
     - `appAccountToken?` (string, iOS only): User identifier for purchase verification
+    - `advancedCommerceData?` (string, iOS only): Campaign token or attribution data for StoreKit 2's `Product.PurchaseOption.custom` API (iOS 15+)
     - `obfuscatedAccountIdAndroid?` (string, Android only): Obfuscated account ID
     - `obfuscatedProfileIdAndroid?` (string, Android only): Obfuscated profile ID
     - `isOfferPersonalized?` (boolean, Android only): Whether offer is personalized

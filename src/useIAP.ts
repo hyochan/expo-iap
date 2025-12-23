@@ -91,6 +91,10 @@ type UseIap = {
   ) => Promise<VerifyPurchaseWithProviderResult>;
   restorePurchases: () => Promise<void>;
   getPromotedProductIOS: () => Promise<Product | null>;
+  /**
+   * @deprecated Use promotedProductListenerIOS to receive the productId,
+   * then call requestPurchase with that SKU instead.
+   */
   requestPurchaseOnPromotedProductIOS: () => Promise<boolean>;
   getActiveSubscriptions: (subscriptionIds?: string[]) => Promise<void>;
   hasActiveSubscriptions: (subscriptionIds?: string[]) => Promise<boolean>;
