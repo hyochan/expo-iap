@@ -63,6 +63,102 @@ For each purchase you can inspect fields such as:
 
 StoreKit does **not** bake "current phase" indicators into these records—`offerIOS.paymentMode` tells you which introductory offer was used initially, but does not tell you whether the user is still inside that offer window. To answer questions like "is the user still in a free trial?" you need either the StoreKit status API or server-side purchase verification.
 
+#### Android `basePlanId` Limitation
+
+:::warning Critical Limitation
+On Android, the `currentPlanId` and `basePlanIdAndroid` fields may return **incorrect values** for subscription groups with multiple base plans.
+:::
+
+**Root Cause:** Google Play Billing API's `Purchase` object does NOT include `basePlanId` information. When a subscription group has multiple base plans (weekly, monthly, yearly), there is no way to determine which specific plan was purchased from the client-side `Purchase` object.
+
+You may see this warning in logs:
+
+```
+Multiple offers (3) found for premium_subscription, using first basePlanId (may be inaccurate)
+```
+
+**What Works Correctly:**
+- `productId` — Subscription group ID
+- `purchaseToken` — Purchase token
+- `isActive` — Subscription active status
+- `transactionId` — Transaction ID
+
+**What May Be Incorrect:**
+- `currentPlanId` / `basePlanIdAndroid` — May return first plan instead of purchased plan
+
+##### Solutions
+
+**1. Client-side Tracking (Recommended for most apps)**
+
+Track `basePlanId` yourself during the purchase flow:
+
+```ts
+// Track basePlanId BEFORE calling requestPurchase
+let purchasedBasePlanId: string | null = null;
+
+const handlePurchase = async (basePlanId: string) => {
+  const offers = product.subscriptionOfferDetailsAndroid ?? [];
+  const offer = offers.find(o => o.basePlanId === basePlanId && !o.offerId);
+
+  // Store it before purchase
+  purchasedBasePlanId = basePlanId;
+
+  await requestPurchase({
+    request: {
+      google: {
+        skus: [subscriptionGroupId],
+        subscriptionOffers: [
+          { sku: subscriptionGroupId, offerToken: offer.offerToken },
+        ],
+      },
+    },
+    type: 'subs',
+  });
+};
+
+// Use YOUR tracked value in onPurchaseSuccess
+onPurchaseSuccess: async (purchase) => {
+  // DON'T rely on purchase.currentPlanId - it may be wrong!
+  const actualBasePlanId = purchasedBasePlanId;
+
+  await saveToBackend({
+    purchaseToken: purchase.purchaseToken,
+    basePlanId: actualBasePlanId,  // Use YOUR tracked value
+    productId: purchase.productId,
+  });
+}
+```
+
+**2. <a href="https://iapkit.com" target="_blank" rel="noopener noreferrer" onClick={() => fetch('https://www.hyo.dev/api/ad-banner', {method: 'POST'}).catch(() => {})}>IAPKit</a> Backend Validation (Recommended)**
+
+Use [`verifyPurchaseWithProvider`](../api/methods/unified-apis.md#verifypurchasewithprovider) with <a href="https://iapkit.com" target="_blank" rel="noopener noreferrer" onClick={() => fetch('https://www.hyo.dev/api/ad-banner', {method: 'POST'}).catch(() => {})}>IAPKit</a> to get accurate `basePlanId` from Google Play Developer API:
+
+```ts
+import {verifyPurchaseWithProvider} from 'expo-iap';
+
+const result = await verifyPurchaseWithProvider({
+  provider: 'iapkit',
+  iapkit: {
+    apiKey: 'your-iapkit-api-key',
+    google: { purchaseToken: purchase.purchaseToken },
+  },
+});
+
+// Access basePlanId from the response
+const basePlanId = result.iapkit?.google?.lineItems?.[0]?.offerDetails?.basePlanId;
+console.log('Actual basePlanId:', basePlanId);
+```
+
+**3. Single Base Plan Per Subscription Group**
+
+If your subscription group has only one base plan, the `basePlanId` will always be accurate. This is the simplest solution if your product design allows it.
+
+:::note
+This is a fundamental limitation of Google Play Billing API, not a bug in this library. The `Purchase` object from Google simply does not include `basePlanId` information.
+:::
+
+**See also:** [SubscriptionOfferDetailsAndroid](https://www.openiap.dev/docs/types#subscriptionofferdetailsandroid) — Each offer contains `basePlanId`, `offerId`, `offerTags`, `offerToken`, and `pricingPhases`.
+
 ## Using `getActiveSubscriptions`
 
 [`getActiveSubscriptions`](../api/methods/core-methods.md#getactivesubscriptions) is a thin helper that filters `getAvailablePurchases` down to subscription products. It returns an array of `ActiveSubscription` objects with convenience fields:

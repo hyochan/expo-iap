@@ -128,6 +128,12 @@ interface ProductSubscriptionAndroidOfferDetails {
 }
 ```
 
+:::warning Android basePlanId Limitation
+The `basePlanId` is available when fetching products, but not when retrieving purchases via `getAvailablePurchases()`. This is a limitation of Google Play Billing Library - the purchase token alone doesn't reveal which base plan was purchased.
+
+See [GitHub Issue #3096](https://github.com/hyochan/react-native-iap/issues/3096) for more details. See the [basePlanId Limitation](./subscription-validation.md#android-baseplanid-limitation) section for details and workarounds.
+:::
+
 ### iOS Subscription Offers
 
 iOS handles subscription offers differently - the base plan is used by default, and promotional offers are optional.
