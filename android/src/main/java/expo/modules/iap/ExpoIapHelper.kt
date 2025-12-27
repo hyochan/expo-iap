@@ -138,6 +138,7 @@ object ExpoIapHelper {
         eventPurchaseUpdated: String,
         eventPurchaseError: String,
         eventUserChoiceBilling: String,
+        eventDeveloperProvidedBilling: String,
     ) {
         openIap.addPurchaseUpdateListener { p ->
             runCatching {
@@ -221,6 +222,37 @@ object ExpoIapHelper {
                     mapOf(
                         "code" to "alternative-billing-not-available",
                         "message" to "Failed to process user choice billing: ${error.message}",
+                    )
+                runCatching {
+                    emitOrQueue(
+                        module,
+                        scope,
+                        connectionReady,
+                        pendingEvents,
+                        eventPurchaseError,
+                        errorPayload,
+                    )
+                }.onFailure { android.util.Log.e(TAG, "Failed to send error event", it) }
+            }
+        }
+        // Developer Provided Billing listener for External Payments (8.3.0+)
+        openIap.addDeveloperProvidedBillingListener { details ->
+            runCatching {
+                emitOrQueue(
+                    module,
+                    scope,
+                    connectionReady,
+                    pendingEvents,
+                    eventDeveloperProvidedBilling,
+                    details.toJson(),
+                )
+            }.onFailure { error ->
+                android.util.Log.e(TAG, "Failed to buffer/send DEVELOPER_PROVIDED_BILLING", error)
+                // Emit as purchase error so user knows something went wrong
+                val errorPayload =
+                    mapOf(
+                        "code" to "developer-billing-error",
+                        "message" to "Failed to process developer provided billing: ${error.message}",
                     )
                 runCatching {
                     emitOrQueue(
