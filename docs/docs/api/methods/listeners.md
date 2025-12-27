@@ -531,7 +531,7 @@ import {
 } from 'expo-iap';
 import {Platform} from 'react-native';
 
-const setupDeveloperProvidedBillingListener = () => {
+const setupDeveloperProvidedBillingListener = async () => {
   if (Platform.OS !== 'android') return;
 
   // Initialize with External Payments program enabled

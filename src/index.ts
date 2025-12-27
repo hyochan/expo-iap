@@ -246,7 +246,7 @@ export const userChoiceBillingListenerAndroid = (
  *
  * @example
  * ```typescript
- * const subscription = developerProvidedBillingListenerAndroid((details) => {
+ * const subscription = developerProvidedBillingListenerAndroid(async (details) => {
  *   console.log('User selected developer billing');
  *   console.log('Token:', details.externalTransactionToken);
  *
