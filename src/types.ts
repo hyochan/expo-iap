@@ -331,6 +331,12 @@ export interface InitConnectionConfig {
    * If not specified, defaults to NONE (standard Google Play billing)
    */
   alternativeBillingModeAndroid?: (AlternativeBillingModeAndroid | null);
+  /**
+   * Enable a specific billing program for Android (8.2.0+)
+   * When set, enables the specified billing program for external transactions.
+   * Use 'external-payments' for Developer Provided Billing (Japan only, 8.3.0+).
+   */
+  enableBillingProgramAndroid?: (BillingProgramAndroid | null);
 }
 
 /**

@@ -129,6 +129,37 @@ object ExpoIapHelper {
         )
     }
 
+    /**
+     * Helper to safely emit an event with error fallback.
+     * Reduces code duplication across listener handlers.
+     */
+    private fun safeEmitEvent(
+        module: Module,
+        scope: CoroutineScope,
+        connectionReady: java.util.concurrent.atomic.AtomicBoolean,
+        pendingEvents: ConcurrentLinkedQueue<Pair<String, Map<String, Any?>>>,
+        eventName: String,
+        payload: Map<String, Any?>,
+        eventPurchaseError: String,
+        fallbackErrorCode: String,
+        fallbackErrorPrefix: String,
+        logTag: String,
+    ) {
+        runCatching {
+            emitOrQueue(module, scope, connectionReady, pendingEvents, eventName, payload)
+        }.onFailure { error ->
+            android.util.Log.e(TAG, "Failed to buffer/send $logTag", error)
+            val errorPayload =
+                mapOf(
+                    "code" to fallbackErrorCode,
+                    "message" to "$fallbackErrorPrefix: ${error.message}",
+                )
+            runCatching {
+                emitOrQueue(module, scope, connectionReady, pendingEvents, eventPurchaseError, errorPayload)
+            }.onFailure { android.util.Log.e(TAG, "Failed to send error event", it) }
+        }
+    }
+
     fun setupListeners(
         openIap: OpenIapModule,
         module: Module,
@@ -206,65 +237,33 @@ object ExpoIapHelper {
             rejectPurchasePromises(errorCode, errorMessage, null)
         }
         openIap.addUserChoiceBillingListener { details ->
-            runCatching {
-                emitOrQueue(
-                    module,
-                    scope,
-                    connectionReady,
-                    pendingEvents,
-                    eventUserChoiceBilling,
-                    details.toJson(),
-                )
-            }.onFailure { error ->
-                android.util.Log.e(TAG, "Failed to buffer/send USER_CHOICE_BILLING", error)
-                // Emit as purchase error so user knows something went wrong
-                val errorPayload =
-                    mapOf(
-                        "code" to "alternative-billing-not-available",
-                        "message" to "Failed to process user choice billing: ${error.message}",
-                    )
-                runCatching {
-                    emitOrQueue(
-                        module,
-                        scope,
-                        connectionReady,
-                        pendingEvents,
-                        eventPurchaseError,
-                        errorPayload,
-                    )
-                }.onFailure { android.util.Log.e(TAG, "Failed to send error event", it) }
-            }
+            safeEmitEvent(
+                module,
+                scope,
+                connectionReady,
+                pendingEvents,
+                eventUserChoiceBilling,
+                details.toJson(),
+                eventPurchaseError,
+                "alternative-billing-not-available",
+                "Failed to process user choice billing",
+                "USER_CHOICE_BILLING",
+            )
         }
         // Developer Provided Billing listener for External Payments (8.3.0+)
         openIap.addDeveloperProvidedBillingListener { details ->
-            runCatching {
-                emitOrQueue(
-                    module,
-                    scope,
-                    connectionReady,
-                    pendingEvents,
-                    eventDeveloperProvidedBilling,
-                    details.toJson(),
-                )
-            }.onFailure { error ->
-                android.util.Log.e(TAG, "Failed to buffer/send DEVELOPER_PROVIDED_BILLING", error)
-                // Emit as purchase error so user knows something went wrong
-                val errorPayload =
-                    mapOf(
-                        "code" to "developer-billing-error",
-                        "message" to "Failed to process developer provided billing: ${error.message}",
-                    )
-                runCatching {
-                    emitOrQueue(
-                        module,
-                        scope,
-                        connectionReady,
-                        pendingEvents,
-                        eventPurchaseError,
-                        errorPayload,
-                    )
-                }.onFailure { android.util.Log.e(TAG, "Failed to send error event", it) }
-            }
+            safeEmitEvent(
+                module,
+                scope,
+                connectionReady,
+                pendingEvents,
+                eventDeveloperProvidedBilling,
+                details.toJson(),
+                eventPurchaseError,
+                "developer-billing-error",
+                "Failed to process developer provided billing",
+                "DEVELOPER_PROVIDED_BILLING",
+            )
         }
     }
 
