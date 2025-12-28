@@ -75,10 +75,14 @@ Alternative billing enables developers to offer payment options outside of the p
 - **iOS**: Redirect users to external websites for payment (iOS 16.0+)
 - **Android**: Use Google Play's alternative billing options (requires approval)
 
-:::warning Platform Approval Required Both platforms require special approval to use alternative billing:
+:::warning Platform Approval Required
+
+Both platforms require special approval to use alternative billing:
 
 - **iOS**: Must be approved for external purchase entitlement
-- **Android**: Must be approved for alternative billing in Google Play Console :::
+- **Android**: Must be approved for alternative billing in Google Play Console
+
+:::
 
 ## iOS Alternative Billing (External Purchase URLs)
 
@@ -197,7 +201,9 @@ This automatically adds the required configuration to your iOS app:
   - Other apps: 1 link per country
 - **Supported Regions**: Different features support different regions (EU, US, etc.)
 
-See [External Purchase Link Entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.storekit.external-purchase-link) for details. :::
+See [External Purchase Link Entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.storekit.external-purchase-link) for details.
+
+:::
 
 ### Basic Usage
 

@@ -75,10 +75,14 @@ Alternative billing enables developers to offer payment options outside of the p
 - **iOS**: Redirect users to external websites for payment (iOS 16.0+)
 - **Android**: Use Google Play's alternative billing options (requires approval)
 
-:::warning Platform Approval Required Both platforms require special approval to use alternative billing:
+:::warning Platform Approval Required
+
+Both platforms require special approval to use alternative billing:
 
 - **iOS**: Must be approved for external purchase entitlement
-- **Android**: Must be approved for alternative billing in Google Play Console :::
+- **Android**: Must be approved for alternative billing in Google Play Console
+
+:::
 
 ## iOS Alternative Billing (External Purchase URLs)
 
@@ -197,7 +201,9 @@ This automatically adds the required configuration to your iOS app:
   - Other apps: 1 link per country
 - **Supported Regions**: Different features support different regions (EU, US, etc.)
 
-See [External Purchase Link Entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.storekit.external-purchase-link) for details. :::
+See [External Purchase Link Entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.storekit.external-purchase-link) for details.
+
+:::
 
 ### Basic Usage
 
@@ -274,10 +280,11 @@ function MyComponent() {
 
 ## Android Alternative Billing
 
-Android supports two alternative billing modes:
+Android supports three alternative billing modes:
 
 1. **Alternative Billing Only**: Users can ONLY use your payment system
 2. **User Choice Billing**: Users choose between Google Play or your payment system
+3. **External Payments** (8.3.0+, Japan only): Side-by-side choice during purchase
 
 ### Mode 1: Alternative Billing Only
 
@@ -360,6 +367,96 @@ const handleUserChoicePurchase = async (productId: string) => {
 };
 ```
 
+### Mode 3: External Payments (Japan Only)
+
+:::warning Billing Library 8.3.0+ Required
+
+External Payments requires Google Play Billing Library 8.3.0 or higher and is currently only available in Japan.
+
+:::
+
+External Payments presents a side-by-side choice between Google Play Billing and your external payment option directly in the purchase dialog.
+
+```typescript
+import {useEffect} from 'react';
+import {
+  initConnection,
+  isBillingProgramAvailableAndroid,
+  developerProvidedBillingListenerAndroid,
+  requestPurchase,
+} from 'expo-iap';
+import {Platform} from 'react-native';
+
+function ExternalPaymentsComponent() {
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const initialize = async () => {
+      // Initialize with External Payments program
+      await initConnection({
+        enableBillingProgramAndroid: 'external-payments',
+      });
+
+      // Check availability (Japan only)
+      const result = await isBillingProgramAvailableAndroid('external-payments');
+      if (!result.isAvailable) {
+        console.log('External Payments not available');
+        return;
+      }
+
+      // Set up listener for when user selects developer billing
+      const subscription = developerProvidedBillingListenerAndroid(
+        async (details) => {
+          console.log('User selected developer billing');
+
+          // Process payment with your gateway
+          await processPayment(details.externalTransactionToken);
+
+          // Report to Google within 24 hours
+          await reportToGoogle(details.externalTransactionToken);
+        },
+      );
+
+      return () => subscription.remove();
+    };
+
+    const cleanup = initialize();
+    return () => {
+      cleanup.then((fn) => fn?.());
+    };
+  }, []);
+
+  const purchaseWithExternalPayments = async (sku: string) => {
+    // Request purchase with developer billing option
+    await requestPurchase({
+      request: {
+        google: {
+          skus: [sku],
+          developerBillingOption: {
+            billingProgram: 'external-payments',
+            linkUri: 'https://your-payment-site.com/checkout',
+            launchMode: 'launch-in-external-browser-or-app',
+          },
+        },
+      },
+      type: 'in-app',
+    });
+  };
+
+  // ... rest of component
+}
+```
+
+#### Key Differences from User Choice Billing
+
+| Feature | User Choice Billing | External Payments |
+|---------|---------------------|-------------------|
+| Billing Library | 7.0+ | 8.3.0+ |
+| Availability | Eligible regions | Japan only |
+| When presented | After initConnection() | During requestPurchase() |
+| UI | Separate dialog | Side-by-side choice in purchase dialog |
+| Listener | `userChoiceBillingListenerAndroid` | `developerProvidedBillingListenerAndroid` |
+
 ### Configuring Alternative Billing Mode
 
 Set the billing mode when initializing the connection:
@@ -381,6 +478,16 @@ import {initConnection, type AlternativeBillingModeAndroid} from 'expo-iap';
 await initConnection({
   alternativeBillingModeAndroid:
     'alternative-only' as AlternativeBillingModeAndroid,
+});
+```
+
+For External Payments:
+
+```typescript
+import {initConnection} from 'expo-iap';
+
+await initConnection({
+  enableBillingProgramAndroid: 'external-payments',
 });
 ```
 
@@ -537,10 +644,16 @@ function AlternativeBillingComponent() {
 - Ensure `useAlternativeBilling: true` in request
 - Check Google Play configuration
 
+#### "External Payments not available"
+
+- External Payments requires Billing Library 8.3.0+
+- Currently only available in Japan
+- Verify `enableBillingProgramAndroid: 'external-payments'` is set
+
 ## Platform Requirements
 
 - **iOS**: iOS 16.0+ for external purchase URLs
-- **Android**: Google Play Billing Library 5.0+ with alternative billing enabled
+- **Android**: Google Play Billing Library 5.0+ with alternative billing enabled (8.3.0+ for External Payments)
 - **Approval**: Both platforms require approval for alternative billing features
 
 ## See Also
