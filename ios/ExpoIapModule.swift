@@ -51,7 +51,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("fetchProducts") { (params: [String: Any]) async throws -> [[String: Any]] in
             ExpoIapLog.payload("fetchProducts", payload: params)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let request = try ExpoIapHelper.decodeProductRequest(from: params)
             let result = try await OpenIapModule.shared.fetchProducts(request)
             let products = ExpoIapHelper.sanitizeArray(OpenIapSerialization.products(result))
@@ -61,7 +60,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("requestPurchase") { (payload: [String: Any]) async throws -> Any? in
             ExpoIapLog.payload("requestPurchase", payload: payload)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let props = try ExpoIapHelper.decodeRequestPurchaseProps(from: payload)
 
             do {
@@ -101,7 +99,6 @@ public final class ExpoIapModule: Module {
                     "isConsumable": isConsumable as Any,
                 ]
             )
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let purchaseInput = try OpenIapSerialization.purchaseInput(from: purchasePayload)
             try await OpenIapModule.shared.finishTransaction(
                 purchase: purchaseInput,
@@ -114,7 +111,6 @@ public final class ExpoIapModule: Module {
         AsyncFunction("getAvailablePurchases") {
             (options: [String: Any]?) async throws -> [[String: Any]] in
             ExpoIapLog.payload("getAvailablePurchases", payload: options ?? [:])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let purchaseOptions = try options.map { try OpenIapSerialization.purchaseOptions(from: $0) }
             let purchases = try await OpenIapModule.shared.getAvailablePurchases(purchaseOptions)
             let sanitized = ExpoIapHelper.sanitizeArray(OpenIapSerialization.purchases(purchases))
@@ -131,7 +127,6 @@ public final class ExpoIapModule: Module {
                     "onlyIncludeActiveItemsIOS": onlyIncludeActive,
                 ]
             )
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let optionsDictionary: [String: Any] = [
                 "alsoPublishToEventListenerIOS": alsoPublish,
                 "onlyIncludeActiveItemsIOS": onlyIncludeActive
@@ -145,7 +140,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("getPendingTransactionsIOS") { () async throws -> [[String: Any]] in
             ExpoIapLog.payload("getPendingTransactionsIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let pending = try await OpenIapModule.shared.getPendingTransactionsIOS()
             let sanitized = pending.map { ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode($0)) }
             ExpoIapLog.result("getPendingTransactionsIOS", value: sanitized)
@@ -154,7 +148,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("clearTransactionIOS") { () async throws -> Bool in
             ExpoIapLog.payload("clearTransactionIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let success = try await OpenIapModule.shared.clearTransactionIOS()
             ExpoIapLog.result("clearTransactionIOS", value: success)
             return success
@@ -162,7 +155,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("getReceiptIOS") { () async throws -> String in
             ExpoIapLog.payload("getReceiptIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let receipt = try await OpenIapModule.shared.getReceiptDataIOS() ?? ""
             ExpoIapLog.result("getReceiptIOS", value: receipt)
             return receipt
@@ -170,7 +162,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("getReceiptDataIOS") { () async throws -> String in
             ExpoIapLog.payload("getReceiptDataIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let receipt = try await OpenIapModule.shared.getReceiptDataIOS() ?? ""
             ExpoIapLog.result("getReceiptDataIOS", value: receipt)
             return receipt
@@ -178,7 +169,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("requestReceiptRefreshIOS") { () async throws -> String in
             ExpoIapLog.payload("requestReceiptRefreshIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let receipt = try await OpenIapModule.shared.getReceiptDataIOS() ?? ""
             ExpoIapLog.result("requestReceiptRefreshIOS", value: receipt)
             return receipt
@@ -186,7 +176,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("validateReceiptIOS") { (sku: String) async throws -> [String: Any] in
             ExpoIapLog.payload("validateReceiptIOS", payload: ["sku": sku])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             do {
                 let props = try OpenIapSerialization.verifyPurchaseProps(from: ["apple": ["sku": sku]])
                 let result = try await OpenIapModule.shared.verifyPurchase(props)
@@ -211,7 +200,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("verifyPurchase") { (params: [String: Any]) async throws -> [String: Any] in
             ExpoIapLog.payload("verifyPurchase", payload: params)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             do {
                 let props = try OpenIapSerialization.verifyPurchaseProps(from: params)
                 let result = try await OpenIapModule.shared.verifyPurchase(props)
@@ -229,7 +217,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("verifyPurchaseWithProvider") { (params: [String: Any]) async throws -> [String: Any] in
             ExpoIapLog.payload("verifyPurchaseWithProvider", payload: params)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             do {
                 let jsonData = try JSONSerialization.data(withJSONObject: params)
                 let props = try JSONDecoder().decode(VerifyPurchaseWithProviderProps.self, from: jsonData)
@@ -248,7 +235,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("presentCodeRedemptionSheetIOS") { () async throws -> Bool in
             ExpoIapLog.payload("presentCodeRedemptionSheetIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let success = try await OpenIapModule.shared.presentCodeRedemptionSheetIOS()
             ExpoIapLog.result("presentCodeRedemptionSheetIOS", value: success)
             return success
@@ -256,7 +242,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("showManageSubscriptionsIOS") { () async throws -> [[String: Any]] in
             ExpoIapLog.payload("showManageSubscriptionsIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let purchases = try await OpenIapModule.shared.showManageSubscriptionsIOS()
             let sanitized = purchases.map { ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode($0)) }
             ExpoIapLog.result("showManageSubscriptionsIOS", value: sanitized)
@@ -265,7 +250,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("deepLinkToSubscriptionsIOS") { () async throws -> Bool in
             ExpoIapLog.payload("deepLinkToSubscriptionsIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             try await OpenIapModule.shared.deepLinkToSubscriptions(nil)
             ExpoIapLog.result("deepLinkToSubscriptionsIOS", value: true)
             return true
@@ -273,7 +257,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("beginRefundRequestIOS") { (sku: String) async throws -> String? in
             ExpoIapLog.payload("beginRefundRequestIOS", payload: ["sku": sku])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let result = try await OpenIapModule.shared.beginRefundRequestIOS(sku: sku)
             ExpoIapLog.result("beginRefundRequestIOS", value: result)
             return result
@@ -281,7 +264,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("getPromotedProductIOS") { () async throws -> [String: Any]? in
             ExpoIapLog.payload("getPromotedProductIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             if let product = try await OpenIapModule.shared.getPromotedProductIOS() {
                 let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(product))
                 ExpoIapLog.result("getPromotedProductIOS", value: sanitized)
@@ -293,7 +275,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("requestPurchaseOnPromotedProductIOS") { () async throws -> Bool in
             ExpoIapLog.payload("requestPurchaseOnPromotedProductIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let success = try await OpenIapModule.shared.requestPurchaseOnPromotedProductIOS()
             ExpoIapLog.result("requestPurchaseOnPromotedProductIOS", value: success)
             return success
@@ -301,7 +282,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("getStorefront") { () async throws -> String in
             ExpoIapLog.payload("getStorefront", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let storefront = try await OpenIapModule.shared.getStorefrontIOS()
             ExpoIapLog.result("getStorefront", value: storefront)
             return storefront
@@ -309,7 +289,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("syncIOS") { () async throws -> Bool in
             ExpoIapLog.payload("syncIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let success = try await OpenIapModule.shared.syncIOS()
             ExpoIapLog.result("syncIOS", value: success)
             return success
@@ -317,7 +296,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("isTransactionVerifiedIOS") { (sku: String) async throws -> Bool in
             ExpoIapLog.payload("isTransactionVerifiedIOS", payload: ["sku": sku])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let verified = try await OpenIapModule.shared.isTransactionVerifiedIOS(sku: sku)
             ExpoIapLog.result("isTransactionVerifiedIOS", value: verified)
             return verified
@@ -325,7 +303,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("getTransactionJwsIOS") { (sku: String) async throws -> String? in
             ExpoIapLog.payload("getTransactionJwsIOS", payload: ["sku": sku])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let jws = try await OpenIapModule.shared.getTransactionJwsIOS(sku: sku)
             ExpoIapLog.result("getTransactionJwsIOS", value: jws)
             return jws
@@ -333,7 +310,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("isEligibleForIntroOfferIOS") { (groupID: String) async throws -> Bool in
             ExpoIapLog.payload("isEligibleForIntroOfferIOS", payload: ["groupID": groupID])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let eligible = try await OpenIapModule.shared.isEligibleForIntroOfferIOS(groupID: groupID)
             ExpoIapLog.result("isEligibleForIntroOfferIOS", value: eligible)
             return eligible
@@ -341,7 +317,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("subscriptionStatusIOS") { (sku: String) async throws -> [[String: Any]]? in
             ExpoIapLog.payload("subscriptionStatusIOS", payload: ["sku": sku])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let statuses = try await OpenIapModule.shared.subscriptionStatusIOS(sku: sku)
             let sanitized = statuses.map { ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode($0)) }
             ExpoIapLog.result("subscriptionStatusIOS", value: sanitized)
@@ -350,7 +325,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("currentEntitlementIOS") { (sku: String) async throws -> [String: Any]? in
             ExpoIapLog.payload("currentEntitlementIOS", payload: ["sku": sku])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             do {
                 if let entitlement = try await OpenIapModule.shared.currentEntitlementIOS(sku: sku) {
                     let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(entitlement))
@@ -370,7 +344,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("latestTransactionIOS") { (sku: String) async throws -> [String: Any]? in
             ExpoIapLog.payload("latestTransactionIOS", payload: ["sku": sku])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             do {
                 if let transaction = try await OpenIapModule.shared.latestTransactionIOS(sku: sku) {
                     let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(transaction))
@@ -390,7 +363,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("getActiveSubscriptions") { (subscriptionIds: [String]?) async throws -> [[String: Any]] in
             ExpoIapLog.payload("getActiveSubscriptions", payload: subscriptionIds.map { ["subscriptionIds": $0] } ?? [:])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let subscriptions = try await OpenIapModule.shared.getActiveSubscriptions(subscriptionIds)
             let sanitized = subscriptions.map { ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode($0)) }
             ExpoIapLog.result("getActiveSubscriptions", value: sanitized)
@@ -399,7 +371,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("hasActiveSubscriptions") { (subscriptionIds: [String]?) async throws -> Bool in
             ExpoIapLog.payload("hasActiveSubscriptions", payload: subscriptionIds.map { ["subscriptionIds": $0] } ?? [:])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let hasActive = try await OpenIapModule.shared.hasActiveSubscriptions(subscriptionIds)
             ExpoIapLog.result("hasActiveSubscriptions", value: hasActive)
             return hasActive
@@ -409,7 +380,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("canPresentExternalPurchaseNoticeIOS") { () async throws -> Bool in
             ExpoIapLog.payload("canPresentExternalPurchaseNoticeIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let canPresent = try await OpenIapModule.shared.canPresentExternalPurchaseNoticeIOS()
             ExpoIapLog.result("canPresentExternalPurchaseNoticeIOS", value: canPresent)
             return canPresent
@@ -417,7 +387,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("presentExternalPurchaseNoticeSheetIOS") { () async throws -> [String: Any] in
             ExpoIapLog.payload("presentExternalPurchaseNoticeSheetIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let result = try await OpenIapModule.shared.presentExternalPurchaseNoticeSheetIOS()
             let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(result))
             ExpoIapLog.result("presentExternalPurchaseNoticeSheetIOS", value: sanitized)
@@ -426,7 +395,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("presentExternalPurchaseLinkIOS") { (url: String) async throws -> [String: Any] in
             ExpoIapLog.payload("presentExternalPurchaseLinkIOS", payload: ["url": url])
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             let result = try await OpenIapModule.shared.presentExternalPurchaseLinkIOS(url)
             let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(result))
             ExpoIapLog.result("presentExternalPurchaseLinkIOS", value: sanitized)
@@ -437,7 +405,6 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("getAppTransactionIOS") { () async throws -> [String: Any]? in
             ExpoIapLog.payload("getAppTransactionIOS", payload: nil)
-            try await ExpoIapHelper.ensureConnection(isInitialized: self.isInitialized)
             if #available(iOS 16.0, tvOS 16.0, *) {
                 if let transaction = try await OpenIapModule.shared.getAppTransactionIOS() {
                     let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(transaction))

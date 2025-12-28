@@ -26,6 +26,8 @@ import {
   getAvailablePurchases,
   restorePurchases,
   promotedProductListenerIOS,
+  userChoiceBillingListenerAndroid,
+  developerProvidedBillingListenerAndroid,
   PurchaseInput,
   getActiveSubscriptions,
   hasActiveSubscriptions,
@@ -96,6 +98,64 @@ describe('Public API (index.ts)', () => {
       expect(addListener).toHaveBeenCalledWith(
         'promoted-product-ios',
         expect.any(Function),
+      );
+    });
+
+    it('userChoiceBillingListenerAndroid warns on non‑Android, adds on Android', () => {
+      (Platform as any).OS = 'ios';
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const sub = userChoiceBillingListenerAndroid(jest.fn());
+      expect(typeof sub.remove).toBe('function');
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+
+      (Platform as any).OS = 'android';
+      const addListener = (ExpoIapModule as any).addListener as jest.Mock;
+      userChoiceBillingListenerAndroid(jest.fn());
+      expect(addListener).toHaveBeenCalledWith(
+        OpenIapEvent.UserChoiceBillingAndroid,
+        expect.any(Function),
+      );
+    });
+
+    it('developerProvidedBillingListenerAndroid warns on non‑Android, adds on Android', () => {
+      (Platform as any).OS = 'ios';
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const sub = developerProvidedBillingListenerAndroid(jest.fn());
+      expect(typeof sub.remove).toBe('function');
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+
+      (Platform as any).OS = 'android';
+      const addListener = (ExpoIapModule as any).addListener as jest.Mock;
+      const fn = jest.fn();
+      developerProvidedBillingListenerAndroid(fn);
+      expect(addListener).toHaveBeenCalledWith(
+        OpenIapEvent.DeveloperProvidedBillingAndroid,
+        expect.any(Function),
+      );
+    });
+
+    it('developerProvidedBillingListenerAndroid receives correct event data', () => {
+      (Platform as any).OS = 'android';
+      const addListener = (ExpoIapModule as any).addListener as jest.Mock;
+      const fn = jest.fn();
+      developerProvidedBillingListenerAndroid(fn);
+
+      // Get the callback that was registered
+      const registeredCallback = addListener.mock.calls.find(
+        (call: any) => call[0] === OpenIapEvent.DeveloperProvidedBillingAndroid,
+      )?.[1];
+
+      // Simulate event with external transaction token
+      const mockDetails = {
+        externalTransactionToken: 'ext-txn-token-12345',
+      };
+      registeredCallback(mockDetails);
+
+      expect(fn).toHaveBeenCalledWith(mockDetails);
+      expect(fn.mock.calls[0][0].externalTransactionToken).toBe(
+        'ext-txn-token-12345',
       );
     });
   });

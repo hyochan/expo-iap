@@ -197,15 +197,4 @@ enum ExpoIapHelper {
         cleanupListeners()
         _ = try? await OpenIapModule.shared.endConnection()
     }
-
-    static func ensureConnection(isInitialized: Bool) async throws {
-        try await MainActor.run {
-            guard isInitialized else {
-                throw PurchaseError.make(
-                    code: .initConnection,
-                    message: "Connection not initialized. Call initConnection() first."
-                )
-            }
-        }
-    }
 }

@@ -22,6 +22,7 @@ import type {
   ActiveSubscription,
   AndroidSubscriptionOfferInput,
   DeepLinkOptions,
+  DeveloperProvidedBillingDetailsAndroid,
   MutationField,
   MutationRequestPurchaseArgs,
   MutationValidateReceiptArgs,
@@ -53,6 +54,11 @@ export enum OpenIapEvent {
   PurchaseError = 'purchase-error',
   PromotedProductIOS = 'promoted-product-ios',
   UserChoiceBillingAndroid = 'user-choice-billing-android',
+  /**
+   * Fired when user selects developer billing in External Payments flow (Android 8.3.0+)
+   * Only available in Japan. Contains externalTransactionToken for reporting.
+   */
+  DeveloperProvidedBillingAndroid = 'developer-provided-billing-android',
 }
 
 type ExpoIapEventPayloads = {
@@ -60,6 +66,7 @@ type ExpoIapEventPayloads = {
   [OpenIapEvent.PurchaseError]: PurchaseError;
   [OpenIapEvent.PromotedProductIOS]: Product;
   [OpenIapEvent.UserChoiceBillingAndroid]: UserChoiceBillingDetails;
+  [OpenIapEvent.DeveloperProvidedBillingAndroid]: DeveloperProvidedBillingDetailsAndroid;
 };
 
 type ExpoIapEventListener<E extends OpenIapEvent> = (
@@ -225,6 +232,50 @@ export const userChoiceBillingListenerAndroid = (
     return {remove: () => {}};
   }
   return emitter.addListener(OpenIapEvent.UserChoiceBillingAndroid, listener);
+};
+
+/**
+ * Android-only listener for Developer Provided Billing events (External Payments).
+ * This fires when a user selects the developer's payment option in the External Payments
+ * side-by-side choice dialog during purchase flow.
+ *
+ * Requires Google Play Billing Library 8.3.0+ and is currently only available in Japan.
+ *
+ * @param listener - Callback function that receives the external transaction token
+ * @returns EventSubscription that can be used to unsubscribe
+ *
+ * @example
+ * ```typescript
+ * const subscription = developerProvidedBillingListenerAndroid(async (details) => {
+ *   console.log('User selected developer billing');
+ *   console.log('Token:', details.externalTransactionToken);
+ *
+ *   // Process payment with your payment gateway
+ *   await processPaymentWithYourGateway(details.externalTransactionToken);
+ *
+ *   // IMPORTANT: Report the token to Google Play within 24 hours
+ *   await reportExternalTransactionToGoogle(details.externalTransactionToken);
+ * });
+ *
+ * // Later, clean up
+ * subscription.remove();
+ * ```
+ *
+ * @platform Android (8.3.0+, Japan only)
+ */
+export const developerProvidedBillingListenerAndroid = (
+  listener: (details: DeveloperProvidedBillingDetailsAndroid) => void,
+) => {
+  if (Platform.OS !== 'android') {
+    ExpoIapConsole.warn(
+      'developerProvidedBillingListenerAndroid: This listener is only available on Android',
+    );
+    return {remove: () => {}};
+  }
+  return emitter.addListener(
+    OpenIapEvent.DeveloperProvidedBillingAndroid,
+    listener,
+  );
 };
 
 export const initConnection: MutationField<'initConnection'> = async (config) =>

@@ -514,3 +514,168 @@ export default function AlternativeBillingComponent() {
 - [showAlternativeBillingDialogAndroid()](/docs/api/methods/core-methods#showalternativebillingdialogandroid)
 - [createAlternativeBillingTokenAndroid()](/docs/api/methods/core-methods#createalternativebillingtokenandroid)
 - [Google Play Alternative Billing documentation](https://developer.android.com/google/play/billing/alternative)
+
+## developerProvidedBillingListenerAndroid()
+
+Android-only listener for Developer Provided Billing events (External Payments program). This fires when a user selects the developer's payment option in the External Payments side-by-side choice dialog during purchase flow.
+
+**Requires:** Google Play Billing Library 8.3.0+
+
+**Availability:** Japan only
+
+```tsx
+import {
+  initConnection,
+  developerProvidedBillingListenerAndroid,
+  requestPurchase,
+} from 'expo-iap';
+import {Platform} from 'react-native';
+
+const setupDeveloperProvidedBillingListener = async () => {
+  if (Platform.OS !== 'android') return;
+
+  // Initialize with External Payments program enabled
+  await initConnection({
+    enableBillingProgramAndroid: 'external-payments',
+  });
+
+  const subscription = developerProvidedBillingListenerAndroid((details) => {
+    console.log('User selected developer billing');
+    console.log('Token:', details.externalTransactionToken);
+
+    handleDeveloperProvidedBilling(details);
+  });
+
+  // Clean up listener when component unmounts
+  return () => {
+    if (subscription) {
+      subscription.remove();
+    }
+  };
+};
+
+const handleDeveloperProvidedBilling = async (details) => {
+  try {
+    // Step 1: Process payment with your payment gateway
+    const paymentResult = await processPaymentWithYourGateway(
+      details.externalTransactionToken,
+    );
+
+    if (!paymentResult.success) {
+      console.error('Payment failed');
+      return;
+    }
+
+    // Step 2: IMPORTANT - Report token to Google Play within 24 hours
+    await reportExternalTransactionToGoogle(details.externalTransactionToken);
+
+    console.log('Developer billing completed successfully');
+  } catch (error) {
+    console.error('Error handling developer provided billing:', error);
+  }
+};
+```
+
+**Parameters:**
+
+- `callback` (function): Function to call when user selects developer billing
+  - `details` (DeveloperProvidedBillingDetailsAndroid): The developer billing details
+    - `externalTransactionToken` (string): Token that must be reported to Google within 24 hours
+
+**Returns:** Subscription object with `remove()` method
+
+**Platform:** Android only (8.3.0+, Japan only)
+
+### Comparison: User Choice vs Developer Provided Billing
+
+| Feature | User Choice Billing | Developer Provided Billing |
+|---------|---------------------|---------------------------|
+| Billing Library | 7.0+ | 8.3.0+ |
+| Availability | Eligible regions | Japan only |
+| When presented | After initConnection() | During requestPurchase() |
+| UI | Separate dialog | Side-by-side choice in purchase dialog |
+| Listener | `userChoiceBillingListenerAndroid` | `developerProvidedBillingListenerAndroid` |
+| Setup | `alternativeBillingModeAndroid: 'user-choice'` | `enableBillingProgramAndroid: 'external-payments'` + `developerBillingOption` in requestPurchase |
+
+### Example with External Payments Flow
+
+```tsx
+import {useEffect} from 'react';
+import {
+  initConnection,
+  isBillingProgramAvailableAndroid,
+  developerProvidedBillingListenerAndroid,
+  requestPurchase,
+} from 'expo-iap';
+import {Platform} from 'react-native';
+
+export default function ExternalPaymentsComponent() {
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const initialize = async () => {
+      // Initialize with External Payments program
+      await initConnection({
+        enableBillingProgramAndroid: 'external-payments',
+      });
+
+      // Check availability (Japan only)
+      const result = await isBillingProgramAvailableAndroid('external-payments');
+      if (!result.isAvailable) {
+        console.log('External Payments not available (not in Japan)');
+        return;
+      }
+
+      // Set up listener
+      const subscription = developerProvidedBillingListenerAndroid(
+        async (details) => {
+          console.log('User selected developer billing');
+
+          // Process payment and report to Google
+          await handleExternalPayment(details.externalTransactionToken);
+        },
+      );
+
+      return () => {
+        subscription.remove();
+      };
+    };
+
+    const cleanup = initialize();
+
+    return () => {
+      cleanup.then((fn) => fn?.());
+    };
+  }, []);
+
+  const purchaseWithExternalPayments = async (sku: string) => {
+    await requestPurchase({
+      request: {
+        google: {
+          skus: [sku],
+          developerBillingOption: {
+            billingProgram: 'external-payments',
+            linkUri: 'https://your-payment-site.com/checkout',
+            launchMode: 'launch-in-external-browser-or-app',
+          },
+        },
+      },
+      type: 'in-app',
+    });
+  };
+
+  // Rest of component
+}
+```
+
+**Important:**
+
+- Token must be reported to Google Play within 24 hours
+- User sees a side-by-side choice between Google Play billing and your payment option
+- If user selects Google Play billing, `purchaseUpdatedListener` fires as normal
+- If user selects developer billing, this listener fires with the token
+
+**See also:**
+
+- [isBillingProgramAvailableAndroid()](/docs/api/methods/android-specific#isbillingprogramavailableandroid)
+- [Google Play External Payment Links](https://developer.android.com/google/play/billing/externalpaymentlinks)

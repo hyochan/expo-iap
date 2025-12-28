@@ -40,6 +40,7 @@ if (result.isAvailable) {
 - `program` (`BillingProgramAndroid`): The billing program to check
   - `'external-offer'` - External offer programs
   - `'external-content-link'` - External content link programs
+  - `'external-payments'` - External payments program (Japan only, 8.3.0+)
 
 **Returns:** `Promise<BillingProgramAvailabilityResultAndroid>`
 
