@@ -369,7 +369,9 @@ const buySubscription = async (subscriptionId: string) => {
   if (Platform.OS === 'ios') {
     // iOS: Simple SKU-based purchase
     await requestPurchase({
-      request: {sku: subscriptionId},
+      request: {
+        apple: {sku: subscriptionId},
+      },
       type: 'subs',
     });
   } else {
@@ -385,13 +387,15 @@ const buySubscription = async (subscriptionId: string) => {
 
     await requestPurchase({
       request: {
-        skus: [subscriptionId],
-        subscriptionOffers: [
-          {
-            sku: subscriptionId,
-            offerToken: firstOffer.offerToken, // Required!
-          },
-        ],
+        google: {
+          skus: [subscriptionId],
+          subscriptionOffers: [
+            {
+              sku: subscriptionId,
+              offerToken: firstOffer.offerToken, // Required!
+            },
+          ],
+        },
       },
       type: 'subs',
     });
