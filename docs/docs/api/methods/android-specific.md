@@ -270,22 +270,24 @@ if (token) {
 ```ts
 import {initConnection, endConnection} from 'expo-iap';
 
-// Initialize with alternative billing mode
+// Initialize with billing program
 await initConnection({
-  alternativeBillingModeAndroid: 'user-choice', // or 'alternative-only'
+  enableBillingProgramAndroid: 'user-choice-billing', // or 'external-offer', 'external-payments'
 });
 
-// To change mode, reinitialize
+// To change program, reinitialize
 await endConnection();
 await initConnection({
-  alternativeBillingModeAndroid: 'alternative-only',
+  enableBillingProgramAndroid: 'external-offer',
 });
 ```
 
-**Billing Modes:**
+**Billing Programs:**
 
-- `user-choice` - Users choose between Google Play billing or your payment system
-- `alternative-only` - Only your payment system is available
+- `user-choice-billing` - Users choose between Google Play billing or your payment system
+- `external-offer` - External offer programs
+- `external-payments` - External payments program (Japan only, 8.3.0+)
+- `external-content-link` - External content link programs
 
 ### Complete Flow Example (Legacy)
 

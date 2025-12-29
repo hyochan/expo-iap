@@ -208,24 +208,19 @@ See [External Purchase Link Entitlement](https://developer.apple.com/documentati
 ### Basic Usage
 
 ```typescript
-import {requestPurchase} from 'expo-iap';
+import {presentExternalPurchaseLinkIOS} from 'expo-iap';
 
 const purchaseWithExternalUrl = async () => {
   try {
-    await requestPurchase({
-      request: {
-        apple: {
-          sku: 'com.example.product',
-          quantity: 1,
-        },
-      },
-      type: 'in-app',
-      useAlternativeBilling: true,
-    });
+    const result = await presentExternalPurchaseLinkIOS('https://your-payment-site.com/checkout');
 
-    // User will be redirected to the external URL
-    // No onPurchaseUpdated callback will fire
-    console.log('User redirected to external payment site');
+    if (result.success) {
+      // User was redirected to the external URL
+      // No onPurchaseUpdated callback will fire
+      console.log('User redirected to external payment site');
+    } else if (result.error) {
+      console.error('External purchase link error:', result.error);
+    }
   } catch (error) {
     console.error('Alternative billing error:', error);
   }
@@ -242,29 +237,24 @@ const purchaseWithExternalUrl = async () => {
 ### Complete iOS Example
 
 ```typescript
-import {useIAP, requestPurchase} from 'expo-iap';
+import {presentExternalPurchaseLinkIOS} from 'expo-iap';
 import {Platform, Alert} from 'react-native';
 
 function MyComponent() {
-  const handleAlternativeBillingPurchase = async (productId: string) => {
+  const handleAlternativeBillingPurchase = async (externalUrl: string) => {
     if (Platform.OS !== 'ios') return;
 
     try {
-      await requestPurchase({
-        request: {
-          apple: {
-            sku: productId,
-            quantity: 1,
-          },
-        },
-        type: 'in-app',
-        useAlternativeBilling: true,
-      });
+      const result = await presentExternalPurchaseLinkIOS(externalUrl);
 
-      Alert.alert(
-        'Redirected',
-        'Complete your purchase on the external website. You will be redirected back to the app.',
-      );
+      if (result.success) {
+        Alert.alert(
+          'Redirected',
+          'Complete your purchase on the external website. You will be redirected back to the app.',
+        );
+      } else if (result.error) {
+        Alert.alert('Error', result.error);
+      }
     } catch (error: any) {
       if (error.code === 'user-cancelled') {
         console.log('User cancelled');
@@ -337,9 +327,9 @@ With user choice, Google automatically shows a selection dialog:
 ```typescript
 import {useIAP, requestPurchase} from 'expo-iap';
 
-// Initialize with user choice mode
+// Initialize with user choice mode (new API)
 const {connected, products, fetchProducts} = useIAP({
-  alternativeBillingModeAndroid: 'user-choice',
+  enableBillingProgramAndroid: 'user-choice-billing',
   onPurchaseSuccess: (purchase) => {
     // This fires if user selects Google Play
     console.log('Google Play purchase:', purchase);
@@ -356,7 +346,6 @@ const handleUserChoicePurchase = async (productId: string) => {
         },
       },
       type: 'in-app',
-      useAlternativeBilling: true,
     });
 
     // If user selects Google Play: onPurchaseSuccess callback fires
@@ -457,37 +446,28 @@ function ExternalPaymentsComponent() {
 | UI | Separate dialog | Side-by-side choice in purchase dialog |
 | Listener | `userChoiceBillingListenerAndroid` | `developerProvidedBillingListenerAndroid` |
 
-### Configuring Alternative Billing Mode
+### Configuring Billing Program
 
-Set the billing mode when initializing the connection:
+Set the billing program when initializing the connection:
 
 ```typescript
 import {useIAP} from 'expo-iap';
 
 const {connected} = useIAP({
-  // 'none' (default), 'user-choice', or 'alternative-only'
-  alternativeBillingModeAndroid: 'alternative-only',
+  // Available programs: 'user-choice-billing', 'external-offer', 'external-payments', 'external-content-link'
+  enableBillingProgramAndroid: 'user-choice-billing',
 });
 ```
 
-Or use the root API (new recommended way):
+Or use the root API:
 
 ```typescript
 import {initConnection, type BillingProgramAndroid} from 'expo-iap';
 
-// Migration Guide (v3.4.0+):
-// - 'user-choice' → 'user-choice-billing'
-// - 'alternative-only' → 'external-offer'
 await initConnection({
-  enableBillingProgramAndroid: 'external-offer' as BillingProgramAndroid,
+  enableBillingProgramAndroid: 'external-offer',
 });
 ```
-
-:::warning Deprecated API
-The `alternativeBillingModeAndroid` config is deprecated. Use `enableBillingProgramAndroid` instead:
-- `alternativeBillingModeAndroid: 'user-choice'` → `enableBillingProgramAndroid: 'user-choice-billing'`
-- `alternativeBillingModeAndroid: 'alternative-only'` → `enableBillingProgramAndroid: 'external-offer'`
-:::
 
 For External Payments:
 
@@ -506,7 +486,9 @@ import {Platform, Alert} from 'react-native';
 import {
   useIAP,
   requestPurchase,
+  presentExternalPurchaseLinkIOS,
   isBillingProgramAvailableAndroid,
+  launchExternalLinkAndroid,
   createBillingProgramReportingDetailsAndroid,
   type BillingProgramAndroid,
 } from 'expo-iap';
@@ -516,7 +498,6 @@ function AlternativeBillingComponent() {
     useState<BillingProgramAndroid>('external-offer');
 
   const {connected, products, fetchProducts} = useIAP({
-    // Use new enableBillingProgramAndroid config (v3.4.0+)
     enableBillingProgramAndroid:
       Platform.OS === 'android' ? billingProgram : undefined,
     onPurchaseSuccess: (purchase) => {
@@ -529,34 +510,14 @@ function AlternativeBillingComponent() {
 
   const handlePurchase = async (productId: string) => {
     if (Platform.OS === 'ios') {
-      // iOS: External URL
-      await requestPurchase({
-        request: {
-          apple: {
-            sku: productId,
-            quantity: 1,
-          },
-        },
-        type: 'in-app',
-        useAlternativeBilling: true,
-      });
+      // iOS: External URL using StoreKit External Purchase Link API
+      const result = await presentExternalPurchaseLinkIOS('https://your-payment-site.com/checkout');
+      if (result.success) {
+        Alert.alert('Redirected', 'Complete purchase on external website');
+      }
     } else if (Platform.OS === 'android') {
-      if (billingMode === 'alternative-only') {
-        // Android: Alternative Billing Only (3-step flow)
-        const isAvailable = await checkAlternativeBillingAvailabilityAndroid();
-        if (!isAvailable) {
-          Alert.alert('Error', 'Alternative billing not available');
-          return;
-        }
-
-        const userAccepted = await showAlternativeBillingDialogAndroid();
-        if (!userAccepted) return;
-
-        // Process payment...
-        const token = await createAlternativeBillingTokenAndroid(productId);
-        // Report to backend...
-      } else {
-        // Android: User Choice
+      if (billingProgram === 'user-choice-billing') {
+        // Android: User Choice Billing - Google shows selection dialog
         await requestPurchase({
           request: {
             google: {
@@ -564,8 +525,25 @@ function AlternativeBillingComponent() {
             },
           },
           type: 'in-app',
-          useAlternativeBilling: true,
         });
+      } else {
+        // Android: Billing Programs API (external-offer, external-payments, etc.)
+        const availability = await isBillingProgramAvailableAndroid(billingProgram);
+        if (!availability.isAvailable) {
+          Alert.alert('Error', 'Billing program not available');
+          return;
+        }
+
+        await launchExternalLinkAndroid({
+          billingProgram,
+          launchMode: 'launch-in-external-browser-or-app',
+          linkType: 'link-to-digital-content-offer',
+          linkUri: `https://your-payment-site.com/purchase/${productId}`,
+        });
+
+        const details = await createBillingProgramReportingDetailsAndroid(billingProgram);
+        // Report token to Google within 24 hours
+        console.log('Token:', details.externalTransactionToken);
       }
     }
   };
@@ -625,7 +603,7 @@ function AlternativeBillingComponent() {
 #### "External URL not opening"
 
 - Check URL format (must be valid HTTPS)
-- Verify `useAlternativeBilling` flag is set
+- Use `presentExternalPurchaseLinkIOS()` for iOS external links
 
 #### "User stuck on external site"
 
@@ -648,8 +626,7 @@ function AlternativeBillingComponent() {
 
 #### "User choice dialog not showing"
 
-- Verify `alternativeBillingModeAndroid: 'user-choice'`
-- Ensure `useAlternativeBilling: true` in request
+- Verify `enableBillingProgramAndroid: 'user-choice-billing'`
 - Check Google Play configuration
 
 #### "External Payments not available"

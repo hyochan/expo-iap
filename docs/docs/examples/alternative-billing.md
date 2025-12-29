@@ -24,28 +24,25 @@ Redirect users to an external website for payment (iOS 16.0+):
 
 ```tsx
 import {Platform, Button, Alert} from 'react-native';
-import {requestPurchase, type Product} from 'expo-iap';
+import {presentExternalPurchaseLinkIOS, type Product} from 'expo-iap';
 
 function IOSAlternativeBilling({product}: {product: Product}) {
   const handlePurchase = async () => {
     if (Platform.OS !== 'ios') return;
 
     try {
-      await requestPurchase({
-        request: {
-          apple: {
-            sku: product.id,
-            quantity: 1,
-          },
-        },
-        type: 'in-app',
-        useAlternativeBilling: true,
-      });
-
-      Alert.alert(
-        'Redirected',
-        'Complete purchase on the external website. You will be redirected back to the app.',
+      const result = await presentExternalPurchaseLinkIOS(
+        `https://your-payment-site.com/purchase/${product.id}`,
       );
+
+      if (result.success) {
+        Alert.alert(
+          'Redirected',
+          'Complete purchase on the external website. You will be redirected back to the app.',
+        );
+      } else if (result.error) {
+        Alert.alert('Error', result.error);
+      }
     } catch (error: any) {
       if (error.code !== 'user-cancelled') {
         Alert.alert('Error', error.message);
@@ -203,9 +200,9 @@ import {Platform, Button} from 'react-native';
 import {useIAP, requestPurchase, type Product} from 'expo-iap';
 
 function AndroidUserChoiceBilling({product}: {product: Product}) {
-  // Initialize with user choice mode
+  // Initialize with user choice billing program
   const {connected} = useIAP({
-    alternativeBillingModeAndroid: 'user-choice',
+    enableBillingProgramAndroid: 'user-choice-billing',
     onPurchaseSuccess: (purchase) => {
       // Fires if user selects Google Play
       console.log('Google Play purchase:', purchase);
@@ -224,7 +221,6 @@ function AndroidUserChoiceBilling({product}: {product: Product}) {
           },
         },
         type: 'in-app',
-        useAlternativeBilling: true,
       });
 
       // If user selects Google Play: onPurchaseSuccess fires
@@ -252,23 +248,24 @@ import {Platform, View, Button, Alert} from 'react-native';
 import {
   useIAP,
   requestPurchase,
+  presentExternalPurchaseLinkIOS,
   isBillingProgramAvailableAndroid,
   launchExternalLinkAndroid,
   createBillingProgramReportingDetailsAndroid,
   type Product,
-  type AlternativeBillingModeAndroid,
+  type BillingProgramAndroid,
 } from 'expo-iap';
 
-type BillingMode = 'billing-programs' | 'user-choice' | 'legacy';
+type BillingMode = 'billing-programs' | 'user-choice-billing';
 
 function AlternativeBillingScreen() {
   const [billingMode, setBillingMode] = useState<BillingMode>('billing-programs');
 
   const {connected, products} = useIAP({
-    alternativeBillingModeAndroid:
-      Platform.OS === 'android' && billingMode === 'user-choice'
-        ? 'user-choice'
-        : undefined,
+    enableBillingProgramAndroid:
+      Platform.OS === 'android' && billingMode === 'user-choice-billing'
+        ? 'user-choice-billing'
+        : 'external-offer',
     onPurchaseSuccess: (purchase) => {
       console.log('Purchase successful:', purchase);
     },
@@ -278,18 +275,15 @@ function AlternativeBillingScreen() {
   });
 
   const handleIOSPurchase = useCallback(async (product: Product) => {
-    await requestPurchase({
-      request: {
-        apple: {
-          sku: product.id,
-          quantity: 1,
-        },
-      },
-      type: 'in-app',
-      useAlternativeBilling: true,
-    });
+    const result = await presentExternalPurchaseLinkIOS(
+      `https://your-payment-site.com/purchase/${product.id}`,
+    );
 
-    Alert.alert('Redirected', 'Complete purchase on external website');
+    if (result.success) {
+      Alert.alert('Redirected', 'Complete purchase on external website');
+    } else if (result.error) {
+      Alert.alert('Error', result.error);
+    }
   }, []);
 
   const handleAndroidBillingPrograms = useCallback(async (product: Product) => {
@@ -318,7 +312,6 @@ function AlternativeBillingScreen() {
         },
       },
       type: 'in-app',
-      useAlternativeBilling: true,
     });
   }, []);
 
@@ -335,7 +328,7 @@ function AlternativeBillingScreen() {
   };
 
   const cycleBillingMode = () => {
-    const modes: BillingMode[] = ['billing-programs', 'user-choice', 'legacy'];
+    const modes: BillingMode[] = ['billing-programs', 'user-choice-billing'];
     const currentIndex = modes.indexOf(billingMode);
     setBillingMode(modes[(currentIndex + 1) % modes.length]);
   };
@@ -366,7 +359,8 @@ function AlternativeBillingScreen() {
 
 ```tsx
 const {connected} = useIAP({
-  alternativeBillingModeAndroid: 'alternative-only', // or 'user-choice' or 'none'
+  // Available programs: 'user-choice-billing', 'external-offer', 'external-payments', 'external-content-link'
+  enableBillingProgramAndroid: 'user-choice-billing',
 });
 ```
 
@@ -376,7 +370,7 @@ const {connected} = useIAP({
 import {initConnection} from 'expo-iap';
 
 await initConnection({
-  alternativeBillingModeAndroid: 'alternative-only',
+  enableBillingProgramAndroid: 'external-offer',
 });
 ```
 

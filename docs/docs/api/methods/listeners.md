@@ -405,9 +405,9 @@ import {Platform} from 'react-native';
 const setupUserChoiceBillingListener = () => {
   if (Platform.OS !== 'android') return;
 
-  // Initialize with user-choice mode
+  // Initialize with user-choice billing program
   await initConnection({
-    alternativeBillingModeAndroid: 'user-choice',
+    enableBillingProgramAndroid: 'user-choice-billing',
   });
 
   const subscription = userChoiceBillingListenerAndroid((details) => {
@@ -463,7 +463,7 @@ const handleUserChoiceBilling = async (details) => {
 
 **Important:**
 
-- Only fires when using `alternativeBillingModeAndroid: 'user-choice'`
+- Only fires when using `enableBillingProgramAndroid: 'user-choice-billing'`
 - Token must be reported to Google Play backend within 24 hours
 - If user selects Google Play billing instead, `purchaseUpdatedListener` will fire as normal
 
@@ -479,9 +479,9 @@ export default function AlternativeBillingComponent() {
     if (Platform.OS !== 'android') return;
 
     const initialize = async () => {
-      // Initialize with user-choice mode
+      // Initialize with user-choice billing program
       await initConnection({
-        alternativeBillingModeAndroid: 'user-choice',
+        enableBillingProgramAndroid: 'user-choice-billing',
       });
 
       // Set up listener
@@ -595,7 +595,7 @@ const handleDeveloperProvidedBilling = async (details) => {
 | When presented | After initConnection() | During requestPurchase() |
 | UI | Separate dialog | Side-by-side choice in purchase dialog |
 | Listener | `userChoiceBillingListenerAndroid` | `developerProvidedBillingListenerAndroid` |
-| Setup | `alternativeBillingModeAndroid: 'user-choice'` | `enableBillingProgramAndroid: 'external-payments'` + `developerBillingOption` in requestPurchase |
+| Setup | `enableBillingProgramAndroid: 'user-choice-billing'` | `enableBillingProgramAndroid: 'external-payments'` + `developerBillingOption` in requestPurchase |
 
 ### Example with External Payments Flow
 
