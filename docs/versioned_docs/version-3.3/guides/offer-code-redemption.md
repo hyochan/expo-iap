@@ -80,6 +80,7 @@ const redeemCode = async (code: string) => {
 Here's a complete example that handles both platforms:
 
 ```typescript
+import {useEffect} from 'react';
 import {Platform} from 'react-native';
 import {
   presentCodeRedemptionSheet,

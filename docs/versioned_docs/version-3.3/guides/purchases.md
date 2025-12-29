@@ -17,7 +17,7 @@ import IapKitBanner from "@site/src/uis/IapKitBanner";
 > Below are some of the specific reasons for the redesign:
 >
 > 1. There may be more than one response when requesting a payment.
-> 2. Purchases are inter-session `asynchronuous` meaning requests that are made may take several hours to complete and continue to exist even after the app has been closed or crashed.
+> 2. Purchases are inter-session `asynchronous` meaning requests that are made may take several hours to complete and continue to exist even after the app has been closed or crashed.
 > 3. The purchase may be pending and hard to track what has been done (for [example](https://github.com/hyochan/react-native-iap/issues/307)).
 > 4. The Billing Flow is an `event` pattern rather than a `callback` pattern.
 
