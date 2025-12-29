@@ -218,72 +218,75 @@ function AlternativeBillingScreen() {
   );
 
   // Handle Android Billing Programs API (8.2.0+)
-  const handleAndroidBillingPrograms = useCallback(async (product: Product) => {
-    console.log('[Android] Starting Billing Programs API flow:', product.id);
+  const handleAndroidBillingPrograms = useCallback(
+    async (product: Product) => {
+      console.log('[Android] Starting Billing Programs API flow:', product.id);
 
-    setIsProcessing(true);
-    setPurchaseResult('Checking billing program availability...');
+      setIsProcessing(true);
+      setPurchaseResult('Checking billing program availability...');
 
-    try {
-      // Step 1: Check if billing program is available
-      const availability = await isBillingProgramAvailableAndroid(
-        billingProgram,
-      );
-      console.log('[Android] Billing program available:', availability);
+      try {
+        // Step 1: Check if billing program is available
+        const availability = await isBillingProgramAvailableAndroid(
+          billingProgram,
+        );
+        console.log('[Android] Billing program available:', availability);
 
-      if (!availability.isAvailable) {
+        if (!availability.isAvailable) {
+          setPurchaseResult(
+            `❌ Billing program not available\n\nProgram: ${availability.billingProgram}`,
+          );
+          Alert.alert(
+            'Error',
+            `${billingProgram} billing program is not available for this user/device`,
+          );
+          setIsProcessing(false);
+          return;
+        }
+
+        setPurchaseResult('Launching external link...');
+
+        // Step 2: Launch external link
+        await launchExternalLinkAndroid({
+          billingProgram,
+          launchMode: 'launch-in-external-browser-or-app',
+          linkType: 'link-to-digital-content-offer',
+          linkUri: `https://openiap.dev/purchase/${product.id}`,
+        });
+
+        setPurchaseResult('Getting reporting token...');
+
+        // Step 3: Get reporting details (after payment completes externally)
+        const details = await createBillingProgramReportingDetailsAndroid(
+          billingProgram,
+        );
+        console.log('[Android] Reporting details:', details);
+
         setPurchaseResult(
-          `❌ Billing program not available\n\nProgram: ${availability.billingProgram}`,
+          `✅ Billing Programs API flow completed\n\nProduct: ${
+            product.id
+          }\nProgram: ${
+            details.billingProgram
+          }\nToken: ${details.externalTransactionToken.substring(
+            0,
+            20,
+          )}...\n\n⚠️ Important:\n1. Report token to Google Play within 24 hours\n2. Process payment on your external site`,
         );
+
         Alert.alert(
-          'Error',
-          `${billingProgram} billing program is not available for this user/device`,
+          'Demo Complete',
+          'Billing Programs API flow completed.\n\nIn production, report the token to Google Play backend within 24 hours.',
         );
+      } catch (error: any) {
+        console.error('[Android] Billing Programs API error:', error);
+        setPurchaseResult(`❌ Error: ${error.message}`);
+        Alert.alert('Error', error.message);
+      } finally {
         setIsProcessing(false);
-        return;
       }
-
-      setPurchaseResult('Launching external link...');
-
-      // Step 2: Launch external link
-      await launchExternalLinkAndroid({
-        billingProgram,
-        launchMode: 'launch-in-external-browser-or-app',
-        linkType: 'link-to-digital-content-offer',
-        linkUri: `https://openiap.dev/purchase/${product.id}`,
-      });
-
-      setPurchaseResult('Getting reporting token...');
-
-      // Step 3: Get reporting details (after payment completes externally)
-      const details = await createBillingProgramReportingDetailsAndroid(
-        billingProgram,
-      );
-      console.log('[Android] Reporting details:', details);
-
-      setPurchaseResult(
-        `✅ Billing Programs API flow completed\n\nProduct: ${
-          product.id
-        }\nProgram: ${
-          details.billingProgram
-        }\nToken: ${details.externalTransactionToken.substring(
-          0,
-          20,
-        )}...\n\n⚠️ Important:\n1. Report token to Google Play within 24 hours\n2. Process payment on your external site`,
-      );
-
-      Alert.alert(
-        'Demo Complete',
-        'Billing Programs API flow completed.\n\nIn production, report the token to Google Play backend within 24 hours.',
-      );
-    } catch (error: any) {
-      console.error('[Android] Billing Programs API error:', error);
-      setPurchaseResult(`❌ Error: ${error.message}`);
-      Alert.alert('Error', error.message);
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [billingProgram]);
+    },
+    [billingProgram],
+  );
 
   // Handle Android User Choice Billing (new enableBillingProgramAndroid: 'user-choice-billing')
   const handleAndroidUserChoiceBilling = useCallback((product: Product) => {
@@ -409,7 +412,8 @@ function AlternativeBillingScreen() {
         ) : null}
 
         {/* Billing Program Selector (Android billing-programs only) */}
-        {Platform.OS === 'android' && androidBillingFlow === 'billing-programs' ? (
+        {Platform.OS === 'android' &&
+        androidBillingFlow === 'billing-programs' ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Billing Program</Text>
             <TouchableOpacity

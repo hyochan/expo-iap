@@ -58,6 +58,7 @@ class ExpoIapModule : Module() {
         get() = appContext.activityProvider?.currentActivity ?: throw Exceptions.MissingActivity()
 
     private val openIap: OpenIapModule by lazy { OpenIapModule(context) }
+
     // Pass openIap directly to OpenIapStore to avoid reflection-based module loading
     private val openIapStore: OpenIapStore by lazy { OpenIapStore(openIap) }
     private var listenersAttached = false
