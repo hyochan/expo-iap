@@ -112,8 +112,23 @@ export interface UseIAPOptions {
   /**
    * Alternative billing mode for Android
    * If not specified, defaults to NONE (standard Google Play billing)
+   * @deprecated Use enableBillingProgramAndroid instead.
+   * - 'user-choice' → 'user-choice-billing'
+   * - 'alternative-only' → 'external-offer'
    */
   alternativeBillingModeAndroid?: 'none' | 'user-choice' | 'alternative-only';
+  /**
+   * Enable a specific billing program for Android (8.2.0+)
+   * When set, enables the specified billing program for external transactions.
+   * Use 'external-payments' for Developer Provided Billing (Japan only, 8.3.0+).
+   * Use 'user-choice-billing' for User Choice Billing (7.0+).
+   */
+  enableBillingProgramAndroid?:
+    | 'unspecified'
+    | 'external-content-link'
+    | 'external-offer'
+    | 'external-payments'
+    | 'user-choice-billing';
 }
 
 /**
@@ -460,12 +475,17 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }
 
     // NOW call initConnection after listeners are ready
-    const config = optionsRef.current?.alternativeBillingModeAndroid
-      ? {
-          alternativeBillingModeAndroid:
-            optionsRef.current.alternativeBillingModeAndroid,
-        }
-      : undefined;
+    // Build config from options (prefer new enableBillingProgramAndroid over deprecated alternativeBillingModeAndroid)
+    const config =
+      optionsRef.current?.enableBillingProgramAndroid ||
+      optionsRef.current?.alternativeBillingModeAndroid
+        ? {
+            enableBillingProgramAndroid:
+              optionsRef.current.enableBillingProgramAndroid,
+            alternativeBillingModeAndroid:
+              optionsRef.current.alternativeBillingModeAndroid,
+          }
+        : undefined;
     const result = await initConnection(config);
     setConnected(result);
     if (!result) {

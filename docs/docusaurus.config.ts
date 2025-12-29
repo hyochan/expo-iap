@@ -46,8 +46,12 @@ const config: Config = {
           lastVersion: 'current',
           versions: {
             current: {
-              label: '3.3 (Current)',
+              label: '3.4 (Current)',
               path: '',
+            },
+            '3.3': {
+              label: '3.3',
+              path: '3.3',
             },
             '3.2': {
               label: '3.2',

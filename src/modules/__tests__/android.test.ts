@@ -239,6 +239,25 @@ describe('Android Module Functions', () => {
         expect(result).toEqual(mockResult);
       });
 
+      it('handles user-choice-billing program (7.0+)', async () => {
+        const mockResult = {
+          billingProgram: 'user-choice-billing',
+          isAvailable: true,
+        };
+        (
+          ExpoIapModule.isBillingProgramAvailableAndroid as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await isBillingProgramAvailableAndroid(
+          'user-choice-billing',
+        );
+
+        expect(
+          ExpoIapModule.isBillingProgramAvailableAndroid,
+        ).toHaveBeenCalledWith('user-choice-billing');
+        expect(result).toEqual(mockResult);
+      });
+
       it('propagates errors from native module', async () => {
         const error = new Error('Billing program not supported');
         (

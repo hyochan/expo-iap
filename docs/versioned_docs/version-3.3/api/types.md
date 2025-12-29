@@ -24,14 +24,12 @@ export type IapStore = 'unknown' | 'apple' | 'google' | 'horizon';
 export type ProductType = 'in-app' | 'subs';
 
 export type PurchaseState =
+  | 'deferred'
+  | 'failed'
   | 'pending'
   | 'purchased'
+  | 'restored'
   | 'unknown';
-
-// Note: 'failed', 'restored', and 'deferred' were removed in v3.4.0
-// - Failed: Both platforms return errors instead of Purchase objects on failure
-// - Restored: Restored purchases return as 'purchased' state
-// - Deferred: iOS StoreKit 2 has no transaction state; Android uses 'pending'
 ```
 
 The `ErrorCode` enum now mirrors the OpenIAP schema without the legacy `E_` prefix:
@@ -68,8 +66,7 @@ export interface ProductCommon {
 
 export interface ProductAndroid extends ProductCommon {
   nameAndroid: string;
-  // Array of offers with discount support (7.0+)
-  oneTimePurchaseOfferDetailsAndroid?: ProductAndroidOneTimePurchaseOfferDetail[] | null;
+  oneTimePurchaseOfferDetailsAndroid?: ProductAndroidOneTimePurchaseOfferDetail | null;
   subscriptionOfferDetailsAndroid?:
     | ProductSubscriptionAndroidOfferDetails[]
     | null;
@@ -111,8 +108,6 @@ export interface PurchaseAndroid extends PurchaseCommon {
   packageNameAndroid?: string | null;
   signatureAndroid?: string | null;
   dataAndroid?: string | null;
-  // Subscription suspension status (8.1.0+)
-  isSuspendedAndroid?: boolean | null;
 }
 
 export interface PurchaseIOS extends PurchaseCommon {
@@ -208,130 +203,4 @@ import type {
 } from 'expo-iap';
 ```
 
-If you need to regenerate types place new schema definitions under the GraphQL inputs and rerun the generator.
-
-## Android Billing Programs API Types (8.2.0+)
-
-New types for the Google Play Billing Programs API:
-
-```ts
-// Billing program types
-// USER_CHOICE_BILLING added in v3.4.0 (available in Google Play Billing 7.0+)
-type BillingProgramAndroid =
-  | 'unspecified'
-  | 'external-content-link'
-  | 'external-offer'
-  | 'external-payments'
-  | 'user-choice-billing';
-
-// Launch mode for external links
-type ExternalLinkLaunchModeAndroid =
-  | 'unspecified'
-  | 'launch-in-external-browser-or-app'
-  | 'caller-will-launch-link';
-
-// Link type for external links
-type ExternalLinkTypeAndroid =
-  | 'unspecified'
-  | 'link-to-digital-content-offer'
-  | 'link-to-app-download';
-
-// Parameters for launching external links
-interface LaunchExternalLinkParamsAndroid {
-  billingProgram: BillingProgramAndroid;
-  launchMode: ExternalLinkLaunchModeAndroid;
-  linkType: ExternalLinkTypeAndroid;
-  linkUri: string;
-}
-
-// Result of checking billing program availability
-interface BillingProgramAvailabilityResultAndroid {
-  billingProgram: BillingProgramAndroid;
-  isAvailable: boolean;
-}
-
-// Reporting details for external transactions
-interface BillingProgramReportingDetailsAndroid {
-  billingProgram: BillingProgramAndroid;
-  externalTransactionToken: string;
-}
-```
-
-## Android One-Time Product Discount Types (7.0+)
-
-Types for one-time purchase product discounts:
-
-```ts
-// Discount amount details
-interface DiscountAmountAndroid {
-  discountAmountMicros: string;
-  formattedDiscountAmount: string;
-}
-
-// Discount display information
-interface DiscountDisplayInfoAndroid {
-  percentageDiscount?: number | null;
-  discountAmount?: DiscountAmountAndroid | null;
-}
-
-// Limited quantity information
-interface LimitedQuantityInfoAndroid {
-  maximumQuantity: number;
-  remainingQuantity: number;
-}
-
-// Offer validity period
-interface ValidTimeWindowAndroid {
-  startTimeMillis: string;
-  endTimeMillis: string;
-}
-
-// Pre-order details (8.1.0+)
-interface PreorderDetailsAndroid {
-  preorderReleaseTimeMillis: string;
-  preorderPresaleEndTimeMillis: string;
-}
-
-// Rental details
-interface RentalDetailsAndroid {
-  rentalPeriod: string;
-  rentalExpirationPeriod?: string | null;
-}
-
-// One-time purchase offer with discount support
-interface ProductAndroidOneTimePurchaseOfferDetail {
-  formattedPrice: string;
-  priceAmountMicros: string;
-  priceCurrencyCode: string;
-  offerId?: string | null;
-  offerToken: string;
-  offerTags: string[];
-  fullPriceMicros?: string | null;
-  discountDisplayInfo?: DiscountDisplayInfoAndroid | null;
-  limitedQuantityInfo?: LimitedQuantityInfoAndroid | null;
-  validTimeWindow?: ValidTimeWindowAndroid | null;
-  preorderDetailsAndroid?: PreorderDetailsAndroid | null;
-  rentalDetailsAndroid?: RentalDetailsAndroid | null;
-}
-```
-
-## Android Subscription Replacement Types (8.1.0+)
-
-Types for subscription upgrade/downgrade:
-
-```ts
-// Product-level replacement parameters
-interface SubscriptionProductReplacementParamsAndroid {
-  oldProductId: string;
-  replacementMode: SubscriptionReplacementModeAndroid;
-}
-
-// Replacement mode options
-type SubscriptionReplacementModeAndroid =
-  | 'unknown-replacement-mode'
-  | 'with-time-proration'
-  | 'charge-prorated-price'
-  | 'charge-full-price'
-  | 'without-proration'
-  | 'deferred'
-  | 'keep-existing';
+If you need to regenerate types place new schema definitions under the GraphQL inputs and rerun the generator. EOF

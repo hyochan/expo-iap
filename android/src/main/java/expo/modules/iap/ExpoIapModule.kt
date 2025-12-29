@@ -58,7 +58,9 @@ class ExpoIapModule : Module() {
         get() = appContext.activityProvider?.currentActivity ?: throw Exceptions.MissingActivity()
 
     private val openIap: OpenIapModule by lazy { OpenIapModule(context) }
-    private val openIapStore: OpenIapStore by lazy { OpenIapStore(context) }
+
+    // Pass openIap directly to OpenIapStore to avoid reflection-based module loading
+    private val openIapStore: OpenIapStore by lazy { OpenIapStore(openIap) }
     private var listenersAttached = false
     private val pendingEvents = ConcurrentLinkedQueue<Pair<String, Map<String, Any?>>>()
     private val connectionReady = AtomicBoolean(false)
@@ -388,6 +390,7 @@ class ExpoIapModule : Module() {
                 }
             }
 
+            @Suppress("DEPRECATION")
             AsyncFunction("checkAlternativeBillingAvailabilityAndroid") { promise: Promise ->
                 ExpoIapLog.payload("checkAlternativeBillingAvailabilityAndroid", null)
                 scope.launch {
@@ -402,6 +405,7 @@ class ExpoIapModule : Module() {
                 }
             }
 
+            @Suppress("DEPRECATION")
             AsyncFunction("showAlternativeBillingDialogAndroid") { promise: Promise ->
                 ExpoIapLog.payload("showAlternativeBillingDialogAndroid", null)
                 scope.launch {
@@ -425,6 +429,7 @@ class ExpoIapModule : Module() {
                 }
             }
 
+            @Suppress("DEPRECATION")
             AsyncFunction("createAlternativeBillingTokenAndroid") { sku: String?, promise: Promise ->
                 ExpoIapLog.payload("createAlternativeBillingTokenAndroid", mapOf("sku" to sku))
                 scope.launch {
@@ -441,6 +446,7 @@ class ExpoIapModule : Module() {
                 }
             }
 
+            @Suppress("UNCHECKED_CAST")
             AsyncFunction("verifyPurchase") { params: Map<String, Any?>, promise: Promise ->
                 ExpoIapLog.payload("verifyPurchase", params)
                 scope.launch {
@@ -639,6 +645,7 @@ class ExpoIapModule : Module() {
             "external-offer" -> OpenIapBillingProgram.ExternalOffer
             "external-content-link" -> OpenIapBillingProgram.ExternalContentLink
             "external-payments" -> OpenIapBillingProgram.ExternalPayments
+            "user-choice-billing" -> OpenIapBillingProgram.UserChoiceBilling
             else -> OpenIapBillingProgram.Unspecified
         }
 
