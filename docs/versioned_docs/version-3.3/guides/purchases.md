@@ -366,12 +366,12 @@ const buySubscription = async (subscriptionId: string) => {
     // Android: Requires offerToken for each subscription
     const subscription = subscriptions.find((s) => s.id === subscriptionId);
 
-    if (!subscription?.subscriptionOfferDetails?.length) {
+    if (!subscription?.subscriptionOfferDetailsAndroid?.length) {
       throw new Error('No subscription offers available');
     }
 
     // Use the first available offer (or let user choose)
-    const firstOffer = subscription.subscriptionOfferDetails[0];
+    const firstOffer = subscription.subscriptionOfferDetailsAndroid[0];
 
     await requestPurchase({
       request: {
@@ -523,9 +523,9 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
 
   if (Platform.OS === 'ios') {
     // iOS: Check expiration date
-    if (purchase.expirationDateIos) {
-      // expirationDateIos is in milliseconds
-      return purchase.expirationDateIos > currentTime;
+    if (purchase.expirationDateIOS) {
+      // expirationDateIOS is in milliseconds
+      return purchase.expirationDateIOS > currentTime;
     }
 
     // For Sandbox environment, consider recent purchases as active
@@ -542,8 +542,8 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
       return purchase.autoRenewingAndroid;
     }
 
-    // Check purchase state (0 = purchased, 1 = canceled)
-    if (purchase.purchaseStateAndroid === 0) {
+    // Check purchase state ('purchased' = valid)
+    if (purchase.purchaseState === 'purchased') {
       return true;
     }
   }
@@ -554,8 +554,9 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
 
 **Key Properties for Subscription Status:**
 
-- **iOS**: `expirationDateIos` - Unix timestamp when subscription expires
+- **iOS**: `expirationDateIOS` - Unix timestamp when subscription expires
 - **Android**: `autoRenewingAndroid` - Boolean indicating if subscription will renew
+- **Common**: `purchaseState` - String union (`'pending'` | `'purchased'` | `'unknown'`)
 
 #### Managing Subscriptions
 
