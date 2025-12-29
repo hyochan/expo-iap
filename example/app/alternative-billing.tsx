@@ -55,6 +55,13 @@ import {CONSUMABLE_PRODUCT_IDS} from '../src/utils/constants';
 
 type AndroidBillingFlow = 'billing-programs' | 'user-choice-billing';
 
+// Billing programs that support external link flow (not user-choice-billing)
+const EXTERNAL_BILLING_PROGRAMS: BillingProgramAndroid[] = [
+  'external-offer',
+  'external-payments',
+  'external-content-link',
+];
+
 function AlternativeBillingScreen() {
   const [externalUrl, setExternalUrl] = useState('https://openiap.dev');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -63,6 +70,7 @@ function AlternativeBillingScreen() {
   const [androidBillingFlow, setAndroidBillingFlow] =
     useState<AndroidBillingFlow>('billing-programs');
   const [showModeSelector, setShowModeSelector] = useState(false);
+  const [showProgramSelector, setShowProgramSelector] = useState(false);
   const [purchaseResult, setPurchaseResult] = useState<string>('');
   const [lastPurchase, setLastPurchase] = useState<Purchase | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -219,7 +227,7 @@ function AlternativeBillingScreen() {
     try {
       // Step 1: Check if billing program is available
       const availability = await isBillingProgramAvailableAndroid(
-        'external-offer',
+        billingProgram,
       );
       console.log('[Android] Billing program available:', availability);
 
@@ -229,7 +237,7 @@ function AlternativeBillingScreen() {
         );
         Alert.alert(
           'Error',
-          'External offer billing program is not available for this user/device',
+          `${billingProgram} billing program is not available for this user/device`,
         );
         setIsProcessing(false);
         return;
@@ -239,7 +247,7 @@ function AlternativeBillingScreen() {
 
       // Step 2: Launch external link
       await launchExternalLinkAndroid({
-        billingProgram: 'external-offer',
+        billingProgram,
         launchMode: 'launch-in-external-browser-or-app',
         linkType: 'link-to-digital-content-offer',
         linkUri: `https://openiap.dev/purchase/${product.id}`,
@@ -249,7 +257,7 @@ function AlternativeBillingScreen() {
 
       // Step 3: Get reporting details (after payment completes externally)
       const details = await createBillingProgramReportingDetailsAndroid(
-        'external-offer',
+        billingProgram,
       );
       console.log('[Android] Reporting details:', details);
 
@@ -275,7 +283,7 @@ function AlternativeBillingScreen() {
     } finally {
       setIsProcessing(false);
     }
-  }, []);
+  }, [billingProgram]);
 
   // Handle Android User Choice Billing (new enableBillingProgramAndroid: 'user-choice-billing')
   const handleAndroidUserChoiceBilling = useCallback((product: Product) => {
@@ -397,6 +405,31 @@ function AlternativeBillingScreen() {
               </Text>
               <Text style={styles.modeSelectorArrow}>▼</Text>
             </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {/* Billing Program Selector (Android billing-programs only) */}
+        {Platform.OS === 'android' && androidBillingFlow === 'billing-programs' ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Billing Program</Text>
+            <TouchableOpacity
+              style={styles.modeSelector}
+              onPress={() => setShowProgramSelector(true)}
+            >
+              <Text style={styles.modeSelectorText}>
+                {billingProgram === 'external-offer'
+                  ? 'External Offer'
+                  : billingProgram === 'external-payments'
+                  ? 'External Payments'
+                  : billingProgram === 'external-content-link'
+                  ? 'External Content Link'
+                  : billingProgram}
+              </Text>
+              <Text style={styles.modeSelectorArrow}>▼</Text>
+            </TouchableOpacity>
+            <Text style={styles.urlHint}>
+              Select the billing program to use for external purchases
+            </Text>
           </View>
         ) : null}
 
@@ -596,6 +629,11 @@ function AlternativeBillingScreen() {
               ]}
               onPress={() => {
                 setAndroidBillingFlow('billing-programs');
+                // Reset to default external billing program when switching from user-choice
+                if (billingProgram === 'user-choice-billing') {
+                  setBillingProgram('external-offer');
+                  void reconnectWithProgram('external-offer');
+                }
                 setShowModeSelector(false);
               }}
             >
@@ -632,6 +670,59 @@ function AlternativeBillingScreen() {
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setShowModeSelector(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Billing Program Selector Modal (Android) */}
+      <Modal
+        visible={showProgramSelector}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowProgramSelector(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Billing Program</Text>
+            {EXTERNAL_BILLING_PROGRAMS.map((program) => (
+              <TouchableOpacity
+                key={program}
+                style={[
+                  styles.modeOption,
+                  billingProgram === program && styles.modeOptionSelected,
+                ]}
+                onPress={() => {
+                  setBillingProgram(program);
+                  setShowProgramSelector(false);
+                  void reconnectWithProgram(program);
+                }}
+              >
+                <Text style={styles.modeOptionTitle}>
+                  {program === 'external-offer'
+                    ? 'External Offer'
+                    : program === 'external-payments'
+                    ? 'External Payments'
+                    : program === 'external-content-link'
+                    ? 'External Content Link'
+                    : program}
+                </Text>
+                <Text style={styles.modeOptionDescription}>
+                  {program === 'external-offer'
+                    ? 'For apps that offer digital content outside Google Play. Requires approval.'
+                    : program === 'external-payments'
+                    ? 'For apps in eligible regions to use alternative payment processors.'
+                    : program === 'external-content-link'
+                    ? 'For linking to external content already purchased outside the app.'
+                    : ''}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowProgramSelector(false)}
             >
               <Text style={styles.modalCloseButtonText}>Cancel</Text>
             </TouchableOpacity>
