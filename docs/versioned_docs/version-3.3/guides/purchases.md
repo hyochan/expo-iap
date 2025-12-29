@@ -332,8 +332,13 @@ export default function PurchaseScreen() {
 Consumable products can be purchased multiple times (e.g., coins, gems):
 
 ```tsx
-const buyConsumable = async (productId) => {
-  await requestPurchase({sku: productId});
+const buyConsumable = async (productId: string) => {
+  await requestPurchase({
+    request: {
+      apple: {sku: productId},
+      google: {skus: [productId]},
+    },
+  });
   // After successful validation and finishing transaction,
   // the product can be purchased again
 };
@@ -344,8 +349,13 @@ const buyConsumable = async (productId) => {
 Non-consumable products are purchased once and remain available (e.g., premium features):
 
 ```tsx
-const buyNonConsumable = async (productId) => {
-  await requestPurchase({sku: productId});
+const buyNonConsumable = async (productId: string) => {
+  await requestPurchase({
+    request: {
+      apple: {sku: productId},
+      google: {skus: [productId]},
+    },
+  });
   // After purchase, check availablePurchases to restore
 };
 ```
@@ -393,7 +403,7 @@ const buySubscription = async (subscriptionId: string) => {
 
 - Each subscription SKU must have a corresponding offerToken
 - The number of SKUs must match the number of offerTokens
-- offerToken comes from `subscriptionOfferDetails` in the product details
+- offerToken comes from `subscriptionOfferDetailsAndroid` in the product details
 - Without offerToken, you'll get: "The number of skus must match the number of offerTokens"
 
 ## Purchase Verification
