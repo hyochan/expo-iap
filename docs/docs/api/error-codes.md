@@ -17,7 +17,7 @@ React Native IAP provides a centralized error handling system with platform-spec
 The `ErrorCode` enum provides standardized error codes that map to platform-specific errors:
 
 ```tsx
-import {ErrorCode} from 'react-native-iap';
+import {ErrorCode} from 'expo-iap';
 
 export enum ErrorCode {
   Unknown = 'unknown',

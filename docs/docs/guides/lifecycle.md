@@ -245,14 +245,24 @@ function MyApp() {
 // ❌ Bad: Initializing for every operation
 const badPurchaseFlow = async (productId) => {
   await initConnection(); // Don't do this
-  await requestPurchase({sku: productId});
+  await requestPurchase({
+    request: {
+      apple: {sku: productId},
+      google: {skus: [productId]},
+    },
+  });
   await endConnection(); // Don't do this
 };
 
 // ✅ Good: Use existing connection
 const goodPurchaseFlow = async (productId) => {
   if (connected) {
-    await requestPurchase({sku: productId});
+    await requestPurchase({
+      request: {
+        apple: {sku: productId},
+        google: {skus: [productId]},
+      },
+    });
   }
 };
 ```

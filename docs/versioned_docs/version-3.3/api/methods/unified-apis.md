@@ -154,7 +154,7 @@ const buySubscription = (subscriptionId: string, subscription?: any) => {
       google: {
         skus: [subscriptionId],
         subscriptionOffers:
-          subscription?.subscriptionOfferDetails?.map((offer) => ({
+          subscription?.subscriptionOfferDetailsAndroid?.map((offer) => ({
             sku: subscriptionId,
             offerToken: offer.offerToken,
           })) || [],
@@ -175,9 +175,11 @@ const buySubscription = (subscriptionId: string, subscription?: any) => {
 ```tsx
 await requestPurchase({
   request: {
-    sku: productId,
-    quantity: 1,
-    appAccountToken: 'user-account-token',
+    apple: {
+      sku: productId,
+      quantity: 1,
+      appAccountToken: 'user-account-token',
+    },
   },
   type: 'in-app',
 });
@@ -693,7 +695,7 @@ interface Purchase {
   // Android-specific properties
   dataAndroid?: string;
   signatureAndroid?: string;
-  purchaseStateAndroid?: number;
+  purchaseState?: 'pending' | 'purchased' | 'unknown';
   isAcknowledgedAndroid?: boolean;
   packageNameAndroid?: string;
   developerPayloadAndroid?: string;

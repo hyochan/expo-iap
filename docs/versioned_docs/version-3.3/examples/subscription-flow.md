@@ -200,12 +200,12 @@ function useSubscriptionStatus() {
 
         // Platform-specific status checks
         if (Platform.OS === 'ios') {
-          // iOS provides expirationDateIos
-          const isExpired = subscription.expirationDateIos < Date.now();
+          // iOS provides expirationDateIOS
+          const isExpired = subscription.expirationDateIOS < Date.now();
           setSubscriptionDetails({
             productId: subscription.productId,
             isActive: !isExpired,
-            expiresAt: new Date(subscription.expirationDateIos),
+            expiresAt: new Date(subscription.expirationDateIOS),
             environment: subscription.environmentIOS, // 'Production' or 'Sandbox'
           });
         } else {
@@ -214,7 +214,7 @@ function useSubscriptionStatus() {
             productId: subscription.productId,
             isActive: subscription.autoRenewingAndroid,
             willAutoRenew: subscription.autoRenewingAndroid,
-            purchaseState: subscription.purchaseStateAndroid, // 0 = purchased, 1 = canceled
+            purchaseState: subscription.purchaseState, // 'pending' | 'purchased' | 'unknown'
           });
         }
       } else {
@@ -281,7 +281,7 @@ async function getUserSubscriptionTier() {
 **Android:**
 
 - `autoRenewingAndroid`: Boolean for auto-renewal status
-- `purchaseStateAndroid`: Purchase state (0 = purchased, 1 = canceled)
+- `purchaseState`: Purchase state ('pending' | 'purchased' | 'unknown')
 
 ⚠️ **Always validate on your server.** Client-side checks are for UI only.
 
@@ -656,7 +656,7 @@ function SubscriptionPlanManager() {
 | **Parameters** | Just new `sku` | `purchaseTokenAndroid` + `replacementModeAndroid` |
 | **Timing** | OS-determined | Specified via `replacementModeAndroid` |
 | **Plan Changes** | Use subscription groups with ranks | Use base plans and offers |
-| **Status Check** | Check `expirationDateIos` | Check `autoRenewingAndroid` |
+| **Status Check** | Check `expirationDateIOS` | Check `autoRenewingAndroid` |
 | **Cancellation Detection** | User manages in Settings | Check `autoRenewingAndroid === false` |
 | **Proration** | Handled by App Store | Configurable via `replacementModeAndroid` |
 

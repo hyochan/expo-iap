@@ -33,7 +33,7 @@ Because the data flows through the same validation pipeline as the purchase list
 
 ```tsx
 import {useEffect} from 'react';
-import {useIAP} from 'react-native-iap';
+import {useIAP} from 'expo-iap';
 
 export function SubscriptionGate({subscriptionId}: {subscriptionId: string}) {
   const {getAvailablePurchases, availablePurchases} = useIAP();
@@ -177,7 +177,7 @@ The helper does **not** fetch additional metadata beyond what `getAvailablePurch
 > **Platform note:** On iOS the helper simply re-shapes the StoreKit 2 entitlement objects. On Android it operates on the merged `inapp` + `subs` purchase list returned by Play Billing, so the output always contains both one-time products and subscriptions unless you pass specific product IDs.
 
 ```ts
-import {getActiveSubscriptions} from 'react-native-iap';
+import {getActiveSubscriptions} from 'expo-iap';
 
 const active = await getActiveSubscriptions(['your.yearly.subscription']);
 if (active.length === 0) {
@@ -190,7 +190,7 @@ if (active.length === 0) {
 If you want a coarse subscription phase that works the same way on iOS and Android, you can compute it from the entitlement cache that backs `getActiveSubscriptions`.
 
 ```ts
-import {getActiveSubscriptions} from 'react-native-iap';
+import {getActiveSubscriptions} from 'expo-iap';
 
 const MS_IN_DAY = 1000 * 60 * 60 * 24;
 const GRACE_WINDOW_DAYS = 3;
@@ -242,7 +242,7 @@ export async function getCurrentPhase(sku: string): Promise<DerivedPhase> {
 When you need to know the exact lifecycle phase, call [`subscriptionStatusIOS`](../api/methods/core-methods.md#subscriptionstatusios). This maps to StoreKit&nbsp;2’s `Product.SubscriptionInfo.Status` API and returns an array of status entries for the subscription group. Each `status.state` comes through as a string so you can forward unknown values to your analytics or logging when Apple adds new phases.
 
 ```ts
-import {subscriptionStatusIOS} from 'react-native-iap';
+import {subscriptionStatusIOS} from 'expo-iap';
 
 const statuses = await subscriptionStatusIOS('your.yearly.subscription');
 const latestState = statuses[0]?.state ?? 'unknown';

@@ -287,8 +287,8 @@ const getSubscriptionPrice = (subscriptionId: string): string => {
   } else {
     // Android
     const androidSubscription = subscription as ProductAndroid;
-    if (androidSubscription.subscriptionOfferDetails?.length > 0) {
-      const firstOffer = androidSubscription.subscriptionOfferDetails[0];
+    if (androidSubscription.subscriptionOfferDetailsAndroid?.length > 0) {
+      const firstOffer = androidSubscription.subscriptionOfferDetailsAndroid[0];
       if (firstOffer.pricingPhases.pricingPhaseList.length > 0) {
         return (
           firstOffer.pricingPhases.pricingPhaseList[0].formattedPrice ||
@@ -332,8 +332,13 @@ export default function PurchaseScreen() {
 Consumable products can be purchased multiple times (e.g., coins, gems):
 
 ```tsx
-const buyConsumable = async (productId) => {
-  await requestPurchase({sku: productId});
+const buyConsumable = async (productId: string) => {
+  await requestPurchase({
+    request: {
+      apple: {sku: productId},
+      google: {skus: [productId]},
+    },
+  });
   // After successful validation and finishing transaction,
   // the product can be purchased again
 };
@@ -344,8 +349,13 @@ const buyConsumable = async (productId) => {
 Non-consumable products are purchased once and remain available (e.g., premium features):
 
 ```tsx
-const buyNonConsumable = async (productId) => {
-  await requestPurchase({sku: productId});
+const buyNonConsumable = async (productId: string) => {
+  await requestPurchase({
+    request: {
+      apple: {sku: productId},
+      google: {skus: [productId]},
+    },
+  });
   // After purchase, check availablePurchases to restore
 };
 ```
@@ -359,29 +369,33 @@ const buySubscription = async (subscriptionId: string) => {
   if (Platform.OS === 'ios') {
     // iOS: Simple SKU-based purchase
     await requestPurchase({
-      request: {sku: subscriptionId},
+      request: {
+        apple: {sku: subscriptionId},
+      },
       type: 'subs',
     });
   } else {
     // Android: Requires offerToken for each subscription
     const subscription = subscriptions.find((s) => s.id === subscriptionId);
 
-    if (!subscription?.subscriptionOfferDetails?.length) {
+    if (!subscription?.subscriptionOfferDetailsAndroid?.length) {
       throw new Error('No subscription offers available');
     }
 
     // Use the first available offer (or let user choose)
-    const firstOffer = subscription.subscriptionOfferDetails[0];
+    const firstOffer = subscription.subscriptionOfferDetailsAndroid[0];
 
     await requestPurchase({
       request: {
-        skus: [subscriptionId],
-        subscriptionOffers: [
-          {
-            sku: subscriptionId,
-            offerToken: firstOffer.offerToken, // Required!
-          },
-        ],
+        google: {
+          skus: [subscriptionId],
+          subscriptionOffers: [
+            {
+              sku: subscriptionId,
+              offerToken: firstOffer.offerToken, // Required!
+            },
+          ],
+        },
       },
       type: 'subs',
     });
@@ -393,7 +407,7 @@ const buySubscription = async (subscriptionId: string) => {
 
 - Each subscription SKU must have a corresponding offerToken
 - The number of SKUs must match the number of offerTokens
-- offerToken comes from `subscriptionOfferDetails` in the product details
+- offerToken comes from `subscriptionOfferDetailsAndroid` in the product details
 - Without offerToken, you'll get: "The number of skus must match the number of offerTokens"
 
 ## Purchase Verification
@@ -523,9 +537,9 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
 
   if (Platform.OS === 'ios') {
     // iOS: Check expiration date
-    if (purchase.expirationDateIos) {
-      // expirationDateIos is in milliseconds
-      return purchase.expirationDateIos > currentTime;
+    if (purchase.expirationDateIOS) {
+      // expirationDateIOS is in milliseconds
+      return purchase.expirationDateIOS > currentTime;
     }
 
     // For Sandbox environment, consider recent purchases as active
@@ -542,8 +556,8 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
       return purchase.autoRenewingAndroid;
     }
 
-    // Check purchase state (0 = purchased, 1 = canceled)
-    if (purchase.purchaseStateAndroid === 0) {
+    // Check purchase state
+    if (purchase.purchaseState === 'purchased') {
       return true;
     }
   }
@@ -554,7 +568,7 @@ const isSubscriptionActive = (purchase: Purchase): boolean => {
 
 **Key Properties for Subscription Status:**
 
-- **iOS**: `expirationDateIos` - Unix timestamp when subscription expires
+- **iOS**: `expirationDateIOS` - Unix timestamp when subscription expires
 - **Android**: `autoRenewingAndroid` - Boolean indicating if subscription will renew
 
 #### Managing Subscriptions

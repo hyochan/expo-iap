@@ -91,7 +91,9 @@ const AndroidProductItem = ({product}: {product: Product}) => {
   const handlePurchase = () => {
     if (product.platform === 'android') {
       requestPurchase({
-        request: {skus: [product.id]},
+        request: {
+          google: {skus: [product.id]},
+        },
         type: 'in-app',
       });
     }
@@ -142,7 +144,7 @@ const AndroidSubscriptionItem = ({
   return (
     <View>
       <Text>{subscription.title}</Text>
-      {subscription.subscriptionOfferDetails?.map((offer) => (
+      {subscription.subscriptionOfferDetailsAndroid?.map((offer) => (
         <TouchableOpacity
           key={offer.offerId}
           onPress={() => handleSubscribe(offer)}
