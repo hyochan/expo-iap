@@ -277,7 +277,7 @@ class ExpoIapModule : Module() {
                                 request =
                                     RequestPurchaseProps.Request.Subscription(
                                         RequestSubscriptionPropsByPlatforms(android = android),
-                                    ),
+                                ),
                                 type = ProductQueryType.Subs,
                             )
                         }
