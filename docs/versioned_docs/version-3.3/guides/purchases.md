@@ -268,7 +268,7 @@ const getProductPrice = (productId: string): string => {
     // Android
     const androidProduct = product as ProductAndroid;
     return (
-      androidProduct.oneTimePurchaseOfferDetails?.formattedPrice || '₩1,200'
+      androidProduct.oneTimePurchaseOfferDetailsAndroid?.[0]?.formattedPrice || '₩1,200'
     );
   }
 };
@@ -287,8 +287,8 @@ const getSubscriptionPrice = (subscriptionId: string): string => {
   } else {
     // Android
     const androidSubscription = subscription as ProductAndroid;
-    if (androidSubscription.subscriptionOfferDetails?.length > 0) {
-      const firstOffer = androidSubscription.subscriptionOfferDetails[0];
+    if (androidSubscription.subscriptionOfferDetailsAndroid?.length) {
+      const firstOffer = androidSubscription.subscriptionOfferDetailsAndroid[0];
       if (firstOffer.pricingPhases.pricingPhaseList.length > 0) {
         return (
           firstOffer.pricingPhases.pricingPhaseList[0].formattedPrice ||
