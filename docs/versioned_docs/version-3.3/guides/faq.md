@@ -258,7 +258,7 @@ const handlePurchaseError = (error) => {
 
 ### I sometimes see both a success and an error for one subscription purchase
 
-This can briefly happen due to StoreKit 2 event ordering and native background work. If you've already received a success and processed it, you can safely ignore a transient error that arrives shortly afterwards.
+This can briefly happen due to StoreKit 2 event ordering and native background work. If you've already received a success and processed it, you can safely ignore a transient error that arrives shortly afterward.
 
 Tip (dedupe in app logic):
 
@@ -286,7 +286,7 @@ const {finishTransaction} = useIAP({
 Because of this timing model, all request\* APIs (e.g., `requestPurchase`) are event-driven, not promise-based:
 
 - `requestPurchase()` does not resolve with a result. It triggers the native flow and you must handle outcomes via `onPurchaseSuccess`/`onPurchaseError` (when using `useIAP`) or `purchaseUpdatedListener`/`purchaseErrorListener`.
-- Avoid relying on `await requestPurchase(...)` for the final outcome; multiple events and inter-session completions are possible.
+- Avoid relying on `await requestPurchase(...)` for the outcome; multiple events and inter-session completions are possible.
 - This design ensures your app remains robust when the store delivers updates after app restarts or in edge timing cases.
 
 ### How do I handle network errors during purchases?
@@ -545,7 +545,7 @@ const purchaseListener = purchaseUpdatedListener(async (purchase) => {
 
 - `Property 'appTransactionID' doesn't exist`
 - `Cannot find member 'appTransactionID' in AppTransaction`
-- `Property 'unit' is inaccessible due to 'internal' protection level` (yoga related)
+- `Property 'unit' is inaccessible due to 'internal' protection level` (yoga-related)
 
 **Root Cause:** The `appTransactionID` field was introduced in iOS 18.4+ SDK. This error occurs when:
 

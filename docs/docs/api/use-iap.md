@@ -371,7 +371,7 @@ const buySubscriptionWithOffer = async (
     try {
       // Updates `availablePurchases` state; do not expect a return value
       await getAvailablePurchases();
-      // Read from state afterwards
+      // Read from state afterward
       console.log('Available purchases count:', availablePurchases.length);
     } catch (error) {
       console.error('Failed to fetch available purchases:', error);
