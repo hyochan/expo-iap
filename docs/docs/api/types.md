@@ -24,12 +24,14 @@ export type IapStore = 'unknown' | 'apple' | 'google' | 'horizon';
 export type ProductType = 'in-app' | 'subs';
 
 export type PurchaseState =
-  | 'deferred'
-  | 'failed'
   | 'pending'
   | 'purchased'
-  | 'restored'
   | 'unknown';
+
+// Note: 'failed', 'restored', and 'deferred' were removed in v3.4.0
+// - Failed: Both platforms return errors instead of Purchase objects on failure
+// - Restored: Restored purchases return as 'purchased' state
+// - Deferred: iOS StoreKit 2 has no transaction state; Android uses 'pending'
 ```
 
 The `ErrorCode` enum now mirrors the OpenIAP schema without the legacy `E_` prefix:
@@ -214,7 +216,13 @@ New types for the Google Play Billing Programs API:
 
 ```ts
 // Billing program types
-type BillingProgramAndroid = 'unspecified' | 'external-content-link' | 'external-offer';
+// USER_CHOICE_BILLING added in v3.4.0 (available in Google Play Billing 7.0+)
+type BillingProgramAndroid =
+  | 'unspecified'
+  | 'external-content-link'
+  | 'external-offer'
+  | 'external-payments'
+  | 'user-choice-billing';
 
 // Launch mode for external links
 type ExternalLinkLaunchModeAndroid =

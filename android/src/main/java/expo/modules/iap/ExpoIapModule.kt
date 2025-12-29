@@ -639,6 +639,7 @@ class ExpoIapModule : Module() {
             "external-offer" -> OpenIapBillingProgram.ExternalOffer
             "external-content-link" -> OpenIapBillingProgram.ExternalContentLink
             "external-payments" -> OpenIapBillingProgram.ExternalPayments
+            "user-choice-billing" -> OpenIapBillingProgram.UserChoiceBilling
             else -> OpenIapBillingProgram.Unspecified
         }
 

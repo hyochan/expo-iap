@@ -470,16 +470,24 @@ const {connected} = useIAP({
 });
 ```
 
-Or use the root API:
+Or use the root API (new recommended way):
 
 ```typescript
-import {initConnection, type AlternativeBillingModeAndroid} from 'expo-iap';
+import {initConnection, type BillingProgramAndroid} from 'expo-iap';
 
+// Migration Guide (v3.4.0+):
+// - 'user-choice' → 'user-choice-billing'
+// - 'alternative-only' → 'external-offer'
 await initConnection({
-  alternativeBillingModeAndroid:
-    'alternative-only' as AlternativeBillingModeAndroid,
+  enableBillingProgramAndroid: 'external-offer' as BillingProgramAndroid,
 });
 ```
+
+:::warning Deprecated API
+The `alternativeBillingModeAndroid` config is deprecated. Use `enableBillingProgramAndroid` instead:
+- `alternativeBillingModeAndroid: 'user-choice'` → `enableBillingProgramAndroid: 'user-choice-billing'`
+- `alternativeBillingModeAndroid: 'alternative-only'` → `enableBillingProgramAndroid: 'external-offer'`
+:::
 
 For External Payments:
 
@@ -498,19 +506,19 @@ import {Platform, Alert} from 'react-native';
 import {
   useIAP,
   requestPurchase,
-  checkAlternativeBillingAvailabilityAndroid,
-  showAlternativeBillingDialogAndroid,
-  createAlternativeBillingTokenAndroid,
-  type AlternativeBillingModeAndroid,
+  isBillingProgramAvailableAndroid,
+  createBillingProgramReportingDetailsAndroid,
+  type BillingProgramAndroid,
 } from 'expo-iap';
 
 function AlternativeBillingComponent() {
-  const [billingMode, setBillingMode] =
-    useState<AlternativeBillingModeAndroid>('alternative-only');
+  const [billingProgram, setBillingProgram] =
+    useState<BillingProgramAndroid>('external-offer');
 
   const {connected, products, fetchProducts} = useIAP({
-    alternativeBillingModeAndroid:
-      Platform.OS === 'android' ? billingMode : undefined,
+    // Use new enableBillingProgramAndroid config (v3.4.0+)
+    enableBillingProgramAndroid:
+      Platform.OS === 'android' ? billingProgram : undefined,
     onPurchaseSuccess: (purchase) => {
       console.log('Purchase successful:', purchase);
     },

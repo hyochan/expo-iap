@@ -39,6 +39,9 @@ export interface ActiveSubscription {
 /**
  * Alternative billing mode for Android
  * Controls which billing system is used
+ * @deprecated Use BillingProgramAndroid with enableBillingProgramAndroid config instead.
+ * - 'user-choice' → 'user-choice-billing'
+ * - 'alternative-only' → 'external-offer'
  */
 export type AlternativeBillingModeAndroid = 'none' | 'user-choice' | 'alternative-only';
 
@@ -68,8 +71,9 @@ export interface AppTransaction {
 /**
  * Billing program types for external content links, external offers, and external payments (Android)
  * Available in Google Play Billing Library 8.2.0+, EXTERNAL_PAYMENTS added in 8.3.0
+ * USER_CHOICE_BILLING added in 7.0+
  */
-export type BillingProgramAndroid = 'unspecified' | 'external-content-link' | 'external-offer' | 'external-payments';
+export type BillingProgramAndroid = 'unspecified' | 'external-content-link' | 'external-offer' | 'external-payments' | 'user-choice-billing';
 
 /**
  * Result of checking billing program availability (Android)
@@ -329,12 +333,16 @@ export interface InitConnectionConfig {
   /**
    * Alternative billing mode for Android
    * If not specified, defaults to NONE (standard Google Play billing)
+   * @deprecated Use enableBillingProgramAndroid instead.
+   * - 'user-choice' → enableBillingProgramAndroid: 'user-choice-billing'
+   * - 'alternative-only' → enableBillingProgramAndroid: 'external-offer'
    */
   alternativeBillingModeAndroid?: (AlternativeBillingModeAndroid | null);
   /**
    * Enable a specific billing program for Android (8.2.0+)
    * When set, enables the specified billing program for external transactions.
    * Use 'external-payments' for Developer Provided Billing (Japan only, 8.3.0+).
+   * Use 'user-choice-billing' for User Choice Billing (7.0+).
    */
   enableBillingProgramAndroid?: (BillingProgramAndroid | null);
 }
@@ -829,7 +837,7 @@ export interface PurchaseOptions {
   onlyIncludeActiveItemsIOS?: (boolean | null);
 }
 
-export type PurchaseState = 'pending' | 'purchased' | 'failed' | 'restored' | 'deferred' | 'unknown';
+export type PurchaseState = 'pending' | 'purchased' | 'unknown';
 
 export type PurchaseVerificationProvider = 'iapkit';
 
