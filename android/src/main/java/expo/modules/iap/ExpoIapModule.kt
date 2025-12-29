@@ -277,7 +277,7 @@ class ExpoIapModule : Module() {
                                 request =
                                     RequestPurchaseProps.Request.Subscription(
                                         RequestSubscriptionPropsByPlatforms(android = android),
-                                ),
+                                    ),
                                 type = ProductQueryType.Subs,
                             )
                         }
@@ -388,6 +388,7 @@ class ExpoIapModule : Module() {
                 }
             }
 
+            @Suppress("DEPRECATION")
             AsyncFunction("checkAlternativeBillingAvailabilityAndroid") { promise: Promise ->
                 ExpoIapLog.payload("checkAlternativeBillingAvailabilityAndroid", null)
                 scope.launch {
@@ -402,6 +403,7 @@ class ExpoIapModule : Module() {
                 }
             }
 
+            @Suppress("DEPRECATION")
             AsyncFunction("showAlternativeBillingDialogAndroid") { promise: Promise ->
                 ExpoIapLog.payload("showAlternativeBillingDialogAndroid", null)
                 scope.launch {
@@ -425,6 +427,7 @@ class ExpoIapModule : Module() {
                 }
             }
 
+            @Suppress("DEPRECATION")
             AsyncFunction("createAlternativeBillingTokenAndroid") { sku: String?, promise: Promise ->
                 ExpoIapLog.payload("createAlternativeBillingTokenAndroid", mapOf("sku" to sku))
                 scope.launch {
@@ -441,6 +444,7 @@ class ExpoIapModule : Module() {
                 }
             }
 
+            @Suppress("UNCHECKED_CAST")
             AsyncFunction("verifyPurchase") { params: Map<String, Any?>, promise: Promise ->
                 ExpoIapLog.payload("verifyPurchase", params)
                 scope.launch {
