@@ -5,6 +5,7 @@ sidebar_position: 1
 ---
 
 import IapKitBanner from "@site/src/uis/IapKitBanner";
+import IapKitLink from "@site/src/uis/IapKitLink";
 
 # Purchase Flow
 
@@ -142,11 +143,11 @@ You can customize this example by:
 
 ## IAPKit Server Verification
 
-[IAPKit](https://iapkit.com) is a server-side receipt verification service that simplifies purchase validation. The example app includes built-in support for IAPKit verification.
+<IapKitLink>IAPKit</IapKitLink> is a server-side receipt verification service that simplifies purchase validation. The example app includes built-in support for IAPKit verification.
 
 ### Setup
 
-1. **Get your API key** from [IAPKit Dashboard](https://iapkit.com)
+1. **Get your API key** from <IapKitLink>IAPKit Dashboard</IapKitLink>
 
 2. **Configure environment variable** in your project:
 
@@ -272,7 +273,7 @@ The example app supports three verification methods:
 - **Webhook support**: Real-time purchase notifications
 - **Dashboard**: Monitor purchases and analytics
 
-For more information, visit [IAPKit Documentation](https://iapkit.com/docs).
+For more information, visit <IapKitLink path="/docs">IAPKit Documentation</IapKitLink>.
 
 ## Next Steps
 

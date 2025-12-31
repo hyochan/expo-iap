@@ -1,7 +1,7 @@
 import React from 'react';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-const TRACKING_URL = 'https://www.hyo.dev/api/ad-banner/cmjf0l1830000249hfa3h249z';
+import {IAPKIT_URL, TRACKING_URL} from '../constants';
 
 interface IapKitBannerProps {
   title?: string;
@@ -25,7 +25,7 @@ export default function IapKitBanner({title}: IapKitBannerProps) {
       }}
     >
       <a
-        href="https://iapkit.com"
+        href={IAPKIT_URL}
         target="_blank"
         rel="noopener noreferrer"
         onClick={handleClick}
@@ -42,7 +42,7 @@ export default function IapKitBanner({title}: IapKitBannerProps) {
       </a>
       {title ? (
         <a
-          href="https://iapkit.com"
+          href={IAPKIT_URL}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleClick}

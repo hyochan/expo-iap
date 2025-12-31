@@ -7,6 +7,7 @@ sidebar_position: 2
 <!-- This document was renamed from subscription-manager.md to subscription-flow.md -->
 
 import IapKitBanner from "@site/src/uis/IapKitBanner";
+import IapKitLink from "@site/src/uis/IapKitLink";
 
 # Subscriptions Flow
 
@@ -697,11 +698,11 @@ See [example/app/subscription-flow.tsx](https://github.com/hyochan/expo-iap/blob
 
 ## IAPKit Server Verification
 
-[IAPKit](https://iapkit.com) provides server-side receipt verification for subscriptions. The example app includes built-in support for IAPKit verification.
+<IapKitLink>IAPKit</IapKitLink> provides server-side receipt verification for subscriptions. The example app includes built-in support for IAPKit verification.
 
 ### Setup
 
-1. **Get your API key** from [IAPKit Dashboard](https://iapkit.com)
+1. **Get your API key** from <IapKitLink>IAPKit Dashboard</IapKitLink>
 
 2. **Configure your API key** via the expo-iap config plugin:
 
@@ -847,4 +848,4 @@ The example app supports three verification methods:
 - **Fraud prevention**: Server-side validation prevents tampering
 - **Webhook notifications**: Get notified of subscription changes
 
-For more information, visit [IAPKit Documentation](https://iapkit.com/docs).
+For more information, visit <IapKitLink path="/docs">IAPKit Documentation</IapKitLink>.

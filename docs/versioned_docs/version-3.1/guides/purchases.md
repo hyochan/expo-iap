@@ -5,6 +5,7 @@ sidebar_position: 2
 ---
 
 import IapKitBanner from "@site/src/uis/IapKitBanner";
+import IapKitLink from "@site/src/uis/IapKitLink";
 
 # Purchases
 
@@ -500,7 +501,7 @@ const handlePurchaseVerification = useCallback(
 
 ### Server-Side Verification with IAPKit
 
-[IAPKit](https://iapkit.com) provides a unified server-side verification API for both iOS and Android:
+<IapKitLink>IAPKit</IapKitLink> provides a unified server-side verification API for both iOS and Android:
 
 ```tsx
 import {verifyPurchaseWithProvider} from 'expo-iap';

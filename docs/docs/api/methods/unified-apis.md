@@ -4,6 +4,8 @@ sidebar_label: Unified APIs
 sidebar_position: 2
 ---
 
+import IapKitLink from "@site/src/uis/IapKitLink";
+
 # Unified APIs
 
 These cross‑platform methods work on both iOS and Android. For StoreKit/Play‑specific helpers, see the [iOS Specific](./ios-specific) and [Android Specific](./android-specific) sections.
@@ -511,7 +513,7 @@ For external verification services with additional security, use [`verifyPurchas
 
 ## verifyPurchaseWithProvider()
 
-Verifies a purchase using an external verification provider. Currently supports [IAPKit](https://iapkit.com) for server-side purchase validation.
+Verifies a purchase using an external verification provider. Currently supports <IapKitLink>IAPKit</IapKitLink> for server-side purchase validation.
 
 ### Verification Basic Usage {#verification-basic-usage}
 
@@ -673,7 +675,7 @@ For error handling patterns, purchase states, and best practices when using `ver
 
 **See also:**
 
-- [IAPKit](https://iapkit.com)
+- <IapKitLink>IAPKit</IapKitLink>
 - [IAPKit Purchase States](https://www.openiap.dev/docs/apis#iapkit-purchase-states)
 - [Error Codes Reference](../error-codes)
 

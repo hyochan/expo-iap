@@ -5,6 +5,7 @@ sidebar_position: 6
 ---
 
 import IapKitBanner from "@site/src/uis/IapKitBanner";
+import IapKitLink from "@site/src/uis/IapKitLink";
 
 # Frequently Asked Questions
 
@@ -296,6 +297,57 @@ Network errors during purchases are tricky because the purchase might still go t
 1. Don't retry the purchase immediately
 2. Check for pending purchases on app restart
 3. Implement proper error messaging for users
+
+## Subscription Renewals
+
+### Are subscription renewals automatically detected when my app launches?
+
+**iOS**: Yes. Renewed subscriptions automatically appear in StoreKit 2's `Transaction.currentEntitlements`. When you call `getAvailablePurchases()` or `getActiveSubscriptions()`, renewed subscriptions will be included.
+
+**Android**: No. The `purchaseUpdatedListener` does **not** fire for renewals that occurred while the app was closed. You must proactively check subscription status on app launch.
+
+### How do I reliably detect subscription renewals on Android?
+
+Since Android's purchase listener doesn't fire for background renewals, you need to:
+
+1. **Call `getAvailablePurchases()` on app launch** to get current subscription state
+2. **Verify with IAPKit** using `verifyPurchaseWithProvider()` for authoritative status
+3. **Re-check when app returns to foreground** using `AppState` listener
+
+```tsx
+import {useEffect} from 'react';
+import {AppState} from 'react-native';
+import {useIAP} from 'expo-iap';
+
+function useSubscriptionCheck() {
+  const {getAvailablePurchases, verifyPurchaseWithProvider} = useIAP();
+
+  const checkStatus = async () => {
+    await getAvailablePurchases();
+    // Then verify with IAPKit for authoritative status
+  };
+
+  useEffect(() => {
+    checkStatus(); // Check on mount
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') checkStatus(); // Re-check on foreground
+    });
+    return () => sub?.remove();
+  }, []);
+}
+```
+
+### What's the recommended approach for subscription status checking?
+
+Use <IapKitLink>IAPKit</IapKitLink> with `verifyPurchaseWithProvider()` for server-side verification. The response includes a `state` field:
+
+- `entitled` - User has an active subscription (grant access)
+- `expired` - Subscription expired (remove access)
+- `canceled` - User cancelled but may still have access until period ends
+- `pending` - Payment pending (show pending UI)
+
+See the [Subscription Renewal Detection](/docs/guides/subscription-validation#subscription-renewal-detection) guide for complete implementation details.
 
 ## Testing
 

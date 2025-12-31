@@ -4,6 +4,8 @@ sidebar_label: Unified APIs
 sidebar_position: 2
 ---
 
+import IapKitLink from "@site/src/uis/IapKitLink";
+
 # Unified APIs
 
 These cross‑platform methods work on both iOS and Android. For StoreKit/Play‑specific helpers, see the [iOS Specific](./ios-specific) and [Android Specific](./android-specific) sections.
@@ -456,7 +458,7 @@ const checkIfUserHasSubscription = async () => {
 
 ## verifyPurchaseWithProvider()
 
-Verifies a purchase using an external verification provider. Currently supports [IAPKit](https://iapkit.com) for server-side purchase validation.
+Verifies a purchase using an external verification provider. Currently supports <IapKitLink>IAPKit</IapKitLink> for server-side purchase validation.
 
 ### Basic Usage
 
@@ -553,7 +555,7 @@ function PurchaseScreen() {
 - `options` (object):
   - `provider` ('iapkit'): The verification provider to use
   - `iapkit` (object): IAPKit-specific configuration
-    - `apiKey` (string): Your IAPKit API key from [iapkit.com](https://iapkit.com)
+    - `apiKey` (string): Your IAPKit API key from <IapKitLink>iapkit.com</IapKitLink>
     - `apple` (object): iOS verification data
       - `jws` (string): The JWS token from the purchase (available as `purchase.purchaseToken` on iOS)
     - `google` (object): Android verification data
@@ -600,7 +602,7 @@ type IapkitPurchaseState =
 
 **See also:**
 
-- [IAPKit](https://iapkit.com)
+- <IapKitLink>IAPKit</IapKitLink>
 - [OpenIAP Verification API](https://www.openiap.dev/docs/apis#verify-purchase-with-provider)
 
 ## Purchase Interface

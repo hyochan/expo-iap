@@ -6,6 +6,7 @@ description: Understand how React Native IAP surfaces StoreKit 2 subscription da
 ---
 
 import IapKitBanner from "@site/src/uis/IapKitBanner";
+import IapKitLink from "@site/src/uis/IapKitLink";
 
 <IapKitBanner />
 
@@ -129,9 +130,9 @@ onPurchaseSuccess: async (purchase) => {
 }
 ```
 
-**2. <a href="https://iapkit.com" target="_blank" rel="noopener noreferrer" onClick={() => fetch('https://www.hyo.dev/api/ad-banner', {method: 'POST'}).catch(() => {})}>IAPKit</a> Backend Validation (Recommended)**
+**2. <IapKitLink>IAPKit</IapKitLink> Backend Validation (Recommended)**
 
-Use [`verifyPurchaseWithProvider`](../api/methods/unified-apis.md#verifypurchasewithprovider) with <a href="https://iapkit.com" target="_blank" rel="noopener noreferrer" onClick={() => fetch('https://www.hyo.dev/api/ad-banner', {method: 'POST'}).catch(() => {})}>IAPKit</a> to get accurate `basePlanId` from Google Play Developer API:
+Use [`verifyPurchaseWithProvider`](../api/methods/unified-apis.md#verifypurchasewithprovider) with <IapKitLink>IAPKit</IapKitLink> to get accurate `basePlanId` from Google Play Developer API:
 
 ```ts
 import {verifyPurchaseWithProvider} from 'expo-iap';

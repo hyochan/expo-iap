@@ -6,6 +6,7 @@ description: Understand how React Native IAP surfaces StoreKit 2 subscription da
 ---
 
 import IapKitBanner from "@site/src/uis/IapKitBanner";
+import IapKitLink from "@site/src/uis/IapKitLink";
 
 <IapKitBanner />
 
@@ -129,9 +130,9 @@ onPurchaseSuccess: async (purchase) => {
 }
 ```
 
-**2. <a href="https://iapkit.com" target="_blank" rel="noopener noreferrer" onClick={() => fetch('https://www.hyo.dev/api/ad-banner', {method: 'POST'}).catch(() => {})}>IAPKit</a> Backend Validation (Recommended)**
+**2. <IapKitLink>IAPKit</IapKitLink> Backend Validation (Recommended)**
 
-Use [`verifyPurchaseWithProvider`](../api/methods/unified-apis.md#verifypurchasewithprovider) with <a href="https://iapkit.com" target="_blank" rel="noopener noreferrer" onClick={() => fetch('https://www.hyo.dev/api/ad-banner', {method: 'POST'}).catch(() => {})}>IAPKit</a> to get accurate `basePlanId` from Google Play Developer API:
+Use [`verifyPurchaseWithProvider`](../api/methods/unified-apis.md#verifypurchasewithprovider) with <IapKitLink>IAPKit</IapKitLink> to get accurate `basePlanId` from Google Play Developer API:
 
 ```ts
 import {verifyPurchaseWithProvider} from 'expo-iap';
@@ -300,6 +301,148 @@ We recommend the following layering:
 1. Use `subscriptionStatusIOS` for fast, on-device checks when UI needs to react immediately.
 2. Periodically upload receipts (via [`getReceiptDataIOS`](../api/methods/core-methods.md#getreceiptdataios)) to your backend for authoritative validation and entitlement provisioning.
 3. Recalculate client caches (`getAvailablePurchases`) after server reconciliation to ensure consistency across devices.
+
+## Subscription renewal detection
+
+Subscription renewals happen automatically when a user's subscription period ends and they haven't cancelled. Detecting these renewals differs significantly between platforms.
+
+### Platform differences
+
+| Aspect | iOS (StoreKit 2) | Android (Google Play Billing) |
+| --- | --- | --- |
+| **Auto-detection on launch** | ✅ Renewed subscriptions automatically appear in `Transaction.currentEntitlements` | ❌ `purchaseUpdatedListener` does NOT fire for renewals that occurred while app was closed |
+| **Listener behavior** | Renewals trigger transaction updates if app is running | Listener only fires for purchases made during active session |
+| **Recommended approach** | Use `getAvailablePurchases()` or `subscriptionStatusIOS` | Always call `getAvailablePurchases()` on app launch + verify with backend |
+
+### The Android renewal detection problem
+
+On Android, the `purchaseUpdatedListener` is designed to handle real-time purchase events during an active session. When a subscription renews while the app is closed (the typical case), this listener **will not fire** when the app reopens.
+
+This means:
+- You cannot rely solely on `purchaseUpdatedListener` for subscription status
+- You **must** check subscription status proactively on app launch
+- Server-side verification provides the authoritative source of truth
+
+### Recommended: IAPKit server-side verification
+
+<IapKitLink>IAPKit</IapKitLink> provides reliable subscription status checking through the `verifyPurchaseWithProvider` API. The response includes a `state` field that indicates the current subscription status:
+
+| State | Description | Action |
+| --- | --- | --- |
+| `entitled` | User has an active, valid subscription | Grant access |
+| `expired` | Subscription has expired and not renewed | Remove access |
+| `canceled` | User cancelled but may still have access until period ends | Check expiration date |
+| `pending` | Payment is pending (e.g., awaiting parental approval) | Show pending UI |
+| `pending-acknowledgment` | Purchase needs acknowledgment (Android) | Call `finishTransaction` |
+| `inauthentic` | Purchase could not be verified / fraudulent | Deny access |
+
+### Checking subscription status on app launch
+
+Always verify subscription status when your app launches or returns to foreground:
+
+```tsx
+import {useEffect, useCallback} from 'react';
+import {AppState, AppStateStatus} from 'react-native';
+import {useIAP} from 'expo-iap';
+
+function useSubscriptionStatus(subscriptionIds: string[]) {
+  const {
+    getAvailablePurchases,
+    verifyPurchaseWithProvider,
+    availablePurchases,
+  } = useIAP();
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const checkSubscriptionStatus = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Step 1: Get available purchases from the store
+      await getAvailablePurchases();
+
+      // Step 2: Find subscription purchases
+      const subscriptionPurchase = availablePurchases.find((p) =>
+        subscriptionIds.includes(p.productId),
+      );
+
+      if (!subscriptionPurchase?.purchaseToken) {
+        setIsSubscribed(false);
+        return;
+      }
+
+      // Step 3: Verify with IAPKit for authoritative status
+      const result = await verifyPurchaseWithProvider({
+        provider: 'iapkit',
+        iapkit: {
+          apple: {jws: subscriptionPurchase.purchaseToken},
+          google: {purchaseToken: subscriptionPurchase.purchaseToken},
+        },
+      });
+
+      // Step 4: Check the subscription state
+      const verification = result.iapkit;
+      const isEntitled = verification?.state === 'entitled';
+      setIsSubscribed(isEntitled);
+    } catch (error) {
+      console.error('Failed to check subscription:', error);
+      setIsSubscribed(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getAvailablePurchases, verifyPurchaseWithProvider, subscriptionIds]);
+
+  // Check on mount
+  useEffect(() => {
+    checkSubscriptionStatus();
+  }, [checkSubscriptionStatus]);
+
+  // Re-check when app returns to foreground
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        checkSubscriptionStatus();
+      }
+    };
+
+    const subscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
+    return () => subscription?.remove();
+  }, [checkSubscriptionStatus]);
+
+  return {isSubscribed, isLoading, refresh: checkSubscriptionStatus};
+}
+```
+
+### Usage example
+
+```tsx
+function PremiumContent() {
+  const {isSubscribed, isLoading} = useSubscriptionStatus([
+    'premium_monthly',
+    'premium_yearly',
+  ]);
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!isSubscribed) {
+    return <SubscriptionPaywall />;
+  }
+
+  return <PremiumFeatures />;
+}
+```
+
+### Best practices
+
+1. **Always check on launch**: Don't rely solely on cached subscription state
+2. **Use server-side verification**: <IapKitLink>IAPKit</IapKitLink> provides authoritative subscription status
+3. **Re-check on foreground**: Subscriptions may have renewed or expired while the app was backgrounded
+4. **Handle edge cases**: Grace periods, billing retry, and pending payments
+5. **Cache carefully**: Store verification timestamps and refresh periodically
 
 ## Putting everything together
 

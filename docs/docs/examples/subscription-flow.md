@@ -7,6 +7,7 @@ sidebar_position: 2
 <!-- This document was renamed from subscription-manager.md to subscription-flow.md -->
 
 import IapKitBanner from "@site/src/uis/IapKitBanner";
+import IapKitLink from "@site/src/uis/IapKitLink";
 
 # Subscriptions Flow
 
@@ -697,11 +698,11 @@ See [example/app/subscription-flow.tsx](https://github.com/hyochan/expo-iap/blob
 
 ## IAPKit Server Verification
 
-[IAPKit](https://iapkit.com) provides server-side receipt verification for subscriptions. The example app includes built-in support for IAPKit verification.
+<IapKitLink>IAPKit</IapKitLink> provides server-side receipt verification for subscriptions. The example app includes built-in support for IAPKit verification.
 
 ### Setup
 
-1. **Get your API key** from [IAPKit Dashboard](https://iapkit.com)
+1. **Get your API key** from <IapKitLink>IAPKit Dashboard</IapKitLink>
 
 2. **Configure your API key** via the expo-iap config plugin:
 
@@ -828,6 +829,93 @@ IAPKit provides detailed subscription state information:
 | `in_billing_retry` | Payment failed, retrying                 |
 | `revoked`          | Subscription was refunded/revoked        |
 
+### Checking Subscription Status on App Launch
+
+Since Android's `purchaseUpdatedListener` doesn't fire for renewals that occurred while the app was closed, always check subscription status on launch:
+
+```tsx
+import {useEffect, useState, useCallback} from 'react';
+import {AppState, AppStateStatus} from 'react-native';
+import {useIAP} from 'expo-iap';
+
+const SUBSCRIPTION_IDS = ['premium_monthly', 'premium_yearly'];
+
+function useSubscriptionStatus() {
+  const {getAvailablePurchases, verifyPurchaseWithProvider, availablePurchases} =
+    useIAP();
+  const [subscriptionState, setSubscriptionState] = useState<{
+    isEntitled: boolean;
+    state: string | null;
+    isLoading: boolean;
+  }>({isEntitled: false, state: null, isLoading: true});
+
+  const checkStatus = useCallback(async () => {
+    setSubscriptionState((prev) => ({...prev, isLoading: true}));
+
+    try {
+      // Step 1: Get purchases from store
+      await getAvailablePurchases();
+
+      // Step 2: Find subscription
+      const subscription = availablePurchases.find((p) =>
+        SUBSCRIPTION_IDS.includes(p.productId),
+      );
+
+      if (!subscription?.purchaseToken) {
+        setSubscriptionState({isEntitled: false, state: 'none', isLoading: false});
+        return;
+      }
+
+      // Step 3: Verify with IAPKit
+      const result = await verifyPurchaseWithProvider({
+        provider: 'iapkit',
+        iapkit: {
+          apple: {jws: subscription.purchaseToken},
+          google: {purchaseToken: subscription.purchaseToken},
+        },
+      });
+
+      const verification = result.iapkit;
+      setSubscriptionState({
+        isEntitled: verification?.state === 'entitled',
+        state: verification?.state ?? 'unknown',
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error('Status check failed:', error);
+      setSubscriptionState({isEntitled: false, state: 'error', isLoading: false});
+    }
+  }, [getAvailablePurchases, verifyPurchaseWithProvider, availablePurchases]);
+
+  // Check on mount and when app returns to foreground
+  useEffect(() => {
+    checkStatus();
+
+    const handleAppState = (state: AppStateStatus) => {
+      if (state === 'active') checkStatus();
+    };
+
+    const sub = AppState.addEventListener('change', handleAppState);
+    return () => sub?.remove();
+  }, [checkStatus]);
+
+  return {...subscriptionState, refresh: checkStatus};
+}
+```
+
+### IAPKit Purchase States Reference
+
+| State | `isValid` | Description | Recommended Action |
+| --- | --- | --- | --- |
+| `entitled` | `true` | User has an active subscription | Grant full access |
+| `expired` | `false` | Subscription has expired | Show renewal prompt |
+| `canceled` | `true`* | User cancelled but period not ended | Grant access, show retention offer |
+| `pending` | `false` | Payment pending (e.g., parental approval) | Show pending message |
+| `pending-acknowledgment` | `true` | Needs `finishTransaction()` (Android) | Call `finishTransaction()` |
+| `inauthentic` | `false` | Could not verify / fraudulent | Deny access |
+
+\* `canceled` may still return `isValid: true` if the subscription period hasn't ended yet. Always check both `state` and `isValid`.
+
 ### Verification Methods
 
 The example app supports three verification methods:
@@ -847,4 +935,4 @@ The example app supports three verification methods:
 - **Fraud prevention**: Server-side validation prevents tampering
 - **Webhook notifications**: Get notified of subscription changes
 
-For more information, visit [IAPKit Documentation](https://iapkit.com/docs).
+For more information, visit <IapKitLink path="/docs">IAPKit Documentation</IapKitLink>.

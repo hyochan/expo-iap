@@ -5,6 +5,7 @@ sidebar_position: 2
 ---
 
 import IapKitBanner from "@site/src/uis/IapKitBanner";
+import IapKitLink from "@site/src/uis/IapKitLink";
 
 # Purchases
 
@@ -420,7 +421,7 @@ Always validate purchases on a secure server for production apps. Client-side ve
 
 ### Server-Side Verification with IAPKit (Recommended)
 
-[IAPKit](https://iapkit.com) provides a unified server-side verification API for both iOS and Android:
+<IapKitLink>IAPKit</IapKitLink> provides a unified server-side verification API for both iOS and Android:
 
 First, configure your IAPKit API key in the expo-iap config plugin:
 
