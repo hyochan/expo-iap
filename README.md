@@ -32,6 +32,17 @@ If you're shipping an app with expo-iap, we’d love to hear about it—please s
 
 **[📖 Visit our comprehensive documentation site →](https://hyochan.github.io/expo-iap)**
 
+## Using with AI Assistants
+
+expo-iap provides AI-friendly documentation for Cursor, GitHub Copilot, Claude, and ChatGPT.
+
+**[📖 AI Assistants Guide →](https://hyochan.github.io/expo-iap/guides/ai-assistants)**
+
+Quick links:
+
+- [llms.txt](https://hyochan.github.io/expo-iap/llms.txt) - Quick reference
+- [llms-full.txt](https://hyochan.github.io/expo-iap/llms-full.txt) - Full API reference
+
 ## Notice
 
 The `expo-iap` module has been migrated from [react-native-iap](https://github.com/hyochan/react-native-iap). While we initially considered fully merging everything into `react-native-iap`, we ultimately decided to maintain the two libraries in parallel, each tailored to its own ecosystem.
