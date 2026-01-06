@@ -125,10 +125,68 @@ supportLibVersion = "28.0.0"
     }
   }`;
 
+const appBuildGradleWithDependencies = `
+apply plugin: "com.android.application"
+
+android {
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId 'com.test.withIAP'
+        minSdkVersion 21
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "com.facebook.react:react-native"
+}
+`;
+
+const appBuildGradleWithExistingOpeniap = `
+apply plugin: "com.android.application"
+
+android {
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId 'com.test.withIAP'
+        minSdkVersion 21
+    }
+}
+
+dependencies {
+    implementation "io.github.hyochan.openiap:openiap-google:1.3.11"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+}
+`;
+
+const appBuildGradleKotlinDsl = `
+plugins {
+    id("com.android.application")
+}
+
+android {
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.test.withIAP"
+        minSdk = 21
+    }
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+}
+`;
+
 export {
   appBuildGradleWithBothIAP,
   appBuildGradleWithoutIAP,
   appBuildGradleWithPlayStoreIAP,
+  appBuildGradleWithDependencies,
+  appBuildGradleWithExistingOpeniap,
+  appBuildGradleKotlinDsl,
   projectBuildGradleWithIAP,
   projectBuildGradleWithoutIAP,
 };

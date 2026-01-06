@@ -307,13 +307,11 @@ const withIapIOS: ConfigPlugin<IOSPluginOptions | undefined> = (
 
       // Add openiap pod with specific version before the 'end' of the main target
       // Find the main target block and add before its end
-      const targetEndRegex = /(target\s+['"][^'"]+['"]\s+do[\s\S]*?)(^\s*end\s*$)/m;
+      const targetEndRegex =
+        /(target\s+['"][^'"]+['"]\s+do[\s\S]*?)(^\s*end\s*$)/m;
       if (targetEndRegex.test(content)) {
         const podLine = `  pod 'openiap', '${options.openiapVersion}'`;
-        content = content.replace(
-          targetEndRegex,
-          `$1${podLine}\n$2`,
-        );
+        content = content.replace(targetEndRegex, `$1${podLine}\n$2`);
         logOnce(
           `🛠️ expo-iap: Added openiap pod version override (${options.openiapVersion}) to Podfile`,
         );
@@ -485,5 +483,5 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
   }
 };
 
-export {withIosAlternativeBilling, withIap};
+export {withIosAlternativeBilling, withIap, modifyAppBuildGradle};
 export default createRunOncePlugin(withIap, pkg.name, pkg.version);
