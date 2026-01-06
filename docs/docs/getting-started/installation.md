@@ -273,7 +273,7 @@ Now that you have Expo IAP installed, you can:
 
 Expo SDK 53 uses **Kotlin 2.0.21**, but `expo-build-properties` doesn't support Kotlin 2.2.0 override yet. The latest Google Play Billing Library 8.1.0+ requires Kotlin 2.2.0, causing build failures with the error:
 
-```
+```text
 Module was compiled with an incompatible version of Kotlin.
 The binary version of its metadata is 2.2.0, expected version is 2.0.0.
 ```
