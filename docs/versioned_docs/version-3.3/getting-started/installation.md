@@ -182,7 +182,9 @@ The expo-iap config plugin supports the following options:
 | `modules.onside` | `boolean` | Enable Onside module for iOS alternative billing (Korea market). |
 | `modules.horizon` | `boolean` | Enable Horizon module for Meta Quest/VR devices (Android). |
 | `ios.alternativeBilling` | `object` | iOS Alternative Billing configuration for external purchases. |
+| `ios.openiapVersion` | `string` | Custom OpenIAP Apple version override for compatibility. |
 | `android.horizonAppId` | `string` | Meta Horizon App ID for Quest/VR devices. |
+| `android.openiapVersion` | `string` | Custom OpenIAP Google version override for Kotlin compatibility (e.g., `"1.3.11"` for Expo SDK 53). |
 
 ### Using IAPKit API Key
 
@@ -268,6 +270,65 @@ Now that you have Expo IAP installed, you can:
 - [Set up iOS configuration](./setup-ios)
 - [Set up Android configuration](./setup-android)
 - [Learn basic usage](../guides/purchases)
+
+## Expo SDK 53 Users
+
+:::warning Kotlin 2.2.0 Compatibility Issue
+
+Expo SDK 53 uses **Kotlin 2.0.21**, but `expo-build-properties` doesn't support Kotlin 2.2.0 override yet. The latest Google Play Billing Library 8.1.0+ requires Kotlin 2.2.0, causing build failures with the error:
+
+```
+Module was compiled with an incompatible version of Kotlin.
+The binary version of its metadata is 2.2.0, expected version is 2.0.0.
+```
+
+:::
+
+### Workaround: Use OpenIAP Version Override (Not Recommended)
+
+:::caution Not Recommended - Feature Limitations
+
+This workaround downgrades to Google Play Billing Library 8.0.x, which means you will **not have access to features introduced in Billing Library 8.1.0+**. This is a temporary solution due to Expo SDK 53's limited Kotlin version support.
+
+**Missing features in 8.0.x:**
+- New billing features and improvements from 8.1.0+
+- Latest Google Play Billing API enhancements
+
+We recommend upgrading to Expo SDK 54+ when available, which should include native Kotlin 2.2.0 support.
+
+:::
+
+Use the `openiapVersion` option to specify a version compatible with Kotlin 2.0.x:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-iap",
+        {
+          "android": {
+            "openiapVersion": "1.3.11"
+          }
+        }
+      ]
+    ]
+  }
+}
+```
+
+**Version Compatibility:**
+
+| openiap-google | Billing Library | Kotlin Required | Status |
+|----------------|-----------------|-----------------|--------|
+| 1.3.21 (latest) | 8.1.0+ | 2.2.0 | ❌ Not compatible with SDK 53 |
+| 1.3.11 | 8.0.x | 2.0.x | ⚠️ Works with SDK 53 (limited features) |
+
+After configuration, run:
+
+```bash
+npx expo prebuild --clean
+```
 
 ## Expo SDK 52 Users
 

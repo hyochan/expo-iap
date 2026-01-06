@@ -59,6 +59,7 @@ const modifyAppBuildGradle = (
   gradle: string,
   language: 'groovy' | 'kotlin',
   isHorizonEnabled?: boolean,
+  customOpeniapVersion?: string,
 ): string => {
   let modified = gradle;
 
@@ -70,6 +71,9 @@ const modifyAppBuildGradle = (
     ? 'openiap-google-horizon'
     : 'openiap-google';
 
+  // Use custom version if provided, otherwise use default from openiap-versions.json
+  const openiapVersion = customOpeniapVersion || OPENIAP_ANDROID_VERSION;
+
   // Ensure OpenIAP dependency exists at desired version in app-level build.gradle(.kts)
   const impl = (ga: string, v: string) =>
     language === 'kotlin'
@@ -77,7 +81,7 @@ const modifyAppBuildGradle = (
       : `    implementation "${ga}:${v}"`;
   const openiapDep = impl(
     `io.github.hyochan.openiap:${artifactId}`,
-    OPENIAP_ANDROID_VERSION,
+    openiapVersion,
   );
 
   // Remove any existing openiap-google or openiap-google-horizon lines (any version, groovy/kotlin, implementation/api)
@@ -91,15 +95,15 @@ const modifyAppBuildGradle = (
   // Ensure the desired dependency line is present
   if (
     !new RegExp(
-      String.raw`io\.github\.hyochan\.openiap:${artifactId}:${OPENIAP_ANDROID_VERSION}`,
+      String.raw`io\.github\.hyochan\.openiap:${artifactId}:${openiapVersion}`,
     ).test(modified)
   ) {
     // Insert just after the opening `dependencies {` line
     modified = addLineToGradle(modified, /dependencies\s*{/, openiapDep, 1);
     logOnce(
       hadExisting
-        ? `🛠️ expo-iap: Replaced OpenIAP dependency with ${OPENIAP_ANDROID_VERSION}`
-        : `🛠️ expo-iap: Added OpenIAP dependency (${OPENIAP_ANDROID_VERSION}) to build.gradle`,
+        ? `🛠️ expo-iap: Replaced OpenIAP dependency with ${openiapVersion}`
+        : `🛠️ expo-iap: Added OpenIAP dependency (${openiapVersion}) to build.gradle`,
     );
   }
 
@@ -144,6 +148,7 @@ const withIapAndroid: ConfigPlugin<
     addDeps?: boolean;
     horizonAppId?: string;
     isHorizonEnabled?: boolean;
+    openiapVersion?: string;
   } | void
 > = (config, props) => {
   const addDeps = props?.addDeps ?? true;
@@ -156,6 +161,7 @@ const withIapAndroid: ConfigPlugin<
         config.modResults.contents,
         language,
         props?.isHorizonEnabled,
+        props?.openiapVersion,
       );
       return config;
     });
@@ -255,14 +261,19 @@ const withIapAndroid: ConfigPlugin<
   return config;
 };
 
+interface IOSPluginOptions {
+  alternativeBilling?: IOSAlternativeBillingConfig;
+  openiapVersion?: string;
+}
+
 /** Ensure Podfile uses CocoaPods CDN and no stale local OpenIAP entry remains. */
-const withIapIOS: ConfigPlugin<IOSAlternativeBillingConfig | undefined> = (
+const withIapIOS: ConfigPlugin<IOSPluginOptions | undefined> = (
   config,
   options,
 ) => {
   // Add iOS alternative billing configuration if provided
-  if (options) {
-    config = withIosAlternativeBilling(config, options);
+  if (options?.alternativeBilling) {
+    config = withIosAlternativeBilling(config, options.alternativeBilling);
   }
 
   return withPodfile(config, (config) => {
@@ -281,6 +292,32 @@ const withIapIOS: ConfigPlugin<IOSAlternativeBillingConfig | undefined> = (
     if (localPodRegex.test(content)) {
       content = content.replace(localPodRegex, '').replace(/\n{3,}/g, '\n\n');
       logOnce('🧹 expo-iap: Removed local OpenIAP pod from Podfile');
+    }
+
+    // 3) Add custom openiap version override if specified
+    if (options?.openiapVersion) {
+      // Remove any existing openiap pod version override
+      const existingOpeniapRegex =
+        /^\s*pod\s+'openiap'\s*,\s*['"][^'"]+['"][^\n]*$/gm;
+      if (existingOpeniapRegex.test(content)) {
+        content = content
+          .replace(existingOpeniapRegex, '')
+          .replace(/\n{3,}/g, '\n\n');
+      }
+
+      // Add openiap pod with specific version before the 'end' of the main target
+      // Find the main target block and add before its end
+      const targetEndRegex = /(target\s+['"][^'"]+['"]\s+do[\s\S]*?)(^\s*end\s*$)/m;
+      if (targetEndRegex.test(content)) {
+        const podLine = `  pod 'openiap', '${options.openiapVersion}'`;
+        content = content.replace(
+          targetEndRegex,
+          `$1${podLine}\n$2`,
+        );
+        logOnce(
+          `🛠️ expo-iap: Added openiap pod version override (${options.openiapVersion}) to Podfile`,
+        );
+      }
     }
 
     config.modResults.contents = content;
@@ -330,6 +367,13 @@ export interface ExpoIapPluginOptions {
      * Requires approval from Apple.
      */
     alternativeBilling?: IOSAlternativeBillingConfig;
+    /**
+     * Custom OpenIAP Apple version to use.
+     * Use this to override the default version for compatibility.
+     *
+     * @default Uses version from openiap-versions.json
+     */
+    openiapVersion?: string;
   };
   /**
    * Android-specific configuration
@@ -341,6 +385,16 @@ export interface ExpoIapPluginOptions {
      * Required when modules.horizon is true.
      */
     horizonAppId?: string;
+    /**
+     * Custom OpenIAP Google version to use.
+     * Use this to override the default version for compatibility with specific Kotlin versions.
+     *
+     * @example
+     * For Expo SDK 53 (Kotlin 2.0.x), use "1.3.11" which depends on Billing Library 8.0.x
+     *
+     * @default Uses version from openiap-versions.json
+     */
+    openiapVersion?: string;
   };
 }
 
@@ -371,10 +425,12 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
     // Respect explicit flag; fall back to presence of localPath only when flag is unset
     const isLocalDev = options?.enableLocalDev ?? !!options?.localPath;
     // Apply Android modifications (skip adding deps when linking local module)
+    const openiapVersion = options?.android?.openiapVersion;
     let result = withIapAndroid(config, {
       addDeps: !isLocalDev,
       horizonAppId,
       isHorizonEnabled,
+      openiapVersion,
     });
 
     // iOS: choose one path to avoid overlap
@@ -410,7 +466,11 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
       }
     } else {
       // Ensure iOS Podfile is set up to resolve public CocoaPods specs
-      result = withIapIOS(result, iosAlternativeBilling);
+      const iosOpeniapVersion = options?.ios?.openiapVersion;
+      result = withIapIOS(result, {
+        alternativeBilling: iosAlternativeBilling,
+        openiapVersion: iosOpeniapVersion,
+      });
       logOnce('📦 [expo-iap] Using OpenIAP from CocoaPods');
     }
 
