@@ -266,6 +266,55 @@ interface IOSPluginOptions {
   openiapVersion?: string;
 }
 
+/**
+ * Modify Podfile content to configure OpenIAP.
+ * This is exported for testing purposes.
+ */
+const modifyPodfile = (content: string, openiapVersion?: string): string => {
+  let modified = content;
+
+  // 1) Ensure CocoaPods CDN source is present at the very top
+  const cdnLine = `source 'https://cdn.cocoapods.org/'`;
+  if (!modified.includes(cdnLine)) {
+    modified = `${cdnLine}\n\n${modified}`;
+    logOnce('📦 expo-iap: Added CocoaPods CDN source to Podfile');
+  }
+
+  // 2) Remove any lingering local OpenIAP pod injection
+  const localPodRegex =
+    /^\s*pod\s+'openiap'\s*,\s*:path\s*=>\s*['"][^'"]+['"][^\n]*$/gm;
+  if (localPodRegex.test(modified)) {
+    modified = modified.replace(localPodRegex, '').replace(/\n{3,}/g, '\n\n');
+    logOnce('🧹 expo-iap: Removed local OpenIAP pod from Podfile');
+  }
+
+  // 3) Add custom openiap version override if specified
+  if (openiapVersion) {
+    // Remove any existing openiap pod version override
+    const existingOpeniapRegex =
+      /^\s*pod\s+'openiap'\s*,\s*['"][^'"]+['"][^\n]*$/gm;
+    if (existingOpeniapRegex.test(modified)) {
+      modified = modified
+        .replace(existingOpeniapRegex, '')
+        .replace(/\n{3,}/g, '\n\n');
+    }
+
+    // Add openiap pod with specific version before the 'end' of the main target
+    // Find the main target block and add before its end
+    const targetEndRegex =
+      /(target\s+['"][^'"]+['"]\s+do[\s\S]*?)(^\s*end\s*$)/m;
+    if (targetEndRegex.test(modified)) {
+      const podLine = `  pod 'openiap', '${openiapVersion}'`;
+      modified = modified.replace(targetEndRegex, `$1${podLine}\n$2`);
+      logOnce(
+        `🛠️ expo-iap: Added openiap pod version override (${openiapVersion}) to Podfile`,
+      );
+    }
+  }
+
+  return modified;
+};
+
 /** Ensure Podfile uses CocoaPods CDN and no stale local OpenIAP entry remains. */
 const withIapIOS: ConfigPlugin<IOSPluginOptions | undefined> = (
   config,
@@ -277,48 +326,10 @@ const withIapIOS: ConfigPlugin<IOSPluginOptions | undefined> = (
   }
 
   return withPodfile(config, (config) => {
-    let content = config.modResults.contents;
-
-    // 1) Ensure CocoaPods CDN source is present at the very top
-    const cdnLine = `source 'https://cdn.cocoapods.org/'`;
-    if (!content.includes(cdnLine)) {
-      content = `${cdnLine}\n\n${content}`;
-      logOnce('📦 expo-iap: Added CocoaPods CDN source to Podfile');
-    }
-
-    // 2) Remove any lingering local OpenIAP pod injection
-    const localPodRegex =
-      /^\s*pod\s+'openiap'\s*,\s*:path\s*=>\s*['"][^'"]+['"][^\n]*$/gm;
-    if (localPodRegex.test(content)) {
-      content = content.replace(localPodRegex, '').replace(/\n{3,}/g, '\n\n');
-      logOnce('🧹 expo-iap: Removed local OpenIAP pod from Podfile');
-    }
-
-    // 3) Add custom openiap version override if specified
-    if (options?.openiapVersion) {
-      // Remove any existing openiap pod version override
-      const existingOpeniapRegex =
-        /^\s*pod\s+'openiap'\s*,\s*['"][^'"]+['"][^\n]*$/gm;
-      if (existingOpeniapRegex.test(content)) {
-        content = content
-          .replace(existingOpeniapRegex, '')
-          .replace(/\n{3,}/g, '\n\n');
-      }
-
-      // Add openiap pod with specific version before the 'end' of the main target
-      // Find the main target block and add before its end
-      const targetEndRegex =
-        /(target\s+['"][^'"]+['"]\s+do[\s\S]*?)(^\s*end\s*$)/m;
-      if (targetEndRegex.test(content)) {
-        const podLine = `  pod 'openiap', '${options.openiapVersion}'`;
-        content = content.replace(targetEndRegex, `$1${podLine}\n$2`);
-        logOnce(
-          `🛠️ expo-iap: Added openiap pod version override (${options.openiapVersion}) to Podfile`,
-        );
-      }
-    }
-
-    config.modResults.contents = content;
+    config.modResults.contents = modifyPodfile(
+      config.modResults.contents,
+      options?.openiapVersion,
+    );
     return config;
   });
 };
@@ -483,5 +494,10 @@ const withIap: ConfigPlugin<ExpoIapPluginOptions | void> = (
   }
 };
 
-export {withIosAlternativeBilling, withIap, modifyAppBuildGradle};
+export {
+  withIosAlternativeBilling,
+  withIap,
+  modifyAppBuildGradle,
+  modifyPodfile,
+};
 export default createRunOncePlugin(withIap, pkg.name, pkg.version);

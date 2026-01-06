@@ -1,67 +1,56 @@
 /**
  * Tests for openiapVersion config plugin option
  *
- * These tests verify that the modifyAppBuildGradle function correctly handles
- * custom OpenIAP versions for Kotlin compatibility (e.g., Expo SDK 53).
+ * These tests verify that the modifyAppBuildGradle and modifyPodfile functions
+ * correctly handle custom OpenIAP versions for Kotlin/Swift compatibility.
  */
 
+// Import shared fixtures from plugin tests
+import {
+  appBuildGradleWithDependencies,
+  appBuildGradleWithExistingOpeniap,
+  appBuildGradleKotlinDsl,
+} from '../../plugin/__tests__/fixtures/buildGradleFiles';
+
 // Use built JS file to avoid Node.js module resolution issues in Jest
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const {modifyAppBuildGradle} = require('../../plugin/build/withIAP');
+// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+const {
+  modifyAppBuildGradle,
+  modifyPodfile,
+} = require('../../plugin/build/withIAP');
 
-const appBuildGradleWithDependencies = `
-apply plugin: "com.android.application"
+// iOS Podfile fixtures
+const podfileBasic = `
+platform :ios, '15.0'
 
-android {
-    compileSdkVersion 34
-
-    defaultConfig {
-        applicationId 'com.test.withIAP'
-        minSdkVersion 21
-    }
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    implementation "com.facebook.react:react-native"
-}
+target 'MyApp' do
+  use_frameworks!
+  pod 'React'
+end
 `;
 
-const appBuildGradleWithExistingOpeniap = `
-apply plugin: "com.android.application"
+const podfileWithExistingOpeniap = `
+source 'https://cdn.cocoapods.org/'
 
-android {
-    compileSdkVersion 34
+platform :ios, '15.0'
 
-    defaultConfig {
-        applicationId 'com.test.withIAP'
-        minSdkVersion 21
-    }
-}
-
-dependencies {
-    implementation "io.github.hyochan.openiap:openiap-google:1.3.11"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
-}
+target 'MyApp' do
+  use_frameworks!
+  pod 'React'
+  pod 'openiap', '1.2.0'
+end
 `;
 
-const appBuildGradleKotlinDsl = `
-plugins {
-    id("com.android.application")
-}
+const podfileWithLocalOpeniap = `
+source 'https://cdn.cocoapods.org/'
 
-android {
-    compileSdk = 34
+platform :ios, '15.0'
 
-    defaultConfig {
-        applicationId = "com.test.withIAP"
-        minSdk = 21
-    }
-}
-
-dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-}
+target 'MyApp' do
+  use_frameworks!
+  pod 'React'
+  pod 'openiap', :path => '../openiap-apple'
+end
 `;
 
 describe('modifyAppBuildGradle with openiapVersion option', () => {
@@ -185,6 +174,72 @@ describe('modifyAppBuildGradle with openiapVersion option', () => {
     const matches = secondResult.match(
       /io\.github\.hyochan\.openiap:openiap-google:1\.3\.11/g,
     );
+    expect(matches?.length).toBe(1);
+  });
+});
+
+describe('modifyPodfile with openiapVersion option', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should add CocoaPods CDN source when not present', () => {
+    const result = modifyPodfile(podfileBasic);
+
+    expect(result).toContain("source 'https://cdn.cocoapods.org/'");
+  });
+
+  it('should add custom openiap pod version when provided', () => {
+    const customVersion = '1.3.0';
+    const result = modifyPodfile(podfileBasic, customVersion);
+
+    expect(result).toContain(`pod 'openiap', '${customVersion}'`);
+  });
+
+  it('should replace existing openiap pod version with custom version', () => {
+    const newVersion = '1.4.0';
+    const result = modifyPodfile(podfileWithExistingOpeniap, newVersion);
+
+    // Should contain the new version
+    expect(result).toContain(`pod 'openiap', '${newVersion}'`);
+    // Should NOT contain the old version
+    expect(result).not.toContain("pod 'openiap', '1.2.0'");
+  });
+
+  it('should remove local OpenIAP pod path and use version instead', () => {
+    const newVersion = '1.3.0';
+    const result = modifyPodfile(podfileWithLocalOpeniap, newVersion);
+
+    // Should contain the new version
+    expect(result).toContain(`pod 'openiap', '${newVersion}'`);
+    // Should NOT contain local path reference
+    expect(result).not.toContain(':path =>');
+  });
+
+  it('should not add openiap pod when no version is specified', () => {
+    const result = modifyPodfile(podfileBasic);
+
+    // Should not contain openiap pod line
+    expect(result).not.toContain("pod 'openiap'");
+  });
+
+  it('should not duplicate CDN source when already present', () => {
+    const result = modifyPodfile(podfileWithExistingOpeniap);
+
+    // Count occurrences of CDN source
+    const matches = result.match(/source 'https:\/\/cdn\.cocoapods\.org\/'/g);
+    expect(matches?.length).toBe(1);
+  });
+
+  it('should not duplicate openiap pod when same version already exists', () => {
+    const version = '1.3.0';
+    // First add the version
+    const firstResult = modifyPodfile(podfileBasic, version);
+    // Then try to add it again
+    const secondResult = modifyPodfile(firstResult, version);
+
+    // Count occurrences of the pod
+    const matches = secondResult.match(/pod 'openiap', '1\.3\.0'/g);
     expect(matches?.length).toBe(1);
   });
 });
