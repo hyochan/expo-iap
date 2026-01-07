@@ -91,7 +91,9 @@ interface UseIAPOptions {
 
 ```tsx
 interface UseIAPReturn {
-  // State
+  // ═══════════════════════════════════════════════════════════════
+  // STATE VARIABLES (read data from these)
+  // ═══════════════════════════════════════════════════════════════
   connected: boolean;
   products: Product[];
   subscriptions: ProductSubscription[];
@@ -99,14 +101,19 @@ interface UseIAPReturn {
   activeSubscriptions: ActiveSubscription[];
   promotedProductIOS?: Product;
 
-  // Methods (return void, update state)
+  // ═══════════════════════════════════════════════════════════════
+  // METHODS (return Promise<void>, update state above)
+  // ═══════════════════════════════════════════════════════════════
   fetchProducts: (params: {skus: string[]; type: 'in-app' | 'subs'}) => Promise<void>;
   requestPurchase: (props: RequestPurchaseProps) => Promise<void>;
   finishTransaction: (params: {purchase: Purchase; isConsumable?: boolean}) => Promise<void>;
   getAvailablePurchases: () => Promise<void>;
+  getActiveSubscriptions: (ids?: string[]) => Promise<void>;
+  restorePurchases: () => Promise<void>;
 
-  // Methods (return values)
-  getActiveSubscriptions: (ids?: string[]) => Promise<ActiveSubscription[]>;
+  // ═══════════════════════════════════════════════════════════════
+  // METHODS THAT RETURN VALUES (exceptions to the pattern)
+  // ═══════════════════════════════════════════════════════════════
   hasActiveSubscriptions: (ids?: string[]) => Promise<boolean>;
   verifyPurchase: (props: VerifyPurchaseProps) => Promise<VerifyPurchaseResult>;
   verifyPurchaseWithProvider: (props: VerifyPurchaseWithProviderProps) => Promise<VerifyPurchaseWithProviderResult>;
@@ -117,10 +124,29 @@ interface UseIAPReturn {
 }
 ```
 
+### Design Pattern
+
+**The hook follows React's state-driven pattern:**
+- Methods return `Promise<void>` and update internal state
+- You must read data from state variables, not from method return values
+
+```tsx
+// ✅ CORRECT: Call method, then read from state
+await fetchProducts({skus: ['product1'], type: 'in-app'});
+console.log(products); // Read from state variable
+
+await getAvailablePurchases();
+console.log(availablePurchases); // Read from state variable
+
+// ❌ WRONG: Don't expect return values from methods
+const result = await fetchProducts({...}); // result is void!
+const purchases = await getAvailablePurchases(); // purchases is void!
+```
+
 ### Important Behavior
 
 - **Auto-connects**: Calls `initConnection()` on mount, `endConnection()` on unmount
-- **Void-returning methods**: `fetchProducts`, `requestPurchase`, `getAvailablePurchases` return `Promise<void>` and update internal state
+- **Void-returning methods**: `fetchProducts`, `requestPurchase`, `getAvailablePurchases`, `getActiveSubscriptions` return `Promise<void>` and update internal state
 - **Use callbacks**: Always handle purchases via `onPurchaseSuccess` and `onPurchaseError`
 
 ### Basic Example
