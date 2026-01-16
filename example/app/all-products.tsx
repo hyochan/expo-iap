@@ -52,7 +52,7 @@ const ALL_PRODUCT_IDS = [...PRODUCT_IDS, ...SUBSCRIPTION_PRODUCT_IDS];
  * - ProductSubscription = ProductSubscriptionIOS | ProductSubscriptionAndroid (type: 'subs')
  *
  * Benefits:
- * ✅ Type-safe access to platform-specific fields (e.g., discountsIOS, subscriptionOfferDetailsAndroid)
+ * ✅ Type-safe access to platform-specific fields (e.g., discountsIOS, subscriptionOffers)
  * ✅ Compile-time errors prevent accessing non-existent fields
  * ✅ Better IDE autocomplete and IntelliSense
  * ✅ Runtime safety - no accessing undefined fields
@@ -111,8 +111,8 @@ function AllProducts() {
         // ✅ Narrowed to: ProductSubscriptionAndroid
         console.log('- Android Subscription detected');
         console.log(
-          '- Offers:',
-          product.subscriptionOfferDetailsAndroid?.length || 0,
+          '- Subscription Offers:',
+          product.subscriptionOffers?.length || 0,
         );
       }
     } else {
@@ -433,134 +433,136 @@ function AllProducts() {
                       </View>
                     )}
 
-                  {/* Android One-Time Purchase Offer Details */}
-                  {'oneTimePurchaseOfferDetailsAndroid' in selectedProduct &&
-                    selectedProduct.oneTimePurchaseOfferDetailsAndroid &&
-                    selectedProduct.oneTimePurchaseOfferDetailsAndroid.length >
-                      0 && (
+                  {/* Discount Offers (Cross-platform) */}
+                  {'discountOffers' in selectedProduct &&
+                    selectedProduct.discountOffers &&
+                    selectedProduct.discountOffers.length > 0 && (
                       <View style={styles.offersSection}>
                         <Text style={styles.offersSectionTitle}>
-                          Android One-Time Purchase Offers (
-                          {
-                            selectedProduct.oneTimePurchaseOfferDetailsAndroid
-                              .length
-                          }
+                          Discount Offers ({selectedProduct.discountOffers.length}
                           )
                         </Text>
-                        {selectedProduct.oneTimePurchaseOfferDetailsAndroid.map(
-                          (offer, idx) => (
-                            <View key={idx} style={styles.offerCard}>
-                              <Text style={styles.offerTitle}>
-                                {offer.offerId || `Offer ${idx + 1}`}
-                              </Text>
+                        {selectedProduct.discountOffers.map((offer, idx) => (
+                          <View key={idx} style={styles.offerCard}>
+                            <Text style={styles.offerTitle}>
+                              {offer.id || `Offer ${idx + 1}`}
+                            </Text>
+                            <Text style={styles.offerDetail}>
+                              Price: {offer.displayPrice}
+                            </Text>
+                            {offer.fullPriceMicrosAndroid && (
                               <Text style={styles.offerDetail}>
-                                Price: {offer.formattedPrice}
+                                Full Price (micros):{' '}
+                                {offer.fullPriceMicrosAndroid}
                               </Text>
-                              {offer.fullPriceMicros && (
+                            )}
+                            {offer.percentageDiscountAndroid && (
+                              <Text style={styles.offerDetail}>
+                                {offer.percentageDiscountAndroid}% off
+                              </Text>
+                            )}
+                            {offer.formattedDiscountAmountAndroid && (
+                              <Text style={styles.offerDetail}>
+                                Discount: {offer.formattedDiscountAmountAndroid}
+                              </Text>
+                            )}
+                            {offer.validTimeWindowAndroid && (
+                              <Text style={styles.offerDetail}>
+                                Valid:{' '}
+                                {new Date(
+                                  Number(
+                                    offer.validTimeWindowAndroid.startTimeMillis,
+                                  ),
+                                ).toLocaleDateString()}{' '}
+                                -{' '}
+                                {new Date(
+                                  Number(
+                                    offer.validTimeWindowAndroid.endTimeMillis,
+                                  ),
+                                ).toLocaleDateString()}
+                              </Text>
+                            )}
+                            {offer.limitedQuantityInfoAndroid && (
+                              <Text style={styles.offerDetail}>
+                                Remaining:{' '}
+                                {
+                                  offer.limitedQuantityInfoAndroid
+                                    .remainingQuantity
+                                }{' '}
+                                /{' '}
+                                {offer.limitedQuantityInfoAndroid.maximumQuantity}
+                              </Text>
+                            )}
+                            {offer.preorderDetailsAndroid && (
+                              <Text style={styles.offerDetail}>
+                                Release:{' '}
+                                {new Date(
+                                  Number(
+                                    offer.preorderDetailsAndroid
+                                      .preorderReleaseTimeMillis,
+                                  ),
+                                ).toLocaleDateString()}
+                              </Text>
+                            )}
+                            {offer.rentalDetailsAndroid && (
+                              <Text style={styles.offerDetail}>
+                                Rental Period:{' '}
+                                {
+                                  offer.rentalDetailsAndroid
+                                    .rentalExpirationPeriod
+                                }
+                              </Text>
+                            )}
+                            {offer.offerTagsAndroid &&
+                              offer.offerTagsAndroid.length > 0 && (
                                 <Text style={styles.offerDetail}>
-                                  Full Price (micros): {offer.fullPriceMicros}
+                                  Tags: {offer.offerTagsAndroid.join(', ')}
                                 </Text>
                               )}
-                              {offer.discountDisplayInfo && (
-                                <>
-                                  <Text style={styles.offerSubtitle}>
-                                    Discount:
-                                  </Text>
-                                  {offer.discountDisplayInfo
-                                    .percentageDiscount && (
-                                    <Text style={styles.offerDetail}>
-                                      {
-                                        offer.discountDisplayInfo
-                                          .percentageDiscount
-                                      }
-                                      % off
-                                    </Text>
-                                  )}
-                                  {offer.discountDisplayInfo.discountAmount && (
-                                    <Text style={styles.offerDetail}>
-                                      Discount:{' '}
-                                      {
-                                        offer.discountDisplayInfo.discountAmount
-                                          .formattedDiscountAmount
-                                      }
-                                    </Text>
-                                  )}
-                                </>
-                              )}
-                              {offer.validTimeWindow && (
-                                <Text style={styles.offerDetail}>
-                                  Valid:{' '}
-                                  {new Date(
-                                    Number(
-                                      offer.validTimeWindow.startTimeMillis,
-                                    ),
-                                  ).toLocaleDateString()}{' '}
-                                  -{' '}
-                                  {new Date(
-                                    Number(offer.validTimeWindow.endTimeMillis),
-                                  ).toLocaleDateString()}
-                                </Text>
-                              )}
-                              {offer.limitedQuantityInfo && (
-                                <Text style={styles.offerDetail}>
-                                  Remaining:{' '}
-                                  {offer.limitedQuantityInfo.remainingQuantity}{' '}
-                                  / {offer.limitedQuantityInfo.maximumQuantity}
-                                </Text>
-                              )}
-                              {offer.preorderDetailsAndroid && (
-                                <Text style={styles.offerDetail}>
-                                  Release:{' '}
-                                  {new Date(
-                                    Number(
-                                      offer.preorderDetailsAndroid
-                                        .preorderReleaseTimeMillis,
-                                    ),
-                                  ).toLocaleDateString()}
-                                </Text>
-                              )}
-                              {offer.rentalDetailsAndroid && (
-                                <Text style={styles.offerDetail}>
-                                  Rental Period:{' '}
-                                  {
-                                    offer.rentalDetailsAndroid
-                                      .rentalExpirationPeriod
-                                  }
-                                </Text>
-                              )}
-                              {offer.offerTags.length > 0 && (
-                                <Text style={styles.offerDetail}>
-                                  Tags: {offer.offerTags.join(', ')}
-                                </Text>
-                              )}
-                            </View>
-                          ),
-                        )}
+                          </View>
+                        ))}
                       </View>
                     )}
 
-                  {/* Android Subscription Offer Details */}
-                  {'subscriptionOfferDetailsAndroid' in selectedProduct &&
-                    selectedProduct.subscriptionOfferDetailsAndroid &&
-                    selectedProduct.subscriptionOfferDetailsAndroid.length >
-                      0 && (
+                  {/* Subscription Offers (Cross-platform) */}
+                  {'subscriptionOffers' in selectedProduct &&
+                    selectedProduct.subscriptionOffers &&
+                    selectedProduct.subscriptionOffers.length > 0 && (
                       <View style={styles.offersSection}>
                         <Text style={styles.offersSectionTitle}>
-                          Android Subscription Offers (
-                          {
-                            selectedProduct.subscriptionOfferDetailsAndroid
-                              .length
-                          }
-                          )
+                          Subscription Offers (
+                          {selectedProduct.subscriptionOffers.length})
                         </Text>
-                        {selectedProduct.subscriptionOfferDetailsAndroid.map(
+                        {selectedProduct.subscriptionOffers.map(
                           (offer, idx) => (
                             <View key={idx} style={styles.offerCard}>
                               <Text style={styles.offerTitle}>
-                                {offer.basePlanId}
-                                {offer.offerId ? ` - ${offer.offerId}` : ''}
+                                {offer.basePlanIdAndroid ?? offer.id}
+                                {offer.id &&
+                                offer.basePlanIdAndroid &&
+                                offer.id !== offer.basePlanIdAndroid
+                                  ? ` - ${offer.id}`
+                                  : ''}
                               </Text>
-                              {offer.pricingPhases?.pricingPhaseList?.map(
+                              <Text style={styles.offerDetail}>
+                                Price: {offer.displayPrice}
+                              </Text>
+                              {offer.paymentMode && (
+                                <Text style={styles.offerDetail}>
+                                  Payment Mode: {offer.paymentMode}
+                                </Text>
+                              )}
+                              {offer.period && (
+                                <Text style={styles.offerDetail}>
+                                  Period: {offer.period.value} {offer.period.unit}
+                                </Text>
+                              )}
+                              {offer.periodCount && (
+                                <Text style={styles.offerDetail}>
+                                  Period Count: {offer.periodCount}
+                                </Text>
+                              )}
+                              {offer.pricingPhasesAndroid?.pricingPhaseList?.map(
                                 (phase, phaseIdx) => (
                                   <View
                                     key={phaseIdx}
@@ -581,11 +583,12 @@ function AllProducts() {
                                   </View>
                                 ),
                               )}
-                              {offer.offerTags.length > 0 && (
-                                <Text style={styles.offerDetail}>
-                                  Tags: {offer.offerTags.join(', ')}
-                                </Text>
-                              )}
+                              {offer.offerTagsAndroid &&
+                                offer.offerTagsAndroid.length > 0 && (
+                                  <Text style={styles.offerDetail}>
+                                    Tags: {offer.offerTagsAndroid.join(', ')}
+                                  </Text>
+                                )}
                             </View>
                           ),
                         )}

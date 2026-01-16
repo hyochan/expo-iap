@@ -61,12 +61,9 @@ const SubscriptionComponent = () => {
   // 2) Access offer details from fetched subscriptions
   const subscription = subscriptions.find((s) => s.id === 'premium_monthly');
 
-  if (subscription?.subscriptionOfferDetailsAndroid) {
-    console.log(
-      'Available offers:',
-      subscription.subscriptionOfferDetailsAndroid,
-    );
-    // Each offer contains: basePlanId, offerId?, offerTags, offerToken, pricingPhases
+  if (subscription?.subscriptionOffers) {
+    console.log('Available offers:', subscription.subscriptionOffers);
+    // Each offer contains: id, displayPrice, paymentMode, period, offerTokenAndroid, pricingPhasesAndroid
   }
 };
 ```
@@ -78,15 +75,13 @@ const purchaseSubscription = async (subscriptionId: string) => {
   const subscription = subscriptions.find((s) => s.id === subscriptionId);
   if (!subscription) return;
 
-  // Build subscriptionOffers from fetched data
-  const subscriptionOffers = (
-    subscription.subscriptionOfferDetailsAndroid ?? []
-  )
+  // Build subscriptionOffers from fetched data using cross-platform subscriptionOffers
+  const offers = (subscription.subscriptionOffers ?? [])
     .map((offer) =>
-      offer?.offerToken
+      offer?.offerTokenAndroid
         ? {
             sku: subscriptionId,
-            offerToken: offer.offerToken,
+            offerToken: offer.offerTokenAndroid,
           }
         : null,
     )
@@ -95,7 +90,7 @@ const purchaseSubscription = async (subscriptionId: string) => {
     );
 
   // Only proceed if offers are available
-  if (subscriptionOffers.length === 0) {
+  if (offers.length === 0) {
     console.error('No subscription offers available');
     return;
   }
@@ -105,8 +100,7 @@ const purchaseSubscription = async (subscriptionId: string) => {
       apple: {sku: subscriptionId},
       google: {
         skus: [subscriptionId],
-        subscriptionOffers:
-          subscriptionOffers.length > 0 ? subscriptionOffers : undefined,
+        subscriptionOffers: offers.length > 0 ? offers : undefined,
       },
     },
     type: 'subs',
@@ -116,15 +110,30 @@ const purchaseSubscription = async (subscriptionId: string) => {
 
 #### Understanding Offer Details
 
-Each `subscriptionOfferDetailsAndroid` item contains:
+Each `subscriptionOffers` item contains (cross-platform `SubscriptionOffer` type):
 
 ```tsx
-interface ProductSubscriptionAndroidOfferDetails {
-  basePlanId: string; // Base plan identifier
-  offerId?: string | null; // Offer identifier (null for base plan)
-  offerTags: string[]; // Tags associated with the offer
-  offerToken: string; // Token required for purchase
-  pricingPhases: PricingPhasesAndroid; // Pricing information
+interface SubscriptionOffer {
+  id: string; // Unique identifier for the offer
+  displayPrice: string; // Formatted price string (e.g., "$9.99/month")
+  price: number; // Numeric price value
+  currency?: string; // Currency code (ISO 4217)
+  type: DiscountOfferType; // 'introductory' | 'promotional' | 'one-time'
+  paymentMode?: PaymentMode; // 'free-trial' | 'pay-as-you-go' | 'pay-up-front' | 'unknown'
+  period?: SubscriptionPeriod; // Subscription period (unit + value)
+  periodCount?: number; // Number of periods the offer applies
+
+  // Android-specific fields
+  basePlanIdAndroid?: string; // Base plan identifier
+  offerTokenAndroid?: string; // Token required for purchase
+  offerTagsAndroid?: string[]; // Tags associated with the offer
+  pricingPhasesAndroid?: PricingPhasesAndroid; // Detailed pricing phases
+
+  // iOS-specific fields
+  keyIdentifierIOS?: string; // Key identifier for signature validation
+  nonceIOS?: string; // Cryptographic nonce (UUID)
+  signatureIOS?: string; // Server-generated signature
+  timestampIOS?: number; // Timestamp when signature was generated
 }
 ```
 
@@ -283,15 +292,15 @@ const selectOffer = (
     return null;
   }
 
-  // Android: Select offer based on type
-  const offers = subscription.subscriptionOfferDetailsAndroid ?? [];
+  // Android: Select offer based on type using cross-platform subscriptionOffers
+  const offers = subscription.subscriptionOffers ?? [];
 
   if (offerType === 'base') {
-    // Find base plan (no offerId)
-    return offers.find((offer) => !offer.offerId);
+    // Find base plan (offer without introductory/promotional type)
+    return offers.find((offer) => !offer.type || offer.type === 'one-time');
   } else {
     // Find introductory offer
-    return offers.find((offer) => offer.offerId?.includes('introductory'));
+    return offers.find((offer) => offer.type === 'introductory');
   }
 };
 

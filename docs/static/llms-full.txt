@@ -439,8 +439,50 @@ interface ProductIOS extends ProductCommon {
 
 interface ProductAndroid extends ProductCommon {
   nameAndroid: string;
+  // Cross-platform offer types (recommended)
+  discountOffers?: DiscountOffer[]; // One-time purchase discounts
+  subscriptionOffers?: SubscriptionOffer[]; // Subscription offers
+  // Deprecated: use discountOffers/subscriptionOffers instead
   oneTimePurchaseOfferDetailsAndroid?: ProductAndroidOneTimePurchaseOfferDetail[];
   subscriptionOfferDetailsAndroid?: ProductSubscriptionAndroidOfferDetails[];
+}
+
+// Cross-platform subscription offer type
+interface SubscriptionOffer {
+  id: string;
+  displayPrice: string;
+  price: number;
+  currency?: string;
+  type: 'introductory' | 'promotional' | 'one-time';
+  paymentMode?: 'free-trial' | 'pay-as-you-go' | 'pay-up-front' | 'unknown';
+  period?: {unit: string; value: number};
+  periodCount?: number;
+  // Android-specific
+  basePlanIdAndroid?: string;
+  offerTokenAndroid?: string;
+  offerTagsAndroid?: string[];
+  pricingPhasesAndroid?: PricingPhasesAndroid;
+  // iOS-specific
+  keyIdentifierIOS?: string;
+  nonceIOS?: string;
+  signatureIOS?: string;
+  timestampIOS?: number;
+}
+
+// Cross-platform discount offer type (one-time purchases)
+interface DiscountOffer {
+  id?: string;
+  displayPrice: string;
+  price: number;
+  currency: string;
+  type: 'introductory' | 'promotional' | 'one-time';
+  // Android-specific
+  offerTokenAndroid?: string;
+  fullPriceMicrosAndroid?: string;
+  percentageDiscountAndroid?: number;
+  formattedDiscountAmountAndroid?: string;
+  validTimeWindowAndroid?: {startTimeMillis: string; endTimeMillis: string};
+  limitedQuantityInfoAndroid?: {maximumQuantity: number; remainingQuantity: number};
 }
 
 type Product = ProductIOS | ProductAndroid;
@@ -850,11 +892,13 @@ function SubscriptionScreen() {
   }, [connected]);
 
   const buySubscription = (subscription: ProductSubscription) => {
-    // Build Android offers from fetched subscription data
-    const offers = subscription.subscriptionOfferDetailsAndroid?.map((offer) => ({
-      sku: subscription.id,
-      offerToken: offer.offerToken,
-    })) || [];
+    // Build Android offers from cross-platform subscriptionOffers
+    const offers = subscription.subscriptionOffers
+      ?.filter((offer) => offer.offerTokenAndroid)
+      .map((offer) => ({
+        sku: subscription.id,
+        offerToken: offer.offerTokenAndroid!,
+      })) || [];
 
     requestPurchase({
       request: {
@@ -1012,12 +1056,14 @@ await clearTransactionIOS();
 // Must fetch products first to get offer tokens
 await fetchProducts({skus: ['sub_id'], type: 'subs'});
 
-// Then use offers from fetched subscription
+// Then use offers from cross-platform subscriptionOffers
 const sub = subscriptions.find(s => s.id === 'sub_id');
-const offers = sub?.subscriptionOfferDetailsAndroid?.map(o => ({
-  sku: sub.id,
-  offerToken: o.offerToken,
-}));
+const offers = sub?.subscriptionOffers
+  ?.filter(o => o.offerTokenAndroid)
+  .map(o => ({
+    sku: sub.id,
+    offerToken: o.offerTokenAndroid!,
+  }));
 ```
 
 ### Debug Tips

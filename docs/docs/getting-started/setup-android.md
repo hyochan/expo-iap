@@ -122,15 +122,15 @@ const AndroidSubscriptionItem = ({
 }) => {
   const {requestPurchase} = useIAP();
 
-  const handleSubscribe = (offer: any) => {
-    if (subscription.platform === 'android') {
+  const handleSubscribe = (offer: SubscriptionOffer) => {
+    if (subscription.platform === 'android' && offer.offerTokenAndroid) {
       requestPurchase({
         request: {
           skus: [subscription.id],
           subscriptionOffers: [
             {
               sku: subscription.id,
-              offerToken: offer.offerToken,
+              offerToken: offer.offerTokenAndroid,
             },
           ],
         },
@@ -144,13 +144,12 @@ const AndroidSubscriptionItem = ({
   return (
     <View>
       <Text>{subscription.title}</Text>
-      {subscription.subscriptionOfferDetailsAndroid?.map((offer) => (
-        <TouchableOpacity
-          key={offer.offerId}
-          onPress={() => handleSubscribe(offer)}
-        >
+      {subscription.subscriptionOffers?.map((offer) => (
+        <TouchableOpacity key={offer.id} onPress={() => handleSubscribe(offer)}>
           <Text>
-            {offer.pricingPhases.pricingPhaseList
+            {offer.displayPrice}
+            {offer.paymentMode && ` (${offer.paymentMode})`}
+            {offer.pricingPhasesAndroid?.pricingPhaseList
               .map((phase) => `${phase.formattedPrice}/${phase.billingPeriod}`)
               .join(' then ')}
           </Text>

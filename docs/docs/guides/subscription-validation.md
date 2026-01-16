@@ -98,8 +98,11 @@ Track `basePlanId` yourself during the purchase flow:
 let purchasedBasePlanId: string | null = null;
 
 const handlePurchase = async (basePlanId: string) => {
-  const offers = product.subscriptionOfferDetailsAndroid ?? [];
-  const offer = offers.find(o => o.basePlanId === basePlanId && !o.offerId);
+  // Use cross-platform subscriptionOffers
+  const offers = product.subscriptionOffers ?? [];
+  const offer = offers.find(
+    (o) => o.basePlanIdAndroid === basePlanId && !o.id,
+  );
 
   // Store it before purchase
   purchasedBasePlanId = basePlanId;
@@ -109,7 +112,7 @@ const handlePurchase = async (basePlanId: string) => {
       google: {
         skus: [subscriptionGroupId],
         subscriptionOffers: [
-          { sku: subscriptionGroupId, offerToken: offer.offerToken },
+          {sku: subscriptionGroupId, offerToken: offer.offerTokenAndroid},
         ],
       },
     },
@@ -159,7 +162,7 @@ This is a fundamental limitation of Google Play Billing API, not a bug in this l
 :::
 
 **See also:**
-- [SubscriptionOfferDetailsAndroid](https://www.openiap.dev/docs/types#subscriptionofferdetailsandroid) — Each offer contains `basePlanId`, `offerId`, `offerTags`, `offerToken`, and `pricingPhases`.
+- [SubscriptionOffer](https://www.openiap.dev/docs/types/offer#subscriptionoffer) — Each offer contains `id`, `displayPrice`, `paymentMode`, `period`, `basePlanIdAndroid`, `offerTokenAndroid`, and `pricingPhasesAndroid`.
 - [GitHub Issue #3096](https://github.com/hyochan/react-native-iap/issues/3096) — Original discussion about this limitation.
 
 ## Using `getActiveSubscriptions`

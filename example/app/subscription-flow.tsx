@@ -348,20 +348,24 @@ function SubscriptionFlow({
     subscription: ProductSubscription,
   ): string => {
     if (
-      'subscriptionOfferDetailsAndroid' in subscription &&
-      subscription.subscriptionOfferDetailsAndroid
+      'subscriptionOffers' in subscription &&
+      subscription.subscriptionOffers
     ) {
-      // Android subscription pricing structure
-      const offers = subscription.subscriptionOfferDetailsAndroid;
+      // Cross-platform subscription pricing structure
+      const offers = subscription.subscriptionOffers;
       if (offers.length > 0) {
-        const pricingPhases = offers[0].pricingPhases;
+        // Use displayPrice from offer or fallback to pricingPhasesAndroid
+        if (offers[0].displayPrice) {
+          return offers[0].displayPrice;
+        }
+        const pricingPhases = offers[0].pricingPhasesAndroid;
         if (pricingPhases && pricingPhases.pricingPhaseList.length > 0) {
           return pricingPhases.pricingPhaseList[0].formattedPrice;
         }
       }
       return subscription.displayPrice;
     } else {
-      // iOS subscription pricing
+      // Fallback to subscription displayPrice
       return subscription.displayPrice;
     }
   };
@@ -400,12 +404,17 @@ function SubscriptionFlow({
 
   const getSubscriptionPeriod = (subscription: ProductSubscription): string => {
     if (
-      'subscriptionOfferDetailsAndroid' in subscription &&
-      subscription.subscriptionOfferDetailsAndroid
+      'subscriptionOffers' in subscription &&
+      subscription.subscriptionOffers
     ) {
-      const offers = subscription.subscriptionOfferDetailsAndroid;
+      const offers = subscription.subscriptionOffers;
       if (offers.length > 0) {
-        const pricingPhases = offers[0].pricingPhases;
+        // Use period from offer if available
+        if (offers[0].period) {
+          return `${offers[0].period.value} ${offers[0].period.unit}`;
+        }
+        // Fallback to pricingPhasesAndroid
+        const pricingPhases = offers[0].pricingPhasesAndroid;
         if (pricingPhases && pricingPhases.pricingPhaseList.length > 0) {
           return pricingPhases.pricingPhaseList[0].billingPeriod || 'Unknown';
         }
@@ -574,114 +583,122 @@ function SubscriptionFlow({
               </View>
             )}
 
-          {/* Android Subscription Offer Details */}
-          {'subscriptionOfferDetailsAndroid' in subscription &&
-            subscription.subscriptionOfferDetailsAndroid &&
-            subscription.subscriptionOfferDetailsAndroid.length > 0 && (
+          {/* Subscription Offers (Cross-platform) */}
+          {'subscriptionOffers' in subscription &&
+            subscription.subscriptionOffers &&
+            subscription.subscriptionOffers.length > 0 && (
               <View style={styles.detailSection}>
                 <Text style={styles.detailSectionTitle}>
-                  Android Subscription Offers (
-                  {subscription.subscriptionOfferDetailsAndroid.length})
+                  Subscription Offers ({subscription.subscriptionOffers.length})
                 </Text>
-                {subscription.subscriptionOfferDetailsAndroid.map(
-                  (offer, idx) => (
-                    <View key={idx} style={styles.offerCard}>
-                      <Text style={styles.offerTitle}>
-                        {offer.basePlanId}
-                        {offer.offerId ? ` - ${offer.offerId}` : ''}
+                {subscription.subscriptionOffers.map((offer, idx) => (
+                  <View key={idx} style={styles.offerCard}>
+                    <Text style={styles.offerTitle}>
+                      {offer.basePlanIdAndroid ?? offer.id}
+                      {offer.id &&
+                      offer.basePlanIdAndroid &&
+                      offer.id !== offer.basePlanIdAndroid
+                        ? ` - ${offer.id}`
+                        : ''}
+                    </Text>
+                    <Text style={styles.offerDetail}>
+                      Price: {offer.displayPrice}
+                    </Text>
+                    {offer.paymentMode && (
+                      <Text style={styles.offerDetail}>
+                        Payment Mode: {offer.paymentMode}
                       </Text>
-                      {offer.pricingPhases?.pricingPhaseList?.map(
-                        (phase, phaseIdx) => (
-                          <View key={phaseIdx} style={styles.nestedOfferCard}>
-                            <Text style={styles.offerDetail}>
-                              Price: {phase.formattedPrice}
-                            </Text>
-                            <Text style={styles.offerDetail}>
-                              Period: {phase.billingPeriod}
-                            </Text>
-                            <Text style={styles.offerDetail}>
-                              Cycles: {phase.billingCycleCount}
-                            </Text>
-                            <Text style={styles.offerDetail}>
-                              Recurrence: {phase.recurrenceMode}
-                            </Text>
-                          </View>
-                        ),
-                      )}
-                      {offer.offerTags.length > 0 && (
+                    )}
+                    {offer.period && (
+                      <Text style={styles.offerDetail}>
+                        Period: {offer.period.value} {offer.period.unit}
+                      </Text>
+                    )}
+                    {offer.periodCount && (
+                      <Text style={styles.offerDetail}>
+                        Period Count: {offer.periodCount}
+                      </Text>
+                    )}
+                    {offer.pricingPhasesAndroid?.pricingPhaseList?.map(
+                      (phase, phaseIdx) => (
+                        <View key={phaseIdx} style={styles.nestedOfferCard}>
+                          <Text style={styles.offerDetail}>
+                            Price: {phase.formattedPrice}
+                          </Text>
+                          <Text style={styles.offerDetail}>
+                            Period: {phase.billingPeriod}
+                          </Text>
+                          <Text style={styles.offerDetail}>
+                            Cycles: {phase.billingCycleCount}
+                          </Text>
+                          <Text style={styles.offerDetail}>
+                            Recurrence: {phase.recurrenceMode}
+                          </Text>
+                        </View>
+                      ),
+                    )}
+                    {offer.offerTagsAndroid &&
+                      offer.offerTagsAndroid.length > 0 && (
                         <Text style={styles.offerDetail}>
-                          Tags: {offer.offerTags.join(', ')}
+                          Tags: {offer.offerTagsAndroid.join(', ')}
                         </Text>
                       )}
-                    </View>
-                  ),
-                )}
+                  </View>
+                ))}
               </View>
             )}
 
-          {/* Android One-Time Purchase Offer Details (if subscription has them) */}
-          {'oneTimePurchaseOfferDetailsAndroid' in subscription &&
-            subscription.oneTimePurchaseOfferDetailsAndroid &&
-            subscription.oneTimePurchaseOfferDetailsAndroid.length > 0 && (
+          {/* Discount Offers (Cross-platform) */}
+          {'discountOffers' in subscription &&
+            subscription.discountOffers &&
+            subscription.discountOffers.length > 0 && (
               <View style={styles.detailSection}>
                 <Text style={styles.detailSectionTitle}>
-                  Android One-Time Purchase Offers (
-                  {subscription.oneTimePurchaseOfferDetailsAndroid.length})
+                  Discount Offers ({subscription.discountOffers.length})
                 </Text>
-                {subscription.oneTimePurchaseOfferDetailsAndroid.map(
-                  (offer, idx) => (
-                    <View key={idx} style={styles.offerCard}>
-                      <Text style={styles.offerTitle}>
-                        {offer.offerId || `Offer ${idx + 1}`}
-                      </Text>
+                {subscription.discountOffers.map((offer, idx) => (
+                  <View key={idx} style={styles.offerCard}>
+                    <Text style={styles.offerTitle}>
+                      {offer.id || `Offer ${idx + 1}`}
+                    </Text>
+                    <Text style={styles.offerDetail}>
+                      Price: {offer.displayPrice}
+                    </Text>
+                    {offer.fullPriceMicrosAndroid && (
                       <Text style={styles.offerDetail}>
-                        Price: {offer.formattedPrice}
+                        Full Price (micros): {offer.fullPriceMicrosAndroid}
                       </Text>
-                      {offer.fullPriceMicros && (
+                    )}
+                    {offer.percentageDiscountAndroid && (
+                      <Text style={styles.offerDetail}>
+                        {offer.percentageDiscountAndroid}% off
+                      </Text>
+                    )}
+                    {offer.formattedDiscountAmountAndroid && (
+                      <Text style={styles.offerDetail}>
+                        Discount: {offer.formattedDiscountAmountAndroid}
+                      </Text>
+                    )}
+                    {offer.validTimeWindowAndroid && (
+                      <Text style={styles.offerDetail}>
+                        Valid:{' '}
+                        {new Date(
+                          Number(offer.validTimeWindowAndroid.startTimeMillis),
+                        ).toLocaleDateString()}{' '}
+                        -{' '}
+                        {new Date(
+                          Number(offer.validTimeWindowAndroid.endTimeMillis),
+                        ).toLocaleDateString()}
+                      </Text>
+                    )}
+                    {offer.offerTagsAndroid &&
+                      offer.offerTagsAndroid.length > 0 && (
                         <Text style={styles.offerDetail}>
-                          Full Price (micros): {offer.fullPriceMicros}
+                          Tags: {offer.offerTagsAndroid.join(', ')}
                         </Text>
                       )}
-                      {offer.discountDisplayInfo && (
-                        <>
-                          <Text style={styles.offerSubtitle}>Discount:</Text>
-                          {offer.discountDisplayInfo.percentageDiscount && (
-                            <Text style={styles.offerDetail}>
-                              {offer.discountDisplayInfo.percentageDiscount}%
-                              off
-                            </Text>
-                          )}
-                          {offer.discountDisplayInfo.discountAmount && (
-                            <Text style={styles.offerDetail}>
-                              Discount:{' '}
-                              {
-                                offer.discountDisplayInfo.discountAmount
-                                  .formattedDiscountAmount
-                              }
-                            </Text>
-                          )}
-                        </>
-                      )}
-                      {offer.validTimeWindow && (
-                        <Text style={styles.offerDetail}>
-                          Valid:{' '}
-                          {new Date(
-                            Number(offer.validTimeWindow.startTimeMillis),
-                          ).toLocaleDateString()}{' '}
-                          -{' '}
-                          {new Date(
-                            Number(offer.validTimeWindow.endTimeMillis),
-                          ).toLocaleDateString()}
-                        </Text>
-                      )}
-                      {offer.offerTags.length > 0 && (
-                        <Text style={styles.offerDetail}>
-                          Tags: {offer.offerTags.join(', ')}
-                        </Text>
-                      )}
-                    </View>
-                  ),
-                )}
+                  </View>
+                ))}
               </View>
             )}
 
