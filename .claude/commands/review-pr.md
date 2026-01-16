@@ -61,12 +61,24 @@ gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews
 - Edit 도구로 리뷰어의 피드백에 따라 수정
 - 각 수정 사항을 TodoWrite로 추적
 
-### Step 5: 결과 보고
+### Step 5: 리뷰 코멘트에 Reply
+
+각 리뷰 코멘트에 수정 완료 reply를 답니다:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/replies -X POST -f body="Fixed in {commit_hash}. {수정 내용 요약}"
+```
+
+- 반드시 수정한 커밋의 hash를 포함합니다
+- 새 코멘트가 아닌 기존 코멘트에 대한 reply로 달아야 합니다
+
+### Step 6: 결과 보고
 
 수정된 내용을 요약하여 보고:
 
 - 수정된 파일 목록
 - 각 파일에서 변경된 내용
+- 커밋 hash
 - 수정하지 못한 코멘트와 그 이유
 
 ## Notes
