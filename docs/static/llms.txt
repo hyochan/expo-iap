@@ -156,12 +156,31 @@ interface Product {
   currency: string;
   type: 'in-app' | 'subs';
   store: 'apple' | 'google' | 'horizon';
+  // Cross-platform offer types
+  discountOffers?: DiscountOffer[]; // One-time purchase discounts
+  subscriptionOffers?: SubscriptionOffer[]; // Subscription offers
   // iOS specific
   displayNameIOS?: string;
   isFamilyShareableIOS?: boolean;
   subscriptionInfoIOS?: SubscriptionInfoIOS;
-  // Android specific
-  subscriptionOfferDetailsAndroid?: SubscriptionOfferDetails[];
+}
+
+interface SubscriptionOffer {
+  id: string;
+  displayPrice: string;
+  price: number;
+  currency?: string;
+  type: 'introductory' | 'promotional' | 'one-time';
+  paymentMode?: 'free-trial' | 'pay-as-you-go' | 'pay-up-front' | 'unknown';
+  period?: {unit: string; value: number};
+  // Android-specific
+  basePlanIdAndroid?: string;
+  offerTokenAndroid?: string;
+  offerTagsAndroid?: string[];
+  pricingPhasesAndroid?: PricingPhasesAndroid;
+  // iOS-specific
+  keyIdentifierIOS?: string;
+  signatureIOS?: string;
 }
 ```
 
@@ -213,12 +232,14 @@ await fetchProducts({skus: ['monthly_sub', 'yearly_sub'], type: 'subs'});
 ### Purchase with Platform-Specific Options
 
 ```tsx
-// For subscriptions with Android offers
+// For subscriptions with Android offers using cross-platform subscriptionOffers
 const subscription = subscriptions.find(s => s.id === 'monthly_sub');
-const offers = subscription?.subscriptionOfferDetailsAndroid?.map(offer => ({
-  sku: subscription.id,
-  offerToken: offer.offerToken,
-})) || [];
+const offers = subscription?.subscriptionOffers
+  ?.filter(offer => offer.offerTokenAndroid)
+  .map(offer => ({
+    sku: subscription.id,
+    offerToken: offer.offerTokenAndroid!,
+  })) || [];
 
 await requestPurchase({
   request: {

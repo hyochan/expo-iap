@@ -559,113 +559,99 @@ function PurchaseFlow({
                       </View>
                     )}
 
-                  {/* Android One-Time Purchase Offer Details */}
-                  {'oneTimePurchaseOfferDetailsAndroid' in selectedProduct &&
-                    selectedProduct.oneTimePurchaseOfferDetailsAndroid &&
-                    Array.isArray(
-                      selectedProduct.oneTimePurchaseOfferDetailsAndroid,
-                    ) &&
-                    selectedProduct.oneTimePurchaseOfferDetailsAndroid.length >
-                      0 && (
+                  {/* Discount Offers (Cross-platform) */}
+                  {'discountOffers' in selectedProduct &&
+                    selectedProduct.discountOffers &&
+                    Array.isArray(selectedProduct.discountOffers) &&
+                    selectedProduct.discountOffers.length > 0 && (
                       <View style={styles.offersSection}>
                         <Text style={styles.offersSectionTitle}>
-                          Android One-Time Purchase Offers (
-                          {
-                            selectedProduct.oneTimePurchaseOfferDetailsAndroid
-                              .length
-                          }
-                          )
+                          Discount Offers (
+                          {selectedProduct.discountOffers.length})
                         </Text>
-                        {selectedProduct.oneTimePurchaseOfferDetailsAndroid.map(
-                          (offer, idx) => (
-                            <View key={idx} style={styles.offerCard}>
-                              <Text style={styles.offerTitle}>
-                                {offer.offerId || `Offer ${idx + 1}`}
-                              </Text>
+                        {selectedProduct.discountOffers.map((offer, idx) => (
+                          <View key={offer.id || idx} style={styles.offerCard}>
+                            <Text style={styles.offerTitle}>
+                              {offer.id || `Offer ${idx + 1}`}
+                            </Text>
+                            <Text style={styles.offerDetail}>
+                              Price: {offer.displayPrice}
+                            </Text>
+                            {offer.fullPriceMicrosAndroid && (
                               <Text style={styles.offerDetail}>
-                                Price: {offer.formattedPrice}
+                                Full Price (micros):{' '}
+                                {offer.fullPriceMicrosAndroid}
                               </Text>
-                              {offer.fullPriceMicros && (
+                            )}
+                            {offer.percentageDiscountAndroid && (
+                              <Text style={styles.offerDetail}>
+                                {offer.percentageDiscountAndroid}% off
+                              </Text>
+                            )}
+                            {offer.formattedDiscountAmountAndroid && (
+                              <Text style={styles.offerDetail}>
+                                Discount: {offer.formattedDiscountAmountAndroid}
+                              </Text>
+                            )}
+                            {offer.validTimeWindowAndroid && (
+                              <Text style={styles.offerDetail}>
+                                Valid:{' '}
+                                {new Date(
+                                  Number(
+                                    offer.validTimeWindowAndroid
+                                      .startTimeMillis,
+                                  ),
+                                ).toLocaleDateString()}{' '}
+                                -{' '}
+                                {new Date(
+                                  Number(
+                                    offer.validTimeWindowAndroid.endTimeMillis,
+                                  ),
+                                ).toLocaleDateString()}
+                              </Text>
+                            )}
+                            {offer.limitedQuantityInfoAndroid && (
+                              <Text style={styles.offerDetail}>
+                                Remaining:{' '}
+                                {
+                                  offer.limitedQuantityInfoAndroid
+                                    .remainingQuantity
+                                }{' '}
+                                /{' '}
+                                {
+                                  offer.limitedQuantityInfoAndroid
+                                    .maximumQuantity
+                                }
+                              </Text>
+                            )}
+                            {offer.preorderDetailsAndroid && (
+                              <Text style={styles.offerDetail}>
+                                Release:{' '}
+                                {new Date(
+                                  Number(
+                                    offer.preorderDetailsAndroid
+                                      .preorderReleaseTimeMillis,
+                                  ),
+                                ).toLocaleDateString()}
+                              </Text>
+                            )}
+                            {offer.rentalDetailsAndroid && (
+                              <Text style={styles.offerDetail}>
+                                Rental Period:{' '}
+                                {
+                                  offer.rentalDetailsAndroid
+                                    .rentalExpirationPeriod
+                                }
+                              </Text>
+                            )}
+                            {Array.isArray(offer.offerTagsAndroid) &&
+                              offer.offerTagsAndroid.length > 0 && (
                                 <Text style={styles.offerDetail}>
-                                  Full Price (micros): {offer.fullPriceMicros}
+                                  Tags: {offer.offerTagsAndroid.join(', ')}
                                 </Text>
                               )}
-                              {offer.discountDisplayInfo && (
-                                <>
-                                  <Text style={styles.offerSubtitle}>
-                                    Discount:
-                                  </Text>
-                                  {offer.discountDisplayInfo
-                                    .percentageDiscount && (
-                                    <Text style={styles.offerDetail}>
-                                      {
-                                        offer.discountDisplayInfo
-                                          .percentageDiscount
-                                      }
-                                      % off
-                                    </Text>
-                                  )}
-                                  {offer.discountDisplayInfo.discountAmount && (
-                                    <Text style={styles.offerDetail}>
-                                      Discount:{' '}
-                                      {
-                                        offer.discountDisplayInfo.discountAmount
-                                          .formattedDiscountAmount
-                                      }
-                                    </Text>
-                                  )}
-                                </>
-                              )}
-                              {offer.validTimeWindow && (
-                                <Text style={styles.offerDetail}>
-                                  Valid:{' '}
-                                  {new Date(
-                                    Number(
-                                      offer.validTimeWindow.startTimeMillis,
-                                    ),
-                                  ).toLocaleDateString()}{' '}
-                                  -{' '}
-                                  {new Date(
-                                    Number(offer.validTimeWindow.endTimeMillis),
-                                  ).toLocaleDateString()}
-                                </Text>
-                              )}
-                              {offer.limitedQuantityInfo && (
-                                <Text style={styles.offerDetail}>
-                                  Remaining:{' '}
-                                  {offer.limitedQuantityInfo.remainingQuantity}{' '}
-                                  / {offer.limitedQuantityInfo.maximumQuantity}
-                                </Text>
-                              )}
-                              {offer.preorderDetailsAndroid && (
-                                <Text style={styles.offerDetail}>
-                                  Release:{' '}
-                                  {new Date(
-                                    Number(
-                                      offer.preorderDetailsAndroid
-                                        .preorderReleaseTimeMillis,
-                                    ),
-                                  ).toLocaleDateString()}
-                                </Text>
-                              )}
-                              {offer.rentalDetailsAndroid && (
-                                <Text style={styles.offerDetail}>
-                                  Rental Period:{' '}
-                                  {
-                                    offer.rentalDetailsAndroid
-                                      .rentalExpirationPeriod
-                                  }
-                                </Text>
-                              )}
-                              {Array.isArray(offer.offerTags) &&
-                                offer.offerTags.length > 0 && (
-                                  <Text style={styles.offerDetail}>
-                                    Tags: {offer.offerTags.join(', ')}
-                                  </Text>
-                                )}
-                            </View>
-                          ),
-                        )}
+                          </View>
+                        ))}
                       </View>
                     )}
                 </>
