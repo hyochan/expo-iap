@@ -62,7 +62,8 @@ Before committing any changes:
   - Product fields: `isFamilyShareableIOS`, `jsonRepresentationIOS`, `subscriptionInfoIOS`
 - **Android-related fields**: Use `Android` suffix (e.g., `nameAndroid`)
   - Platform-specific fields: `oneTimePurchaseOfferDetailsAndroid`, `subscriptionOfferDetailsAndroid`
-  - Keep `pricingPhases` (not `pricingPhasesAndroid`) for consistency with Google Play Billing
+  - In **Android-specific types** (e.g., `ProductSubscriptionAndroidOfferDetails`), keep `pricingPhases` without suffix for consistency with Google Play Billing
+  - In **cross-platform types** (e.g., `SubscriptionOffer`, `DiscountOffer`), use `pricingPhasesAndroid` suffix to distinguish from common fields
 - **Common fields**: Fields shared across platforms go in Common types (e.g., `ids`, `platform`, `debugDescription`)
   - Use these for data that exists on both platforms without platform-specific variations
 
