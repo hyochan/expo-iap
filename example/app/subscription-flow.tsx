@@ -592,7 +592,7 @@ function SubscriptionFlow({
                   Subscription Offers ({subscription.subscriptionOffers.length})
                 </Text>
                 {subscription.subscriptionOffers.map((offer, idx) => (
-                  <View key={idx} style={styles.offerCard}>
+                  <View key={offer.id} style={styles.offerCard}>
                     <Text style={styles.offerTitle}>
                       {offer.basePlanIdAndroid ?? offer.id}
                       {offer.id &&
@@ -657,7 +657,7 @@ function SubscriptionFlow({
                   Discount Offers ({subscription.discountOffers.length})
                 </Text>
                 {subscription.discountOffers.map((offer, idx) => (
-                  <View key={idx} style={styles.offerCard}>
+                  <View key={offer.id || idx} style={styles.offerCard}>
                     <Text style={styles.offerTitle}>
                       {offer.id || `Offer ${idx + 1}`}
                     </Text>

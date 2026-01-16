@@ -566,11 +566,11 @@ function PurchaseFlow({
                     selectedProduct.discountOffers.length > 0 && (
                       <View style={styles.offersSection}>
                         <Text style={styles.offersSectionTitle}>
-                          Discount Offers ({selectedProduct.discountOffers.length}
-                          )
+                          Discount Offers (
+                          {selectedProduct.discountOffers.length})
                         </Text>
                         {selectedProduct.discountOffers.map((offer, idx) => (
-                          <View key={idx} style={styles.offerCard}>
+                          <View key={offer.id || idx} style={styles.offerCard}>
                             <Text style={styles.offerTitle}>
                               {offer.id || `Offer ${idx + 1}`}
                             </Text>
@@ -598,7 +598,8 @@ function PurchaseFlow({
                                 Valid:{' '}
                                 {new Date(
                                   Number(
-                                    offer.validTimeWindowAndroid.startTimeMillis,
+                                    offer.validTimeWindowAndroid
+                                      .startTimeMillis,
                                   ),
                                 ).toLocaleDateString()}{' '}
                                 -{' '}
@@ -617,7 +618,10 @@ function PurchaseFlow({
                                     .remainingQuantity
                                 }{' '}
                                 /{' '}
-                                {offer.limitedQuantityInfoAndroid.maximumQuantity}
+                                {
+                                  offer.limitedQuantityInfoAndroid
+                                    .maximumQuantity
+                                }
                               </Text>
                             )}
                             {offer.preorderDetailsAndroid && (

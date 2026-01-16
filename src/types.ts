@@ -659,14 +659,12 @@ export interface ProductAndroid extends ProductCommon {
    * One-time purchase offer details including discounts (Android)
    * Returns all eligible offers. Available in Google Play Billing Library 7.0+
    * @deprecated Use discountOffers instead for cross-platform compatibility.
-   * @deprecated Use discountOffers instead
    */
   oneTimePurchaseOfferDetailsAndroid?: (ProductAndroidOneTimePurchaseOfferDetail[] | null);
   platform: 'android';
   price?: (number | null);
   /**
    * @deprecated Use subscriptionOffers instead for cross-platform compatibility.
-   * @deprecated Use subscriptionOffers instead
    */
   subscriptionOfferDetailsAndroid?: (ProductSubscriptionAndroidOfferDetails[] | null);
   /**
@@ -745,7 +743,6 @@ export interface ProductIOS extends ProductCommon {
   price?: (number | null);
   /**
    * @deprecated Use subscriptionOffers instead for cross-platform compatibility.
-   * @deprecated Use subscriptionOffers instead
    */
   subscriptionInfoIOS?: (SubscriptionInfoIOS | null);
   /**
@@ -789,14 +786,12 @@ export interface ProductSubscriptionAndroid extends ProductCommon {
    * One-time purchase offer details including discounts (Android)
    * Returns all eligible offers. Available in Google Play Billing Library 7.0+
    * @deprecated Use discountOffers instead for cross-platform compatibility.
-   * @deprecated Use discountOffers instead
    */
   oneTimePurchaseOfferDetailsAndroid?: (ProductAndroidOneTimePurchaseOfferDetail[] | null);
   platform: 'android';
   price?: (number | null);
   /**
    * @deprecated Use subscriptionOffers instead for cross-platform compatibility.
-   * @deprecated Use subscriptionOffers instead
    */
   subscriptionOfferDetailsAndroid: ProductSubscriptionAndroidOfferDetails[];
   /**
@@ -828,7 +823,6 @@ export interface ProductSubscriptionIOS extends ProductCommon {
   description: string;
   /**
    * @deprecated Use subscriptionOffers instead for cross-platform compatibility.
-   * @deprecated Use subscriptionOffers instead
    */
   discountsIOS?: (DiscountIOS[] | null);
   displayName?: (string | null);
@@ -846,7 +840,6 @@ export interface ProductSubscriptionIOS extends ProductCommon {
   price?: (number | null);
   /**
    * @deprecated Use subscriptionOffers instead for cross-platform compatibility.
-   * @deprecated Use subscriptionOffers instead
    */
   subscriptionInfoIOS?: (SubscriptionInfoIOS | null);
   /**

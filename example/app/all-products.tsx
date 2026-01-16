@@ -439,11 +439,11 @@ function AllProducts() {
                     selectedProduct.discountOffers.length > 0 && (
                       <View style={styles.offersSection}>
                         <Text style={styles.offersSectionTitle}>
-                          Discount Offers ({selectedProduct.discountOffers.length}
-                          )
+                          Discount Offers (
+                          {selectedProduct.discountOffers.length})
                         </Text>
                         {selectedProduct.discountOffers.map((offer, idx) => (
-                          <View key={idx} style={styles.offerCard}>
+                          <View key={offer.id || idx} style={styles.offerCard}>
                             <Text style={styles.offerTitle}>
                               {offer.id || `Offer ${idx + 1}`}
                             </Text>
@@ -471,7 +471,8 @@ function AllProducts() {
                                 Valid:{' '}
                                 {new Date(
                                   Number(
-                                    offer.validTimeWindowAndroid.startTimeMillis,
+                                    offer.validTimeWindowAndroid
+                                      .startTimeMillis,
                                   ),
                                 ).toLocaleDateString()}{' '}
                                 -{' '}
@@ -490,7 +491,10 @@ function AllProducts() {
                                     .remainingQuantity
                                 }{' '}
                                 /{' '}
-                                {offer.limitedQuantityInfoAndroid.maximumQuantity}
+                                {
+                                  offer.limitedQuantityInfoAndroid
+                                    .maximumQuantity
+                                }
                               </Text>
                             )}
                             {offer.preorderDetailsAndroid && (
@@ -535,7 +539,7 @@ function AllProducts() {
                         </Text>
                         {selectedProduct.subscriptionOffers.map(
                           (offer, idx) => (
-                            <View key={idx} style={styles.offerCard}>
+                            <View key={offer.id} style={styles.offerCard}>
                               <Text style={styles.offerTitle}>
                                 {offer.basePlanIdAndroid ?? offer.id}
                                 {offer.id &&
@@ -554,7 +558,8 @@ function AllProducts() {
                               )}
                               {offer.period && (
                                 <Text style={styles.offerDetail}>
-                                  Period: {offer.period.value} {offer.period.unit}
+                                  Period: {offer.period.value}{' '}
+                                  {offer.period.unit}
                                 </Text>
                               )}
                               {offer.periodCount && (

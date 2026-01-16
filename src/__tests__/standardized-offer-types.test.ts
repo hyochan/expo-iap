@@ -214,10 +214,12 @@ describe('Standardized Offer Types', () => {
         offerWithPhases.pricingPhasesAndroid?.pricingPhaseList[0].billingPeriod,
       ).toBe('P1W');
       expect(
-        offerWithPhases.pricingPhasesAndroid?.pricingPhaseList[0].recurrenceMode,
+        offerWithPhases.pricingPhasesAndroid?.pricingPhaseList[0]
+          .recurrenceMode,
       ).toBe(3);
       expect(
-        offerWithPhases.pricingPhasesAndroid?.pricingPhaseList[1].formattedPrice,
+        offerWithPhases.pricingPhasesAndroid?.pricingPhaseList[1]
+          .formattedPrice,
       ).toBe('$9.99');
     });
   });
