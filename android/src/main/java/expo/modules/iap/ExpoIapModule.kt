@@ -19,6 +19,7 @@ import dev.hyo.openiap.RequestPurchaseResultPurchase
 import dev.hyo.openiap.RequestPurchaseResultPurchases
 import dev.hyo.openiap.RequestSubscriptionAndroidProps
 import dev.hyo.openiap.RequestSubscriptionPropsByPlatforms
+import dev.hyo.openiap.SubscriptionProductReplacementParamsAndroid
 import dev.hyo.openiap.VerifyPurchaseGoogleOptions
 import dev.hyo.openiap.VerifyPurchaseProps
 import dev.hyo.openiap.VerifyPurchaseWithProviderProps
@@ -274,6 +275,7 @@ class ExpoIapModule : Module() {
                                     replacementModeAndroid = parsedParams.replacementMode?.toInt(),
                                     skus = parsedParams.skus,
                                     subscriptionOffers = subscriptionOffers,
+                                    subscriptionProductReplacementParams = parsedParams.subscriptionProductReplacementParams,
                                 )
                             RequestPurchaseProps(
                                 request =

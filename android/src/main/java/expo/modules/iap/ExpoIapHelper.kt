@@ -4,6 +4,8 @@ import android.util.Log
 import dev.hyo.openiap.AndroidSubscriptionOfferInput
 import dev.hyo.openiap.OpenIapModule
 import dev.hyo.openiap.ProductQueryType
+import dev.hyo.openiap.SubscriptionProductReplacementParamsAndroid
+import dev.hyo.openiap.SubscriptionReplacementModeAndroid
 import expo.modules.kotlin.Promise
 import expo.modules.kotlin.modules.Module
 import kotlinx.coroutines.CoroutineScope
@@ -79,6 +81,19 @@ object ExpoIapHelper {
             (params["purchaseTokenAndroid"] ?: params["purchaseToken"]) as? String
         val replacementMode =
             (params["replacementModeAndroid"] ?: params["replacementMode"]) as? Number
+        val subscriptionProductReplacementParams =
+            (params["subscriptionProductReplacementParams"] as? Map<*, *>)?.let { paramsMap ->
+                val oldProductId = paramsMap["oldProductId"] as? String
+                val replacementModeStr = paramsMap["replacementMode"] as? String
+                if (oldProductId.isNullOrEmpty() || replacementModeStr.isNullOrEmpty()) {
+                    null
+                } else {
+                    SubscriptionProductReplacementParamsAndroid(
+                        oldProductId = oldProductId,
+                        replacementMode = parseSubscriptionReplacementMode(replacementModeStr),
+                    )
+                }
+            }
 
         return RequestPurchaseParams(
             type = type,
@@ -90,8 +105,20 @@ object ExpoIapHelper {
             explicitSubscriptionOffers = explicitSubscriptionOffers,
             purchaseToken = purchaseToken,
             replacementMode = replacementMode,
+            subscriptionProductReplacementParams = subscriptionProductReplacementParams,
         )
     }
+
+    fun parseSubscriptionReplacementMode(mode: String): SubscriptionReplacementModeAndroid =
+        when (mode) {
+            "with-time-proration" -> SubscriptionReplacementModeAndroid.WithTimeProration
+            "charge-prorated-price" -> SubscriptionReplacementModeAndroid.ChargeProratedPrice
+            "charge-full-price" -> SubscriptionReplacementModeAndroid.ChargeFullPrice
+            "without-proration" -> SubscriptionReplacementModeAndroid.WithoutProration
+            "deferred" -> SubscriptionReplacementModeAndroid.Deferred
+            "keep-existing" -> SubscriptionReplacementModeAndroid.KeepExisting
+            else -> SubscriptionReplacementModeAndroid.UnknownReplacementMode
+        }
 
     data class RequestPurchaseParams(
         val type: String?,
@@ -103,6 +130,7 @@ object ExpoIapHelper {
         val explicitSubscriptionOffers: List<AndroidSubscriptionOfferInput>,
         val purchaseToken: String?,
         val replacementMode: Number?,
+        val subscriptionProductReplacementParams: SubscriptionProductReplacementParamsAndroid?,
     )
 
     fun addPurchasePromise(promise: Promise) {
