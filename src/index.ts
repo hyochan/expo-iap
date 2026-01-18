@@ -367,6 +367,7 @@ export const getAvailablePurchases: QueryField<
     alsoPublishToEventListenerIOS:
       options?.alsoPublishToEventListenerIOS ?? false,
     onlyIncludeActiveItemsIOS: options?.onlyIncludeActiveItemsIOS ?? true,
+    includeSuspendedAndroid: options?.includeSuspendedAndroid ?? false,
   };
 
   const resolvePurchases: () => Promise<Purchase[]> =
@@ -376,7 +377,10 @@ export const getAvailablePurchases: QueryField<
           normalizedOptions.alsoPublishToEventListenerIOS,
           normalizedOptions.onlyIncludeActiveItemsIOS,
         ) as Promise<Purchase[]>,
-      android: () => ExpoIapModule.getAvailableItems() as Promise<Purchase[]>,
+      android: () =>
+        ExpoIapModule.getAvailableItems(normalizedOptions) as Promise<
+          Purchase[]
+        >,
     }) ?? (() => Promise.resolve([] as Purchase[]));
 
   const purchases = await resolvePurchases();

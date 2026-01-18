@@ -12,6 +12,7 @@ import dev.hyo.openiap.OpenIapModule
 import dev.hyo.openiap.ProductQueryType
 import dev.hyo.openiap.ProductRequest
 import dev.hyo.openiap.Purchase
+import dev.hyo.openiap.PurchaseOptions
 import dev.hyo.openiap.RequestPurchaseAndroidProps
 import dev.hyo.openiap.RequestPurchaseProps
 import dev.hyo.openiap.RequestPurchasePropsByPlatforms
@@ -189,11 +190,12 @@ class ExpoIapModule : Module() {
                 }
             }
 
-            AsyncFunction("getAvailableItems") { promise: Promise ->
-                ExpoIapLog.payload("getAvailableItemsAndroid", null)
+            AsyncFunction("getAvailableItems") { options: Map<String, Any?>?, promise: Promise ->
+                ExpoIapLog.payload("getAvailableItemsAndroid", options)
                 scope.launch {
                     try {
-                        val purchases = openIap.getAvailablePurchases(null)
+                        val purchaseOptions = options?.let { PurchaseOptions.fromJson(it) }
+                        val purchases = openIap.getAvailablePurchases(purchaseOptions)
                         val payload = purchases.map { it.toJson() }
                         ExpoIapLog.result("getAvailableItemsAndroid", payload)
                         promise.resolve(payload)
