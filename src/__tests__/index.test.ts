@@ -564,7 +564,11 @@ describe('Public API (index.ts)', () => {
         .fn()
         .mockResolvedValueOnce([
           {id: 'active-sub', transactionId: 'txn-1'},
-          {id: 'suspended-sub', transactionId: 'txn-2', isSuspendedAndroid: true},
+          {
+            id: 'suspended-sub',
+            transactionId: 'txn-2',
+            isSuspendedAndroid: true,
+          },
         ]);
       const res = await getAvailablePurchases({includeSuspendedAndroid: true});
       expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith({

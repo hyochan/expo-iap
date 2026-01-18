@@ -199,6 +199,7 @@ interface Purchase {
   // Android specific
   autoRenewingAndroid?: boolean;
   packageNameAndroid?: string;
+  isSuspendedAndroid?: boolean; // Android 8.1+ - subscription payment paused
 }
 ```
 
@@ -253,6 +254,51 @@ await requestPurchase({
 });
 ```
 
+### iOS Win-Back Offers (iOS 18+)
+
+```tsx
+// Re-engage churned subscribers with win-back offers
+await requestPurchase({
+  request: {
+    apple: {
+      sku: 'premium_monthly',
+      winBackOffer: {offerId: 'winback_50_off'},
+    },
+  },
+  type: 'subs',
+});
+```
+
+### iOS JWS Promotional Offers (iOS 15+)
+
+```tsx
+// New simplified JWS format for promotional offers
+await requestPurchase({
+  request: {
+    apple: {
+      sku: 'premium_yearly',
+      promotionalOfferJWS: {
+        offerId: 'promo_20_off',
+        jws: 'eyJhbGciOiJFUzI1NiI...', // Server-signed JWS
+      },
+    },
+  },
+  type: 'subs',
+});
+```
+
+### Android Product Status (Android 8.0+)
+
+```tsx
+// Check why products couldn't be fetched
+const result = await fetchProducts({skus: ['product_1'], type: 'in-app'});
+result.forEach((product) => {
+  if (product.platform === 'android' && product.productStatusAndroid) {
+    // 'ok' | 'not-found' | 'no-offers-available' | 'unknown'
+  }
+});
+```
+
 ### Restore Purchases
 
 ```tsx
@@ -265,6 +311,9 @@ const restore = async () => {
     // Validate and restore each
   }
 };
+
+// Include suspended subscriptions (Android 8.1+)
+await getAvailablePurchases({includeSuspendedAndroid: true});
 ```
 
 ### Check Active Subscriptions

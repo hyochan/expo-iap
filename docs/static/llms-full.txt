@@ -335,11 +335,18 @@ const purchases = await getAvailablePurchases();
 for (const purchase of purchases) {
   // Validate and restore
 }
+
+// Include suspended subscriptions (Android 8.1+)
+const allPurchases = await getAvailablePurchases({
+  includeSuspendedAndroid: true,
+});
+// Check purchase.isSuspendedAndroid - don't grant entitlement if true
 ```
 
-**iOS Options:**
+**Options:**
 - `onlyIncludeActiveItemsIOS?: boolean` (default: true)
 - `alsoPublishToEventListenerIOS?: boolean`
+- `includeSuspendedAndroid?: boolean` - Include suspended subscriptions (Android 8.1+)
 
 ### getActiveSubscriptions
 
@@ -445,6 +452,8 @@ interface ProductAndroid extends ProductCommon {
   // Deprecated: use discountOffers/subscriptionOffers instead
   oneTimePurchaseOfferDetailsAndroid?: ProductAndroidOneTimePurchaseOfferDetail[];
   subscriptionOfferDetailsAndroid?: ProductSubscriptionAndroidOfferDetails[];
+  // Android 8.0+ product status
+  productStatusAndroid?: 'ok' | 'not-found' | 'no-offers-available' | 'unknown';
 }
 
 // Cross-platform subscription offer type
@@ -551,6 +560,12 @@ interface RequestPurchaseProps {
       quantity?: number;
       appAccountToken?: string;
       advancedCommerceData?: string;
+      // iOS 18+ Win-back offers
+      winBackOffer?: {offerId: string};
+      // iOS 15+ JWS promotional offers (WWDC 2025)
+      promotionalOfferJWS?: {offerId: string; jws: string};
+      // iOS 15+ Override intro eligibility
+      introductoryOfferEligibility?: boolean;
     };
     google?: {
       skus: string[];
@@ -924,6 +939,89 @@ function SubscriptionScreen() {
     </View>
   );
 }
+```
+
+### iOS Win-Back Offers (iOS 18+)
+
+Win-back offers re-engage churned subscribers with special discounts.
+
+```tsx
+// Apply a win-back offer during subscription purchase
+await requestPurchase({
+  request: {
+    apple: {
+      sku: 'premium_monthly',
+      winBackOffer: {offerId: 'winback_50_off'},
+    },
+  },
+  type: 'subs',
+});
+```
+
+### iOS JWS Promotional Offers (iOS 15+)
+
+New simplified format for promotional offers using compact JWS strings, back-deployed to iOS 15.
+
+```tsx
+await requestPurchase({
+  request: {
+    apple: {
+      sku: 'premium_yearly',
+      promotionalOfferJWS: {
+        offerId: 'promo_20_off',
+        jws: 'eyJhbGciOiJFUzI1NiI...', // Server-signed JWS
+      },
+    },
+  },
+  type: 'subs',
+});
+```
+
+### Android Product Status (Android 8.0+)
+
+Get detailed feedback on why products couldn't be fetched.
+
+```tsx
+const result = await fetchProducts({
+  skus: ['product_1', 'missing_product'],
+  type: 'in-app',
+});
+
+result.forEach((product) => {
+  if (product.platform === 'android') {
+    switch (product.productStatusAndroid) {
+      case 'ok':
+        // Product available
+        break;
+      case 'not-found':
+        // SKU doesn't exist in Play Console
+        break;
+      case 'no-offers-available':
+        // User not eligible for any offers
+        break;
+    }
+  }
+});
+```
+
+### Android Suspended Subscriptions (Android 8.1+)
+
+Include and handle suspended subscriptions (payment issues).
+
+```tsx
+const purchases = await getAvailablePurchases({
+  includeSuspendedAndroid: true,
+});
+
+purchases.forEach((purchase) => {
+  if (purchase.isSuspendedAndroid) {
+    // Do NOT grant entitlements
+    // Direct user to subscription center to fix payment
+    await deepLinkToSubscriptions({skuAndroid: purchase.productId});
+  } else {
+    // Normal active subscription - grant access
+  }
+});
 ```
 
 ### Restore Purchases
