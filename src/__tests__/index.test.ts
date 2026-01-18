@@ -538,7 +538,7 @@ describe('Public API (index.ts)', () => {
       });
       expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith(true, false);
 
-      // Android path (unified getAvailableItems)
+      // Android path (unified getAvailableItems with options)
       (Platform as any).OS = 'android';
       (Platform as any).select = (obj: any) => obj.android;
       (ExpoIapModule.getAvailableItems as jest.Mock) = jest
@@ -548,9 +548,31 @@ describe('Public API (index.ts)', () => {
           {id: 's1', transactionId: 'txn-2'},
         ]);
       const res = await getAvailablePurchases();
-      expect(ExpoIapModule.getAvailableItems).toHaveBeenCalled();
+      expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith({
+        alsoPublishToEventListenerIOS: false,
+        onlyIncludeActiveItemsIOS: true,
+        includeSuspendedAndroid: false,
+      });
       expect(res).toHaveLength(2);
       expect(res.map((p) => p.id)).toEqual(['p1', 's1']);
+    });
+
+    it('getAvailablePurchases passes includeSuspendedAndroid option on Android', async () => {
+      (Platform as any).OS = 'android';
+      (Platform as any).select = (obj: any) => obj.android;
+      (ExpoIapModule.getAvailableItems as jest.Mock) = jest
+        .fn()
+        .mockResolvedValueOnce([
+          {id: 'active-sub', transactionId: 'txn-1'},
+          {id: 'suspended-sub', transactionId: 'txn-2', isSuspendedAndroid: true},
+        ]);
+      const res = await getAvailablePurchases({includeSuspendedAndroid: true});
+      expect(ExpoIapModule.getAvailableItems).toHaveBeenCalledWith({
+        alsoPublishToEventListenerIOS: false,
+        onlyIncludeActiveItemsIOS: true,
+        includeSuspendedAndroid: true,
+      });
+      expect(res).toHaveLength(2);
     });
 
     it('restorePurchases performs iOS sync then fetches purchases', async () => {
