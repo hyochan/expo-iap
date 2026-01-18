@@ -293,20 +293,26 @@ const checkDeviceSupport = async () => {
 
 #### 1. Network connectivity
 
-Handle network errors gracefully:
+Handle connection errors gracefully using the `connected` state and `onPurchaseError` callback:
 
 ```tsx
-const {connectionError} = useIAP();
+const {connected} = useIAP({
+  onPurchaseError: (error) => {
+    if (error.code === ErrorCode.NetworkError) {
+      // Handle network error
+      Alert.alert('Network Error', 'Please check your internet connection.');
+    }
+  },
+});
 
-if (connectionError) {
+if (!connected) {
   return (
     <View>
       <Text>Store connection failed</Text>
-      <Text>{connectionError.message}</Text>
       <Button
         title="Retry"
         onPress={() => {
-          // Implement retry logic
+          // Implement retry logic (e.g., remount the component)
           retryConnection();
         }}
       />
@@ -414,11 +420,15 @@ useEffect(() => {
 ### 3. Monitor connection state
 
 ```tsx
-const {connected, connectionError} = useIAP();
+const {connected} = useIAP({
+  onPurchaseError: (error) => {
+    console.log('Purchase error:', error);
+  },
+});
 
 useEffect(() => {
-  console.log('Connection state changed:', {connected, error: connectionError});
-}, [connected, connectionError]);
+  console.log('Connection state changed:', connected);
+}, [connected]);
 ```
 
 ## Testing Strategies
