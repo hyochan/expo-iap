@@ -977,6 +977,7 @@ await requestPurchase({
 Get detailed feedback on why products couldn't be fetched.
 
 ```tsx
+// Direct API usage: fetchProducts returns Product[]
 const result = await fetchProducts({
   skus: ['product_1', 'missing_product'],
   type: 'in-app',
@@ -1012,7 +1013,10 @@ purchases.forEach((purchase) => {
   if (purchase.isSuspendedAndroid) {
     // Do NOT grant entitlements
     // Direct user to subscription center to fix payment
-    await deepLinkToSubscriptions({skuAndroid: purchase.productId});
+    await deepLinkToSubscriptions({
+      skuAndroid: purchase.productId,
+      packageNameAndroid: 'com.example.app',
+    });
   } else {
     // Normal active subscription - grant access
   }
