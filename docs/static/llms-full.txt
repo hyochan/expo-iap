@@ -560,12 +560,7 @@ interface RequestPurchaseProps {
       quantity?: number;
       appAccountToken?: string;
       advancedCommerceData?: string;
-      // iOS 18+ Win-back offers
-      winBackOffer?: {offerId: string};
-      // iOS 15+ JWS promotional offers (WWDC 2025)
-      promotionalOfferJWS?: {offerId: string; jws: string};
-      // iOS 15+ Override intro eligibility
-      introductoryOfferEligibility?: boolean;
+      withOffer?: DiscountOfferInputIOS; // One-time purchase discounts
     };
     google?: {
       skus: string[];

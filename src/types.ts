@@ -1,6 +1,6 @@
 // ============================================================================
 // AUTO-GENERATED TYPES — DO NOT EDIT DIRECTLY
-// Run `bun run generate:types` after updating any *.graphql schema file.
+// Run `npm run generate` after updating any *.graphql schema file.
 // ============================================================================
 
 export interface ActiveSubscription {
@@ -1216,30 +1216,11 @@ export interface RequestPurchaseIosProps {
   andDangerouslyFinishTransactionAutomatically?: (boolean | null);
   /** App account token for user tracking */
   appAccountToken?: (string | null);
-  /**
-   * Override introductory offer eligibility (iOS 15+, WWDC 2025).
-   * Set to true to indicate the user is eligible for introductory offer,
-   * or false to indicate they are not. When nil, the system determines eligibility.
-   * Back-deployed to iOS 15.
-   */
-  introductoryOfferEligibility?: (boolean | null);
-  /**
-   * JWS promotional offer (iOS 15+, WWDC 2025).
-   * New signature format using compact JWS string for promotional offers.
-   * Back-deployed to iOS 15.
-   */
-  promotionalOfferJWS?: (PromotionalOfferJwsInputIOS | null);
   /** Purchase quantity */
   quantity?: (number | null);
   /** Product SKU */
   sku: string;
-  /**
-   * Win-back offer to apply (iOS 18+)
-   * Used to re-engage churned subscribers with a discount or free trial.
-   * Note: Win-back offers only apply to subscription products.
-   */
-  winBackOffer?: (WinBackOfferInputIOS | null);
-  /** Discount offer to apply */
+  /** Discount offer to apply (one-time purchase discounts) */
   withOffer?: (DiscountOfferInputIOS | null);
 }
 
