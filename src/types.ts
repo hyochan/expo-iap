@@ -1,6 +1,6 @@
 // ============================================================================
 // AUTO-GENERATED TYPES — DO NOT EDIT DIRECTLY
-// Run `npm run generate` after updating any *.graphql schema file.
+// Run `bun run generate:types` after updating any *.graphql schema file.
 // ============================================================================
 
 export interface ActiveSubscription {
@@ -1220,7 +1220,10 @@ export interface RequestPurchaseIosProps {
   quantity?: (number | null);
   /** Product SKU */
   sku: string;
-  /** Discount offer to apply (one-time purchase discounts) */
+  /**
+   * Promotional offer to apply (subscriptions only, ignored for one-time purchases).
+   * iOS only supports promotional offers for auto-renewable subscriptions.
+   */
   withOffer?: (DiscountOfferInputIOS | null);
 }
 
@@ -1324,6 +1327,10 @@ export interface RequestSubscriptionIosProps {
    * via StoreKit Message (automatic) or subscription offer APIs.
    */
   winBackOffer?: (WinBackOfferInputIOS | null);
+  /**
+   * Promotional offer to apply for subscription purchases.
+   * Requires server-signed offer with nonce, timestamp, keyId, and signature.
+   */
   withOffer?: (DiscountOfferInputIOS | null);
 }
 
