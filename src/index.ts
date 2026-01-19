@@ -650,6 +650,7 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         subscriptionOffers,
         replacementModeAndroid,
         purchaseTokenAndroid,
+        subscriptionProductReplacementParams,
       } = normalizedRequest;
 
       const normalizedOffers = subscriptionOffers ?? [];
@@ -668,6 +669,8 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         ),
         subscriptionOffers: normalizedOffers,
         isOfferPersonalized: isOfferPersonalized ?? false,
+        subscriptionProductReplacementParams:
+          subscriptionProductReplacementParams ?? undefined,
       })) as Purchase[];
 
       return normalizePurchaseArray(result);

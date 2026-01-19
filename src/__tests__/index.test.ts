@@ -406,6 +406,141 @@ describe('Public API (index.ts)', () => {
       ).rejects.toThrow(/The `skus` property is required/);
     });
 
+    it('Android subscription passes subscriptionProductReplacementParams to native module', async () => {
+      (Platform as any).OS = 'android';
+      (ExpoIapModule.requestPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue([]);
+
+      await requestPurchase({
+        request: {
+          google: {
+            skus: ['new_subscription'],
+            subscriptionOffers: [{sku: 'new_subscription', offerToken: 'token'}],
+            subscriptionProductReplacementParams: {
+              oldProductId: 'old_subscription',
+              replacementMode: 'with-time-proration',
+            },
+          },
+        },
+        type: 'subs',
+      });
+
+      expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'subs',
+          skuArr: ['new_subscription'],
+          subscriptionProductReplacementParams: {
+            oldProductId: 'old_subscription',
+            replacementMode: 'with-time-proration',
+          },
+        }),
+      );
+    });
+
+    it('Android subscription passes subscriptionProductReplacementParams with all replacement modes', async () => {
+      (Platform as any).OS = 'android';
+      (ExpoIapModule.requestPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue([]);
+
+      const replacementModes = [
+        'unknown-replacement-mode',
+        'with-time-proration',
+        'charge-prorated-price',
+        'charge-full-price',
+        'without-proration',
+        'deferred',
+        'keep-existing',
+      ] as const;
+
+      for (const mode of replacementModes) {
+        await requestPurchase({
+          request: {
+            google: {
+              skus: ['new_sub'],
+              subscriptionOffers: [{sku: 'new_sub', offerToken: 'token'}],
+              subscriptionProductReplacementParams: {
+                oldProductId: 'old_sub',
+                replacementMode: mode,
+              },
+            },
+          },
+          type: 'subs',
+        });
+
+        expect(ExpoIapModule.requestPurchase).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            subscriptionProductReplacementParams: {
+              oldProductId: 'old_sub',
+              replacementMode: mode,
+            },
+          }),
+        );
+      }
+    });
+
+    it('Android subscription works without subscriptionProductReplacementParams (optional)', async () => {
+      (Platform as any).OS = 'android';
+      (ExpoIapModule.requestPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue([]);
+
+      await requestPurchase({
+        request: {
+          google: {
+            skus: ['subscription'],
+            subscriptionOffers: [{sku: 'subscription', offerToken: 'token'}],
+          },
+        },
+        type: 'subs',
+      });
+
+      expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'subs',
+          skuArr: ['subscription'],
+          subscriptionProductReplacementParams: undefined,
+        }),
+      );
+    });
+
+    it('Android subscription passes both legacy replacementModeAndroid and new subscriptionProductReplacementParams', async () => {
+      (Platform as any).OS = 'android';
+      (ExpoIapModule.requestPurchase as jest.Mock) = jest
+        .fn()
+        .mockResolvedValue([]);
+
+      await requestPurchase({
+        request: {
+          google: {
+            skus: ['new_subscription'],
+            subscriptionOffers: [{sku: 'new_subscription', offerToken: 'token'}],
+            purchaseTokenAndroid: 'old-purchase-token',
+            replacementModeAndroid: 2,
+            subscriptionProductReplacementParams: {
+              oldProductId: 'old_subscription',
+              replacementMode: 'charge-prorated-price',
+            },
+          },
+        },
+        type: 'subs',
+      });
+
+      expect(ExpoIapModule.requestPurchase).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'subs',
+          skuArr: ['new_subscription'],
+          purchaseToken: 'old-purchase-token',
+          replacementMode: 2,
+          subscriptionProductReplacementParams: {
+            oldProductId: 'old_subscription',
+            replacementMode: 'charge-prorated-price',
+          },
+        }),
+      );
+    });
+
     it('iOS maps withOffer through offerToRecordIOS', async () => {
       (Platform as any).OS = 'ios';
       const offer = {
