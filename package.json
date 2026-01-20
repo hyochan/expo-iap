@@ -47,6 +47,7 @@
     "@jest/globals": "^30.0.5",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.1.7",
+    "@types/react-test-renderer": "^19.1.0",
     "eslint": "8.57.0",
     "eslint-config-expo": "^9.2.0",
     "eslint-config-prettier": "^10.1.5",

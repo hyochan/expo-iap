@@ -108,6 +108,13 @@ type UseIap = {
 export interface UseIAPOptions {
   onPurchaseSuccess?: (purchase: Purchase) => void;
   onPurchaseError?: (error: PurchaseError) => void;
+  /**
+   * Callback for general errors from hook methods like fetchProducts,
+   * getAvailablePurchases, getActiveSubscriptions, restorePurchases, etc.
+   * These are Promise-based operations that can fail due to network issues
+   * or store unavailability.
+   */
+  onError?: (error: Error) => void;
   onPromotedProductIOS?: (product: Product) => void;
   /**
    * Alternative billing mode for Android
@@ -229,6 +236,15 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     [],
   );
 
+  // Helper function to invoke onError callback
+  const invokeOnError = useCallback((error: unknown) => {
+    if (optionsRef.current?.onError) {
+      optionsRef.current.onError(
+        error instanceof Error ? error : new Error(String(error)),
+      );
+    }
+  }, []);
+
   const fetchProductsInternal = useCallback(
     async (params: {
       skus: string[];
@@ -314,9 +330,16 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         }
       } catch (error) {
         ExpoIapConsole.error('Error fetching products:', error);
+        invokeOnError(error);
+        throw error;
       }
     },
-    [canonicalProductType, mergeWithDuplicateCheck, normalizeProductQueryType],
+    [
+      canonicalProductType,
+      invokeOnError,
+      mergeWithDuplicateCheck,
+      normalizeProductQueryType,
+    ],
   );
 
   const getAvailablePurchasesInternal = useCallback(async (): Promise<void> => {
@@ -328,8 +351,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       setAvailablePurchases(result);
     } catch (error) {
       ExpoIapConsole.error('Error fetching available purchases:', error);
+      invokeOnError(error);
+      throw error;
     }
-  }, []);
+  }, [invokeOnError]);
 
   const getActiveSubscriptionsInternal = useCallback(
     async (subscriptionIds?: string[]): Promise<void> => {
@@ -338,10 +363,11 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         setActiveSubscriptions(result);
       } catch (error) {
         ExpoIapConsole.error('Error getting active subscriptions:', error);
-        // Preserve existing state on error
+        invokeOnError(error);
+        throw error;
       }
     },
-    [],
+    [invokeOnError],
   );
 
   const hasActiveSubscriptionsInternal = useCallback(
@@ -410,8 +436,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       setAvailablePurchases(purchases);
     } catch (error) {
       ExpoIapConsole.warn('Failed to restore purchases:', error);
+      invokeOnError(error);
+      throw error;
     }
-  }, []);
+  }, [invokeOnError]);
 
   const validateReceipt = useCallback(async (props: VerifyPurchaseProps) => {
     return validateReceiptInternal(props);
