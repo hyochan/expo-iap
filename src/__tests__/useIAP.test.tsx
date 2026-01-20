@@ -368,10 +368,7 @@ describe('useIAP hook', () => {
 
       await ReactTestRenderer.act(async () => {
         ReactTestRenderer.create(
-          <TestComponent
-            options={{onError}}
-            onHookReady={() => {}}
-          />,
+          <TestComponent options={{onError}} onHookReady={() => {}} />,
         );
         await flushPromises();
       });
@@ -396,10 +393,7 @@ describe('useIAP hook', () => {
       // This should not throw an unhandled promise rejection
       await ReactTestRenderer.act(async () => {
         ReactTestRenderer.create(
-          <TestComponent
-            options={{onError}}
-            onHookReady={() => {}}
-          />,
+          <TestComponent options={{onError}} onHookReady={() => {}} />,
         );
         await flushPromises();
       });
@@ -420,11 +414,7 @@ describe('useIAP hook', () => {
 
       // No onError callback - should not throw unhandled exception
       await ReactTestRenderer.act(async () => {
-        ReactTestRenderer.create(
-          <TestComponent
-            onHookReady={() => {}}
-          />,
-        );
+        ReactTestRenderer.create(<TestComponent onHookReady={() => {}} />);
         await flushPromises();
       });
 
