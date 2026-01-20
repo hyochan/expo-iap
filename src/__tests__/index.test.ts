@@ -416,7 +416,9 @@ describe('Public API (index.ts)', () => {
         request: {
           google: {
             skus: ['new_subscription'],
-            subscriptionOffers: [{sku: 'new_subscription', offerToken: 'token'}],
+            subscriptionOffers: [
+              {sku: 'new_subscription', offerToken: 'token'},
+            ],
             subscriptionProductReplacementParams: {
               oldProductId: 'old_subscription',
               replacementMode: 'with-time-proration',
@@ -515,7 +517,9 @@ describe('Public API (index.ts)', () => {
         request: {
           google: {
             skus: ['new_subscription'],
-            subscriptionOffers: [{sku: 'new_subscription', offerToken: 'token'}],
+            subscriptionOffers: [
+              {sku: 'new_subscription', offerToken: 'token'},
+            ],
             purchaseTokenAndroid: 'old-purchase-token',
             replacementModeAndroid: 2,
             subscriptionProductReplacementParams: {

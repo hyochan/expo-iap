@@ -108,6 +108,13 @@ type UseIap = {
 export interface UseIAPOptions {
   onPurchaseSuccess?: (purchase: Purchase) => void;
   onPurchaseError?: (error: PurchaseError) => void;
+  /**
+   * Callback for general errors from hook methods like fetchProducts,
+   * getAvailablePurchases, getActiveSubscriptions, restorePurchases, etc.
+   * These are Promise-based operations that can fail due to network issues
+   * or store unavailability.
+   */
+  onError?: (error: Error) => void;
   onPromotedProductIOS?: (product: Product) => void;
   /**
    * Alternative billing mode for Android
@@ -314,6 +321,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         }
       } catch (error) {
         ExpoIapConsole.error('Error fetching products:', error);
+        if (optionsRef.current?.onError) {
+          optionsRef.current.onError(error as Error);
+        }
+        throw error;
       }
     },
     [canonicalProductType, mergeWithDuplicateCheck, normalizeProductQueryType],
@@ -328,6 +339,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       setAvailablePurchases(result);
     } catch (error) {
       ExpoIapConsole.error('Error fetching available purchases:', error);
+      if (optionsRef.current?.onError) {
+        optionsRef.current.onError(error as Error);
+      }
+      throw error;
     }
   }, []);
 
@@ -338,7 +353,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         setActiveSubscriptions(result);
       } catch (error) {
         ExpoIapConsole.error('Error getting active subscriptions:', error);
-        // Preserve existing state on error
+        if (optionsRef.current?.onError) {
+          optionsRef.current.onError(error as Error);
+        }
+        throw error;
       }
     },
     [],
@@ -410,6 +428,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       setAvailablePurchases(purchases);
     } catch (error) {
       ExpoIapConsole.warn('Failed to restore purchases:', error);
+      if (optionsRef.current?.onError) {
+        optionsRef.current.onError(error as Error);
+      }
+      throw error;
     }
   }, []);
 

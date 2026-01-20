@@ -68,8 +68,7 @@ const {
 interface UseIAPOptions {
   onPurchaseSuccess?: (purchase: Purchase) => void;
   onPurchaseError?: (error: PurchaseError) => void;
-  onSyncError?: (error: Error) => void;
-  shouldAutoSyncPurchases?: boolean; // Controls auto sync behavior inside the hook
+  onError?: (error: Error) => void; // General errors from hook methods
   onPromotedProductIOS?: (product: Product) => void; // iOS promoted products
 }
 ```

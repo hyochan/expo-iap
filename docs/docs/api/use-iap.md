@@ -67,7 +67,7 @@ const {
 interface UseIAPOptions {
   onPurchaseSuccess?: (purchase: Purchase) => void;
   onPurchaseError?: (error: PurchaseError) => void;
-  shouldAutoSyncPurchases?: boolean; // Controls auto sync behavior inside the hook
+  onError?: (error: Error) => void; // General errors from hook methods
   onPromotedProductIOS?: (product: Product) => void; // iOS promoted products
 }
 ```
@@ -99,6 +99,29 @@ interface UseIAPOptions {
       Alert.alert('Purchase Failed', error.message);
     }
   };
+  ```
+
+#### onError
+
+- **Type**: `(error: Error) => void`
+- **Description**: Called when general errors occur from hook methods like `fetchProducts`, `getAvailablePurchases`, `getActiveSubscriptions`, or `restorePurchases`. These are Promise-based operations that can fail due to network issues or store unavailability.
+- **Note**: This is different from `onPurchaseError` which only handles purchase-related errors. The error is also re-thrown, so you can additionally use try/catch if needed.
+- **Example**:
+
+  ```tsx
+  const {fetchProducts} = useIAP({
+    onError: (error) => {
+      // Handle errors from fetchProducts, getAvailablePurchases, etc.
+      console.error('IAP operation failed:', error.message);
+      Alert.alert('Error', 'Failed to load products. Please try again.');
+    },
+    onPurchaseError: (error) => {
+      // Handle purchase-specific errors
+      if (error.code !== ErrorCode.UserCancelled) {
+        Alert.alert('Purchase Failed', error.message);
+      }
+    },
+  });
   ```
 
 #### autoFinishTransactions
@@ -629,7 +652,11 @@ const AndroidPurchaseExample = () => {
 
 ## Error Handling
 
-The `useIAP` hook integrates with the centralized error handling system:
+The `useIAP` hook provides two separate error callbacks for different types of errors:
+
+### Purchase Errors (`onPurchaseError`)
+
+Use `onPurchaseError` for handling purchase-related errors that occur during `requestPurchase`:
 
 ```tsx
 const {requestPurchase} = useIAP({
@@ -653,6 +680,36 @@ const {requestPurchase} = useIAP({
     }
   },
 });
+```
+
+### General Errors (`onError`)
+
+Use `onError` for handling errors from other hook methods like `fetchProducts`, `getAvailablePurchases`, `getActiveSubscriptions`, or `restorePurchases`:
+
+```tsx
+const {fetchProducts, getAvailablePurchases} = useIAP({
+  onError: (error) => {
+    // Handle errors from fetchProducts, getAvailablePurchases, etc.
+    console.error('IAP operation failed:', error.message);
+    Alert.alert('Error', 'Something went wrong. Please try again.');
+  },
+  onPurchaseError: (error) => {
+    // Handle purchase-specific errors separately
+    if (error.code !== ErrorCode.UserCancelled) {
+      Alert.alert('Purchase Failed', error.message);
+    }
+  },
+});
+
+// The error is also re-thrown, so you can use try/catch if needed
+const loadProducts = async () => {
+  try {
+    await fetchProducts({skus: ['product_1'], type: 'in-app'});
+  } catch (error) {
+    // onError callback is called first, then error is thrown here
+    // You can handle it differently if needed
+  }
+};
 ```
 
 ## Best Practices
