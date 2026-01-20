@@ -615,9 +615,9 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         replacementMode: -1,
         obfuscatedAccountId: obfuscatedAccountId,
         obfuscatedProfileId: obfuscatedProfileId,
-        offerTokenAndroid: offerToken,
+        offerToken: offerToken,
         offerTokenArr: [],
-        isOfferPersonalizedAndroid: isOfferPersonalized ?? false,
+        isOfferPersonalized: isOfferPersonalized ?? false,
       })) as Purchase[];
 
       return normalizePurchaseArray(result);
@@ -670,7 +670,7 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
           (offer: AndroidSubscriptionOfferInput) => offer.offerToken,
         ),
         subscriptionOffers: normalizedOffers,
-        isOfferPersonalizedAndroid: isOfferPersonalized ?? false,
+        isOfferPersonalized: isOfferPersonalized ?? false,
         subscriptionProductReplacementParams:
           subscriptionProductReplacementParams ?? undefined,
       })) as Purchase[];

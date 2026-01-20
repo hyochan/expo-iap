@@ -595,7 +595,7 @@ const handleDeveloperProvidedBilling = async (details) => {
 | When presented | After initConnection() | During requestPurchase() |
 | UI | Separate dialog | Side-by-side choice in purchase dialog |
 | Listener | `userChoiceBillingListenerAndroid` | `developerProvidedBillingListenerAndroid` |
-| Setup | `enableBillingProgramAndroid: 'user-choice-billing'` | `enableBillingProgramAndroid: 'external-payments'` + `developerBillingOptionAndroid` in requestPurchase |
+| Setup | `enableBillingProgramAndroid: 'user-choice-billing'` | `enableBillingProgramAndroid: 'external-payments'` + `developerBillingOption` in requestPurchase |
 
 ### Example with External Payments Flow
 
@@ -653,7 +653,7 @@ export default function ExternalPaymentsComponent() {
       request: {
         google: {
           skus: [sku],
-          developerBillingOptionAndroid: {
+          developerBillingOption: {
             billingProgram: 'external-payments',
             linkUri: 'https://your-payment-site.com/checkout',
             launchMode: 'launch-in-external-browser-or-app',
