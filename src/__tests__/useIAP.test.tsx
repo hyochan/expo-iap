@@ -357,5 +357,83 @@ describe('useIAP hook', () => {
       // Should still throw even without onError callback
       expect(thrownError).toBe(mockError);
     });
+
+    it('calls onError when initConnection fails', async () => {
+      const mockError = new Error('Failed to initialize connection');
+      (ExpoIapModule.initConnection as jest.Mock) = jest
+        .fn()
+        .mockRejectedValue(mockError);
+
+      const onError = jest.fn();
+
+      await ReactTestRenderer.act(async () => {
+        ReactTestRenderer.create(
+          <TestComponent
+            options={{onError}}
+            onHookReady={() => {}}
+          />,
+        );
+        await flushPromises();
+      });
+
+      // Wait for initConnection to be called and fail
+      await ReactTestRenderer.act(async () => {
+        await flushPromises();
+      });
+
+      expect(onError).toHaveBeenCalledTimes(1);
+      expect(onError).toHaveBeenCalledWith(mockError);
+    });
+
+    it('does not throw unhandled exception when initConnection fails with onError', async () => {
+      const mockError = new Error('Store unavailable');
+      (ExpoIapModule.initConnection as jest.Mock) = jest
+        .fn()
+        .mockRejectedValue(mockError);
+
+      const onError = jest.fn();
+
+      // This should not throw an unhandled promise rejection
+      await ReactTestRenderer.act(async () => {
+        ReactTestRenderer.create(
+          <TestComponent
+            options={{onError}}
+            onHookReady={() => {}}
+          />,
+        );
+        await flushPromises();
+      });
+
+      await ReactTestRenderer.act(async () => {
+        await flushPromises();
+      });
+
+      // onError should be called, error should be handled gracefully
+      expect(onError).toHaveBeenCalledWith(mockError);
+    });
+
+    it('handles initConnection failure without onError callback', async () => {
+      const mockError = new Error('Connection failed');
+      (ExpoIapModule.initConnection as jest.Mock) = jest
+        .fn()
+        .mockRejectedValue(mockError);
+
+      // No onError callback - should not throw unhandled exception
+      await ReactTestRenderer.act(async () => {
+        ReactTestRenderer.create(
+          <TestComponent
+            onHookReady={() => {}}
+          />,
+        );
+        await flushPromises();
+      });
+
+      await ReactTestRenderer.act(async () => {
+        await flushPromises();
+      });
+
+      // Test passes if no unhandled exception is thrown
+      expect(ExpoIapModule.initConnection).toHaveBeenCalled();
+    });
   });
 });

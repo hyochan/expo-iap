@@ -514,21 +514,31 @@ export function useIAP(options?: UseIAPOptions): UseIap {
               optionsRef.current.alternativeBillingModeAndroid,
           }
         : undefined;
-    const result = await initConnection(config);
-    setConnected(result);
-    if (!result) {
-      // If connection failed, clean up listeners
-      ExpoIapConsole.warn(
-        '[useIAP] Connection failed, cleaning up listeners...',
-      );
+
+    try {
+      const result = await initConnection(config);
+      setConnected(result);
+      if (!result) {
+        // If connection failed, clean up listeners
+        ExpoIapConsole.warn(
+          '[useIAP] Connection failed, cleaning up listeners...',
+        );
+        subscriptionsRef.current.purchaseUpdate?.remove();
+        subscriptionsRef.current.promotedProductIOS?.remove();
+        subscriptionsRef.current.purchaseUpdate = undefined;
+        subscriptionsRef.current.promotedProductIOS = undefined;
+        // Keep purchaseError listener registered to capture subsequent retries
+      }
+    } catch (error) {
+      ExpoIapConsole.error('initConnection failed:', error);
+      invokeOnError(error);
+      // Clean up listeners on error
       subscriptionsRef.current.purchaseUpdate?.remove();
       subscriptionsRef.current.promotedProductIOS?.remove();
       subscriptionsRef.current.purchaseUpdate = undefined;
       subscriptionsRef.current.promotedProductIOS = undefined;
-      // Keep purchaseError listener registered to capture subsequent retries
-      return;
     }
-  }, [refreshSubscriptionStatus]);
+  }, [refreshSubscriptionStatus, invokeOnError]);
 
   useEffect(() => {
     initIapWithSubscriptions();
