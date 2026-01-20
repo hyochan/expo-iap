@@ -495,8 +495,9 @@ class ExpoIapModule : Module() {
                 ExpoIapLog.payload("verifyPurchaseWithProvider", params)
                 scope.launch {
                     try {
-                        val props = VerifyPurchaseWithProviderProps.fromJson(params)
-                            ?: throw IllegalArgumentException("Invalid verifyPurchaseWithProvider params")
+                        val props =
+                            VerifyPurchaseWithProviderProps.fromJson(params)
+                                ?: throw IllegalArgumentException("Invalid verifyPurchaseWithProvider params")
                         val result = openIap.verifyPurchaseWithProvider(props)
                         val resultMap = result.toJson()
                         ExpoIapLog.result("verifyPurchaseWithProvider", resultMap)
