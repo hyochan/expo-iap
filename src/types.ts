@@ -1,6 +1,6 @@
 // ============================================================================
 // AUTO-GENERATED TYPES — DO NOT EDIT DIRECTLY
-// Run `bun run generate:types` after updating any *.graphql schema file.
+// Run `npm run generate` after updating any *.graphql schema file.
 // ============================================================================
 
 export interface ActiveSubscription {
@@ -1194,12 +1194,21 @@ export interface RequestPurchaseAndroidProps {
    * Google Play Billing and the developer's external payment option.
    */
   developerBillingOption?: (DeveloperBillingOptionParamsAndroid | null);
-  /** Personalized offer flag */
-  isOfferPersonalized?: (boolean | null);
+  /**
+   * Personalized offer flag (Android).
+   * When true, indicates the price was customized for this user.
+   */
+  isOfferPersonalizedAndroid?: (boolean | null);
   /** Obfuscated account ID */
   obfuscatedAccountIdAndroid?: (string | null);
   /** Obfuscated profile ID */
   obfuscatedProfileIdAndroid?: (string | null);
+  /**
+   * Offer token for one-time purchase discounts (Android 7.0+).
+   * Pass the offerToken from oneTimePurchaseOfferDetailsAndroid or discountOffers
+   * to apply a discount offer to the purchase.
+   */
+  offerTokenAndroid?: (string | null);
   /** List of product SKUs */
   skus: string[];
 }
@@ -1271,8 +1280,11 @@ export interface RequestSubscriptionAndroidProps {
    * Google Play Billing and the developer's external payment option.
    */
   developerBillingOption?: (DeveloperBillingOptionParamsAndroid | null);
-  /** Personalized offer flag */
-  isOfferPersonalized?: (boolean | null);
+  /**
+   * Personalized offer flag (Android).
+   * When true, indicates the price was customized for this user.
+   */
+  isOfferPersonalizedAndroid?: (boolean | null);
   /** Obfuscated account ID */
   obfuscatedAccountIdAndroid?: (string | null);
   /** Obfuscated profile ID */

@@ -604,7 +604,8 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         skus,
         obfuscatedAccountIdAndroid,
         obfuscatedProfileIdAndroid,
-        isOfferPersonalized,
+        isOfferPersonalizedAndroid,
+        offerTokenAndroid,
       } = normalizedRequest;
 
       const result = (await ExpoIapModule.requestPurchase({
@@ -614,8 +615,9 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         replacementMode: -1,
         obfuscatedAccountId: obfuscatedAccountIdAndroid,
         obfuscatedProfileId: obfuscatedProfileIdAndroid,
+        offerTokenAndroid: offerTokenAndroid ?? undefined,
         offerTokenArr: [],
-        isOfferPersonalized: isOfferPersonalized ?? false,
+        isOfferPersonalizedAndroid: isOfferPersonalizedAndroid ?? false,
       })) as Purchase[];
 
       return normalizePurchaseArray(result);
@@ -646,7 +648,7 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         skus,
         obfuscatedAccountIdAndroid,
         obfuscatedProfileIdAndroid,
-        isOfferPersonalized,
+        isOfferPersonalizedAndroid,
         subscriptionOffers,
         replacementModeAndroid,
         purchaseTokenAndroid,
@@ -668,7 +670,7 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
           (offer: AndroidSubscriptionOfferInput) => offer.offerToken,
         ),
         subscriptionOffers: normalizedOffers,
-        isOfferPersonalized: isOfferPersonalized ?? false,
+        isOfferPersonalizedAndroid: isOfferPersonalizedAndroid ?? false,
         subscriptionProductReplacementParams:
           subscriptionProductReplacementParams ?? undefined,
       })) as Purchase[];

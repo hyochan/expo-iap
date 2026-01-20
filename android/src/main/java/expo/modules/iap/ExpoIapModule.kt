@@ -294,6 +294,7 @@ class ExpoIapModule : Module() {
                                     isOfferPersonalized = parsedParams.isOfferPersonalized,
                                     obfuscatedAccountIdAndroid = parsedParams.obfuscatedAccountId,
                                     obfuscatedProfileIdAndroid = parsedParams.obfuscatedProfileId,
+                                    offerToken = parsedParams.offerToken,
                                     skus = parsedParams.skus,
                                 )
                             RequestPurchaseProps(
