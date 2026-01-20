@@ -421,7 +421,7 @@ function ExternalPaymentsComponent() {
       request: {
         google: {
           skus: [sku],
-          developerBillingOption: {
+          developerBillingOptionAndroid: {
             billingProgram: 'external-payments',
             linkUri: 'https://your-payment-site.com/checkout',
             launchMode: 'launch-in-external-browser-or-app',

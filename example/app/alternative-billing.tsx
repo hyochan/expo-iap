@@ -303,7 +303,7 @@ function AlternativeBillingScreen() {
         },
       },
       type: 'in-app',
-      // developerBillingOption can be set to specify developer billing behavior
+      // developerBillingOptionAndroid can be set to specify developer billing behavior
     })
       .then(() => {
         // Google will show selection dialog

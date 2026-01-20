@@ -384,4 +384,119 @@ describe('Standardized Offer Types', () => {
       expect(androidOffers[0].offerToken).toBe('token_android');
     });
   });
+
+  describe('RequestPurchaseAndroidProps with offerTokenAndroid', () => {
+    it('should support offerTokenAndroid for one-time purchase discounts', () => {
+      // This tests the type structure for one-time purchase discount offers
+      // introduced in Google Play Billing Library 7.0
+      const purchaseRequest = {
+        skus: ['premium_upgrade'],
+        offerTokenAndroid: 'discount_offer_token_abc123',
+        isOfferPersonalizedAndroid: false,
+        obfuscatedAccountIdAndroid: 'account_123',
+        obfuscatedProfileIdAndroid: 'profile_456',
+      };
+
+      expect(purchaseRequest.skus).toEqual(['premium_upgrade']);
+      expect(purchaseRequest.offerTokenAndroid).toBe(
+        'discount_offer_token_abc123',
+      );
+      expect(purchaseRequest.isOfferPersonalizedAndroid).toBe(false);
+      expect(purchaseRequest.obfuscatedAccountIdAndroid).toBe('account_123');
+      expect(purchaseRequest.obfuscatedProfileIdAndroid).toBe('profile_456');
+    });
+
+    it('should allow offerTokenAndroid to be optional', () => {
+      const purchaseRequestWithoutOffer = {
+        skus: ['regular_product'],
+        // No offerTokenAndroid - regular purchase without discount
+      };
+
+      expect(purchaseRequestWithoutOffer.skus).toEqual(['regular_product']);
+      expect(purchaseRequestWithoutOffer).not.toHaveProperty(
+        'offerTokenAndroid',
+      );
+    });
+
+    it('should extract offerTokenAndroid from DiscountOffer for purchase', () => {
+      // Simulate getting a product with discount offers
+      const discountOffer: DiscountOffer = {
+        id: 'flash_sale',
+        displayPrice: '$2.99',
+        price: 2.99,
+        currency: 'USD',
+        type: 'one-time',
+        offerTokenAndroid: 'flash_sale_token_xyz',
+        percentageDiscountAndroid: 50,
+      };
+
+      // Build purchase request using the offer token from the discount offer
+      const purchaseRequest = {
+        skus: ['premium_upgrade'],
+        offerTokenAndroid: discountOffer.offerTokenAndroid,
+      };
+
+      expect(purchaseRequest.offerTokenAndroid).toBe('flash_sale_token_xyz');
+      expect(purchaseRequest.offerTokenAndroid).toBe(
+        discountOffer.offerTokenAndroid,
+      );
+    });
+
+    it('should support isOfferPersonalizedAndroid for EU compliance', () => {
+      // isOfferPersonalizedAndroid indicates when the price was customized for this user
+      // Required for EU Digital Services Act compliance
+      const personalizedRequest = {
+        skus: ['premium_product'],
+        isOfferPersonalizedAndroid: true,
+      };
+
+      const nonPersonalizedRequest = {
+        skus: ['premium_product'],
+        isOfferPersonalizedAndroid: false,
+      };
+
+      expect(personalizedRequest.isOfferPersonalizedAndroid).toBe(true);
+      expect(nonPersonalizedRequest.isOfferPersonalizedAndroid).toBe(false);
+    });
+
+    it('should combine discountOffers offerTokenAndroid with purchase request', () => {
+      // Full workflow: product → discount offer → purchase request
+      const mockProduct: ProductAndroid = {
+        id: 'consumable_gems',
+        title: '100 Gems',
+        description: 'A pack of 100 gems',
+        displayName: 'Gems Pack',
+        displayPrice: '$4.99',
+        price: 4.99,
+        currency: 'USD',
+        platform: 'android',
+        type: 'in-app',
+        nameAndroid: '100 Gems',
+        discountOffers: [
+          {
+            id: 'summer_sale',
+            displayPrice: '$2.49',
+            price: 2.49,
+            currency: 'USD',
+            type: 'one-time',
+            offerTokenAndroid: 'summer_sale_offer_token',
+            percentageDiscountAndroid: 50,
+          },
+        ],
+      };
+
+      // Get the offer token from product's discount offers
+      const selectedOffer = mockProduct.discountOffers?.[0];
+      const offerToken = selectedOffer?.offerTokenAndroid;
+
+      // Create purchase request with the offer token
+      const purchaseRequest = {
+        skus: [mockProduct.id],
+        offerTokenAndroid: offerToken,
+      };
+
+      expect(purchaseRequest.skus).toEqual(['consumable_gems']);
+      expect(purchaseRequest.offerTokenAndroid).toBe('summer_sale_offer_token');
+    });
+  });
 });

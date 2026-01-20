@@ -1193,7 +1193,7 @@ export interface RequestPurchaseAndroidProps {
    * When provided, the purchase flow will show a side-by-side choice between
    * Google Play Billing and the developer's external payment option.
    */
-  developerBillingOption?: (DeveloperBillingOptionParamsAndroid | null);
+  developerBillingOptionAndroid?: (DeveloperBillingOptionParamsAndroid | null);
   /**
    * Personalized offer flag (Android).
    * When true, indicates the price was customized for this user.
@@ -1279,7 +1279,7 @@ export interface RequestSubscriptionAndroidProps {
    * When provided, the purchase flow will show a side-by-side choice between
    * Google Play Billing and the developer's external payment option.
    */
-  developerBillingOption?: (DeveloperBillingOptionParamsAndroid | null);
+  developerBillingOptionAndroid?: (DeveloperBillingOptionParamsAndroid | null);
   /**
    * Personalized offer flag (Android).
    * When true, indicates the price was customized for this user.
