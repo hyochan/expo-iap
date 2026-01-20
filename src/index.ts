@@ -615,7 +615,7 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         replacementMode: -1,
         obfuscatedAccountId: obfuscatedAccountId,
         obfuscatedProfileId: obfuscatedProfileId,
-        offerTokenAndroid: offerToken ?? undefined,
+        offerTokenAndroid: offerToken,
         offerTokenArr: [],
         isOfferPersonalizedAndroid: isOfferPersonalized ?? false,
       })) as Purchase[];
