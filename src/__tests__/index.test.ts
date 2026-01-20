@@ -507,7 +507,7 @@ describe('Public API (index.ts)', () => {
       );
     });
 
-    it('Android subscription passes both legacy replacementModeAndroid and new subscriptionProductReplacementParams', async () => {
+    it('Android subscription passes both legacy replacementMode and new subscriptionProductReplacementParams', async () => {
       (Platform as any).OS = 'android';
       (ExpoIapModule.requestPurchase as jest.Mock) = jest
         .fn()
@@ -520,8 +520,8 @@ describe('Public API (index.ts)', () => {
             subscriptionOffers: [
               {sku: 'new_subscription', offerToken: 'token'},
             ],
-            purchaseTokenAndroid: 'old-purchase-token',
-            replacementModeAndroid: 2,
+            purchaseToken: 'old-purchase-token',
+            replacementMode: 2,
             subscriptionProductReplacementParams: {
               oldProductId: 'old_subscription',
               replacementMode: 'charge-prorated-price',

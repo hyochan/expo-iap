@@ -311,8 +311,8 @@ if (discountOffer?.offerTokenAndroid) {
     request: {
       google: {
         skus: [product.id],
-        offerTokenAndroid: discountOffer.offerTokenAndroid,
-        isOfferPersonalizedAndroid: false, // EU compliance flag
+        offerToken: discountOffer.offerTokenAndroid,  // Input field: no suffix
+        isOfferPersonalized: false, // EU compliance flag
       },
     },
     type: 'in-app',

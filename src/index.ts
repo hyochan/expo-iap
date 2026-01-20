@@ -602,10 +602,10 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
 
       const {
         skus,
-        obfuscatedAccountIdAndroid,
-        obfuscatedProfileIdAndroid,
-        isOfferPersonalizedAndroid,
-        offerTokenAndroid,
+        obfuscatedAccountId,
+        obfuscatedProfileId,
+        isOfferPersonalized,
+        offerToken,
       } = normalizedRequest;
 
       const result = (await ExpoIapModule.requestPurchase({
@@ -613,11 +613,11 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         skuArr: skus,
         purchaseToken: undefined,
         replacementMode: -1,
-        obfuscatedAccountId: obfuscatedAccountIdAndroid,
-        obfuscatedProfileId: obfuscatedProfileIdAndroid,
-        offerTokenAndroid: offerTokenAndroid ?? undefined,
+        obfuscatedAccountId: obfuscatedAccountId,
+        obfuscatedProfileId: obfuscatedProfileId,
+        offerTokenAndroid: offerToken ?? undefined,
         offerTokenArr: [],
-        isOfferPersonalizedAndroid: isOfferPersonalizedAndroid ?? false,
+        isOfferPersonalizedAndroid: isOfferPersonalized ?? false,
       })) as Purchase[];
 
       return normalizePurchaseArray(result);
@@ -646,31 +646,31 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
 
       const {
         skus,
-        obfuscatedAccountIdAndroid,
-        obfuscatedProfileIdAndroid,
-        isOfferPersonalizedAndroid,
+        obfuscatedAccountId,
+        obfuscatedProfileId,
+        isOfferPersonalized,
         subscriptionOffers,
-        replacementModeAndroid,
-        purchaseTokenAndroid,
+        replacementMode: replacementModeInput,
+        purchaseToken: purchaseTokenInput,
         subscriptionProductReplacementParams,
       } = normalizedRequest;
 
       const normalizedOffers = subscriptionOffers ?? [];
-      const replacementMode = replacementModeAndroid ?? -1;
-      const purchaseToken = purchaseTokenAndroid ?? undefined;
+      const replacementMode = replacementModeInput ?? -1;
+      const purchaseToken = purchaseTokenInput ?? undefined;
 
       const result = (await ExpoIapModule.requestPurchase({
         type: native,
         skuArr: skus,
         purchaseToken,
         replacementMode,
-        obfuscatedAccountId: obfuscatedAccountIdAndroid,
-        obfuscatedProfileId: obfuscatedProfileIdAndroid,
+        obfuscatedAccountId: obfuscatedAccountId,
+        obfuscatedProfileId: obfuscatedProfileId,
         offerTokenArr: normalizedOffers.map(
           (offer: AndroidSubscriptionOfferInput) => offer.offerToken,
         ),
         subscriptionOffers: normalizedOffers,
-        isOfferPersonalizedAndroid: isOfferPersonalizedAndroid ?? false,
+        isOfferPersonalizedAndroid: isOfferPersonalized ?? false,
         subscriptionProductReplacementParams:
           subscriptionProductReplacementParams ?? undefined,
       })) as Purchase[];

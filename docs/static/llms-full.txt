@@ -285,7 +285,7 @@ await requestPurchase({
     },
     google: {
       skus: ['product_id'],
-      obfuscatedAccountIdAndroid: 'user-id', // Optional
+      obfuscatedAccountId: 'user-id', // Optional
     },
   },
   type: 'in-app',
@@ -564,9 +564,10 @@ interface RequestPurchaseProps {
     };
     google?: {
       skus: string[];
-      obfuscatedAccountIdAndroid?: string;
-      obfuscatedProfileIdAndroid?: string;
+      obfuscatedAccountId?: string;
+      obfuscatedProfileId?: string;
       isOfferPersonalized?: boolean;
+      offerToken?: string;  // For one-time purchase discounts (Android 7.0+)
       subscriptionOffers?: Array<{sku: string; offerToken: string}>;
     };
   };
