@@ -271,10 +271,10 @@ class ExpoIapModule : Module() {
                             val android =
                                 RequestSubscriptionAndroidProps(
                                     isOfferPersonalized = parsedParams.isOfferPersonalized,
-                                    obfuscatedAccountIdAndroid = parsedParams.obfuscatedAccountId,
-                                    obfuscatedProfileIdAndroid = parsedParams.obfuscatedProfileId,
-                                    purchaseTokenAndroid = parsedParams.purchaseToken,
-                                    replacementModeAndroid = parsedParams.replacementMode?.toInt(),
+                                    obfuscatedAccountId = parsedParams.obfuscatedAccountId,
+                                    obfuscatedProfileId = parsedParams.obfuscatedProfileId,
+                                    purchaseToken = parsedParams.purchaseToken,
+                                    replacementMode = parsedParams.replacementMode?.toInt(),
                                     skus = parsedParams.skus,
                                     subscriptionOffers = subscriptionOffers,
                                     subscriptionProductReplacementParams = parsedParams.subscriptionProductReplacementParams,
@@ -292,8 +292,9 @@ class ExpoIapModule : Module() {
                             val android =
                                 RequestPurchaseAndroidProps(
                                     isOfferPersonalized = parsedParams.isOfferPersonalized,
-                                    obfuscatedAccountIdAndroid = parsedParams.obfuscatedAccountId,
-                                    obfuscatedProfileIdAndroid = parsedParams.obfuscatedProfileId,
+                                    obfuscatedAccountId = parsedParams.obfuscatedAccountId,
+                                    obfuscatedProfileId = parsedParams.obfuscatedProfileId,
+                                    offerToken = parsedParams.offerToken,
                                     skus = parsedParams.skus,
                                 )
                             RequestPurchaseProps(
@@ -494,7 +495,9 @@ class ExpoIapModule : Module() {
                 ExpoIapLog.payload("verifyPurchaseWithProvider", params)
                 scope.launch {
                     try {
-                        val props = VerifyPurchaseWithProviderProps.fromJson(params)
+                        val props =
+                            VerifyPurchaseWithProviderProps.fromJson(params)
+                                ?: throw IllegalArgumentException("Invalid verifyPurchaseWithProvider params")
                         val result = openIap.verifyPurchaseWithProvider(props)
                         val resultMap = result.toJson()
                         ExpoIapLog.result("verifyPurchaseWithProvider", resultMap)

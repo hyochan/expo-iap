@@ -59,10 +59,8 @@ object ExpoIapHelper {
             (params["skus"] as? List<*>)?.filterIsInstance<String>()
                 ?: (params["skuArr"] as? List<*>)?.filterIsInstance<String>()
                 ?: emptyList()
-        val obfuscatedAccountId =
-            (params["obfuscatedAccountIdAndroid"] ?: params["obfuscatedAccountId"]) as? String
-        val obfuscatedProfileId =
-            (params["obfuscatedProfileIdAndroid"] ?: params["obfuscatedProfileId"]) as? String
+        val obfuscatedAccountId = params["obfuscatedAccountId"] as? String
+        val obfuscatedProfileId = params["obfuscatedProfileId"] as? String
         val isOfferPersonalized = params["isOfferPersonalized"] as? Boolean ?: false
         val offerTokenArr =
             (params["offerTokenArr"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
@@ -77,10 +75,8 @@ object ExpoIapHelper {
                     AndroidSubscriptionOfferInput(offerToken = offerToken, sku = sku)
                 }
             } ?: emptyList()
-        val purchaseToken =
-            (params["purchaseTokenAndroid"] ?: params["purchaseToken"]) as? String
-        val replacementMode =
-            (params["replacementModeAndroid"] ?: params["replacementMode"]) as? Number
+        val purchaseToken = params["purchaseToken"] as? String
+        val replacementMode = params["replacementMode"] as? Number
         val subscriptionProductReplacementParams =
             (params["subscriptionProductReplacementParams"] as? Map<*, *>)?.let { paramsMap ->
                 val oldProductId = paramsMap["oldProductId"] as? String
@@ -94,6 +90,8 @@ object ExpoIapHelper {
                     )
                 }
             }
+        // offerToken for one-time purchase discounts (Android 7.0+)
+        val offerToken = params["offerToken"] as? String
 
         return RequestPurchaseParams(
             type = type,
@@ -101,6 +99,7 @@ object ExpoIapHelper {
             obfuscatedAccountId = obfuscatedAccountId,
             obfuscatedProfileId = obfuscatedProfileId,
             isOfferPersonalized = isOfferPersonalized,
+            offerToken = offerToken,
             offerTokenArr = offerTokenArr,
             explicitSubscriptionOffers = explicitSubscriptionOffers,
             purchaseToken = purchaseToken,
@@ -126,6 +125,8 @@ object ExpoIapHelper {
         val obfuscatedAccountId: String?,
         val obfuscatedProfileId: String?,
         val isOfferPersonalized: Boolean,
+        /** Offer token for one-time purchase discounts (Android 7.0+) */
+        val offerToken: String?,
         val offerTokenArr: List<String>,
         val explicitSubscriptionOffers: List<AndroidSubscriptionOfferInput>,
         val purchaseToken: String?,

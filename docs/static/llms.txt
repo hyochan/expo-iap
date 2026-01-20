@@ -299,6 +299,27 @@ result.forEach((product) => {
 });
 ```
 
+### Android One-Time Purchase Discounts (Android 7.0+)
+
+```tsx
+// Apply discount offers to one-time purchases
+const product = products.find(p => p.id === 'premium_upgrade');
+const discountOffer = product?.discountOffers?.[0];
+
+if (product && discountOffer?.offerTokenAndroid) {
+  await requestPurchase({
+    request: {
+      google: {
+        skus: [product.id],
+        offerToken: discountOffer.offerTokenAndroid,  // Input field: no suffix
+        isOfferPersonalized: false, // EU compliance flag
+      },
+    },
+    type: 'in-app',
+  });
+}
+```
+
 ### Restore Purchases
 
 ```tsx

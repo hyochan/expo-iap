@@ -602,9 +602,10 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
 
       const {
         skus,
-        obfuscatedAccountIdAndroid,
-        obfuscatedProfileIdAndroid,
+        obfuscatedAccountId,
+        obfuscatedProfileId,
         isOfferPersonalized,
+        offerToken,
       } = normalizedRequest;
 
       const result = (await ExpoIapModule.requestPurchase({
@@ -612,8 +613,9 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
         skuArr: skus,
         purchaseToken: undefined,
         replacementMode: -1,
-        obfuscatedAccountId: obfuscatedAccountIdAndroid,
-        obfuscatedProfileId: obfuscatedProfileIdAndroid,
+        obfuscatedAccountId: obfuscatedAccountId,
+        obfuscatedProfileId: obfuscatedProfileId,
+        offerToken: offerToken,
         offerTokenArr: [],
         isOfferPersonalized: isOfferPersonalized ?? false,
       })) as Purchase[];
@@ -644,26 +646,26 @@ export const requestPurchase: MutationField<'requestPurchase'> = async (
 
       const {
         skus,
-        obfuscatedAccountIdAndroid,
-        obfuscatedProfileIdAndroid,
+        obfuscatedAccountId,
+        obfuscatedProfileId,
         isOfferPersonalized,
         subscriptionOffers,
-        replacementModeAndroid,
-        purchaseTokenAndroid,
+        replacementMode: replacementModeInput,
+        purchaseToken: purchaseTokenInput,
         subscriptionProductReplacementParams,
       } = normalizedRequest;
 
       const normalizedOffers = subscriptionOffers ?? [];
-      const replacementMode = replacementModeAndroid ?? -1;
-      const purchaseToken = purchaseTokenAndroid ?? undefined;
+      const replacementMode = replacementModeInput ?? -1;
+      const purchaseToken = purchaseTokenInput ?? undefined;
 
       const result = (await ExpoIapModule.requestPurchase({
         type: native,
         skuArr: skus,
         purchaseToken,
         replacementMode,
-        obfuscatedAccountId: obfuscatedAccountIdAndroid,
-        obfuscatedProfileId: obfuscatedProfileIdAndroid,
+        obfuscatedAccountId: obfuscatedAccountId,
+        obfuscatedProfileId: obfuscatedProfileId,
         offerTokenArr: normalizedOffers.map(
           (offer: AndroidSubscriptionOfferInput) => offer.offerToken,
         ),
