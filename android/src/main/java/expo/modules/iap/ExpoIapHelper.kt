@@ -59,12 +59,13 @@ object ExpoIapHelper {
             (params["skus"] as? List<*>)?.filterIsInstance<String>()
                 ?: (params["skuArr"] as? List<*>)?.filterIsInstance<String>()
                 ?: emptyList()
+        // New field names first, with legacy names as fallback for backwards compatibility
         val obfuscatedAccountId =
-            (params["obfuscatedAccountIdAndroid"] ?: params["obfuscatedAccountId"]) as? String
+            (params["obfuscatedAccountId"] ?: params["obfuscatedAccountIdAndroid"]) as? String
         val obfuscatedProfileId =
-            (params["obfuscatedProfileIdAndroid"] ?: params["obfuscatedProfileId"]) as? String
+            (params["obfuscatedProfileId"] ?: params["obfuscatedProfileIdAndroid"]) as? String
         val isOfferPersonalized =
-            (params["isOfferPersonalizedAndroid"] ?: params["isOfferPersonalized"]) as? Boolean ?: false
+            (params["isOfferPersonalized"] ?: params["isOfferPersonalizedAndroid"]) as? Boolean ?: false
         val offerTokenArr =
             (params["offerTokenArr"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
         val explicitSubscriptionOffers =
@@ -79,9 +80,9 @@ object ExpoIapHelper {
                 }
             } ?: emptyList()
         val purchaseToken =
-            (params["purchaseTokenAndroid"] ?: params["purchaseToken"]) as? String
+            (params["purchaseToken"] ?: params["purchaseTokenAndroid"]) as? String
         val replacementMode =
-            (params["replacementModeAndroid"] ?: params["replacementMode"]) as? Number
+            (params["replacementMode"] ?: params["replacementModeAndroid"]) as? Number
         val subscriptionProductReplacementParams =
             (params["subscriptionProductReplacementParams"] as? Map<*, *>)?.let { paramsMap ->
                 val oldProductId = paramsMap["oldProductId"] as? String
@@ -95,9 +96,9 @@ object ExpoIapHelper {
                     )
                 }
             }
-        // offerTokenAndroid for one-time purchase discounts (Android 7.0+)
+        // offerToken for one-time purchase discounts (Android 7.0+)
         val offerToken =
-            (params["offerTokenAndroid"] ?: params["offerToken"]) as? String
+            (params["offerToken"] ?: params["offerTokenAndroid"]) as? String
 
         return RequestPurchaseParams(
             type = type,
