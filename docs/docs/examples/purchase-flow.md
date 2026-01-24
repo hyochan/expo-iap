@@ -93,7 +93,7 @@ Notes:
 
 ### Key iOS Options
 
-- `appAccountToken`: set per user to correlate receipts on your backend
+- `appAccountToken`: set per user to correlate receipts on your backend. **Must be a valid UUID format** (e.g., `550e8400-e29b-41d4-a716-446655440000`). If a non-UUID value is provided, Apple will silently return `null` for this field in the purchase response.
 - `quantity`: purchase quantity for iOS (consumables)
 
 ### Purchase Object Properties
