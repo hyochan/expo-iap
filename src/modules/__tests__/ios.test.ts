@@ -813,8 +813,9 @@ describe('iOS Module Functions', () => {
           ExpoIapModule.getExternalPurchaseCustomLinkTokenIOS as jest.Mock
         ).mockResolvedValue(mockResult);
 
-        const result =
-          await getExternalPurchaseCustomLinkTokenIOS('acquisition');
+        const result = await getExternalPurchaseCustomLinkTokenIOS(
+          'acquisition',
+        );
 
         expect(
           ExpoIapModule.getExternalPurchaseCustomLinkTokenIOS,
@@ -844,8 +845,9 @@ describe('iOS Module Functions', () => {
           ExpoIapModule.getExternalPurchaseCustomLinkTokenIOS as jest.Mock
         ).mockResolvedValue(mockResult);
 
-        const result =
-          await getExternalPurchaseCustomLinkTokenIOS('acquisition');
+        const result = await getExternalPurchaseCustomLinkTokenIOS(
+          'acquisition',
+        );
 
         expect(result.error).toBe('App not eligible');
         expect(result.token).toBeUndefined();
