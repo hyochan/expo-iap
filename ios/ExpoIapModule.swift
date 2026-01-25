@@ -415,5 +415,42 @@ public final class ExpoIapModule: Module {
             ExpoIapLog.result("getAppTransactionIOS", value: nil)
             return nil
         }
+
+        // MARK: - ExternalPurchaseCustomLink (iOS 18.1+)
+
+        AsyncFunction("isEligibleForExternalPurchaseCustomLinkIOS") { () async throws -> Bool in
+            ExpoIapLog.payload("isEligibleForExternalPurchaseCustomLinkIOS", payload: nil)
+            let isEligible = try await OpenIapModule.shared.isEligibleForExternalPurchaseCustomLinkIOS()
+            ExpoIapLog.result("isEligibleForExternalPurchaseCustomLinkIOS", value: isEligible)
+            return isEligible
+        }
+
+        AsyncFunction("getExternalPurchaseCustomLinkTokenIOS") { (tokenType: String) async throws -> [String: Any] in
+            ExpoIapLog.payload("getExternalPurchaseCustomLinkTokenIOS", payload: ["tokenType": tokenType])
+            guard let type = ExternalPurchaseCustomLinkTokenTypeIOS(rawValue: tokenType) else {
+                throw IapException.from(PurchaseError.make(
+                    code: .developerError,
+                    message: "Invalid token type: \(tokenType). Must be 'acquisition' or 'services'"
+                ))
+            }
+            let result = try await OpenIapModule.shared.getExternalPurchaseCustomLinkTokenIOS(type)
+            let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(result))
+            ExpoIapLog.result("getExternalPurchaseCustomLinkTokenIOS", value: sanitized)
+            return sanitized
+        }
+
+        AsyncFunction("showExternalPurchaseCustomLinkNoticeIOS") { (noticeType: String) async throws -> [String: Any] in
+            ExpoIapLog.payload("showExternalPurchaseCustomLinkNoticeIOS", payload: ["noticeType": noticeType])
+            guard let type = ExternalPurchaseCustomLinkNoticeTypeIOS(rawValue: noticeType) else {
+                throw IapException.from(PurchaseError.make(
+                    code: .developerError,
+                    message: "Invalid notice type: \(noticeType). Must be 'browser'"
+                ))
+            }
+            let result = try await OpenIapModule.shared.showExternalPurchaseCustomLinkNoticeIOS(type)
+            let sanitized = ExpoIapHelper.sanitizeDictionary(OpenIapSerialization.encode(result))
+            ExpoIapLog.result("showExternalPurchaseCustomLinkNoticeIOS", value: sanitized)
+            return sanitized
+        }
     }
 }

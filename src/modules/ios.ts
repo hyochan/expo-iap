@@ -6,6 +6,10 @@ import ExpoIapModule from '../ExpoIapModule';
 
 // Types
 import type {
+  ExternalPurchaseCustomLinkNoticeResultIOS,
+  ExternalPurchaseCustomLinkTokenResultIOS,
+  ExternalPurchaseCustomLinkTokenTypeIOS,
+  ExternalPurchaseCustomLinkNoticeTypeIOS,
   ExternalPurchaseLinkResultIOS,
   ExternalPurchaseNoticeResultIOS,
   MutationField,
@@ -372,18 +376,18 @@ export const canPresentExternalPurchaseNoticeIOS: QueryField<
 };
 
 /**
- * Present an external purchase notice sheet to inform users about external purchases (iOS 18.2+).
+ * Present an external purchase notice sheet to inform users about external purchases (iOS 15.4+).
  * This must be called before opening an external purchase link.
+ * Returns the external purchase token when user continues.
  *
- * @returns Promise resolving to the result with action and error if any
+ * @returns Promise resolving to the result with action, token, and error if any
  * @platform iOS
  */
-export const presentExternalPurchaseNoticeSheetIOS: MutationField<
-  'presentExternalPurchaseNoticeSheetIOS'
-> = async () => {
-  const result = await ExpoIapModule.presentExternalPurchaseNoticeSheetIOS();
-  return result as ExternalPurchaseNoticeResultIOS;
-};
+export const presentExternalPurchaseNoticeSheetIOS =
+  async (): Promise<ExternalPurchaseNoticeResultIOS> => {
+    const result = await ExpoIapModule.presentExternalPurchaseNoticeSheetIOS();
+    return result as ExternalPurchaseNoticeResultIOS;
+  };
 
 /**
  * Present an external purchase link to redirect users to your website (iOS 16.0+).
@@ -397,6 +401,66 @@ export const presentExternalPurchaseLinkIOS: MutationField<
 > = async (url: string) => {
   const result = await ExpoIapModule.presentExternalPurchaseLinkIOS(url);
   return result as ExternalPurchaseLinkResultIOS;
+};
+
+/**
+ * Check if app is eligible for ExternalPurchaseCustomLink API (iOS 18.1+).
+ * Returns true if the app can use custom external purchase links.
+ *
+ * @returns Promise resolving to true if eligible
+ * @platform iOS
+ * @see https://developer.apple.com/documentation/storekit/externalpurchasecustomlink/iseligible
+ */
+export const isEligibleForExternalPurchaseCustomLinkIOS =
+  async (): Promise<boolean> => {
+    return !!(await ExpoIapModule.isEligibleForExternalPurchaseCustomLinkIOS());
+  };
+
+/**
+ * Get external purchase token for reporting to Apple (iOS 18.1+).
+ * Use this token with Apple's External Purchase Server API to report transactions.
+ *
+ * @param tokenType - Token type: 'acquisition' (new customers) or 'services' (existing customers)
+ * @returns Promise resolving to the token result with token string or error
+ * @platform iOS
+ * @see https://developer.apple.com/documentation/storekit/externalpurchasecustomlink/token(for:)
+ */
+export const getExternalPurchaseCustomLinkTokenIOS = async (
+  tokenType: ExternalPurchaseCustomLinkTokenTypeIOS,
+): Promise<ExternalPurchaseCustomLinkTokenResultIOS> => {
+  if (!tokenType) {
+    throw new Error(
+      "getExternalPurchaseCustomLinkTokenIOS requires a tokenType ('acquisition' or 'services')",
+    );
+  }
+  const result = await ExpoIapModule.getExternalPurchaseCustomLinkTokenIOS(
+    tokenType,
+  );
+  return result as ExternalPurchaseCustomLinkTokenResultIOS;
+};
+
+/**
+ * Show ExternalPurchaseCustomLink notice sheet (iOS 18.1+).
+ * Displays the system disclosure notice sheet for custom external purchase links.
+ * Call this after a deliberate customer interaction before linking out to external purchases.
+ *
+ * @param noticeType - Notice type: 'browser' (external purchases displayed in browser)
+ * @returns Promise resolving to the result with continued status and error if any
+ * @platform iOS
+ * @see https://developer.apple.com/documentation/storekit/externalpurchasecustomlink/shownotice(type:)
+ */
+export const showExternalPurchaseCustomLinkNoticeIOS = async (
+  noticeType: ExternalPurchaseCustomLinkNoticeTypeIOS,
+): Promise<ExternalPurchaseCustomLinkNoticeResultIOS> => {
+  if (!noticeType) {
+    throw new Error(
+      "showExternalPurchaseCustomLinkNoticeIOS requires a noticeType ('browser')",
+    );
+  }
+  const result = await ExpoIapModule.showExternalPurchaseCustomLinkNoticeIOS(
+    noticeType,
+  );
+  return result as ExternalPurchaseCustomLinkNoticeResultIOS;
 };
 
 // iOS-specific APIs only; cross-platform wrappers live in src/index.ts

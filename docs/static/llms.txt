@@ -337,6 +337,33 @@ const restore = async () => {
 await getAvailablePurchases({includeSuspendedAndroid: true});
 ```
 
+### iOS External Purchase Custom Link (iOS 18.1+)
+
+For apps with custom external purchase links entitlement:
+
+```tsx
+import {
+  isEligibleForExternalPurchaseCustomLinkIOS,
+  getExternalPurchaseCustomLinkTokenIOS,
+  showExternalPurchaseCustomLinkNoticeIOS,
+} from 'expo-iap';
+
+// Check eligibility
+const isEligible = await isEligibleForExternalPurchaseCustomLinkIOS();
+
+if (isEligible) {
+  // Show disclosure notice
+  const notice = await showExternalPurchaseCustomLinkNoticeIOS('browser');
+  if (notice.continued) {
+    // Get token for reporting to Apple
+    const result = await getExternalPurchaseCustomLinkTokenIOS('acquisition');
+    if (result.token) {
+      // Open external link and report to Apple's External Purchase Server API
+    }
+  }
+}
+```
+
 ### Check Active Subscriptions
 
 ```tsx

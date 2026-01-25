@@ -742,10 +742,14 @@ import {
   currentEntitlementIOS,
   showManageSubscriptionsIOS,
   beginRefundRequestIOS,
-  // Alternative Billing (iOS 16+)
+  // External Purchase (iOS 15.4+)
   canPresentExternalPurchaseNoticeIOS,
   presentExternalPurchaseNoticeSheetIOS,
   presentExternalPurchaseLinkIOS,
+  // ExternalPurchaseCustomLink (iOS 18.1+)
+  isEligibleForExternalPurchaseCustomLinkIOS,
+  getExternalPurchaseCustomLinkTokenIOS,
+  showExternalPurchaseCustomLinkNoticeIOS,
 } from 'expo-iap';
 
 // Clear pending transactions
@@ -759,6 +763,25 @@ await beginRefundRequestIOS(transactionId);
 
 // Show subscription management
 await showManageSubscriptionsIOS();
+
+// ExternalPurchaseCustomLink (iOS 18.1+)
+// Check if eligible for custom external purchase links
+const isEligible = await isEligibleForExternalPurchaseCustomLinkIOS();
+
+if (isEligible) {
+  // Show disclosure notice before external link
+  const noticeResult = await showExternalPurchaseCustomLinkNoticeIOS('browser');
+  if (noticeResult.continued) {
+    // Get token for reporting to Apple
+    const tokenResult = await getExternalPurchaseCustomLinkTokenIOS('acquisition');
+    // tokenResult.token - report to Apple's External Purchase Server API
+    // tokenResult.error - error message if failed
+  }
+}
+
+// presentExternalPurchaseNoticeSheetIOS now returns token
+const result = await presentExternalPurchaseNoticeSheetIOS();
+// result.externalPurchaseToken - token to report to Apple
 ```
 
 ### Android-Specific
