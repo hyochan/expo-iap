@@ -576,7 +576,7 @@ export interface Mutation {
    * Uses ExternalPurchase.presentNoticeSheet() which returns a token when user continues.
    * Reference: https://developer.apple.com/documentation/storekit/externalpurchase/presentnoticesheet()
    */
-  presentExternalPurchaseNoticeSheetIOS: ExternalPurchaseNoticeResultIOS;
+  presentExternalPurchaseNoticeSheetIOS: Promise<ExternalPurchaseNoticeResultIOS>;
   /** Initiate a purchase flow; rely on events for final state */
   requestPurchase?: Promise<(Purchase | Purchase[] | null)>;
   /**

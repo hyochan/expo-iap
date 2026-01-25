@@ -1,5 +1,32 @@
 // Mock the native module first
-jest.mock('../../ExpoIapModule');
+jest.mock('../../ExpoIapModule', () => ({
+  __esModule: true,
+  default: {
+    isEligibleForIntroOfferIOS: jest.fn(),
+    syncIOS: jest.fn(),
+    subscriptionStatusIOS: jest.fn(),
+    currentEntitlementIOS: jest.fn(),
+    latestTransactionIOS: jest.fn(),
+    beginRefundRequestIOS: jest.fn(),
+    showManageSubscriptionsIOS: jest.fn(),
+    getReceiptDataIOS: jest.fn(),
+    isTransactionVerifiedIOS: jest.fn(),
+    getTransactionJwsIOS: jest.fn(),
+    validateReceiptIOS: jest.fn(),
+    presentCodeRedemptionSheetIOS: jest.fn(),
+    getAppTransactionIOS: jest.fn(),
+    getPromotedProductIOS: jest.fn(),
+    requestPurchaseOnPromotedProductIOS: jest.fn(),
+    getPendingTransactionsIOS: jest.fn(),
+    clearTransactionIOS: jest.fn(),
+    canPresentExternalPurchaseNoticeIOS: jest.fn(),
+    presentExternalPurchaseNoticeSheetIOS: jest.fn(),
+    presentExternalPurchaseLinkIOS: jest.fn(),
+    isEligibleForExternalPurchaseCustomLinkIOS: jest.fn(),
+    getExternalPurchaseCustomLinkTokenIOS: jest.fn(),
+    showExternalPurchaseCustomLinkNoticeIOS: jest.fn(),
+  },
+}));
 
 // Mock React Native's Linking module
 jest.mock('react-native', () => ({
@@ -31,6 +58,12 @@ import {
   isProductIOS,
   getPendingTransactionsIOS,
   clearTransactionIOS,
+  canPresentExternalPurchaseNoticeIOS,
+  presentExternalPurchaseNoticeSheetIOS,
+  presentExternalPurchaseLinkIOS,
+  isEligibleForExternalPurchaseCustomLinkIOS,
+  getExternalPurchaseCustomLinkTokenIOS,
+  showExternalPurchaseCustomLinkNoticeIOS,
 } from '../ios';
 /* eslint-enable import/first */
 
@@ -608,6 +641,303 @@ describe('iOS Module Functions', () => {
       const result = await clearTransactionIOS();
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('External Purchase APIs', () => {
+    describe('canPresentExternalPurchaseNoticeIOS', () => {
+      it('should return true when native module returns true', async () => {
+        (
+          ExpoIapModule.canPresentExternalPurchaseNoticeIOS as jest.Mock
+        ).mockResolvedValue(true);
+
+        const result = await canPresentExternalPurchaseNoticeIOS();
+
+        expect(
+          ExpoIapModule.canPresentExternalPurchaseNoticeIOS,
+        ).toHaveBeenCalledTimes(1);
+        expect(result).toBe(true);
+      });
+
+      it('should return false when native module returns false', async () => {
+        (
+          ExpoIapModule.canPresentExternalPurchaseNoticeIOS as jest.Mock
+        ).mockResolvedValue(false);
+
+        const result = await canPresentExternalPurchaseNoticeIOS();
+
+        expect(result).toBe(false);
+      });
+
+      it('should return false when native module returns null', async () => {
+        (
+          ExpoIapModule.canPresentExternalPurchaseNoticeIOS as jest.Mock
+        ).mockResolvedValue(null);
+
+        const result = await canPresentExternalPurchaseNoticeIOS();
+
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('presentExternalPurchaseNoticeSheetIOS', () => {
+      it('should return result with continue and token', async () => {
+        const mockResult = {
+          result: 'continue',
+          externalPurchaseToken: 'token-abc-123',
+        };
+        (
+          ExpoIapModule.presentExternalPurchaseNoticeSheetIOS as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await presentExternalPurchaseNoticeSheetIOS();
+
+        expect(
+          ExpoIapModule.presentExternalPurchaseNoticeSheetIOS,
+        ).toHaveBeenCalledTimes(1);
+        expect(result.result).toBe('continue');
+        expect(result.externalPurchaseToken).toBe('token-abc-123');
+      });
+
+      it('should return result with dismissed action', async () => {
+        const mockResult = {
+          result: 'dismissed',
+        };
+        (
+          ExpoIapModule.presentExternalPurchaseNoticeSheetIOS as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await presentExternalPurchaseNoticeSheetIOS();
+
+        expect(result.result).toBe('dismissed');
+        expect(result.externalPurchaseToken).toBeUndefined();
+      });
+
+      it('should propagate errors from native module', async () => {
+        const mockError = new Error('External purchase notice failed');
+        (
+          ExpoIapModule.presentExternalPurchaseNoticeSheetIOS as jest.Mock
+        ).mockRejectedValue(mockError);
+
+        await expect(presentExternalPurchaseNoticeSheetIOS()).rejects.toThrow(
+          'External purchase notice failed',
+        );
+      });
+    });
+
+    describe('presentExternalPurchaseLinkIOS', () => {
+      it('should call native module with URL parameter', async () => {
+        const mockUrl = 'https://example.com/purchase';
+        const mockResult = {success: true};
+        (
+          ExpoIapModule.presentExternalPurchaseLinkIOS as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await presentExternalPurchaseLinkIOS(mockUrl);
+
+        expect(
+          ExpoIapModule.presentExternalPurchaseLinkIOS,
+        ).toHaveBeenCalledWith(mockUrl);
+        expect(result.success).toBe(true);
+      });
+
+      it('should return error result when link fails', async () => {
+        const mockUrl = 'https://example.com/purchase';
+        const mockResult = {
+          success: false,
+          error: 'Network unavailable',
+        };
+        (
+          ExpoIapModule.presentExternalPurchaseLinkIOS as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await presentExternalPurchaseLinkIOS(mockUrl);
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBe('Network unavailable');
+      });
+    });
+  });
+
+  describe('ExternalPurchaseCustomLink APIs (iOS 18.1+)', () => {
+    describe('isEligibleForExternalPurchaseCustomLinkIOS', () => {
+      it('should return true when eligible', async () => {
+        (
+          ExpoIapModule.isEligibleForExternalPurchaseCustomLinkIOS as jest.Mock
+        ).mockResolvedValue(true);
+
+        const result = await isEligibleForExternalPurchaseCustomLinkIOS();
+
+        expect(
+          ExpoIapModule.isEligibleForExternalPurchaseCustomLinkIOS,
+        ).toHaveBeenCalledTimes(1);
+        expect(result).toBe(true);
+      });
+
+      it('should return false when not eligible', async () => {
+        (
+          ExpoIapModule.isEligibleForExternalPurchaseCustomLinkIOS as jest.Mock
+        ).mockResolvedValue(false);
+
+        const result = await isEligibleForExternalPurchaseCustomLinkIOS();
+
+        expect(result).toBe(false);
+      });
+
+      it('should return false when native returns null', async () => {
+        (
+          ExpoIapModule.isEligibleForExternalPurchaseCustomLinkIOS as jest.Mock
+        ).mockResolvedValue(null);
+
+        const result = await isEligibleForExternalPurchaseCustomLinkIOS();
+
+        expect(result).toBe(false);
+      });
+
+      it('should propagate errors from native module', async () => {
+        const mockError = new Error('iOS version not supported');
+        (
+          ExpoIapModule.isEligibleForExternalPurchaseCustomLinkIOS as jest.Mock
+        ).mockRejectedValue(mockError);
+
+        await expect(
+          isEligibleForExternalPurchaseCustomLinkIOS(),
+        ).rejects.toThrow('iOS version not supported');
+      });
+    });
+
+    describe('getExternalPurchaseCustomLinkTokenIOS', () => {
+      it('should call native module with acquisition token type', async () => {
+        const mockResult = {token: 'acquisition-token-xyz'};
+        (
+          ExpoIapModule.getExternalPurchaseCustomLinkTokenIOS as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result =
+          await getExternalPurchaseCustomLinkTokenIOS('acquisition');
+
+        expect(
+          ExpoIapModule.getExternalPurchaseCustomLinkTokenIOS,
+        ).toHaveBeenCalledWith('acquisition');
+        expect(result.token).toBe('acquisition-token-xyz');
+      });
+
+      it('should call native module with services token type', async () => {
+        const mockResult = {token: 'services-token-abc'};
+        (
+          ExpoIapModule.getExternalPurchaseCustomLinkTokenIOS as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await getExternalPurchaseCustomLinkTokenIOS('services');
+
+        expect(
+          ExpoIapModule.getExternalPurchaseCustomLinkTokenIOS,
+        ).toHaveBeenCalledWith('services');
+        expect(result.token).toBe('services-token-abc');
+      });
+
+      it('should return error when token fetch fails', async () => {
+        const mockResult = {
+          error: 'App not eligible',
+        };
+        (
+          ExpoIapModule.getExternalPurchaseCustomLinkTokenIOS as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result =
+          await getExternalPurchaseCustomLinkTokenIOS('acquisition');
+
+        expect(result.error).toBe('App not eligible');
+        expect(result.token).toBeUndefined();
+      });
+
+      it('should throw when tokenType missing', async () => {
+        await expect(
+          getExternalPurchaseCustomLinkTokenIOS(undefined as any),
+        ).rejects.toThrow(/requires a tokenType/);
+      });
+
+      it('should throw when tokenType is empty string', async () => {
+        await expect(
+          getExternalPurchaseCustomLinkTokenIOS('' as any),
+        ).rejects.toThrow(/requires a tokenType/);
+      });
+
+      it('should propagate errors from native module', async () => {
+        const mockError = new Error('Failed to get token');
+        (
+          ExpoIapModule.getExternalPurchaseCustomLinkTokenIOS as jest.Mock
+        ).mockRejectedValue(mockError);
+
+        await expect(
+          getExternalPurchaseCustomLinkTokenIOS('acquisition'),
+        ).rejects.toThrow('Failed to get token');
+      });
+    });
+
+    describe('showExternalPurchaseCustomLinkNoticeIOS', () => {
+      it('should call native module with browser notice type', async () => {
+        const mockResult = {continued: true};
+        (
+          ExpoIapModule.showExternalPurchaseCustomLinkNoticeIOS as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await showExternalPurchaseCustomLinkNoticeIOS('browser');
+
+        expect(
+          ExpoIapModule.showExternalPurchaseCustomLinkNoticeIOS,
+        ).toHaveBeenCalledWith('browser');
+        expect(result.continued).toBe(true);
+      });
+
+      it('should return continued false when user cancels', async () => {
+        const mockResult = {continued: false};
+        (
+          ExpoIapModule.showExternalPurchaseCustomLinkNoticeIOS as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await showExternalPurchaseCustomLinkNoticeIOS('browser');
+
+        expect(result.continued).toBe(false);
+      });
+
+      it('should return error when notice fails', async () => {
+        const mockResult = {
+          continued: false,
+          error: 'Not eligible',
+        };
+        (
+          ExpoIapModule.showExternalPurchaseCustomLinkNoticeIOS as jest.Mock
+        ).mockResolvedValue(mockResult);
+
+        const result = await showExternalPurchaseCustomLinkNoticeIOS('browser');
+
+        expect(result.continued).toBe(false);
+        expect(result.error).toBe('Not eligible');
+      });
+
+      it('should throw when noticeType missing', async () => {
+        await expect(
+          showExternalPurchaseCustomLinkNoticeIOS(undefined as any),
+        ).rejects.toThrow(/requires a noticeType/);
+      });
+
+      it('should throw when noticeType is empty string', async () => {
+        await expect(
+          showExternalPurchaseCustomLinkNoticeIOS('' as any),
+        ).rejects.toThrow(/requires a noticeType/);
+      });
+
+      it('should propagate errors from native module', async () => {
+        const mockError = new Error('Notice display failed');
+        (
+          ExpoIapModule.showExternalPurchaseCustomLinkNoticeIOS as jest.Mock
+        ).mockRejectedValue(mockError);
+
+        await expect(
+          showExternalPurchaseCustomLinkNoticeIOS('browser'),
+        ).rejects.toThrow('Notice display failed');
+      });
     });
   });
 });
