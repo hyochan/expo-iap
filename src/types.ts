@@ -605,7 +605,7 @@ export interface Mutation {
    * Call this after a deliberate customer interaction before linking out to external purchases.
    * Reference: https://developer.apple.com/documentation/storekit/externalpurchasecustomlink/shownotice(type:)
    */
-  showExternalPurchaseCustomLinkNoticeIOS: ExternalPurchaseCustomLinkNoticeResultIOS;
+  showExternalPurchaseCustomLinkNoticeIOS: Promise<ExternalPurchaseCustomLinkNoticeResultIOS>;
   /** Open subscription management UI and return changed purchases (iOS 15+) */
   showManageSubscriptionsIOS: Promise<PurchaseIOS[]>;
   /** Force a StoreKit sync for transactions (iOS 15+) */
