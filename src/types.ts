@@ -1128,7 +1128,7 @@ export interface Query {
    * Use this token with Apple's External Purchase Server API to report transactions.
    * Reference: https://developer.apple.com/documentation/storekit/externalpurchasecustomlink/token(for:)
    */
-  getExternalPurchaseCustomLinkTokenIOS: ExternalPurchaseCustomLinkTokenResultIOS;
+  getExternalPurchaseCustomLinkTokenIOS: Promise<ExternalPurchaseCustomLinkTokenResultIOS>;
   /** Retrieve all pending transactions in the StoreKit queue */
   getPendingTransactionsIOS: Promise<PurchaseIOS[]>;
   /** Get the currently promoted product (iOS 11+) */
@@ -1151,7 +1151,7 @@ export interface Query {
    * Returns true if the app can use custom external purchase links.
    * Reference: https://developer.apple.com/documentation/storekit/externalpurchasecustomlink/iseligible
    */
-  isEligibleForExternalPurchaseCustomLinkIOS: boolean;
+  isEligibleForExternalPurchaseCustomLinkIOS: Promise<boolean>;
   /** Check introductory offer eligibility for a subscription group */
   isEligibleForIntroOfferIOS: Promise<boolean>;
   /** Verify a StoreKit 2 transaction signature */
