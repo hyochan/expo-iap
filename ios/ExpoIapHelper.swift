@@ -21,8 +21,7 @@ final class IapException: GenericException<(code: String, message: String, produ
 
 enum ExpoIapHelper {
     // Disambiguate Subscription type to the one provided by OpenIAP
-    private typealias IAPSubscription = OpenIAP.Subscription
-    private static var listeners: [IAPSubscription] = []
+    private static var listeners: [OpenIAP.Subscription] = []
 
     static func sanitizeDictionary(_ dictionary: [String: Any?]) -> [String: Any] {
         var result: [String: Any] = [:]
