@@ -1,88 +1,165 @@
-# PR Code Review Resolver
+# Review PR Comments
 
-PR URL이 주어지면 해당 PR의 모든 코드 리뷰 코멘트를 확인하고 수정합니다.
+Review and address PR review comments for this repository.
 
-## Instructions
+> **Note:** This extends the global `/review-pr` command with project-specific checks.
 
-1. **PR 정보 가져오기**: `gh` CLI를 사용하여 PR의 리뷰 코멘트를 모두 가져옵니다.
+## Arguments
 
-2. **리뷰 코멘트 분석**: 각 리뷰 코멘트의 내용을 분석합니다:
+- `$ARGUMENTS` - PR number (e.g., `123`) or PR URL
 
-   - 파일 경로
-   - 라인 번호
-   - 리뷰어의 요청 사항
-   - 코드 변경이 필요한지 여부
+## Project-Specific Build Commands
 
-3. **코드 수정**: 각 리뷰 코멘트에 대해:
+Based on changed files, run these checks BEFORE committing:
 
-   - 해당 파일을 읽습니다
-   - 리뷰어의 피드백에 따라 코드를 수정합니다
-   - 수정이 불가능하거나 추가 논의가 필요한 경우 사용자에게 알립니다
+| Path | Commands |
+| --- | --- |
+| `src/` | `bun run lint && bun run typecheck && bun run test` |
+| `ios/` | `cd example && bun run ios --no-launch` (requires Xcode) |
+| `android/` | `cd example && bun run android --no-launch` (requires Android Studio) |
+| `example/` | `cd example && bun run lint && bun run typecheck && bun run test` |
 
-4. **결과 보고**: 모든 수정 사항을 요약하여 보고합니다.
-
-## Input
-
-$ARGUMENTS - PR URL 또는 PR 번호 (예: https://github.com/owner/repo/pull/123 또는 123)
-
-## Execution Steps
-
-### Step 1: PR 정보 파싱
+**Important:** Always run both root and example tests:
 
 ```bash
-# PR URL에서 정보 추출 또는 PR 번호 직접 사용
+bun run test
+cd example && bun run test
 ```
 
-### Step 2: 리뷰 코멘트 가져오기
+## Project Conventions
 
-다음 명령어들을 사용하여 PR의 모든 리뷰 코멘트를 가져옵니다:
+When reviewing and fixing, check these project-specific rules:
+
+### Naming Conventions
+
+- **iOS fields/functions**: Must end with `IOS` suffix (e.g., `currencyCodeIOS`, `getStorefrontIOS`)
+- **Android fields/functions**: Must end with `Android` suffix (e.g., `nameAndroid`, `deepLinkToSubscriptionsAndroid`)
+- **ID fields**: Use `Id` not `ID` (e.g., `productId`, `transactionId`)
+- **Type names**: Use `Iap` prefix (e.g., `IapPurchase`), iOS suffix `IOS`, Android prefix `ProductAndroid...`
+
+### Files NOT to Edit
+
+- `src/types.ts` - Generated from OpenIAP schema, run `bun run generate:types` instead
+- `ios/ExpoIap.podspec` - iOS version must stay at `13.4` (see CLAUDE.md)
+
+### Error Codes
+
+- Use `ErrorCode` enum, NOT string literals
+- Format is kebab-case: `'user-cancelled'` not `'E_USER_CANCELLED'`
+
+See [CLAUDE.md](../../CLAUDE.md) for full conventions.
+
+## Workflow
+
+### Step 1: Get PR Information
 
 ```bash
-# PR 리뷰 코멘트 (코드에 직접 달린 코멘트)
+# Get PR review comments
 gh api repos/{owner}/{repo}/pulls/{pr_number}/comments
 
-# PR 리뷰 자체 (approve, request changes 등과 함께 달린 코멘트)
+# Get PR reviews (approve, request changes, etc.)
 gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews
+
+# Get changed files
+gh pr view {pr_number} --json files
 ```
 
-### Step 3: 각 코멘트 처리
+### Step 2: Analyze Each Comment
 
-각 리뷰 코멘트에 대해:
+For each review comment:
 
-1. `path` 필드에서 파일 경로 확인
-2. `line` 또는 `original_line` 필드에서 라인 번호 확인
-3. `body` 필드에서 리뷰 내용 확인
-4. `diff_hunk` 필드에서 컨텍스트 확인
-5. 해당 파일을 읽고 리뷰 내용에 따라 수정
+1. `path` - File path
+2. `line` or `original_line` - Line number
+3. `body` - Review content
+4. `diff_hunk` - Code context
+5. Determine if code change is needed
 
-### Step 4: 수정 적용
+### Step 3: Apply Fixes
 
-- Read 도구로 해당 파일 읽기
-- Edit 도구로 리뷰어의 피드백에 따라 수정
-- 각 수정 사항을 TodoWrite로 추적
+1. Read the target file
+2. Apply changes per reviewer feedback
+3. Track changes with TodoWrite
+4. Run project-specific checks
 
-### Step 5: 리뷰 코멘트에 Reply
-
-각 리뷰 코멘트에 수정 완료 reply를 답니다:
+### Step 4: Run Checks Before Commit
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/replies -X POST -f body="Fixed in {commit_hash}. {수정 내용 요약}"
+# Always run these
+bun run lint
+bun run typecheck
+bun run test
+
+# If example/ changed
+cd example && bun run test
 ```
 
-- 반드시 수정한 커밋의 hash를 포함합니다
-- 새 코멘트가 아닌 기존 코멘트에 대한 reply로 달아야 합니다
+### Step 5: Commit Changes
 
-### Step 6: 결과 보고
+```bash
+git add <changed-files>
+git commit -m "$(cat <<'EOF'
+fix: address PR review comments
 
-수정된 내용을 요약하여 보고:
+- <summary of change 1>
+- <summary of change 2>
 
-- 수정된 파일 목록
-- 각 파일에서 변경된 내용
-- 커밋 hash
-- 수정하지 못한 코멘트와 그 이유
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+EOF
+)"
+```
+
+### Step 6: Reply to Comments
+
+Reply to each addressed comment:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/replies \
+  -X POST -f body="Fixed in abc1234.
+
+**Changes:**
+- Description of what was changed"
+```
+
+## Reply Format Rules (CRITICAL)
+
+When replying to PR comments:
+
+### Commit Hash Formatting
+
+**NEVER wrap commit hashes in backticks or code blocks.** GitHub only auto-links plain text commit hashes.
+
+| Format     | Example                 | Result                   |
+| ---------- | ----------------------- | ------------------------ |
+| ✅ CORRECT | `Fixed in f3b5fec.`     | Clickable link to commit |
+| ❌ WRONG   | `Fixed in \`f3b5fec\`.` | Plain text, no link      |
+
+**Examples of correct replies:**
+
+```text
+Fixed in f3b5fec.
+
+**Changes:**
+- Updated type definition to use IOS suffix
+```
+
+```text
+Fixed in abc1234 along with other review items.
+```
+
+**Do NOT use backticks around the commit hash** - this breaks GitHub's auto-linking feature.
+
+## Result Report
+
+After addressing all comments, report:
+
+- List of modified files
+- Summary of changes per file
+- Commit hash
+- Any comments not addressed and why
 
 ## Notes
 
-- 리뷰 코멘트가 단순 질문이나 칭찬인 경우 코드 수정이 필요 없습니다
-- 리뷰어의 의도가 불명확한 경우 사용자에게 확인을 요청합니다
-- CLAUDE.md의 코딩 컨벤션을 준수합니다
+- If a comment is a question or praise, no code change needed
+- If reviewer intent is unclear, ask for clarification
+- Follow CLAUDE.md coding conventions strictly
+- Use `bun` exclusively for all commands
