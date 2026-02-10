@@ -17,6 +17,9 @@ import type {
   SubscriptionOffer,
   ProductAndroid,
   ProductSubscriptionAndroid,
+  InstallmentPlanDetailsAndroid,
+  PendingPurchaseUpdateAndroid,
+  PurchaseAndroid,
 } from '../types';
 /* eslint-enable import/first */
 
@@ -497,6 +500,187 @@ describe('Standardized Offer Types', () => {
 
       expect(purchaseRequest.skus).toEqual(['consumable_gems']);
       expect(purchaseRequest.offerToken).toBe('summer_sale_offer_token');
+    });
+  });
+
+  describe('purchaseOptionIdAndroid (Billing Library 7.0+)', () => {
+    it('should support purchaseOptionIdAndroid on DiscountOffer', () => {
+      const discountOffer: DiscountOffer = {
+        id: 'option_offer',
+        displayPrice: '$4.99',
+        price: 4.99,
+        currency: 'USD',
+        type: 'one-time',
+        offerTokenAndroid: 'token_abc',
+        purchaseOptionIdAndroid: 'purchase_option_001',
+      };
+
+      expect(discountOffer.purchaseOptionIdAndroid).toBe('purchase_option_001');
+    });
+
+    it('should allow null purchaseOptionIdAndroid', () => {
+      const discountOffer: DiscountOffer = {
+        id: 'basic_offer',
+        displayPrice: '$4.99',
+        price: 4.99,
+        currency: 'USD',
+        type: 'one-time',
+      };
+
+      expect(discountOffer.purchaseOptionIdAndroid).toBeUndefined();
+    });
+  });
+
+  describe('InstallmentPlanDetailsAndroid (Billing Library 7.0+)', () => {
+    it('should have correct structure', () => {
+      const installmentDetails: InstallmentPlanDetailsAndroid = {
+        commitmentPaymentsCount: 12,
+        subsequentCommitmentPaymentsCount: 12,
+      };
+
+      expect(installmentDetails.commitmentPaymentsCount).toBe(12);
+      expect(installmentDetails.subsequentCommitmentPaymentsCount).toBe(12);
+    });
+
+    it('should support zero subsequentCommitmentPaymentsCount (revert to normal plan)', () => {
+      const installmentDetails: InstallmentPlanDetailsAndroid = {
+        commitmentPaymentsCount: 12,
+        subsequentCommitmentPaymentsCount: 0,
+      };
+
+      // subsequentCommitmentPaymentsCount = 0 means plan reverts to normal upon renewal
+      expect(installmentDetails.subsequentCommitmentPaymentsCount).toBe(0);
+    });
+
+    it('should be supported on SubscriptionOffer', () => {
+      const subscriptionOffer: SubscriptionOffer = {
+        id: 'installment_sub',
+        displayPrice: '$9.99/month',
+        price: 9.99,
+        type: 'introductory',
+        basePlanIdAndroid: 'monthly_installment',
+        offerTokenAndroid: 'install_token',
+        installmentPlanDetailsAndroid: {
+          commitmentPaymentsCount: 12,
+          subsequentCommitmentPaymentsCount: 12,
+        },
+      };
+
+      expect(
+        subscriptionOffer.installmentPlanDetailsAndroid
+          ?.commitmentPaymentsCount,
+      ).toBe(12);
+      expect(
+        subscriptionOffer.installmentPlanDetailsAndroid
+          ?.subsequentCommitmentPaymentsCount,
+      ).toBe(12);
+    });
+
+    it('should allow null installmentPlanDetailsAndroid on SubscriptionOffer', () => {
+      const subscriptionOffer: SubscriptionOffer = {
+        id: 'regular_sub',
+        displayPrice: '$9.99',
+        price: 9.99,
+        type: 'introductory',
+      };
+
+      expect(subscriptionOffer.installmentPlanDetailsAndroid).toBeUndefined();
+    });
+  });
+
+  describe('PendingPurchaseUpdateAndroid (Billing Library 5.0+)', () => {
+    it('should have correct structure', () => {
+      const pendingUpdate: PendingPurchaseUpdateAndroid = {
+        products: ['premium_monthly', 'premium_yearly'],
+        purchaseToken: 'pending_token_abc123',
+      };
+
+      expect(pendingUpdate.products).toEqual([
+        'premium_monthly',
+        'premium_yearly',
+      ]);
+      expect(pendingUpdate.purchaseToken).toBe('pending_token_abc123');
+    });
+
+    it('should support single product upgrade scenario', () => {
+      const pendingUpdate: PendingPurchaseUpdateAndroid = {
+        products: ['premium_yearly'],
+        purchaseToken: 'upgrade_token',
+      };
+
+      expect(pendingUpdate.products).toHaveLength(1);
+      expect(pendingUpdate.products[0]).toBe('premium_yearly');
+    });
+
+    it('should be supported on PurchaseAndroid', () => {
+      const purchase: PurchaseAndroid = {
+        id: 'order_123',
+        productId: 'premium_monthly',
+        transactionDate: 1700000000000,
+        purchaseToken: 'current_token',
+        store: 'google',
+        platform: 'android',
+        quantity: 1,
+        purchaseState: 'purchased',
+        isAutoRenewing: true,
+        pendingPurchaseUpdateAndroid: {
+          products: ['premium_yearly'],
+          purchaseToken: 'pending_upgrade_token',
+        },
+      };
+
+      expect(purchase.pendingPurchaseUpdateAndroid).not.toBeNull();
+      expect(purchase.pendingPurchaseUpdateAndroid?.products).toEqual([
+        'premium_yearly',
+      ]);
+      expect(purchase.pendingPurchaseUpdateAndroid?.purchaseToken).toBe(
+        'pending_upgrade_token',
+      );
+    });
+
+    it('should allow null pendingPurchaseUpdateAndroid on PurchaseAndroid', () => {
+      const purchase: PurchaseAndroid = {
+        id: 'order_no_pending',
+        productId: 'regular_product',
+        transactionDate: 1700000000000,
+        store: 'google',
+        platform: 'android',
+        quantity: 1,
+        purchaseState: 'purchased',
+        isAutoRenewing: false,
+      };
+
+      expect(purchase.pendingPurchaseUpdateAndroid).toBeUndefined();
+    });
+
+    it('should handle subscription downgrade use case', () => {
+      // Scenario: User on yearly plan downgrades to monthly
+      // The downgrade is pending until the yearly period ends
+      const purchase: PurchaseAndroid = {
+        id: 'yearly_order',
+        productId: 'premium_yearly',
+        transactionDate: 1700000000000,
+        store: 'google',
+        platform: 'android',
+        quantity: 1,
+        purchaseState: 'purchased',
+        isAutoRenewing: true,
+        currentPlanId: 'yearly',
+        pendingPurchaseUpdateAndroid: {
+          products: ['premium_monthly'],
+          purchaseToken: 'downgrade_pending_token',
+        },
+      };
+
+      // Current purchase is still yearly
+      expect(purchase.productId).toBe('premium_yearly');
+      expect(purchase.currentPlanId).toBe('yearly');
+
+      // But there's a pending downgrade to monthly
+      expect(purchase.pendingPurchaseUpdateAndroid).not.toBeNull();
+      expect(purchase.pendingPurchaseUpdateAndroid?.products[0]).toBe(
+        'premium_monthly',
+      );
     });
   });
 });

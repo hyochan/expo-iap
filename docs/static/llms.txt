@@ -178,9 +178,15 @@ interface SubscriptionOffer {
   offerTokenAndroid?: string;
   offerTagsAndroid?: string[];
   pricingPhasesAndroid?: PricingPhasesAndroid;
+  installmentPlanDetailsAndroid?: InstallmentPlanDetailsAndroid; // Billing 7.0+
   // iOS-specific
   keyIdentifierIOS?: string;
   signatureIOS?: string;
+}
+
+interface InstallmentPlanDetailsAndroid {
+  commitmentPaymentsCount: number;      // Initial commitment payments
+  subsequentCommitmentPaymentsCount: number; // Renewal commitment (0 = revert to normal)
 }
 ```
 
@@ -200,6 +206,12 @@ interface Purchase {
   autoRenewingAndroid?: boolean;
   packageNameAndroid?: string;
   isSuspendedAndroid?: boolean; // Android 8.1+ - subscription payment paused
+  pendingPurchaseUpdateAndroid?: PendingPurchaseUpdateAndroid; // Billing 5.0+
+}
+
+interface PendingPurchaseUpdateAndroid {
+  products: string[];     // New products the user is switching to
+  purchaseToken: string;  // Token for pending transaction
 }
 ```
 
@@ -371,6 +383,33 @@ const hasActive = await hasActiveSubscriptions(['premium_monthly', 'premium_year
 if (hasActive) {
   // User has premium access
 }
+```
+
+### Android Pending Subscription Updates (Android 5.0+)
+
+Track pending subscription upgrades/downgrades:
+
+```tsx
+const purchases = await getAvailablePurchases();
+purchases?.forEach((purchase) => {
+  if (purchase.pendingPurchaseUpdateAndroid) {
+    console.log('Pending change to:', purchase.pendingPurchaseUpdateAndroid.products);
+  }
+});
+```
+
+### Android Installment Plans (Android 7.0+)
+
+Check for installment subscription plans:
+
+```tsx
+const product = subscriptions.find(s => s.id === 'premium_yearly');
+product?.subscriptionOffers?.forEach((offer) => {
+  if (offer.installmentPlanDetailsAndroid) {
+    const {commitmentPaymentsCount} = offer.installmentPlanDetailsAndroid;
+    console.log(`${commitmentPaymentsCount} payment commitment`);
+  }
+});
 ```
 
 ### Verify Purchase with IAPKit
