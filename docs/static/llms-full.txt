@@ -471,11 +471,18 @@ interface SubscriptionOffer {
   offerTokenAndroid?: string;
   offerTagsAndroid?: string[];
   pricingPhasesAndroid?: PricingPhasesAndroid;
+  installmentPlanDetailsAndroid?: InstallmentPlanDetailsAndroid; // Billing 7.0+
   // iOS-specific
   keyIdentifierIOS?: string;
   nonceIOS?: string;
   signatureIOS?: string;
   timestampIOS?: number;
+}
+
+// Installment plan details for subscription offers (Android Billing 7.0+)
+interface InstallmentPlanDetailsAndroid {
+  commitmentPaymentsCount: number;      // Initial commitment payments
+  subsequentCommitmentPaymentsCount: number; // Renewal commitment (0 = revert to normal)
 }
 
 // Cross-platform discount offer type (one-time purchases)
@@ -492,6 +499,7 @@ interface DiscountOffer {
   formattedDiscountAmountAndroid?: string;
   validTimeWindowAndroid?: {startTimeMillis: string; endTimeMillis: string};
   limitedQuantityInfoAndroid?: {maximumQuantity: number; remainingQuantity: number};
+  purchaseOptionIdAndroid?: string; // Billing 7.0+
 }
 
 type Product = ProductIOS | ProductAndroid;
@@ -526,6 +534,13 @@ interface PurchaseAndroid extends PurchaseCommon {
   signatureAndroid?: string;
   dataAndroid?: string;
   isSuspendedAndroid?: boolean;
+  pendingPurchaseUpdateAndroid?: PendingPurchaseUpdateAndroid; // Billing 5.0+
+}
+
+// Pending subscription upgrade/downgrade (Android Billing 5.0+)
+interface PendingPurchaseUpdateAndroid {
+  products: string[];     // New products the user is switching to
+  purchaseToken: string;  // Token for pending transaction
 }
 
 type Purchase = PurchaseIOS | PurchaseAndroid;
