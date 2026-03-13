@@ -130,6 +130,7 @@ describe('ios module selection', () => {
   describe('autolinking computation', () => {
     const entries = (state: AutolinkState) => [
       {name: 'ExpoIapModule', enable: state.expoIap},
+      {name: 'ExpoOnsideModule', enable: state.onside},
       {name: 'ExpoIapOnsideModule', enable: state.onside},
     ];
 
@@ -141,19 +142,30 @@ describe('ios module selection', () => {
           onside: true,
         }),
       );
-      expect(result.modules).toEqual(['ExpoIapModule', 'ExpoIapOnsideModule']);
-      expect(result.added).toEqual(['ExpoIapModule', 'ExpoIapOnsideModule']);
+      expect(result.modules).toEqual([
+        'ExpoIapModule',
+        'ExpoOnsideModule',
+        'ExpoIapOnsideModule',
+      ]);
+      expect(result.added).toEqual([
+        'ExpoIapModule',
+        'ExpoOnsideModule',
+        'ExpoIapOnsideModule',
+      ]);
       expect(result.removed).toEqual([]);
     });
 
     it('removes disabled modules while retaining enabled ones', () => {
       const result = computeAutolinkModules(
-        ['ExpoIapModule', 'ExpoIapOnsideModule'],
+        ['ExpoIapModule', 'ExpoOnsideModule', 'ExpoIapOnsideModule'],
         entries({expoIap: true, onside: false}),
       );
       expect(result.modules).toEqual(['ExpoIapModule']);
       expect(result.added).toEqual([]);
-      expect(result.removed).toEqual(['ExpoIapOnsideModule']);
+      expect(result.removed).toEqual([
+        'ExpoOnsideModule',
+        'ExpoIapOnsideModule',
+      ]);
     });
 
     it('preserves unrelated modules when toggling state', () => {
@@ -161,8 +173,12 @@ describe('ios module selection', () => {
         ['CustomModule'],
         entries({expoIap: false, onside: true}),
       );
-      expect(result.modules).toEqual(['CustomModule', 'ExpoIapOnsideModule']);
-      expect(result.added).toEqual(['ExpoIapOnsideModule']);
+      expect(result.modules).toEqual([
+        'CustomModule',
+        'ExpoOnsideModule',
+        'ExpoIapOnsideModule',
+      ]);
+      expect(result.added).toEqual(['ExpoOnsideModule', 'ExpoIapOnsideModule']);
       expect(result.removed).toEqual([]);
     });
   });

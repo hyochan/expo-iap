@@ -1,5 +1,7 @@
 // Mock the native module first
-jest.mock('../../ExpoIapModule');
+jest.mock('../../ExpoIapModule', () =>
+  require('../../__mocks__/ExpoIapModule'),
+);
 
 // Mock React Native's Linking module
 jest.mock('react-native', () => ({

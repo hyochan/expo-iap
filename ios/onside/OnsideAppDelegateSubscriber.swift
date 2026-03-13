@@ -1,4 +1,6 @@
 import ExpoModulesCore
+
+#if canImport(OnsideKit)
 import OnsideKit
 
 public class OnsideAppDelegateSubscriber: ExpoAppDelegateSubscriber {
@@ -108,4 +110,4 @@ public class OnsideAppDelegateSubscriber: ExpoAppDelegateSubscriber {
         #endif
     }
 }
-
+#endif

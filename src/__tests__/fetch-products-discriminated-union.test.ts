@@ -1,5 +1,5 @@
 // Mock native module and RN (must come before imports)
-jest.mock('../ExpoIapModule');
+jest.mock('../ExpoIapModule', () => require('../__mocks__/ExpoIapModule'));
 jest.mock('react-native', () => ({
   Platform: {OS: 'ios', select: jest.fn((obj) => obj.ios)},
   NativeEventEmitter: jest.fn(() => ({

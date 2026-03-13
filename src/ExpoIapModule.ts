@@ -3,15 +3,14 @@ import {installedFromOnside} from './onside';
 
 type NativeIapModuleName = 'ExpoIapOnside' | 'ExpoIap';
 
-const {module: ExpoIapModule, name: resolvedNativeModuleName} =
-  resolveNativeModule();
+let cached: {module: any; name: NativeIapModuleName} | null = null;
 
-export const USING_ONSIDE_SDK = resolvedNativeModuleName === 'ExpoIapOnside';
-
-// Platform-specific error codes from native modules
-export const NATIVE_ERROR_CODES = ExpoIapModule.ERROR_CODES || {};
-
-export default ExpoIapModule;
+function getResolved(): {module: any; name: NativeIapModuleName} {
+  if (!cached) {
+    cached = resolveNativeModule();
+  }
+  return cached;
+}
 
 function resolveNativeModule(): {
   module: any;
@@ -28,7 +27,6 @@ function resolveNativeModule(): {
       return {module, name};
     } catch (error) {
       if (name === 'ExpoIapOnside' && isMissingModuleError(error, name)) {
-        // Onside module is optional. If unavailable, fall back to ExpoIap.
         continue;
       }
 
@@ -53,3 +51,21 @@ function isMissingModuleError(error: unknown, moduleName: string): boolean {
 
   return false;
 }
+
+export const NATIVE_ERROR_CODES: Record<string, unknown> = new Proxy(
+  {} as Record<string, unknown>,
+  {
+    get(_, prop) {
+      return (getResolved().module.ERROR_CODES || {})[prop as string];
+    },
+  },
+);
+
+export default new Proxy({} as any, {
+  get(_, prop) {
+    if (prop === 'USING_ONSIDE_SDK') {
+      return getResolved().name === 'ExpoIapOnside';
+    }
+    return getResolved().module[prop];
+  },
+});

@@ -8,6 +8,7 @@ const LOCAL_OPENIAP_PATHS = {
 export default ({config}: ConfigContext): ExpoConfig => {
   // Check if building for TV (set EXPO_TV=1 before prebuild)
   const isTV = process.env.EXPO_TV === '1';
+  const isOnsideEnabled = false;
 
   const pluginEntries: NonNullable<ExpoConfig['plugins']> = [
     // TV config plugin (must be first for TV builds)
@@ -27,7 +28,7 @@ export default ({config}: ConfigContext): ExpoConfig => {
         },
         modules: {
           // Onside module: iOS only (alternative billing for Korea)
-          onside: false,
+          onside: isOnsideEnabled,
           // Horizon module: Android only (Meta Quest/VR devices)
           horizon: false,
         },
@@ -97,7 +98,7 @@ export default ({config}: ConfigContext): ExpoConfig => {
           kotlinVersion: '2.2.0',
         },
         ios: {
-          deploymentTarget: '16.0',
+          deploymentTarget: isTV ? '16.0' : isOnsideEnabled ? '16.0' : '15.1',
         },
       },
     ],

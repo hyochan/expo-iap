@@ -325,7 +325,7 @@ const syncAutolinking = (state: AutolinkState) => {
     const raw = fs.readFileSync(AUTOLINKING_CONFIG_PATH, 'utf8');
     const config = JSON.parse(raw);
     const iosConfig = config.ios ?? (config.ios = {});
-    const existing: string[] = Array.isArray(iosConfig.modules)
+    const existingModules: string[] = Array.isArray(iosConfig.modules)
       ? iosConfig.modules.filter((module: string) => module !== 'OneSideModule')
       : [];
 
@@ -342,6 +342,12 @@ const syncAutolinking = (state: AutolinkState) => {
         removeLog: '🧹 expo-iap: Disabled ExpoIapModule autolinking',
       },
       {
+        name: 'ExpoOnsideModule',
+        enable: state.onside,
+        addLog: '🔗 expo-iap: Enabled ExpoOnsideModule autolinking',
+        removeLog: '🧹 expo-iap: Disabled ExpoOnsideModule autolinking',
+      },
+      {
         name: 'ExpoIapOnsideModule',
         enable: state.onside,
         addLog: '🔗 expo-iap: Enabled ExpoIapOnsideModule autolinking',
@@ -354,7 +360,7 @@ const syncAutolinking = (state: AutolinkState) => {
       added,
       removed,
     } = computeAutolinkModules(
-      existing,
+      existingModules,
       desiredEntries.map(({name, enable}) => ({name, enable})),
     );
 
@@ -372,8 +378,30 @@ const syncAutolinking = (state: AutolinkState) => {
       }
     }
 
-    if (added.length > 0 || removed.length > 0) {
+    const existingSubscribers: string[] = Array.isArray(
+      iosConfig.appDelegateSubscribers,
+    )
+      ? iosConfig.appDelegateSubscribers
+      : [];
+    const onsideSubscriberName = 'OnsideAppDelegateSubscriber';
+    const hasSubscriber = existingSubscribers.includes(onsideSubscriberName);
+    let nextSubscribers = existingSubscribers;
+    if (state.onside && !hasSubscriber) {
+      nextSubscribers = [...existingSubscribers, onsideSubscriberName];
+      logOnce('🔗 expo-iap: Enabled OnsideAppDelegateSubscriber');
+    } else if (!state.onside && hasSubscriber) {
+      nextSubscribers = existingSubscribers.filter(
+        (s: string) => s !== onsideSubscriberName,
+      );
+      logOnce('🧹 expo-iap: Disabled OnsideAppDelegateSubscriber');
+    }
+
+    const modulesChanged = added.length > 0 || removed.length > 0;
+    const subscribersChanged = nextSubscribers !== existingSubscribers;
+
+    if (modulesChanged || subscribersChanged) {
       iosConfig.modules = nextModules;
+      iosConfig.appDelegateSubscribers = nextSubscribers;
       fs.writeFileSync(
         AUTOLINKING_CONFIG_PATH,
         `${JSON.stringify(config, null, 2)}\n`,

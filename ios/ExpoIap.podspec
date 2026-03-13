@@ -26,11 +26,7 @@ Pod::Spec.new do |s|
   s.dependency 'ExpoModulesCore'
   s.dependency 'openiap', "#{versions['apple']}"
 
-  #TODO: optionally
-  s.dependency 'OnsideKit'
-
-  # OnsideKit is optional and managed by the Expo config plugin
-  # When modules.onside is enabled, the plugin will add OnsideKit to your Podfile
+  # OnsideKit is optional; added via ensureOnsidePod() in Podfile when modules.onside is enabled
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',

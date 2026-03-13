@@ -49,7 +49,6 @@ public final class ExpoIapOnsideModule: Module {
     private let transactionObserver = OnsideTransactionObserverBridge()
     private let productFetcher = OnsideProductFetcher()
     private var productCache: [String: OnsideProduct] = [:]
-    //    private var transactionCache: [UUID: OnsidePaymentTransaction] = [:]
 
     private let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
@@ -268,17 +267,18 @@ public final class ExpoIapOnsideModule: Module {
                     self?.restoreContinuation = continuation
 
                     Onside.defaultPaymentQueue().restoreCompletedTransactions { result in
-                        switch result {
-                        case .success:
-                            continuation.resume(returning: true)
-                        case .failure(let error):
-                            continuation.resume(
-                                throwing: OnsideBridgeError.queueError(error.localizedDescription)
-                            )
-                        }
-
                         Task { @MainActor [weak self] in
-                            self?.restoreContinuation = nil
+                            guard let self else { return }
+                            let cont = self.restoreContinuation
+                            self.restoreContinuation = nil
+                            switch result {
+                            case .success:
+                                cont?.resume(returning: true)
+                            case .failure(let error):
+                                cont?.resume(
+                                    throwing: OnsideBridgeError.queueError(error.localizedDescription)
+                                )
+                            }
                         }
                     }
                 }
@@ -316,23 +316,22 @@ public final class ExpoIapOnsideModule: Module {
         transactionObserver.onTransactionsUpdated = { [weak self] transactions in
             guard let self = self else { return }
             transactions.forEach { transaction in
-                //                self.transactionCache[transaction.id] = transaction
                 self.handle(transaction: transaction)
             }
         }
 
         transactionObserver.onRestoreFinished = { [weak self] in
-            guard let self = self else { return }
-            self.restoreContinuation?.resume(returning: true)
+            guard let self else { return }
+            let cont = self.restoreContinuation
             self.restoreContinuation = nil
+            cont?.resume(returning: true)
         }
 
         transactionObserver.onRestoreFailed = { [weak self] error in
-            guard let self = self else { return }
-            self.restoreContinuation?.resume(
-                throwing: OnsideBridgeError.queueError(error.localizedDescription)
-            )
+            guard let self else { return }
+            let cont = self.restoreContinuation
             self.restoreContinuation = nil
+            cont?.resume(throwing: OnsideBridgeError.queueError(error.localizedDescription))
         }
     }
 
@@ -341,9 +340,9 @@ public final class ExpoIapOnsideModule: Module {
             Onside.defaultPaymentQueue().remove(observer: transactionObserver)
             isInitialized = false
         }
-        //        transactionCache.removeAll()
-        restoreContinuation?.resume(returning: false)
+        let cont = restoreContinuation
         restoreContinuation = nil
+        cont?.resume(returning: false)
     }
 
     private func handle(transaction: OnsidePaymentTransaction) {
@@ -398,8 +397,6 @@ public final class ExpoIapOnsideModule: Module {
     private func serialize(transaction: OnsidePaymentTransaction) throws -> [String: Any] {
         let product = transaction.payment.product
         var dictionary: [String: Any?] = [:]
-        //        dictionary["id"] = transaction.id.uuidString
-        //        dictionary["transactionId"] = transaction.id.uuidString
         dictionary["id"] = transaction.transactionIdentifier ?? ""
         dictionary["transactionId"] = transaction.transactionIdentifier ?? ""
         dictionary["productId"] = transaction.payment.product.productIdentifier
@@ -438,14 +435,6 @@ public final class ExpoIapOnsideModule: Module {
             "type": "in-app",
         ]
         let data = try JSONSerialization.data(withJSONObject: jsonObject, options: [])
-        guard let json = String(data: data, encoding: .utf8) else {
-            throw OnsideBridgeError.queueError("Unable to encode JSON string")
-        }
-        return json
-    }
-
-    private func encodeToJSONString<T: Encodable>(_ value: T) throws -> String {
-        let data = try encoder.encode(value)
         guard let json = String(data: data, encoding: .utf8) else {
             throw OnsideBridgeError.queueError("Unable to encode JSON string")
         }
