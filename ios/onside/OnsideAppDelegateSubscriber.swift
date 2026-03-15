@@ -1,14 +1,15 @@
 import ExpoModulesCore
-
 #if canImport(OnsideKit)
 import OnsideKit
+#endif
 
 public class OnsideAppDelegateSubscriber: ExpoAppDelegateSubscriber {
 
     public func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        #if canImport(OnsideKit)
         #if DEBUG
         print("[OnsideAppDelegate] 🚀 didFinishLaunching")
         #endif
@@ -23,17 +24,16 @@ public class OnsideAppDelegateSubscriber: ExpoAppDelegateSubscriber {
         #if DEBUG
         print("[OnsideAppDelegate] Callback scheme: \(callbackScheme)")
         #endif
-
-
-
+        #endif
         return true
     }
 
     public func application(
-    _ app: UIApplication,
-    open url: URL,
-    options: [UIApplication.OpenURLOptionsKey : Any] = [:]
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey: Any] = [:]
     ) -> Bool {
+        #if canImport(OnsideKit)
         #if DEBUG
         print("[OnsideAppDelegate] 📥 Received URL: \(url.absoluteString)")
         print("[OnsideAppDelegate] URL scheme: \(url.scheme ?? "nil")")
@@ -42,7 +42,6 @@ public class OnsideAppDelegateSubscriber: ExpoAppDelegateSubscriber {
         print("[OnsideAppDelegate] Is main thread: \(Thread.isMainThread)")
         #endif
 
-        // Check if this is an Onside callback URL
         let bundleId = Bundle.main.bundleIdentifier ?? ""
         let expectedScheme = bundleId + ".onside-auth"
 
@@ -53,12 +52,10 @@ public class OnsideAppDelegateSubscriber: ExpoAppDelegateSubscriber {
             return false
         }
 
-        // Also check for plain "onside" scheme
         if scheme == "onside" {
             #if DEBUG
             print("[OnsideAppDelegate] 🔗 Received onside:// URL (from Onside Store)")
             #endif
-            // Still try to handle it
             let handled = Onside.handle(url: url)
             #if DEBUG
             print("[OnsideAppDelegate] Onside.handle returned: \(handled)")
@@ -66,21 +63,15 @@ public class OnsideAppDelegateSubscriber: ExpoAppDelegateSubscriber {
             return handled
         }
 
-        // Only handle Onside callback URLs
         if scheme == expectedScheme {
             #if DEBUG
             print("[OnsideAppDelegate] 🔐 Handling Onside callback (auth)")
             #endif
-
-            // Handle synchronously - Onside.handle must be called on the same runloop
             let handled = Onside.handle(url: url)
             #if DEBUG
             print("[OnsideAppDelegate] Onside.handle returned: \(handled)")
-
             if handled {
                 print("[OnsideAppDelegate] ✅ Successfully handled Onside callback")
-
-                // Ensure app returns to active state
                 DispatchQueue.main.async {
                     print("[OnsideAppDelegate] 🔄 Ensuring app is active...")
                 }
@@ -88,7 +79,6 @@ public class OnsideAppDelegateSubscriber: ExpoAppDelegateSubscriber {
                 print("[OnsideAppDelegate] ⚠️ Onside.handle returned false")
             }
             #endif
-
             return handled
         }
 
@@ -96,18 +86,24 @@ public class OnsideAppDelegateSubscriber: ExpoAppDelegateSubscriber {
         print("[OnsideAppDelegate] ℹ️ Not an Onside callback URL (expected: \(expectedScheme)), passing through")
         #endif
         return false
+        #else
+        return false
+        #endif
     }
 
     public func applicationDidBecomeActive(_ application: UIApplication) {
+        #if canImport(OnsideKit)
         #if DEBUG
         print("[OnsideAppDelegate] 🟢 applicationDidBecomeActive")
+        #endif
         #endif
     }
 
     public func applicationWillResignActive(_ application: UIApplication) {
+        #if canImport(OnsideKit)
         #if DEBUG
         print("[OnsideAppDelegate] 🟡 applicationWillResignActive")
         #endif
+        #endif
     }
 }
-#endif
