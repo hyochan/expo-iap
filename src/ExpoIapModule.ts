@@ -1,10 +1,71 @@
-import {requireNativeModule} from 'expo-modules-core';
+import {requireNativeModule, UnavailabilityError} from 'expo-modules-core';
+import {installedFromOnside} from './onside';
 
-// It loads the native module object from the JSI or falls back to
-// the bridge module (from NativeModulesProxy) if the remote debugger is on.
-const ExpoIapModule = requireNativeModule('ExpoIap');
+type NativeIapModuleName = 'ExpoIapOnside' | 'ExpoIap';
 
-// Platform-specific error codes from native modules
-export const NATIVE_ERROR_CODES = ExpoIapModule.ERROR_CODES || {};
+let cached: {module: any; name: NativeIapModuleName} | null = null;
 
-export default ExpoIapModule;
+function getResolved(): {module: any; name: NativeIapModuleName} {
+  if (!cached) {
+    cached = resolveNativeModule();
+  }
+  return cached;
+}
+
+function resolveNativeModule(): {
+  module: any;
+  name: NativeIapModuleName;
+} {
+  const candidates: NativeIapModuleName[] = ['ExpoIapOnside', 'ExpoIap'];
+
+  for (const name of candidates) {
+    try {
+      const module = requireNativeModule(name);
+      if (name === 'ExpoIapOnside' && !installedFromOnside) {
+        continue;
+      }
+      return {module, name};
+    } catch (error) {
+      if (name === 'ExpoIapOnside' && isMissingModuleError(error, name)) {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new UnavailabilityError(
+    'expo-iap',
+    'ExpoIap native module is unavailable',
+  );
+}
+
+function isMissingModuleError(error: unknown, moduleName: string): boolean {
+  if (error instanceof UnavailabilityError) {
+    return true;
+  }
+
+  if (error instanceof Error) {
+    return error.message.includes(`Cannot find native module '${moduleName}'`);
+  }
+
+  return false;
+}
+
+export const NATIVE_ERROR_CODES: Record<string, unknown> = new Proxy(
+  {} as Record<string, unknown>,
+  {
+    get(_, prop) {
+      return (getResolved().module.ERROR_CODES || {})[prop as string];
+    },
+  },
+);
+
+export default new Proxy({} as any, {
+  get(_, prop) {
+    if (prop === 'USING_ONSIDE_SDK') {
+      return getResolved().name === 'ExpoIapOnside';
+    }
+    return getResolved().module[prop];
+  },
+});

@@ -47,6 +47,7 @@ import {createPurchaseError, type PurchaseError} from './utils/errorMapping';
 export * from './types';
 export * from './modules/android';
 export * from './modules/ios';
+export * from './onside';
 
 // Get the native constant value
 export enum OpenIapEvent {

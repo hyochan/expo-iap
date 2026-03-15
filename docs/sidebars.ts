@@ -49,6 +49,7 @@ const sidebars: SidebarsConfig = {
         'guides/subscription-validation',
         'guides/offer-code-redemption',
         'guides/alternative-billing',
+        'guides/onside-integration',
         'guides/error-handling',
         'guides/expo-plugin',
         'guides/troubleshooting',
