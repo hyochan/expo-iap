@@ -210,3 +210,8 @@ vr:
   label: VR
   permalink: /vr
   description: Virtual reality platforms
+
+onside:
+  label: Onside
+  permalink: /onside
+  description: Onside alternative payment integration

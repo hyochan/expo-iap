@@ -5,7 +5,7 @@ sidebar_label: Onside Integration
 
 # Onside Integration
 
-**Onside** allows you to use an alternative payment system on iOS. It is perfect for apps in the European Union (DMA) or South Korea.
+**Onside** allows you to use an alternative payment system on iOS. It is perfect for apps in the European Union (DMA).
 
 The best part: **you don't need to change your code** for making purchases. The library automatically switches between Apple and Onside depending on where the user installed your app.
 
