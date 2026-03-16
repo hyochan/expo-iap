@@ -26,7 +26,10 @@ Pod::Spec.new do |s|
   s.dependency 'ExpoModulesCore'
   s.dependency 'openiap', "#{versions['apple']}"
 
-  s.dependency 'OnsideKit'
+  s.subspec 'Onside' do |ss|
+    ss.dependency 'OnsideKit'
+  end
+
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',

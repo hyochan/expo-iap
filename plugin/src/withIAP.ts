@@ -263,12 +263,16 @@ const withIapAndroid: ConfigPlugin<
   return config;
 };
 
-const ensureOnsidePod = (content: string): string => {
-  const podLine =
-    "  pod 'OnsideKit', :podspec => 'https://raw.githubusercontent.com/onside-io/OnsideKit-iOS/0.5.0/OnsideKit.podspec'";
-  const podRegex = /^\s*pod\s+'OnsideKit'\b.*$/m;
+const ONSIDEKIT_PODSPEC_URL =
+  'https://raw.githubusercontent.com/onside-io/OnsideKit-iOS/0.5.0/OnsideKit.podspec';
 
-  if (podRegex.test(content)) {
+const EXPO_IAP_IOS_PATH = '../node_modules/expo-iap/ios';
+
+const ensureOnsidePod = (content: string): string => {
+  const alreadyHasOnside =
+    /^\s*pod\s+['"]ExpoIap\/Onside['"].*$/m.test(content) ||
+    /^\s*pod\s+['"]OnsideKit['"]\b.*$/m.test(content);
+  if (alreadyHasOnside) {
     return content;
   }
 
@@ -276,7 +280,7 @@ const ensureOnsidePod = (content: string): string => {
   if (!targetMatch) {
     WarningAggregator.addWarningIOS(
       'expo-iap',
-      'Could not find a target block in Podfile when adding OnsideKit; skipping installation.',
+      'Could not find a target block in Podfile when adding ExpoIap/Onside; skipping installation.',
     );
     return content;
   }
@@ -285,9 +289,15 @@ const ensureOnsidePod = (content: string): string => {
   const before = content.slice(0, insertIndex);
   const after = content.slice(insertIndex);
 
-  logOnce('📦 expo-iap: Added OnsideKit pod to Podfile');
+  const podLines =
+    `  pod 'OnsideKit', :podspec => '${ONSIDEKIT_PODSPEC_URL}'\n` +
+    `  pod 'ExpoIap/Onside', :path => '${EXPO_IAP_IOS_PATH}'`;
 
-  return `${before}${podLine}\n${after}`;
+  logOnce(
+    '📦 expo-iap: Added ExpoIap/Onside subspec (and OnsideKit for resolution) to Podfile',
+  );
+
+  return `${before}${podLines}\n${after}`;
 };
 
 export type AutolinkState = {expoIap: boolean; onside: boolean};
