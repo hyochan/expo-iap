@@ -268,11 +268,21 @@ const ONSIDEKIT_PODSPEC_URL =
 
 const EXPO_IAP_IOS_PATH = '../node_modules/expo-iap/ios';
 
-const ensureOnsidePod = (content: string): string => {
-  const alreadyHasOnside =
-    /^\s*pod\s+['"]ExpoIap\/Onside['"].*$/m.test(content) ||
-    /^\s*pod\s+['"]OnsideKit['"]\b.*$/m.test(content);
-  if (alreadyHasOnside) {
+const ensureOnsidePod = (content: string, onside: boolean): string => {
+  const alreadyHasOnsideKit = /^\s*pod\s+['"]OnsideKit['"]\b.*$/m.test(content);
+  const alreadyHasExpoIapOnside = /^\s*pod\s+['"]ExpoIap\/Onside['"].*$/m.test(
+    content,
+  );
+
+  let podLines = '';
+  if (!alreadyHasOnsideKit) {
+    podLines += `  pod 'OnsideKit', :podspec => '${ONSIDEKIT_PODSPEC_URL}'\n`;
+  }
+  if (onside && !alreadyHasExpoIapOnside) {
+    podLines += `  pod 'ExpoIap/Onside', :path => '${EXPO_IAP_IOS_PATH}'`;
+  }
+
+  if (!podLines) {
     return content;
   }
 
@@ -289,13 +299,13 @@ const ensureOnsidePod = (content: string): string => {
   const before = content.slice(0, insertIndex);
   const after = content.slice(insertIndex);
 
-  const podLines =
-    `  pod 'OnsideKit', :podspec => '${ONSIDEKIT_PODSPEC_URL}'\n` +
-    `  pod 'ExpoIap/Onside', :path => '${EXPO_IAP_IOS_PATH}'`;
-
-  logOnce(
-    '📦 expo-iap: Added ExpoIap/Onside subspec (and OnsideKit for resolution) to Podfile',
-  );
+  if (onside && !alreadyHasExpoIapOnside) {
+    logOnce(
+      '📦 expo-iap: Added ExpoIap/Onside subspec (and OnsideKit for resolution) to Podfile',
+    );
+  } else if (!alreadyHasOnsideKit) {
+    logOnce('📦 expo-iap: Added OnsideKit to Podfile');
+  }
 
   return `${before}${podLines}\n${after}`;
 };
@@ -501,10 +511,8 @@ const withIapIOS: ConfigPlugin<WithIapIosOptions | undefined> = (
       logOnce('🧹 expo-iap: Removed local OpenIAP pod from Podfile');
     }
 
-    // 3) Optionally install OnsideKit when enabled in config
-    if (options?.enableOnside) {
-      content = ensureOnsidePod(content);
-    }
+    // 3) Always add OnsideKit; add ExpoIap/Onside only when onside is enabled
+    content = ensureOnsidePod(content, options?.enableOnside ?? false);
 
     config.modResults.contents = content;
     return config;

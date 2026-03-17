@@ -37,4 +37,5 @@ Pod::Spec.new do |s|
   }
 
   s.source_files = "**/*.{h,m,swift}"
+  s.default_subspecs = []
 end
