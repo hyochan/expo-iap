@@ -195,13 +195,16 @@ describe('ensureOnsidePodIOS', () => {
     '',
   ].join('\n');
 
-  it('adds both OnsideKit and ExpoIap/Onside pods', () => {
+  it('adds OnsideKit pod and post_install hook', () => {
     const result = ensureOnsidePodIOS(basePodfile);
     expect(result).toContain("pod 'OnsideKit'");
-    expect(result).toContain("pod 'ExpoIap/Onside'");
+    expect(result).toContain('# [expo-iap] Make OnsideKit visible');
+    expect(result).toContain('post_install do |installer|');
+    expect(result).toContain("target.name == 'ExpoIap'");
+    expect(result).toContain('SWIFT_INCLUDE_PATHS');
   });
 
-  it('inserts pods inside the target block', () => {
+  it('inserts OnsideKit pod inside the target block', () => {
     const result = ensureOnsidePodIOS(basePodfile);
     const targetIndex = result.indexOf("target 'MyApp' do");
     const onsideKitIndex = result.indexOf("pod 'OnsideKit'");
@@ -210,38 +213,51 @@ describe('ensureOnsidePodIOS', () => {
     expect(onsideKitIndex).toBeLessThan(endIndex);
   });
 
-  it('skips if both pods already exist', () => {
-    const podfileWithBoth = [
+  it('appends into existing post_install block', () => {
+    const podfileWithPostInstall = [
       "target 'MyApp' do",
-      "  pod 'OnsideKit', :podspec => 'https://example.com'",
-      "  pod 'ExpoIap/Onside', :path => '../node_modules/expo-iap/ios'",
+      "  pod 'ExpoModulesCore'",
+      'end',
+      '',
+      'post_install do |installer|',
+      '  # existing hook',
       'end',
     ].join('\n');
-    const result = ensureOnsidePodIOS(podfileWithBoth);
-    expect(result).toBe(podfileWithBoth);
+    const result = ensureOnsidePodIOS(podfileWithPostInstall);
+    expect(result).toContain("pod 'OnsideKit'");
+    expect(result).toContain('# [expo-iap] Make OnsideKit visible');
+    // Should not create a second post_install block
+    const postInstallCount = (
+      result.match(/post_install do \|installer\|/g) ?? []
+    ).length;
+    expect(postInstallCount).toBe(1);
   });
 
-  it('adds missing ExpoIap/Onside when OnsideKit already exists', () => {
+  it('skips if OnsideKit and post_install hook already exist', () => {
+    const podfileComplete = [
+      "target 'MyApp' do",
+      "  pod 'OnsideKit', :podspec => 'https://example.com'",
+      'end',
+      '',
+      'post_install do |installer|',
+      '  # [expo-iap] Make OnsideKit visible',
+      'end',
+    ].join('\n');
+    const result = ensureOnsidePodIOS(podfileComplete);
+    expect(result).toBe(podfileComplete);
+  });
+
+  it('adds post_install hook when OnsideKit already exists', () => {
     const podfileWithOnsideKit = [
       "target 'MyApp' do",
       "  pod 'OnsideKit', :podspec => 'https://example.com'",
       'end',
     ].join('\n');
     const result = ensureOnsidePodIOS(podfileWithOnsideKit);
-    expect(result).toContain("pod 'ExpoIap/Onside'");
-    expect(result).not.toContain('raw.githubusercontent');
-  });
-
-  it('adds missing OnsideKit when ExpoIap/Onside already exists', () => {
-    const podfileWithSubspec = [
-      "target 'MyApp' do",
-      "  pod 'ExpoIap/Onside', :path => '../node_modules/expo-iap/ios'",
-      'end',
-    ].join('\n');
-    const result = ensureOnsidePodIOS(podfileWithSubspec);
-    expect(result).toContain("pod 'OnsideKit'");
-    const subspecCount = (result.match(/pod 'ExpoIap\/Onside'/g) ?? []).length;
-    expect(subspecCount).toBe(1);
+    expect(result).toContain('# [expo-iap] Make OnsideKit visible');
+    // Should not add a duplicate OnsideKit pod
+    const onsideKitCount = (result.match(/pod 'OnsideKit'/g) ?? []).length;
+    expect(onsideKitCount).toBe(1);
   });
 
   it('returns unchanged content when no target block found', () => {
@@ -260,7 +276,7 @@ describe('ensureOnsidePodIOS', () => {
 
     expect(content).toBe(basePodfile);
     expect(content).not.toContain("pod 'OnsideKit'");
-    expect(content).not.toContain("pod 'ExpoIap/Onside'");
+    expect(content).not.toContain('# [expo-iap] Make OnsideKit visible');
   });
 
   it('modifies Podfile when onside is enabled', () => {
@@ -273,6 +289,6 @@ describe('ensureOnsidePodIOS', () => {
 
     expect(content).not.toBe(basePodfile);
     expect(content).toContain("pod 'OnsideKit'");
-    expect(content).toContain("pod 'ExpoIap/Onside'");
+    expect(content).toContain('# [expo-iap] Make OnsideKit visible');
   });
 });

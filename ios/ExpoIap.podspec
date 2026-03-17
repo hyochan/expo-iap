@@ -26,11 +26,9 @@ Pod::Spec.new do |s|
   s.dependency 'ExpoModulesCore'
   s.dependency 'openiap', "#{versions['apple']}"
 
-  s.subspec 'Onside' do |ss|
-    ss.dependency 'OnsideKit'
-  end
-
-  s.default_subspecs = []
+  # OnsideKit is optional; added via ensureOnsidePodIOS() in Podfile when modules.onside is enabled
+  # A post_install hook makes OnsideKit visible to ExpoIap so #if canImport(OnsideKit) works.
+  # Once OnsideKit is published to CocoaPods CDN, this can be replaced with a subspec dependency.
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
