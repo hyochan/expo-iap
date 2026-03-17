@@ -7,7 +7,6 @@ import {
   withGradleProperties,
   withInfoPlist,
   withPodfile,
-  withAppDelegate,
 } from 'expo/config-plugins';
 import type {ExpoConfig} from '@expo/config-types';
 import * as fs from 'fs';
@@ -268,21 +267,13 @@ const ONSIDEKIT_PODSPEC_URL =
 
 const EXPO_IAP_IOS_PATH = '../node_modules/expo-iap/ios';
 
-const ensureOnsidePod = (content: string, onside: boolean): string => {
-  const alreadyHasOnsideKit = /^\s*pod\s+['"]OnsideKit['"]\b.*$/m.test(content);
+export const ensureOnsidePodIOS = (content: string): string => {
+  const alreadyHasOnsideKit = /^\s*pod\s+['"]OnsideKit['"].*$/m.test(content);
   const alreadyHasExpoIapOnside = /^\s*pod\s+['"]ExpoIap\/Onside['"].*$/m.test(
     content,
   );
 
-  let podLines = '';
-  if (!alreadyHasOnsideKit) {
-    podLines += `  pod 'OnsideKit', :podspec => '${ONSIDEKIT_PODSPEC_URL}'\n`;
-  }
-  if (onside && !alreadyHasExpoIapOnside) {
-    podLines += `  pod 'ExpoIap/Onside', :path => '${EXPO_IAP_IOS_PATH}'`;
-  }
-
-  if (!podLines) {
+  if (alreadyHasOnsideKit && alreadyHasExpoIapOnside) {
     return content;
   }
 
@@ -295,19 +286,21 @@ const ensureOnsidePod = (content: string, onside: boolean): string => {
     return content;
   }
 
+  let podLines = '';
+  if (!alreadyHasOnsideKit) {
+    podLines += `  pod 'OnsideKit', :podspec => '${ONSIDEKIT_PODSPEC_URL}'\n`;
+  }
+  if (!alreadyHasExpoIapOnside) {
+    podLines += `  pod 'ExpoIap/Onside', :path => '${EXPO_IAP_IOS_PATH}'\n`;
+  }
+
   const insertIndex = targetMatch.index! + targetMatch[0].length;
   const before = content.slice(0, insertIndex);
   const after = content.slice(insertIndex);
 
-  if (onside && !alreadyHasExpoIapOnside) {
-    logOnce(
-      '📦 expo-iap: Added ExpoIap/Onside subspec (and OnsideKit for resolution) to Podfile',
-    );
-  } else if (!alreadyHasOnsideKit) {
-    logOnce('📦 expo-iap: Added OnsideKit to Podfile');
-  }
+  logOnce('📦 expo-iap: Added ExpoIap/Onside subspec to Podfile');
 
-  return `${before}${podLines}\n${after}`;
+  return `${before}${podLines}${after}`;
 };
 
 export type AutolinkState = {expoIap: boolean; onside: boolean};
@@ -511,8 +504,10 @@ const withIapIOS: ConfigPlugin<WithIapIosOptions | undefined> = (
       logOnce('🧹 expo-iap: Removed local OpenIAP pod from Podfile');
     }
 
-    // 3) Always add OnsideKit; add ExpoIap/Onside only when onside is enabled
-    content = ensureOnsidePod(content, options?.enableOnside ?? false);
+    // 3) Optionally install OnsideKit when enabled in config
+    if (options?.enableOnside) {
+      content = ensureOnsidePodIOS(content);
+    }
 
     config.modResults.contents = content;
     return config;

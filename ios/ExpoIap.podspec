@@ -30,6 +30,8 @@ Pod::Spec.new do |s|
     ss.dependency 'OnsideKit'
   end
 
+  s.default_subspecs = []
+
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
@@ -37,5 +39,4 @@ Pod::Spec.new do |s|
   }
 
   s.source_files = "**/*.{h,m,swift}"
-  s.default_subspecs = []
 end

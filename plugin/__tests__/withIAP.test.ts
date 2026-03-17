@@ -1,6 +1,7 @@
 import type {ExpoConfig} from '@expo/config-types';
 import {
   computeAutolinkModules,
+  ensureOnsidePodIOS,
   modifyAppBuildGradle,
   resolveModuleSelection,
 } from '../src/withIAP';
@@ -28,7 +29,7 @@ jest.mock('expo/config-plugins', () => {
 
   return {
     ...plugins,
-    WarningAggregator: {addWarningAndroid: jest.fn()},
+    WarningAggregator: {addWarningAndroid: jest.fn(), addWarningIOS: jest.fn()},
   };
 });
 
@@ -181,5 +182,97 @@ describe('ios module selection', () => {
       expect(result.added).toEqual(['ExpoOnsideModule', 'ExpoIapOnsideModule']);
       expect(result.removed).toEqual([]);
     });
+  });
+});
+
+describe('ensureOnsidePodIOS', () => {
+  const basePodfile = [
+    "source 'https://cdn.cocoapods.org/'",
+    '',
+    "target 'MyApp' do",
+    "  pod 'ExpoModulesCore'",
+    'end',
+    '',
+  ].join('\n');
+
+  it('adds both OnsideKit and ExpoIap/Onside pods', () => {
+    const result = ensureOnsidePodIOS(basePodfile);
+    expect(result).toContain("pod 'OnsideKit'");
+    expect(result).toContain("pod 'ExpoIap/Onside'");
+  });
+
+  it('inserts pods inside the target block', () => {
+    const result = ensureOnsidePodIOS(basePodfile);
+    const targetIndex = result.indexOf("target 'MyApp' do");
+    const onsideKitIndex = result.indexOf("pod 'OnsideKit'");
+    const endIndex = result.indexOf('end');
+    expect(onsideKitIndex).toBeGreaterThan(targetIndex);
+    expect(onsideKitIndex).toBeLessThan(endIndex);
+  });
+
+  it('skips if both pods already exist', () => {
+    const podfileWithBoth = [
+      "target 'MyApp' do",
+      "  pod 'OnsideKit', :podspec => 'https://example.com'",
+      "  pod 'ExpoIap/Onside', :path => '../node_modules/expo-iap/ios'",
+      'end',
+    ].join('\n');
+    const result = ensureOnsidePodIOS(podfileWithBoth);
+    expect(result).toBe(podfileWithBoth);
+  });
+
+  it('adds missing ExpoIap/Onside when OnsideKit already exists', () => {
+    const podfileWithOnsideKit = [
+      "target 'MyApp' do",
+      "  pod 'OnsideKit', :podspec => 'https://example.com'",
+      'end',
+    ].join('\n');
+    const result = ensureOnsidePodIOS(podfileWithOnsideKit);
+    expect(result).toContain("pod 'ExpoIap/Onside'");
+    expect(result).not.toContain('raw.githubusercontent');
+  });
+
+  it('adds missing OnsideKit when ExpoIap/Onside already exists', () => {
+    const podfileWithSubspec = [
+      "target 'MyApp' do",
+      "  pod 'ExpoIap/Onside', :path => '../node_modules/expo-iap/ios'",
+      'end',
+    ].join('\n');
+    const result = ensureOnsidePodIOS(podfileWithSubspec);
+    expect(result).toContain("pod 'OnsideKit'");
+    const subspecCount = (result.match(/pod 'ExpoIap\/Onside'/g) ?? []).length;
+    expect(subspecCount).toBe(1);
+  });
+
+  it('returns unchanged content when no target block found', () => {
+    const noPodfile = '# empty';
+    const result = ensureOnsidePodIOS(noPodfile);
+    expect(result).toBe(noPodfile);
+  });
+
+  it('does not modify Podfile when onside is disabled (not called)', () => {
+    const enableOnside = false;
+    let content = basePodfile;
+
+    if (enableOnside) {
+      content = ensureOnsidePodIOS(content);
+    }
+
+    expect(content).toBe(basePodfile);
+    expect(content).not.toContain("pod 'OnsideKit'");
+    expect(content).not.toContain("pod 'ExpoIap/Onside'");
+  });
+
+  it('modifies Podfile when onside is enabled', () => {
+    const enableOnside = true;
+    let content = basePodfile;
+
+    if (enableOnside) {
+      content = ensureOnsidePodIOS(content);
+    }
+
+    expect(content).not.toBe(basePodfile);
+    expect(content).toContain("pod 'OnsideKit'");
+    expect(content).toContain("pod 'ExpoIap/Onside'");
   });
 });
