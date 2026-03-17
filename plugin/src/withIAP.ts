@@ -262,75 +262,28 @@ const withIapAndroid: ConfigPlugin<
   return config;
 };
 
-const ONSIDEKIT_PODSPEC_URL =
-  'https://raw.githubusercontent.com/onside-io/OnsideKit-iOS/0.5.0/OnsideKit.podspec';
-
-// post_install hook that adds OnsideKit's module to ExpoIap's search paths
-// so that `#if canImport(OnsideKit)` resolves correctly at build time.
-// This is needed because OnsideKit is not yet on CocoaPods CDN, so we cannot
-// use a podspec `s.dependency`. Once OnsideKit is on CDN, replace with a subspec.
-const ONSIDE_POST_INSTALL_HOOK = `
-  # [expo-iap] Make OnsideKit visible to ExpoIap for #if canImport(OnsideKit)
-  installer.pods_project.targets.each do |target|
-    if target.name == 'ExpoIap'
-      target.build_configurations.each do |config|
-        swift_paths = config.build_settings['SWIFT_INCLUDE_PATHS'] || '$(inherited)'
-        onside_path = '\${PODS_CONFIGURATION_BUILD_DIR}/OnsideKit'
-        unless swift_paths.include?(onside_path)
-          config.build_settings['SWIFT_INCLUDE_PATHS'] = "#{swift_paths} #{onside_path}"
-        end
-      end
-    end
-  end`;
-
-const ONSIDE_POST_INSTALL_MARKER = '# [expo-iap] Make OnsideKit visible';
+const EXPO_IAP_IOS_PATH = '../node_modules/expo-iap/ios';
 
 export const ensureOnsidePodIOS = (content: string): string => {
-  const alreadyHasOnsideKit = /^\s*pod\s+['"]OnsideKit['"].*$/m.test(content);
-  const alreadyHasPostInstall = content.includes(ONSIDE_POST_INSTALL_MARKER);
-
-  if (alreadyHasOnsideKit && alreadyHasPostInstall) {
+  if (/^\s*pod\s+['"]ExpoIap\/Onside['"].*$/m.test(content)) {
     return content;
   }
 
-  let result = content;
-
-  // 1) Add OnsideKit pod inside the target block
-  if (!alreadyHasOnsideKit) {
-    const targetMatch = result.match(/target\s+'[^']+'\s+do\s*\n/);
-    if (!targetMatch) {
-      WarningAggregator.addWarningIOS(
-        'expo-iap',
-        'Could not find a target block in Podfile when adding OnsideKit; skipping installation.',
-      );
-      return content;
-    }
-
-    const podLine = `  pod 'OnsideKit', :podspec => '${ONSIDEKIT_PODSPEC_URL}'\n`;
-    const insertIndex = targetMatch.index! + targetMatch[0].length;
-    result = result.slice(0, insertIndex) + podLine + result.slice(insertIndex);
+  const targetMatch = content.match(/target\s+'[^']+'\s+do\s*\n/);
+  if (!targetMatch) {
+    WarningAggregator.addWarningIOS(
+      'expo-iap',
+      'Could not find a target block in Podfile when adding ExpoIap/Onside; skipping installation.',
+    );
+    return content;
   }
 
-  // 2) Add post_install hook to make OnsideKit visible to ExpoIap
-  if (!alreadyHasPostInstall) {
-    const postInstallMatch = result.match(/post_install\s+do\s+\|installer\|/);
-    if (postInstallMatch) {
-      // Append inside existing post_install block
-      const insertIndex = postInstallMatch.index! + postInstallMatch[0].length;
-      result =
-        result.slice(0, insertIndex) +
-        '\n' +
-        ONSIDE_POST_INSTALL_HOOK +
-        result.slice(insertIndex);
-    } else {
-      // Create new post_install block
-      result += `\npost_install do |installer|${ONSIDE_POST_INSTALL_HOOK}\nend\n`;
-    }
-  }
+  const podLine = `  pod 'ExpoIap/Onside', :path => '${EXPO_IAP_IOS_PATH}'\n`;
+  const insertIndex = targetMatch.index! + targetMatch[0].length;
 
-  logOnce('📦 expo-iap: Added OnsideKit pod and post_install hook to Podfile');
+  logOnce('📦 expo-iap: Added ExpoIap/Onside subspec to Podfile');
 
-  return result;
+  return content.slice(0, insertIndex) + podLine + content.slice(insertIndex);
 };
 
 export type AutolinkState = {expoIap: boolean; onside: boolean};
