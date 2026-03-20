@@ -61,6 +61,16 @@ export const NATIVE_ERROR_CODES: Record<string, unknown> = new Proxy(
   },
 );
 
+/**
+ * Returns the raw native module (not wrapped in a Proxy).
+ * Use this for EventEmitter / addListener calls — JSI HostObjects
+ * require the real native module as `this`; a Proxy triggers
+ * "native state unsupported on Proxy" on New Architecture / Hermes.
+ */
+export function getNativeModule() {
+  return getResolved().module;
+}
+
 export default new Proxy({} as any, {
   get(_, prop) {
     if (prop === 'USING_ONSIDE_SDK') {

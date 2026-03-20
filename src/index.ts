@@ -1,9 +1,8 @@
 // External dependencies
-import {requireNativeModule} from 'expo-modules-core';
 import {Platform} from 'react-native';
 
 // Internal modules
-import ExpoIapModule from './ExpoIapModule';
+import ExpoIapModule, {getNativeModule} from './ExpoIapModule';
 import {
   isProductIOS,
   validateReceiptIOS,
@@ -85,9 +84,10 @@ type ExpoIapEmitter = {
   ): void;
 };
 
-// Ensure the emitter has proper EventEmitter interface
-export const emitter = (ExpoIapModule ||
-  requireNativeModule('ExpoIap')) as ExpoIapEmitter;
+// Use the raw native module for the emitter — JSI HostObjects require the
+// real native module as `this` when calling addListener. Using a Proxy as
+// `this` triggers "native state unsupported on Proxy" on New Architecture / Hermes.
+export const emitter = getNativeModule() as ExpoIapEmitter;
 
 /**
  * TODO(v3.1.0): Remove legacy 'inapp' alias once downstream apps migrate to 'in-app'.
