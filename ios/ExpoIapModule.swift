@@ -169,6 +169,7 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("requestReceiptRefreshIOS") { () async throws -> String in
             ExpoIapLog.payload("requestReceiptRefreshIOS", payload: nil)
+            _ = try await OpenIapModule.shared.syncIOS()
             let receipt = try await OpenIapModule.shared.getReceiptDataIOS() ?? ""
             ExpoIapLog.result("requestReceiptRefreshIOS", value: receipt)
             return receipt

@@ -10,6 +10,7 @@ const mockNativeModule = {
   beginRefundRequestIOS: jest.fn(),
   showManageSubscriptionsIOS: jest.fn(),
   getReceiptDataIOS: jest.fn(),
+  requestReceiptRefreshIOS: jest.fn(),
   isTransactionVerifiedIOS: jest.fn(),
   getTransactionJwsIOS: jest.fn(),
   validateReceiptIOS: jest.fn(),
