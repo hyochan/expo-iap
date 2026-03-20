@@ -10,6 +10,7 @@ jest.mock('../../ExpoIapModule', () => ({
     beginRefundRequestIOS: jest.fn(),
     showManageSubscriptionsIOS: jest.fn(),
     getReceiptDataIOS: jest.fn(),
+    requestReceiptRefreshIOS: jest.fn(),
     isTransactionVerifiedIOS: jest.fn(),
     getTransactionJwsIOS: jest.fn(),
     validateReceiptIOS: jest.fn(),
@@ -49,6 +50,7 @@ import {
   beginRefundRequestIOS,
   showManageSubscriptionsIOS,
   getReceiptIOS,
+  requestReceiptRefreshIOS,
   isTransactionVerifiedIOS,
   getTransactionJwsIOS,
   validateReceiptIOS,
@@ -481,6 +483,28 @@ describe('iOS Module Functions', () => {
 
       expect(ExpoIapModule.getReceiptDataIOS).toHaveBeenCalledTimes(1);
       expect(result).toBe(mockReceipt);
+    });
+
+    it('should call requestReceiptRefreshIOS and return refreshed receipt', async () => {
+      const mockReceipt = 'refreshed-base64-receipt-data';
+
+      (ExpoIapModule.requestReceiptRefreshIOS as jest.Mock).mockResolvedValue(
+        mockReceipt,
+      );
+
+      const result = await requestReceiptRefreshIOS();
+
+      expect(ExpoIapModule.requestReceiptRefreshIOS).toHaveBeenCalledTimes(1);
+      expect(result).toBe(mockReceipt);
+    });
+
+    it('requestReceiptRefreshIOS should propagate errors', async () => {
+      const mockError = new Error('Sync failed');
+      (ExpoIapModule.requestReceiptRefreshIOS as jest.Mock).mockRejectedValue(
+        mockError,
+      );
+
+      await expect(requestReceiptRefreshIOS()).rejects.toThrow('Sync failed');
     });
 
     it('should call isTransactionVerifiedIOS with SKU', async () => {

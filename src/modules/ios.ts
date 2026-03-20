@@ -185,6 +185,21 @@ export const getReceiptDataIOS: QueryField<'getReceiptDataIOS'> = async () => {
 export const getReceiptIOS = getReceiptDataIOS;
 
 /**
+ * Refresh the receipt data from Apple's servers and return the updated receipt.
+ * This calls AppStore.sync() before reading the receipt, ensuring the latest
+ * receipt data is available. Use this after a first purchase when
+ * getReceiptDataIOS() may return an empty string because the receipt file
+ * has not yet been written to disk.
+ *
+ * @returns {Promise<string>} Base64 encoded receipt data
+ *
+ * @platform iOS
+ */
+export const requestReceiptRefreshIOS = async (): Promise<string> => {
+  return ExpoIapModule.requestReceiptRefreshIOS();
+};
+
+/**
  * Check if a transaction is verified through StoreKit 2.
  * StoreKit 2 performs local verification of transaction JWS signatures.
  *
