@@ -5,6 +5,16 @@ import OpenIAP
 import UIKit
 #endif
 
+/// Wrapper to suppress deprecation warnings for APIs that are themselves deprecated
+/// in expo-iap but still need to call through to the underlying OpenIAP methods.
+@available(iOS 15.0, tvOS 15.0, *)
+private enum DeprecatedHelper {
+    @available(*, deprecated, message: "Use promotedProductListenerIOS + requestPurchase instead")
+    static func requestPurchaseOnPromotedProduct() async throws -> Bool {
+        try await OpenIapModule.shared.requestPurchaseOnPromotedProductIOS()
+    }
+}
+
 @available(iOS 15.0, tvOS 15.0, *)
 @MainActor
 public final class ExpoIapModule: Module {
@@ -276,7 +286,7 @@ public final class ExpoIapModule: Module {
 
         AsyncFunction("requestPurchaseOnPromotedProductIOS") { () async throws -> Bool in
             ExpoIapLog.payload("requestPurchaseOnPromotedProductIOS", payload: nil)
-            let success = try await OpenIapModule.shared.requestPurchaseOnPromotedProductIOS()
+            let success = try await DeprecatedHelper.requestPurchaseOnPromotedProduct()
             ExpoIapLog.result("requestPurchaseOnPromotedProductIOS", value: success)
             return success
         }

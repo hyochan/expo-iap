@@ -586,13 +586,12 @@ public final class ExpoIapOnsideModule: Module {
     nonisolated public func definition() -> ModuleDefinition {
         Name("ExpoIapOnside")
 
-        Constants {
-            var constants: [String: Any] = [:]
-            OpenIapSerialization.errorCodes().forEach { key, value in
-                constants[key] = value
-            }
-            constants["IS_ONSIDE_KIT_INSTALLED_IOS"] = false
-            return constants
+        Constant("ERROR_CODES") {
+            OpenIapSerialization.errorCodes()
+        }
+
+        Constant("IS_ONSIDE_KIT_INSTALLED_IOS") {
+            false
         }
 
         Events(
