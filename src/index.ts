@@ -84,10 +84,18 @@ type ExpoIapEmitter = {
   ): void;
 };
 
-// Use the raw native module for the emitter — JSI HostObjects require the
+// Use the raw native module for listener calls — JSI HostObjects require the
 // real native module as `this` when calling addListener. Using a Proxy as
 // `this` triggers "native state unsupported on Proxy" on New Architecture / Hermes.
-export const emitter = getNativeModule() as ExpoIapEmitter;
+// Resolved lazily so importing this module doesn't throw on unsupported platforms.
+export const emitter: ExpoIapEmitter = {
+  addListener(eventName, listener) {
+    return getNativeModule().addListener(eventName, listener);
+  },
+  removeListener(eventName, listener) {
+    return getNativeModule().removeListener(eventName, listener);
+  },
+};
 
 /**
  * TODO(v3.1.0): Remove legacy 'inapp' alias once downstream apps migrate to 'in-app'.
