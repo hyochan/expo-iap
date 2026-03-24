@@ -1,6 +1,7 @@
 import type {ExpoConfig} from '@expo/config-types';
 import {
   computeAutolinkModules,
+  ensureOnsidePodIOS,
   modifyAppBuildGradle,
   resolveModuleSelection,
 } from '../src/withIAP';
@@ -28,7 +29,7 @@ jest.mock('expo/config-plugins', () => {
 
   return {
     ...plugins,
-    WarningAggregator: {addWarningAndroid: jest.fn()},
+    WarningAggregator: {addWarningAndroid: jest.fn(), addWarningIOS: jest.fn()},
   };
 });
 
@@ -181,5 +182,70 @@ describe('ios module selection', () => {
       expect(result.added).toEqual(['ExpoOnsideModule', 'ExpoIapOnsideModule']);
       expect(result.removed).toEqual([]);
     });
+  });
+});
+
+describe('ensureOnsidePodIOS', () => {
+  const basePodfile = [
+    "source 'https://cdn.cocoapods.org/'",
+    '',
+    "target 'MyApp' do",
+    "  pod 'ExpoModulesCore'",
+    'end',
+    '',
+  ].join('\n');
+
+  it('adds ExpoIap/Onside subspec pod', () => {
+    const result = ensureOnsidePodIOS(basePodfile);
+    expect(result).toContain("pod 'ExpoIap/Onside'");
+  });
+
+  it('inserts pod inside the target block', () => {
+    const result = ensureOnsidePodIOS(basePodfile);
+    const targetIndex = result.indexOf("target 'MyApp' do");
+    const subspecIndex = result.indexOf("pod 'ExpoIap/Onside'");
+    const endIndex = result.indexOf('end');
+    expect(subspecIndex).toBeGreaterThan(targetIndex);
+    expect(subspecIndex).toBeLessThan(endIndex);
+  });
+
+  it('skips if ExpoIap/Onside already exists', () => {
+    const podfileWithSubspec = [
+      "target 'MyApp' do",
+      "  pod 'ExpoIap/Onside', :path => '../node_modules/expo-iap/ios'",
+      'end',
+    ].join('\n');
+    const result = ensureOnsidePodIOS(podfileWithSubspec);
+    expect(result).toBe(podfileWithSubspec);
+  });
+
+  it('returns unchanged content when no target block found', () => {
+    const noPodfile = '# empty';
+    const result = ensureOnsidePodIOS(noPodfile);
+    expect(result).toBe(noPodfile);
+  });
+
+  it('does not modify Podfile when onside is disabled (not called)', () => {
+    const enableOnside = false;
+    let content = basePodfile;
+
+    if (enableOnside) {
+      content = ensureOnsidePodIOS(content);
+    }
+
+    expect(content).toBe(basePodfile);
+    expect(content).not.toContain("pod 'ExpoIap/Onside'");
+  });
+
+  it('modifies Podfile when onside is enabled', () => {
+    const enableOnside = true;
+    let content = basePodfile;
+
+    if (enableOnside) {
+      content = ensureOnsidePodIOS(content);
+    }
+
+    expect(content).not.toBe(basePodfile);
+    expect(content).toContain("pod 'ExpoIap/Onside'");
   });
 });

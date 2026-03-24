@@ -7,7 +7,6 @@ import {
   withGradleProperties,
   withInfoPlist,
   withPodfile,
-  withAppDelegate,
 } from 'expo/config-plugins';
 import type {ExpoConfig} from '@expo/config-types';
 import * as fs from 'fs';
@@ -263,12 +262,10 @@ const withIapAndroid: ConfigPlugin<
   return config;
 };
 
-const ensureOnsidePod = (content: string): string => {
-  const podLine =
-    "  pod 'OnsideKit', :podspec => 'https://raw.githubusercontent.com/onside-io/OnsideKit-iOS/0.5.0/OnsideKit.podspec'";
-  const podRegex = /^\s*pod\s+'OnsideKit'\b.*$/m;
+const EXPO_IAP_IOS_PATH = '../node_modules/expo-iap/ios';
 
-  if (podRegex.test(content)) {
+export const ensureOnsidePodIOS = (content: string): string => {
+  if (/^\s*pod\s+['"]ExpoIap\/Onside['"].*$/m.test(content)) {
     return content;
   }
 
@@ -276,18 +273,17 @@ const ensureOnsidePod = (content: string): string => {
   if (!targetMatch) {
     WarningAggregator.addWarningIOS(
       'expo-iap',
-      'Could not find a target block in Podfile when adding OnsideKit; skipping installation.',
+      'Could not find a target block in Podfile when adding ExpoIap/Onside; skipping installation.',
     );
     return content;
   }
 
+  const podLine = `  pod 'ExpoIap/Onside', :path => '${EXPO_IAP_IOS_PATH}'\n`;
   const insertIndex = targetMatch.index! + targetMatch[0].length;
-  const before = content.slice(0, insertIndex);
-  const after = content.slice(insertIndex);
 
-  logOnce('📦 expo-iap: Added OnsideKit pod to Podfile');
+  logOnce('📦 expo-iap: Added ExpoIap/Onside subspec to Podfile');
 
-  return `${before}${podLine}\n${after}`;
+  return content.slice(0, insertIndex) + podLine + content.slice(insertIndex);
 };
 
 export type AutolinkState = {expoIap: boolean; onside: boolean};
@@ -493,7 +489,7 @@ const withIapIOS: ConfigPlugin<WithIapIosOptions | undefined> = (
 
     // 3) Optionally install OnsideKit when enabled in config
     if (options?.enableOnside) {
-      content = ensureOnsidePod(content);
+      content = ensureOnsidePodIOS(content);
     }
 
     config.modResults.contents = content;
