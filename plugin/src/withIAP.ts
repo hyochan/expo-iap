@@ -265,7 +265,11 @@ const withIapAndroid: ConfigPlugin<
 const EXPO_IAP_IOS_PATH = '../node_modules/expo-iap/ios';
 
 export const ensureOnsidePodIOS = (content: string): string => {
-  if (/^\s*pod\s+['"]ExpoIap\/Onside['"].*$/m.test(content)) {
+  // Check for both old subspec format and new direct pod format
+  if (
+    /^\s*pod\s+['"]ExpoIap\/Onside['"].*$/m.test(content) ||
+    /^\s*pod\s+['"]OnsideKit['"].*$/m.test(content)
+  ) {
     return content;
   }
 
@@ -273,15 +277,15 @@ export const ensureOnsidePodIOS = (content: string): string => {
   if (!targetMatch) {
     WarningAggregator.addWarningIOS(
       'expo-iap',
-      'Could not find a target block in Podfile when adding ExpoIap/Onside; skipping installation.',
+      'Could not find a target block in Podfile when adding OnsideKit; skipping installation.',
     );
     return content;
   }
 
-  const podLine = `  pod 'ExpoIap/Onside', :path => '${EXPO_IAP_IOS_PATH}'\n`;
+  const podLine = `  pod 'OnsideKit'\n`;
   const insertIndex = targetMatch.index! + targetMatch[0].length;
 
-  logOnce('📦 expo-iap: Added ExpoIap/Onside subspec to Podfile');
+  logOnce('📦 expo-iap: Added OnsideKit pod to Podfile');
 
   return content.slice(0, insertIndex) + podLine + content.slice(insertIndex);
 };

@@ -195,18 +195,18 @@ describe('ensureOnsidePodIOS', () => {
     '',
   ].join('\n');
 
-  it('adds ExpoIap/Onside subspec pod', () => {
+  it('adds OnsideKit pod', () => {
     const result = ensureOnsidePodIOS(basePodfile);
-    expect(result).toContain("pod 'ExpoIap/Onside'");
+    expect(result).toContain("pod 'OnsideKit'");
   });
 
   it('inserts pod inside the target block', () => {
     const result = ensureOnsidePodIOS(basePodfile);
     const targetIndex = result.indexOf("target 'MyApp' do");
-    const subspecIndex = result.indexOf("pod 'ExpoIap/Onside'");
+    const podIndex = result.indexOf("pod 'OnsideKit'");
     const endIndex = result.indexOf('end');
-    expect(subspecIndex).toBeGreaterThan(targetIndex);
-    expect(subspecIndex).toBeLessThan(endIndex);
+    expect(podIndex).toBeGreaterThan(targetIndex);
+    expect(podIndex).toBeLessThan(endIndex);
   });
 
   it('skips if ExpoIap/Onside already exists', () => {
@@ -217,6 +217,16 @@ describe('ensureOnsidePodIOS', () => {
     ].join('\n');
     const result = ensureOnsidePodIOS(podfileWithSubspec);
     expect(result).toBe(podfileWithSubspec);
+  });
+
+  it('skips if OnsideKit already exists', () => {
+    const podfileWithOnside = [
+      "target 'MyApp' do",
+      "  pod 'OnsideKit'",
+      'end',
+    ].join('\n');
+    const result = ensureOnsidePodIOS(podfileWithOnside);
+    expect(result).toBe(podfileWithOnside);
   });
 
   it('returns unchanged content when no target block found', () => {
@@ -234,7 +244,7 @@ describe('ensureOnsidePodIOS', () => {
     }
 
     expect(content).toBe(basePodfile);
-    expect(content).not.toContain("pod 'ExpoIap/Onside'");
+    expect(content).not.toContain("pod 'OnsideKit'");
   });
 
   it('modifies Podfile when onside is enabled', () => {
@@ -246,6 +256,6 @@ describe('ensureOnsidePodIOS', () => {
     }
 
     expect(content).not.toBe(basePodfile);
-    expect(content).toContain("pod 'ExpoIap/Onside'");
+    expect(content).toContain("pod 'OnsideKit'");
   });
 });
