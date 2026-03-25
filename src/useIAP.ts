@@ -99,6 +99,12 @@ type UseIap = {
   requestPurchaseOnPromotedProductIOS: () => Promise<boolean>;
   getActiveSubscriptions: (subscriptionIds?: string[]) => Promise<void>;
   hasActiveSubscriptions: (subscriptionIds?: string[]) => Promise<boolean>;
+  /**
+   * Manually retry the store connection.
+   * Useful when the initial auto-connect fails (e.g., Play Store not ready at mount time).
+   * Updates the `connected` state on success.
+   */
+  reconnect: () => Promise<boolean>;
   checkAlternativeBillingAvailabilityAndroid: () => Promise<boolean>;
   showAlternativeBillingDialogAndroid: () => Promise<boolean>;
   createAlternativeBillingTokenAndroid: (
@@ -476,6 +482,19 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     [],
   );
 
+  // Build config from options (prefer new enableBillingProgramAndroid over deprecated alternativeBillingModeAndroid)
+  const buildConnectionConfig = useCallback(() => {
+    return optionsRef.current?.enableBillingProgramAndroid ||
+      optionsRef.current?.alternativeBillingModeAndroid
+      ? {
+          enableBillingProgramAndroid:
+            optionsRef.current.enableBillingProgramAndroid,
+          alternativeBillingModeAndroid:
+            optionsRef.current.alternativeBillingModeAndroid,
+        }
+      : undefined;
+  }, []);
+
   const initIapWithSubscriptions = useCallback(async (): Promise<void> => {
     // CRITICAL: Register listeners BEFORE initConnection to avoid race condition
     // Events might fire immediately after initConnection, so listeners must be ready
@@ -524,17 +543,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }
 
     // NOW call initConnection after listeners are ready
-    // Build config from options (prefer new enableBillingProgramAndroid over deprecated alternativeBillingModeAndroid)
-    const config =
-      optionsRef.current?.enableBillingProgramAndroid ||
-      optionsRef.current?.alternativeBillingModeAndroid
-        ? {
-            enableBillingProgramAndroid:
-              optionsRef.current.enableBillingProgramAndroid,
-            alternativeBillingModeAndroid:
-              optionsRef.current.alternativeBillingModeAndroid,
-          }
-        : undefined;
+    const config = buildConnectionConfig();
 
     try {
       const result = await initConnection(config);
@@ -559,7 +568,54 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       subscriptionsRef.current.purchaseUpdate = undefined;
       subscriptionsRef.current.promotedProductIOS = undefined;
     }
-  }, [refreshSubscriptionStatus, invokeOnError]);
+  }, [buildConnectionConfig, refreshSubscriptionStatus, invokeOnError]);
+
+  // Manual reconnect method for when the initial auto-connect fails.
+  // Re-runs initConnection and updates the connected state.
+  // Re-registers event listeners if they were cleaned up during a previous failure.
+  const reconnect = useCallback(async (): Promise<boolean> => {
+    const config = buildConnectionConfig();
+
+    try {
+      const result = await initConnection(config);
+      setConnected(result);
+
+      if (result) {
+        // Re-register listeners if they were cleaned up during a previous failure
+        if (!subscriptionsRef.current.purchaseUpdate) {
+          subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
+            async (purchase: Purchase) => {
+              await refreshSubscriptionStatus(purchase.productId);
+
+              if (optionsRef.current?.onPurchaseSuccess) {
+                optionsRef.current.onPurchaseSuccess(purchase);
+              }
+            },
+          );
+        }
+
+        if (
+          Platform.OS === 'ios' &&
+          !subscriptionsRef.current.promotedProductIOS
+        ) {
+          subscriptionsRef.current.promotedProductIOS =
+            promotedProductListenerIOS((product: Product) => {
+              setPromotedProductIOS(product);
+
+              if (optionsRef.current?.onPromotedProductIOS) {
+                optionsRef.current.onPromotedProductIOS(product);
+              }
+            });
+        }
+      }
+
+      return result;
+    } catch (error) {
+      ExpoIapConsole.error('[useIAP] reconnect failed:', error);
+      invokeOnError(error);
+      return false;
+    }
+  }, [buildConnectionConfig, refreshSubscriptionStatus, invokeOnError]);
 
   useEffect(() => {
     initIapWithSubscriptions();
@@ -594,6 +650,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     requestPurchaseOnPromotedProductIOS,
     getActiveSubscriptions: getActiveSubscriptionsInternal,
     hasActiveSubscriptions: hasActiveSubscriptionsInternal,
+    // Reconnect method for manual retry
+    reconnect,
     // Alternative billing methods (Android only)
     checkAlternativeBillingAvailabilityAndroid,
     showAlternativeBillingDialogAndroid,
