@@ -411,12 +411,17 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         if (subscriptionsRefState.current.some((sub) => sub.id === productId)) {
           await fetchProductsInternal({skus: [productId], type: 'subs'});
           await getAvailablePurchasesInternal();
+          await getActiveSubscriptionsInternal();
         }
       } catch (error) {
         ExpoIapConsole.warn('Failed to refresh subscription status:', error);
       }
     },
-    [fetchProductsInternal, getAvailablePurchasesInternal],
+    [
+      fetchProductsInternal,
+      getAvailablePurchasesInternal,
+      getActiveSubscriptionsInternal,
+    ],
   );
 
   // Restore completed transactions with cross-platform behavior.
