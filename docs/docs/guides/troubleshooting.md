@@ -14,21 +14,7 @@ This guide covers common issues you might encounter when implementing in-app pur
 
 ## Prerequisites Checklist
 
-Before diving into troubleshooting, ensure you have completed these essential steps:
-
-### App Store Setup (iOS)
-
-- [ ] **Agreements**: Completed all agreements, tax, and banking information in App Store Connect
-- [ ] **Sandbox Account**: Created sandbox testing accounts in "Users and Roles"
-- [ ] **Device Setup**: Signed into iOS device with sandbox account in "Settings > iTunes & App Stores"
-- [ ] **Products Created**: Set up In-App Purchase products with status "Ready to Submit"
-
-### Google Play Setup (Android)
-
-- [ ] **Play Console**: Completed all required information in Google Play Console
-- [ ] **Test Accounts**: Added test accounts to your app's testing track
-- [ ] **Signed Build**: Using signed APK/AAB (not debug builds)
-- [ ] **Upload**: Uploaded at least one version to internal testing
+Before diving into troubleshooting, ensure you have completed all steps in the [Prerequisites](/docs/getting-started/prerequisites) page, including store configuration for both iOS and Android.
 
 ## Common Issues
 
