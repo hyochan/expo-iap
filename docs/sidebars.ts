@@ -24,6 +24,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Getting Started',
       items: [
+        'getting-started/prerequisites',
         'getting-started/installation',
         {
           type: 'category',
