@@ -73,7 +73,7 @@ jobs:
 
       - name: Build Android library
         working-directory: example/android
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug -PreactNativeArchitectures=arm64-v8a --stacktrace
 
   validate-ios:
     runs-on: macos-15
