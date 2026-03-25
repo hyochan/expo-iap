@@ -462,15 +462,29 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     [],
   );
 
+  // Build config from options (prefer new enableBillingProgramAndroid over deprecated alternativeBillingModeAndroid)
+  const buildConnectionConfig = useCallback(() => {
+    return optionsRef.current?.enableBillingProgramAndroid ||
+      optionsRef.current?.alternativeBillingModeAndroid
+      ? {
+          enableBillingProgramAndroid:
+            optionsRef.current.enableBillingProgramAndroid,
+          alternativeBillingModeAndroid:
+            optionsRef.current.alternativeBillingModeAndroid,
+        }
+      : undefined;
+  }, []);
+
   const initIapWithSubscriptions = useCallback(async (): Promise<void> => {
     // CRITICAL: Register listeners BEFORE initConnection to avoid race condition
     // Events might fire immediately after initConnection, so listeners must be ready
     // Register purchase update listener BEFORE initConnection to avoid race conditions.
     subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
       async (purchase: Purchase) => {
-        if ('expirationDateIOS' in purchase) {
-          await refreshSubscriptionStatus(purchase.id);
-        }
+        // Refresh subscription status for both iOS and Android subscription purchases.
+        // refreshSubscriptionStatus internally checks whether the product is a known
+        // subscription, so it is safe to call unconditionally for any purchase event.
+        await refreshSubscriptionStatus(purchase.productId);
 
         if (optionsRef.current?.onPurchaseSuccess) {
           optionsRef.current.onPurchaseSuccess(purchase);
@@ -509,17 +523,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }
 
     // NOW call initConnection after listeners are ready
-    // Build config from options (prefer new enableBillingProgramAndroid over deprecated alternativeBillingModeAndroid)
-    const config =
-      optionsRef.current?.enableBillingProgramAndroid ||
-      optionsRef.current?.alternativeBillingModeAndroid
-        ? {
-            enableBillingProgramAndroid:
-              optionsRef.current.enableBillingProgramAndroid,
-            alternativeBillingModeAndroid:
-              optionsRef.current.alternativeBillingModeAndroid,
-          }
-        : undefined;
+    const config = buildConnectionConfig();
 
     try {
       const result = await initConnection(config);
@@ -544,22 +548,13 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       subscriptionsRef.current.purchaseUpdate = undefined;
       subscriptionsRef.current.promotedProductIOS = undefined;
     }
-  }, [refreshSubscriptionStatus, invokeOnError]);
+  }, [buildConnectionConfig, refreshSubscriptionStatus, invokeOnError]);
 
   // Manual reconnect method for when the initial auto-connect fails.
-  // Re-runs initConnection and updates the connected state without
-  // tearing down / re-registering event listeners.
+  // Re-runs initConnection and updates the connected state.
+  // Re-registers event listeners if they were cleaned up during a previous failure.
   const reconnect = useCallback(async (): Promise<boolean> => {
-    const config =
-      optionsRef.current?.enableBillingProgramAndroid ||
-      optionsRef.current?.alternativeBillingModeAndroid
-        ? {
-            enableBillingProgramAndroid:
-              optionsRef.current.enableBillingProgramAndroid,
-            alternativeBillingModeAndroid:
-              optionsRef.current.alternativeBillingModeAndroid,
-          }
-        : undefined;
+    const config = buildConnectionConfig();
 
     try {
       const result = await initConnection(config);
@@ -570,9 +565,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         if (!subscriptionsRef.current.purchaseUpdate) {
           subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
             async (purchase: Purchase) => {
-              if ('expirationDateIOS' in purchase) {
-                await refreshSubscriptionStatus(purchase.id);
-              }
+              await refreshSubscriptionStatus(purchase.productId);
 
               if (optionsRef.current?.onPurchaseSuccess) {
                 optionsRef.current.onPurchaseSuccess(purchase);
@@ -602,7 +595,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
       invokeOnError(error);
       return false;
     }
-  }, [refreshSubscriptionStatus, invokeOnError]);
+  }, [buildConnectionConfig, refreshSubscriptionStatus, invokeOnError]);
 
   useEffect(() => {
     initIapWithSubscriptions();
