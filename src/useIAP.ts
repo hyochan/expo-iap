@@ -98,6 +98,12 @@ type UseIap = {
   requestPurchaseOnPromotedProductIOS: () => Promise<boolean>;
   getActiveSubscriptions: (subscriptionIds?: string[]) => Promise<void>;
   hasActiveSubscriptions: (subscriptionIds?: string[]) => Promise<boolean>;
+  /**
+   * Manually retry the store connection.
+   * Useful when the initial auto-connect fails (e.g., Play Store not ready at mount time).
+   * Updates the `connected` state on success.
+   */
+  reconnect: () => Promise<boolean>;
   checkAlternativeBillingAvailabilityAndroid: () => Promise<boolean>;
   showAlternativeBillingDialogAndroid: () => Promise<boolean>;
   createAlternativeBillingTokenAndroid: (
@@ -540,6 +546,64 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     }
   }, [refreshSubscriptionStatus, invokeOnError]);
 
+  // Manual reconnect method for when the initial auto-connect fails.
+  // Re-runs initConnection and updates the connected state without
+  // tearing down / re-registering event listeners.
+  const reconnect = useCallback(async (): Promise<boolean> => {
+    const config =
+      optionsRef.current?.enableBillingProgramAndroid ||
+      optionsRef.current?.alternativeBillingModeAndroid
+        ? {
+            enableBillingProgramAndroid:
+              optionsRef.current.enableBillingProgramAndroid,
+            alternativeBillingModeAndroid:
+              optionsRef.current.alternativeBillingModeAndroid,
+          }
+        : undefined;
+
+    try {
+      const result = await initConnection(config);
+      setConnected(result);
+
+      if (result) {
+        // Re-register listeners if they were cleaned up during a previous failure
+        if (!subscriptionsRef.current.purchaseUpdate) {
+          subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
+            async (purchase: Purchase) => {
+              if ('expirationDateIOS' in purchase) {
+                await refreshSubscriptionStatus(purchase.id);
+              }
+
+              if (optionsRef.current?.onPurchaseSuccess) {
+                optionsRef.current.onPurchaseSuccess(purchase);
+              }
+            },
+          );
+        }
+
+        if (
+          Platform.OS === 'ios' &&
+          !subscriptionsRef.current.promotedProductIOS
+        ) {
+          subscriptionsRef.current.promotedProductIOS =
+            promotedProductListenerIOS((product: Product) => {
+              setPromotedProductIOS(product);
+
+              if (optionsRef.current?.onPromotedProductIOS) {
+                optionsRef.current.onPromotedProductIOS(product);
+              }
+            });
+        }
+      }
+
+      return result;
+    } catch (error) {
+      ExpoIapConsole.error('[useIAP] reconnect failed:', error);
+      invokeOnError(error);
+      return false;
+    }
+  }, [refreshSubscriptionStatus, invokeOnError]);
+
   useEffect(() => {
     initIapWithSubscriptions();
     const currentSubscriptions = subscriptionsRef.current;
@@ -573,6 +637,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     requestPurchaseOnPromotedProductIOS,
     getActiveSubscriptions: getActiveSubscriptionsInternal,
     hasActiveSubscriptions: hasActiveSubscriptionsInternal,
+    // Reconnect method for manual retry
+    reconnect,
     // Alternative billing methods (Android only)
     checkAlternativeBillingAvailabilityAndroid,
     showAlternativeBillingDialogAndroid,
