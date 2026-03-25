@@ -249,81 +249,21 @@ useEffect(() => {
 
 ## Getting Product Information
 
-### Retrieving Product Prices
-
-Here's how to get product prices across platforms:
+The cross-platform `displayPrice` field (from `ProductCommon`) provides the formatted price string for any product:
 
 ```tsx
-// Get product price by ID with proper platform checking
-const getProductPrice = (productId: string): string => {
-  if (!isReady || products.length === 0) {
-    return Platform.OS === 'ios' ? '$0.99' : '₩1,200'; // Default prices
-  }
-
-  const product = products.find((p) => p.id === productId);
-  if (!product) return Platform.OS === 'ios' ? '$0.99' : '₩1,200';
-
-  if (Platform.OS === 'ios') {
-    return product.displayPrice || '$0.99';
-  } else {
-    // Android
-    const androidProduct = product as ProductAndroid;
-    return (
-      androidProduct.oneTimePurchaseOfferDetails?.formattedPrice || '₩1,200'
-    );
-  }
-};
-
-// Get subscription price by ID with proper platform checking
-const getSubscriptionPrice = (subscriptionId: string): string => {
-  if (!isReady || subscriptions.length === 0) {
-    return Platform.OS === 'ios' ? '$9.99' : '₩11,000'; // Default prices
-  }
-
-  const subscription = subscriptions.find((s) => s.id === subscriptionId);
-  if (!subscription) return Platform.OS === 'ios' ? '$9.99' : '₩11,000';
-
-  if (Platform.OS === 'ios') {
-    return subscription.displayPrice || '$9.99';
-  } else {
-    // Android
-    const androidSubscription = subscription as ProductAndroid;
-    if (androidSubscription.subscriptionOfferDetailsAndroid?.length > 0) {
-      const firstOffer = androidSubscription.subscriptionOfferDetailsAndroid[0];
-      if (firstOffer.pricingPhases.pricingPhaseList.length > 0) {
-        return (
-          firstOffer.pricingPhases.pricingPhaseList[0].formattedPrice ||
-          '₩11,000'
-        );
-      }
-    }
-    return '₩11,000'; // Default Android price
-  }
-};
+const product = products.find((p) => p.id === productId);
+console.log(product.displayPrice); // "$4.99", "₩1,200", etc.
 ```
 
-## Platform Support
-
-### Checking Platform Compatibility
+For subscription pricing phases on Android, use `subscriptionOfferDetailsAndroid`:
 
 ```tsx
-// Define supported platforms
-const SUPPORTED_PLATFORMS = ['ios', 'android'];
+const subscription = subscriptions.find((s) => s.id === subscriptionId);
 
-export default function PurchaseScreen() {
-  const isPlatformSupported = SUPPORTED_PLATFORMS.includes(Platform.OS);
-
-  if (!isPlatformSupported) {
-    return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <Text>Platform Not Supported</Text>
-        <Text>In-app purchases are only available on iOS and Android.</Text>
-      </View>
-    );
-  }
-
-  // Rest of your purchase implementation
-}
+// Android: access pricing phases from offer details
+const offer = subscription?.subscriptionOfferDetailsAndroid?.[0];
+const price = offer?.pricingPhases.pricingPhaseList[0]?.formattedPrice;
 ```
 
 ## Product Types
@@ -621,19 +561,7 @@ const handlePurchaseError = (error) => {
 
 ## Testing Purchases
 
-### iOS Testing
-
-1. Create sandbox accounts in App Store Connect
-2. Sign out of App Store on device
-3. Sign in with sandbox account when prompted during purchase
-4. Test with TestFlight builds
-
-### Android Testing
-
-1. Create test accounts in Google Play Console
-2. Upload signed APK to internal testing track
-3. Add test accounts to the testing track
-4. Test with signed builds (not debug builds)
+Ensure you have completed the [Prerequisites](../getting-started/prerequisites) — including real device setup and store configuration for both platforms. For detailed testing troubleshooting, see the [Troubleshooting Guide](./troubleshooting).
 
 ## Next Steps
 
