@@ -49,6 +49,7 @@ import type {
   VerifyPurchaseWithProviderResult,
   ProductAndroid,
   ProductSubscriptionIOS,
+  PurchaseOptions,
 } from './types';
 import {ErrorCode} from './types';
 import type {PurchaseError} from './utils/errorMapping';
@@ -72,7 +73,7 @@ type UseIap = {
     purchase: Purchase;
     isConsumable?: boolean;
   }) => Promise<void>;
-  getAvailablePurchases: () => Promise<void>;
+  getAvailablePurchases: (options?: PurchaseOptions) => Promise<void>;
   fetchProducts: (params: {
     skus: string[];
     type?: ProductTypeInput;
@@ -89,7 +90,7 @@ type UseIap = {
   verifyPurchaseWithProvider: (
     props: VerifyPurchaseWithProviderProps,
   ) => Promise<VerifyPurchaseWithProviderResult>;
-  restorePurchases: () => Promise<void>;
+  restorePurchases: (options?: PurchaseOptions) => Promise<void>;
   getPromotedProductIOS: () => Promise<Product | null>;
   /**
    * @deprecated Use promotedProductListenerIOS to receive the productId,
@@ -342,19 +343,26 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     ],
   );
 
-  const getAvailablePurchasesInternal = useCallback(async (): Promise<void> => {
-    try {
-      const result = await getAvailablePurchases({
-        alsoPublishToEventListenerIOS: false,
-        onlyIncludeActiveItemsIOS: true,
-      });
-      setAvailablePurchases(result);
-    } catch (error) {
-      ExpoIapConsole.error('Error fetching available purchases:', error);
-      invokeOnError(error);
-      throw error;
-    }
-  }, [invokeOnError]);
+  const getAvailablePurchasesInternal = useCallback(
+    async (options?: PurchaseOptions): Promise<void> => {
+      try {
+        const result = await getAvailablePurchases({
+          alsoPublishToEventListenerIOS:
+            options?.alsoPublishToEventListenerIOS ?? false,
+          onlyIncludeActiveItemsIOS:
+            options?.onlyIncludeActiveItemsIOS ?? true,
+          includeSuspendedAndroid:
+            options?.includeSuspendedAndroid ?? false,
+        });
+        setAvailablePurchases(result);
+      } catch (error) {
+        ExpoIapConsole.error('Error fetching available purchases:', error);
+        invokeOnError(error);
+        throw error;
+      }
+    },
+    [invokeOnError],
+  );
 
   const getActiveSubscriptionsInternal = useCallback(
     async (subscriptionIds?: string[]): Promise<void> => {
@@ -427,24 +435,31 @@ export function useIAP(options?: UseIAPOptions): UseIap {
   // Restore completed transactions with cross-platform behavior.
   // iOS: best-effort sync (ignore sync errors) then fetch available purchases.
   // Android: fetch available purchases directly.
-  const restorePurchasesInternal = useCallback(async (): Promise<void> => {
-    try {
-      // iOS: Try to sync first, but don't fail if sync errors occur
-      if (Platform.OS === 'ios') {
-        await syncIOS().catch(() => undefined); // syncIOS returns Promise<boolean>, we don't need the result
-      }
+  const restorePurchasesInternal = useCallback(
+    async (options?: PurchaseOptions): Promise<void> => {
+      try {
+        // iOS: Try to sync first, but don't fail if sync errors occur
+        if (Platform.OS === 'ios') {
+          await syncIOS().catch(() => undefined); // syncIOS returns Promise<boolean>, we don't need the result
+        }
 
-      const purchases = await getAvailablePurchases({
-        alsoPublishToEventListenerIOS: false,
-        onlyIncludeActiveItemsIOS: true,
-      });
-      setAvailablePurchases(purchases);
-    } catch (error) {
-      ExpoIapConsole.warn('Failed to restore purchases:', error);
-      invokeOnError(error);
-      throw error;
-    }
-  }, [invokeOnError]);
+        const purchases = await getAvailablePurchases({
+          alsoPublishToEventListenerIOS:
+            options?.alsoPublishToEventListenerIOS ?? false,
+          onlyIncludeActiveItemsIOS:
+            options?.onlyIncludeActiveItemsIOS ?? true,
+          includeSuspendedAndroid:
+            options?.includeSuspendedAndroid ?? false,
+        });
+        setAvailablePurchases(purchases);
+      } catch (error) {
+        ExpoIapConsole.warn('Failed to restore purchases:', error);
+        invokeOnError(error);
+        throw error;
+      }
+    },
+    [invokeOnError],
+  );
 
   const validateReceipt = useCallback(async (props: VerifyPurchaseProps) => {
     return validateReceiptInternal(props);
