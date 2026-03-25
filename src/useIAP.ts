@@ -465,7 +465,7 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         // Refresh subscription status for both iOS and Android subscription purchases.
         // refreshSubscriptionStatus internally checks whether the product is a known
         // subscription, so it is safe to call unconditionally for any purchase event.
-        await refreshSubscriptionStatus(purchase.id);
+        await refreshSubscriptionStatus(purchase.productId);
 
         if (optionsRef.current?.onPurchaseSuccess) {
           optionsRef.current.onPurchaseSuccess(purchase);
