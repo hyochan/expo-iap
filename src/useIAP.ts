@@ -462,9 +462,10 @@ export function useIAP(options?: UseIAPOptions): UseIap {
     // Register purchase update listener BEFORE initConnection to avoid race conditions.
     subscriptionsRef.current.purchaseUpdate = purchaseUpdatedListener(
       async (purchase: Purchase) => {
-        if ('expirationDateIOS' in purchase) {
-          await refreshSubscriptionStatus(purchase.id);
-        }
+        // Refresh subscription status for both iOS and Android subscription purchases.
+        // refreshSubscriptionStatus internally checks whether the product is a known
+        // subscription, so it is safe to call unconditionally for any purchase event.
+        await refreshSubscriptionStatus(purchase.id);
 
         if (optionsRef.current?.onPurchaseSuccess) {
           optionsRef.current.onPurchaseSuccess(purchase);
