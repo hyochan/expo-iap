@@ -355,10 +355,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         const result = await getAvailablePurchases({
           alsoPublishToEventListenerIOS:
             options?.alsoPublishToEventListenerIOS ?? false,
-          onlyIncludeActiveItemsIOS:
-            options?.onlyIncludeActiveItemsIOS ?? true,
-          includeSuspendedAndroid:
-            options?.includeSuspendedAndroid ?? false,
+          onlyIncludeActiveItemsIOS: options?.onlyIncludeActiveItemsIOS ?? true,
+          includeSuspendedAndroid: options?.includeSuspendedAndroid ?? false,
         });
         setAvailablePurchases(result);
       } catch (error) {
@@ -452,10 +450,8 @@ export function useIAP(options?: UseIAPOptions): UseIap {
         const purchases = await getAvailablePurchases({
           alsoPublishToEventListenerIOS:
             options?.alsoPublishToEventListenerIOS ?? false,
-          onlyIncludeActiveItemsIOS:
-            options?.onlyIncludeActiveItemsIOS ?? true,
-          includeSuspendedAndroid:
-            options?.includeSuspendedAndroid ?? false,
+          onlyIncludeActiveItemsIOS: options?.onlyIncludeActiveItemsIOS ?? true,
+          includeSuspendedAndroid: options?.includeSuspendedAndroid ?? false,
         });
         setAvailablePurchases(purchases);
       } catch (error) {

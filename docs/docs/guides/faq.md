@@ -724,11 +724,12 @@ eas build --profile development --platform ios --clear-cache
 - Plugin conflicts between `com.android.library` and `com.android.application`
 - Kotlin compatibility errors with other packages
 
-**Root Cause:** Starting with expo-iap v2.7.0, Google Play Billing Library v8.0.0 is used, which requires Kotlin 2.0+.
+**Root Cause:** Starting with expo-iap v3.3.0, Google Play Billing Library v8.2 is used, which requires Kotlin 2.0+.
 
 **Solution:**
 - **Expo SDK 54+**: No action needed — Kotlin 2.0+ is included by default.
-- **Expo SDK 53 or earlier**: See [Prerequisites — Android Kotlin Requirement](../getting-started/prerequisites#android-kotlin-requirement) for configuration details.
+- **Expo SDK 53**: Kotlin 2.0+ is included natively. If you encounter build issues, see [Prerequisites — Android Kotlin Requirement](../getting-started/prerequisites#android-kotlin-requirement).
+- **Expo SDK 52 or earlier**: Incompatible. See the [Expo SDK 52 workaround](../getting-started/installation#expo-sdk-52-users).
 
 **Common Follow-up Issues:**
 

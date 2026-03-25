@@ -38,6 +38,7 @@ Expo SDK 53 includes Kotlin 2.0+ natively as well, but if you encounter build is
 {
   "expo": {
     "plugins": [
+      "expo-iap",
       [
         "expo-build-properties",
         {
