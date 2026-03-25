@@ -18,7 +18,7 @@ Before using expo-iap, ensure your environment meets the following requirements.
 | **iOS** | iOS 12+ (iOS 15+ required for StoreKit 2 features) |
 | **Android** | API level 21+ |
 | **Node.js** | 16 or later |
-| **Xcode** | 16.4+ recommended ([why?](/docs/guides/faq#build-error-apptransactionid-property-not-found)) |
+| **Xcode** | 16.4+ recommended ([why?](../guides/faq#build-error-apptransactionid-property-not-found)) |
 
 ## Android Kotlin Requirement
 
@@ -55,7 +55,7 @@ Expo SDK 53 includes Kotlin 2.0+ natively as well, but if you encounter build is
 
 :::warning Expo SDK 52 or earlier
 
-Expo SDK 52 (React Native 0.76.x) uses Kotlin 1.9.x, which is **incompatible** with Google Play Billing Library v8. See the [Expo SDK 52 workaround](/docs/getting-started/installation#expo-sdk-52-users) in the installation guide.
+Expo SDK 52 (React Native 0.76.x) uses Kotlin 1.9.x, which is **incompatible** with Google Play Billing Library v8. See the [Expo SDK 52 workaround](./installation#expo-sdk-52-users) in the installation guide.
 
 :::
 
@@ -97,11 +97,11 @@ Before testing purchases, you must configure products in the respective app stor
 :::info
 
 For detailed platform setup, see:
-- [iOS Setup Guide](/docs/getting-started/setup-ios)
-- [Android Setup Guide](/docs/getting-started/setup-android)
+- [iOS Setup Guide](./setup-ios)
+- [Android Setup Guide](./setup-android)
 
 :::
 
 ## Next Steps
 
-Once prerequisites are met, proceed to [Installation](/docs/getting-started/installation).
+Once prerequisites are met, proceed to [Installation](./installation).

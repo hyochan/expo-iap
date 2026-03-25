@@ -728,7 +728,7 @@ eas build --profile development --platform ios --clear-cache
 
 **Solution:**
 - **Expo SDK 54+**: No action needed — Kotlin 2.0+ is included by default.
-- **Expo SDK 53 or earlier**: See [Prerequisites — Android Kotlin Requirement](/docs/getting-started/prerequisites#android-kotlin-requirement) for configuration details.
+- **Expo SDK 53 or earlier**: See [Prerequisites — Android Kotlin Requirement](../getting-started/prerequisites#android-kotlin-requirement) for configuration details.
 
 **Common Follow-up Issues:**
 

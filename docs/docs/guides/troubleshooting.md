@@ -14,7 +14,7 @@ This guide covers common issues you might encounter when implementing in-app pur
 
 ## Prerequisites Checklist
 
-Before diving into troubleshooting, ensure you have completed all steps in the [Prerequisites](/docs/getting-started/prerequisites) page, including store configuration for both iOS and Android.
+Before diving into troubleshooting, ensure you have completed all steps in the [Prerequisites](../getting-started/prerequisites) page, including store configuration for both iOS and Android.
 
 ## Common Issues
 

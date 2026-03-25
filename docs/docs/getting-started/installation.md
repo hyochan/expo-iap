@@ -13,7 +13,7 @@ This guide will help you install and configure Expo IAP in your React Native or 
 
 ## Prerequisites
 
-Before installing, ensure your environment meets the [Prerequisites](/docs/getting-started/prerequisites) — including platform requirements, Kotlin version, and store configuration.
+Before installing, ensure your environment meets the [Prerequisites](./prerequisites) — including platform requirements, Kotlin version, and store configuration.
 
 ## Package Installation
 
@@ -33,7 +33,7 @@ After installing the package, you need to:
 
    **Expo SDK 54+**: No configuration needed — Kotlin 2.0+ is included by default.
 
-   **Expo SDK 53 or earlier**: See [Kotlin requirement details](/docs/getting-started/prerequisites#android-kotlin-requirement).
+   **Expo SDK 53 or earlier**: See [Kotlin requirement details](./prerequisites#android-kotlin-requirement).
 
 2. **Install the plugin and run prebuild**:
 
@@ -92,7 +92,7 @@ Then install the native dependencies:
 
 #### Android
 
-For Android Kotlin version configuration, see [Prerequisites — Android Kotlin Requirement](/docs/getting-started/prerequisites#android-kotlin-requirement).
+For Android Kotlin version configuration, see [Prerequisites — Android Kotlin Requirement](./prerequisites#android-kotlin-requirement).
 
 After configuring, run:
 
