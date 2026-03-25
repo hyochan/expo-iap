@@ -10,6 +10,10 @@ import IapKitBanner from "@site/src/uis/IapKitBanner"; import SponsorSection fro
 
 **Expo IAP** is a powerful in-app purchase solution for Expo and React Native applications that **conforms to the [Open IAP specification](https://openiap.dev)**. It provides a unified API for handling in-app purchases across iOS and Android platforms with comprehensive error handling and modern TypeScript support.
 
+### Built-in Purchase Verification with IAPKit
+
+Expo IAP includes **[IAPKit](https://iapkit.com)** integration out of the box — no extra dependencies required. Use `verifyPurchaseWithProvider()` to verify purchases server-side on both iOS and Android with a single API call. Just add your IAPKit API key to the config plugin and you're ready to go. See the [Purchase Verification guide](./guides/purchases#purchase-verification) for details.
+
 If you're shipping an app with expo-iap, we’d love to hear about it—please share your product and feedback in [Who’s using Expo IAP?](https://github.com/hyochan/expo-iap/discussions/143). Community stories help us keep improving the ecosystem.
 
 ## Promotion
