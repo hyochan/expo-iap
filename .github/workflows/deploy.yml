@@ -54,6 +54,10 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Install example dependencies
+        working-directory: example
+        run: bun install
+
       - name: Install JDK
         uses: actions/setup-java@v4
         with:
@@ -63,9 +67,13 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
+      - name: Generate native projects (expo prebuild)
+        working-directory: example
+        run: npx expo prebuild --platform android --clean
+
       - name: Build Android library
         working-directory: example/android
-        run: ./gradlew :expo-iap:assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --stacktrace
 
   validate-ios:
     runs-on: macos-15
@@ -98,16 +106,9 @@ jobs:
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
-      - name: Cache CocoaPods
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cocoapods/repos/trunk
-            example/ios/Pods
-            ~/Library/Caches/CocoaPods
-          key: ${{ runner.os }}-pods-${{ hashFiles('example/ios/Podfile.lock', 'example/ios/Podfile') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
+      - name: Generate native projects (expo prebuild)
+        working-directory: example
+        run: npx expo prebuild --platform ios --clean
 
       - name: Install CocoaPods dependencies
         working-directory: example/ios
@@ -144,7 +145,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.1.38' # Use specific version to avoid rate limiting
+          bun-version: '1.1.38'
 
       - name: Cache Bun dependencies
         uses: actions/cache@v4
@@ -173,7 +174,6 @@ jobs:
         env:
           INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
-          # Create version commit and tag (supports patch, minor, major)
           npm version "$INPUT_VERSION" --tag-version-prefix="" -m "chore(release): %s"
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
