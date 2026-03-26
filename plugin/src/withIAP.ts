@@ -262,32 +262,17 @@ const withIapAndroid: ConfigPlugin<
   return config;
 };
 
-const EXPO_IAP_IOS_PATH = '../node_modules/expo-iap/ios';
-
 export const ensureOnsidePodIOS = (content: string): string => {
-  // Check for both old subspec format and new direct pod format
-  if (
-    /^\s*pod\s+['"]ExpoIap\/Onside['"].*$/m.test(content) ||
-    /^\s*pod\s+['"]OnsideKit['"].*$/m.test(content)
-  ) {
+  // Set EXPO_IAP_ONSIDE env var at the top of the Podfile so that the ExpoIap podspec
+  // conditionally adds OnsideKit as a dependency. This makes #if canImport(OnsideKit)
+  // work inside ExpoIap's Swift source files.
+  if (content.includes("ENV['EXPO_IAP_ONSIDE'] = '1'")) {
     return content;
   }
 
-  const targetMatch = content.match(/target\s+'[^']+'\s+do\s*\n/);
-  if (!targetMatch) {
-    WarningAggregator.addWarningIOS(
-      'expo-iap',
-      'Could not find a target block in Podfile when adding OnsideKit; skipping installation.',
-    );
-    return content;
-  }
+  logOnce('📦 expo-iap: Enabled OnsideKit (EXPO_IAP_ONSIDE=1)');
 
-  const podLine = `  pod 'OnsideKit'\n`;
-  const insertIndex = targetMatch.index! + targetMatch[0].length;
-
-  logOnce('📦 expo-iap: Added OnsideKit pod to Podfile');
-
-  return content.slice(0, insertIndex) + podLine + content.slice(insertIndex);
+  return `ENV['EXPO_IAP_ONSIDE'] = '1'\n` + content;
 };
 
 export type AutolinkState = {expoIap: boolean; onside: boolean};
