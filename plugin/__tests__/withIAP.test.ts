@@ -195,24 +195,26 @@ describe('ensureOnsidePodIOS', () => {
     '',
   ].join('\n');
 
-  it('adds OnsideKit pod', () => {
+  it('adds ExpoIapOnside pod', () => {
     const result = ensureOnsidePodIOS(basePodfile);
-    expect(result).toContain("pod 'OnsideKit'");
+    expect(result).toContain(
+      "pod 'ExpoIapOnside', :path => '../node_modules/expo-iap/ios'",
+    );
   });
 
   it('inserts pod inside the target block', () => {
     const result = ensureOnsidePodIOS(basePodfile);
     const targetIndex = result.indexOf("target 'MyApp' do");
-    const podIndex = result.indexOf("pod 'OnsideKit'");
+    const podIndex = result.indexOf("pod 'ExpoIapOnside'");
     const endIndex = result.indexOf('end');
     expect(podIndex).toBeGreaterThan(targetIndex);
     expect(podIndex).toBeLessThan(endIndex);
   });
 
-  it('skips if ExpoIap/Onside already exists', () => {
+  it('skips if ExpoIapOnside already exists', () => {
     const podfileWithSubspec = [
       "target 'MyApp' do",
-      "  pod 'ExpoIap/Onside', :path => '../node_modules/expo-iap/ios'",
+      "  pod 'ExpoIapOnside', :path => '../node_modules/expo-iap/ios'",
       'end',
     ].join('\n');
     const result = ensureOnsidePodIOS(podfileWithSubspec);
@@ -244,7 +246,7 @@ describe('ensureOnsidePodIOS', () => {
     }
 
     expect(content).toBe(basePodfile);
-    expect(content).not.toContain("pod 'OnsideKit'");
+    expect(content).not.toContain("pod 'ExpoIapOnside'");
   });
 
   it('modifies Podfile when onside is enabled', () => {
@@ -256,6 +258,6 @@ describe('ensureOnsidePodIOS', () => {
     }
 
     expect(content).not.toBe(basePodfile);
-    expect(content).toContain("pod 'OnsideKit'");
+    expect(content).toContain("pod 'ExpoIapOnside'");
   });
 });

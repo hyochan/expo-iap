@@ -87,19 +87,19 @@ public final class ExpoIapOnsideModule: Module {
         }
 
         AsyncFunction("initConnection") { (config: [String: Any]?) async throws -> Bool in
-            ExpoIapLog.payload("initConnectionOnside", payload: config)
+            OnsideIapLog.payload("initConnectionOnside", payload: config)
             try await ensureObserverRegistered()
             return true
         }
 
         AsyncFunction("endConnection") { () async throws -> Bool in
-            ExpoIapLog.payload("endConnectionOnside", payload: nil)
+            OnsideIapLog.payload("endConnectionOnside", payload: nil)
             await cleanup()
             return true
         }
 
         AsyncFunction("fetchProducts") { (params: [String: Any]) async throws -> [[String: Any]] in
-            ExpoIapLog.payload("fetchProductsOnside", payload: params)
+            OnsideIapLog.payload("fetchProductsOnside", payload: params)
             try await ensureObserverRegistered()
 
             var storefront = await Onside.defaultPaymentQueue().storefront
@@ -152,7 +152,7 @@ public final class ExpoIapOnsideModule: Module {
                 }
             }
 
-            let request = try ExpoIapHelper.decodeProductRequest(from: params)
+            let request = try OnsideIapSupport.decodeProductRequest(from: params)
             guard !request.skus.isEmpty else {
                 throw OnsideBridgeError.emptySkuList
             }
@@ -173,12 +173,12 @@ public final class ExpoIapOnsideModule: Module {
                 }
                 return try response.products.map { try serializeProduct($0) }
             }
-            ExpoIapLog.result("fetchProductsOnside", value: payload)
+            OnsideIapLog.result("fetchProductsOnside", value: payload)
             return payload
         }
 
         AsyncFunction("requestPurchase") { (payload: [String: Any]) async throws -> Any? in
-            ExpoIapLog.payload("requestPurchaseOnside", payload: payload)
+            OnsideIapLog.payload("requestPurchaseOnside", payload: payload)
 
             try await ensureObserverRegistered()
 
@@ -214,12 +214,12 @@ public final class ExpoIapOnsideModule: Module {
                 }
             }
 
-            ExpoIapLog.result("requestPurchaseOnside", value: nil as Any?)
+            OnsideIapLog.result("requestPurchaseOnside", value: nil as Any?)
             return nil
         }
 
         AsyncFunction("finishTransaction") { (purchasePayload: [String: Any], _: Bool?) async throws -> Bool in
-            ExpoIapLog.payload("finishTransactionOnside", payload: purchasePayload)
+            OnsideIapLog.payload("finishTransactionOnside", payload: purchasePayload)
             try await ensureObserverRegistered()
 
             let productId = purchasePayload["productId"] as? String
@@ -248,12 +248,12 @@ public final class ExpoIapOnsideModule: Module {
             }
 
             await queue.finishTransaction(transaction)
-            ExpoIapLog.result("finishTransactionOnside", value: true)
+            OnsideIapLog.result("finishTransactionOnside", value: true)
             return true
         }
 
         AsyncFunction("restorePurchases") { () async throws -> Bool in
-            ExpoIapLog.payload("restorePurchasesOnside", payload: nil)
+            OnsideIapLog.payload("restorePurchasesOnside", payload: nil)
             try await ensureObserverRegistered()
 
             try await MainActor.run {
@@ -286,10 +286,10 @@ public final class ExpoIapOnsideModule: Module {
         }
 
         AsyncFunction("getStorefrontIOS") { () async throws -> String in
-            ExpoIapLog.payload("getStorefrontOnside", payload: nil)
+            OnsideIapLog.payload("getStorefrontOnside", payload: nil)
             try await ensureObserverRegistered()
             let storefront = await Onside.defaultPaymentQueue().storefront?.countryCode ?? ""
-            ExpoIapLog.result("getStorefrontOnside", value: storefront)
+            OnsideIapLog.result("getStorefrontOnside", value: storefront)
             return storefront
         }
     }
@@ -369,7 +369,7 @@ public final class ExpoIapOnsideModule: Module {
                 break
             }
         } catch {
-            ExpoIapLog.failure("handleTransactionOnside", error: error)
+            OnsideIapLog.failure("handleTransactionOnside", error: error)
         }
     }
 
