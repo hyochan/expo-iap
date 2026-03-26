@@ -26,9 +26,12 @@ Pod::Spec.new do |s|
   s.dependency 'ExpoModulesCore'
   s.dependency 'openiap', "#{versions['apple']}"
 
-  # OnsideKit is handled as a separate pod entry in the Podfile (not a subspec)
-  # to avoid CocoaPods resolving it when not needed.
-  # The Expo plugin adds `pod 'OnsideKit'` to the Podfile when modules.onside is enabled.
+  # OnsideKit dependency is conditionally included via ENV var set by the Expo plugin.
+  # When modules.onside is enabled, the plugin prepends ENV['EXPO_IAP_ONSIDE']='1' to the
+  # Podfile, which makes this dependency active and enables #if canImport(OnsideKit) in Swift.
+  if ENV['EXPO_IAP_ONSIDE'] == '1'
+    s.dependency 'OnsideKit'
+  end
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
