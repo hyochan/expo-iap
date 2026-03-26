@@ -207,6 +207,12 @@ describe('ensureOnsidePodIOS', () => {
     expect(result).toBe(podfileWithEnv);
   });
 
+  it('overwrites env var when value is not 1', () => {
+    const podfileWithZero = `ENV['EXPO_IAP_ONSIDE'] = '0'\n${basePodfile}`;
+    const result = ensureOnsidePodIOS(podfileWithZero);
+    expect(result).toContain("ENV['EXPO_IAP_ONSIDE'] = '1'");
+  });
+
   it('does not modify Podfile when onside is disabled (not called)', () => {
     const enableOnside = false;
     let content = basePodfile;

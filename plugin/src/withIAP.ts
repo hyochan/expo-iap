@@ -266,7 +266,7 @@ export const ensureOnsidePodIOS = (content: string): string => {
   // Set EXPO_IAP_ONSIDE env var at the top of the Podfile so that the ExpoIap podspec
   // conditionally adds OnsideKit as a dependency. This makes #if canImport(OnsideKit)
   // work inside ExpoIap's Swift source files.
-  if (content.includes("ENV['EXPO_IAP_ONSIDE']")) {
+  if (content.includes("ENV['EXPO_IAP_ONSIDE'] = '1'")) {
     return content;
   }
 
