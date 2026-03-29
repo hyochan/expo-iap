@@ -78,13 +78,24 @@ For detailed usage examples and error handling, see the [documentation](https://
 
 > Sharing your thoughts—any feedback would be greatly appreciated!
 
+## Powered by OpenIAP
+
+<a href="https://openiap.dev"><img src="https://github.com/hyodotdev/openiap/blob/main/logo.png" alt="OpenIAP" height="50" /></a>
+
+Expo IAP conforms to the **[OpenIAP specification](https://openiap.dev)** — an open, vendor-neutral interoperability standard for in-app purchases. OpenIAP provides:
+
+- **Shared specification** — Common types, error codes, and purchase flows across all platforms
+- **Generated type-safe bindings** — Swift, Kotlin, Dart, and GDScript from a single GraphQL schema
+- **Platform implementations** — [openiap-apple](https://github.com/hyodotdev/openiap/tree/main/packages/apple) (StoreKit 2) and [openiap-google](https://github.com/hyodotdev/openiap/tree/main/packages/google) (Play Billing 8.x)
+- **Verification profiles** — Standardized receipt validation and purchase verification patterns
+
+Other libraries built on OpenIAP: [react-native-iap](https://github.com/hyochan/react-native-iap) · [flutter_inapp_purchase](https://github.com/hyochan/flutter_inapp_purchase) · [kmp-iap](https://github.com/hyochan/kmp-iap) · [godot-iap](https://github.com/hyochan/godot-iap)
+
+**[Learn more about the OpenIAP standard →](https://openiap.dev/docs/foundation/about)**
+
 ## Our Sponsors
 
 💼 **[View Our Sponsors](https://openiap.dev/sponsors)**
-
-We're building the OpenIAP ecosystem—defining the spec at [openiap.dev](https://www.openiap.dev), maintaining [OpenIAP](https://github.com/hyodotdev/openiap) for the shared type system, and shipping platform SDKs like [openiap-apple](https://github.com/hyodotdev/openiap/tree/main/packages/apple) and [openiap-google](https://github.com/hyodotdev/openiap/tree/main/packages/google) that power [expo-iap](https://github.com/hyochan/expo-iap), [flutter_inapp_purchase](https://github.com/hyochan/flutter_inapp_purchase), React Native, and [kmp-iap](https://github.com/hyochan/kmp-iap). The work so far has focused on untangling fragmented APIs; the next milestone is a streamlined purchase flow: `initConnection → fetchProducts → requestPurchase → (server receipt validation) → finishTransaction`.
-
-Your sponsorship helps ensure developers across platforms, OS, and frameworks can implement in-app purchases without headaches. It also fuels new plugins, payment systems, and partner integrations already being explored in the OpenIAP community. Sponsors receive shout-outs in every release and can request tailored support depending on tier. If you’re interested—or have rollout feedback to share—you can view sponsorship options at [openiap.dev/sponsors](https://openiap.dev/sponsors).
 
 ### <p style="color: rgb(255, 182, 193);">Angel</p>
 
