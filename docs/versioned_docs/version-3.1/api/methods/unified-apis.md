@@ -555,7 +555,7 @@ function PurchaseScreen() {
 - `options` (object):
   - `provider` ('iapkit'): The verification provider to use
   - `iapkit` (object): IAPKit-specific configuration
-    - `apiKey` (string): Your IAPKit API key from <IapKitLink>iapkit.com</IapKitLink>
+    - `apiKey` (string): Your IAPKit API key from <IapKitLink>kit.openiap.dev</IapKitLink>
     - `apple` (object): iOS verification data
       - `jws` (string): The JWS token from the purchase (available as `purchase.purchaseToken` on iOS)
     - `google` (object): Android verification data

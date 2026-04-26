@@ -176,7 +176,7 @@ The expo-iap config plugin supports the following options:
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `iapkitApiKey` | `string` | **(v3.2.1+)** IAPKit API key for server-side receipt verification. Get your key from <IapKitLink>iapkit.com</IapKitLink>. Available via `Constants.expoConfig?.extra?.iapkitApiKey`. |
+| `iapkitApiKey` | `string` | **(v3.2.1+)** IAPKit API key for server-side receipt verification. Get your key from <IapKitLink>kit.openiap.dev</IapKitLink>. Available via `Constants.expoConfig?.extra?.iapkitApiKey`. |
 | `enableLocalDev` | `boolean` | Enable local development mode for OpenIAP library. |
 | `localPath` | `string \| {ios?: string, android?: string}` | Local development path for OpenIAP library. |
 | `modules.onside` | `boolean` | Enable Onside module for iOS alternative billing (Korea market). |

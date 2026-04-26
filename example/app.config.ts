@@ -19,7 +19,7 @@ export default ({config}: ConfigContext): ExpoConfig => {
       '../app.plugin.js',
       {
         // IAPKit API key for server-side receipt verification
-        // Get your API key from https://iapkit.com
+        // Get your API key from https://kit.openiap.dev
         iapkitApiKey: process.env.EXPO_PUBLIC_IAPKIT_API_KEY,
         enableLocalDev: false,
         localPath: {

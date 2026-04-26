@@ -1228,4 +1228,4 @@ console.log('Environment:', purchase.environmentIOS); // Sandbox | Production
 - [Full Documentation](https://hyochan.github.io/expo-iap/)
 - [OpenIAP Specification](https://openiap.dev)
 - [Example App](https://github.com/hyochan/expo-iap/tree/main/example)
-- [IAPKit](https://iapkit.com)
+- [IAPKit](https://kit.openiap.dev)

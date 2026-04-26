@@ -12,7 +12,7 @@ import IapKitBanner from "@site/src/uis/IapKitBanner"; import SponsorSection fro
 
 ### Built-in Purchase Verification with IAPKit
 
-Expo IAP includes **[IAPKit](https://iapkit.com)** integration out of the box — no extra dependencies required. Use `verifyPurchaseWithProvider()` to verify purchases server-side on both iOS and Android with a single API call. Just add your IAPKit API key to the config plugin and you're ready to go. See the [Purchase Verification guide](./guides/purchases#purchase-verification) for details.
+Expo IAP includes **[IAPKit](https://kit.openiap.dev)** integration out of the box — no extra dependencies required. Use `verifyPurchaseWithProvider()` to verify purchases server-side on both iOS and Android with a single API call. Just add your IAPKit API key to the config plugin and you're ready to go. See the [Purchase Verification guide](./guides/purchases#purchase-verification) for details.
 
 If you're shipping an app with expo-iap, we’d love to hear about it—please share your product and feedback in [Who’s using Expo IAP?](https://github.com/hyochan/expo-iap/discussions/143). Community stories help us keep improving the ecosystem.
 
