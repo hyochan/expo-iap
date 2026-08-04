@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkexpo_iap_docs=globalThis.webpackChunkexpo_iap_docs||[]).push([[5783],{97267(e){e.exports=JSON.parse('{"metadata":{"permalink":"/expo-iap/blog/page/2","page":2,"postsPerPage":10,"totalPages":3,"totalCount":21,"previousPage":"/expo-iap/blog","nextPage":"/expo-iap/blog/page/3","blogDescription":"Blog","blogTitle":"Blog"}}')}}]);

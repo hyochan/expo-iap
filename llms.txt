@@ -1,0 +1,474 @@
+# expo-iap
+
+> In-App Purchase solution for Expo and React Native supporting iOS StoreKit 2 and Android Play Billing 8.x
+
+expo-iap is a powerful cross-platform in-app purchase library that conforms to the OpenIAP specification. It provides a unified API for handling purchases across iOS and Android with TypeScript support.
+
+## Documentation
+
+- [Full Documentation](https://hyochan.github.io/expo-iap/)
+- [Detailed AI Reference](https://hyochan.github.io/expo-iap/llms-full.txt)
+- [OpenIAP Specification](https://openiap.dev)
+
+## Quick Start
+
+### Installation
+
+```bash
+npx expo install expo-iap
+```
+
+### Basic Usage
+
+```tsx
+import {useIAP} from 'expo-iap';
+
+function Store() {
+  const {connected, products, fetchProducts, requestPurchase, finishTransaction} = useIAP({
+    onPurchaseSuccess: async (purchase) => {
+      // Verify on your backend first
+      await finishTransaction({purchase, isConsumable: true});
+    },
+    onPurchaseError: (error) => {
+      console.error('Purchase failed:', error);
+    },
+  });
+
+  useEffect(() => {
+    if (connected) {
+      fetchProducts({skus: ['product.id'], type: 'in-app'});
+    }
+  }, [connected]);
+
+  const handlePurchase = (productId: string) => {
+    requestPurchase({
+      request: {
+        apple: {sku: productId},
+        google: {skus: [productId]},
+      },
+    });
+  };
+}
+```
+
+## Core API Reference
+
+### useIAP Hook
+
+The main interface for in-app purchases. Auto-manages connection lifecycle.
+
+**Design Pattern:** The hook follows React's state-driven pattern. Methods return `Promise<void>` and update internal state. You must read data from the returned state variables, not from method return values.
+
+```tsx
+const {
+  // ═══════════════════════════════════════════════════════════════
+  // STATE VARIABLES (read data from these)
+  // ═══════════════════════════════════════════════════════════════
+  connected,           // boolean - IAP service ready
+  products,            // Product[] - populated by fetchProducts()
+  subscriptions,       // ProductSubscription[] - populated by fetchProducts()
+  availablePurchases,  // Purchase[] - populated by getAvailablePurchases()
+  activeSubscriptions, // ActiveSubscription[] - populated by getActiveSubscriptions()
+
+  // ═══════════════════════════════════════════════════════════════
+  // METHODS (return Promise<void>, update state above)
+  // ═══════════════════════════════════════════════════════════════
+  fetchProducts,            // ({skus, type}) => Promise<void>
+  requestPurchase,          // (props) => Promise<void>
+  finishTransaction,        // ({purchase, isConsumable}) => Promise<void>
+  getAvailablePurchases,    // () => Promise<void>
+  getActiveSubscriptions,   // (ids?) => Promise<void>
+  restorePurchases,         // () => Promise<void>
+
+  // ═══════════════════════════════════════════════════════════════
+  // METHODS THAT RETURN VALUES (exceptions to the pattern)
+  // ═══════════════════════════════════════════════════════════════
+  hasActiveSubscriptions,   // (ids?) => Promise<boolean>
+  verifyPurchase,           // (props) => Promise<VerifyPurchaseResult>
+  verifyPurchaseWithProvider, // (props) => Promise<result>
+} = useIAP(options);
+```
+
+**Usage Pattern:**
+```tsx
+// ✅ CORRECT: Call method, then read from state
+await fetchProducts({skus: ['product1'], type: 'in-app'});
+console.log(products); // Read from state variable
+
+await getAvailablePurchases();
+console.log(availablePurchases); // Read from state variable
+
+// ❌ WRONG: Don't expect return values from methods
+const result = await fetchProducts({...}); // result is void!
+const purchases = await getAvailablePurchases(); // purchases is void!
+```
+
+**Options:**
+- `onPurchaseSuccess?: (purchase: Purchase) => void` - Success callback
+- `onPurchaseError?: (error: PurchaseError) => void` - Error callback
+
+### Direct API Functions
+
+For use outside React components. Unlike hook methods, these return data directly.
+
+```tsx
+import {
+  initConnection,     // () => Promise<boolean>
+  endConnection,      // () => Promise<void>
+  fetchProducts,      // ({skus, type}) => Promise<Product[]>
+  requestPurchase,    // (props) => Promise<Purchase | Purchase[] | void>
+  finishTransaction,  // ({purchase, isConsumable}) => Promise<void>
+  getAvailablePurchases,   // (options?) => Promise<Purchase[]> - returns Purchase array directly
+  getActiveSubscriptions,  // (ids?) => Promise<ActiveSubscription[]>
+  hasActiveSubscriptions,  // (ids?) => Promise<boolean>
+  deepLinkToSubscriptions, // ({skuAndroid?}) => Promise<void>
+  getStorefront,           // () => Promise<string>
+} from 'expo-iap';
+```
+
+**Note:** The root API `getAvailablePurchases` returns `Promise<Purchase[]>`, while the hook's `getAvailablePurchases` returns `Promise<void>` and updates internal state.
+
+### Event Listeners
+
+```tsx
+import {purchaseUpdatedListener, purchaseErrorListener} from 'expo-iap';
+
+const unsubscribe = purchaseUpdatedListener((purchase) => {
+  // Handle purchase
+});
+
+const unsubscribeError = purchaseErrorListener((error) => {
+  // Handle error
+});
+```
+
+## Key Types
+
+### Product
+
+```tsx
+interface Product {
+  id: string;
+  title: string;
+  description: string;
+  displayPrice: string;
+  price?: number;
+  currency: string;
+  type: 'in-app' | 'subs';
+  store: 'apple' | 'google' | 'horizon';
+  // Cross-platform offer types
+  discountOffers?: DiscountOffer[]; // One-time purchase discounts
+  subscriptionOffers?: SubscriptionOffer[]; // Subscription offers
+  // iOS specific
+  displayNameIOS?: string;
+  isFamilyShareableIOS?: boolean;
+  subscriptionInfoIOS?: SubscriptionInfoIOS;
+}
+
+interface SubscriptionOffer {
+  id: string;
+  displayPrice: string;
+  price: number;
+  currency?: string;
+  type: 'introductory' | 'promotional' | 'one-time';
+  paymentMode?: 'free-trial' | 'pay-as-you-go' | 'pay-up-front' | 'unknown';
+  period?: {unit: string; value: number};
+  // Android-specific
+  basePlanIdAndroid?: string;
+  offerTokenAndroid?: string;
+  offerTagsAndroid?: string[];
+  pricingPhasesAndroid?: PricingPhasesAndroid;
+  installmentPlanDetailsAndroid?: InstallmentPlanDetailsAndroid; // Billing 7.0+
+  // iOS-specific
+  keyIdentifierIOS?: string;
+  signatureIOS?: string;
+}
+
+interface InstallmentPlanDetailsAndroid {
+  commitmentPaymentsCount: number;      // Initial commitment payments
+  subsequentCommitmentPaymentsCount: number; // Renewal commitment (0 = revert to normal)
+}
+```
+
+### Purchase
+
+```tsx
+interface Purchase {
+  id: string;
+  productId: string;
+  purchaseState: 'pending' | 'purchased' | 'unknown';
+  transactionDate: number;
+  purchaseToken?: string;
+  // iOS specific
+  expirationDateIOS?: number;
+  environmentIOS?: 'Sandbox' | 'Production';
+  // Android specific
+  autoRenewingAndroid?: boolean;
+  packageNameAndroid?: string;
+  isSuspendedAndroid?: boolean; // Android 8.1+ - subscription payment paused
+  pendingPurchaseUpdateAndroid?: PendingPurchaseUpdateAndroid; // Billing 5.0+
+}
+
+interface PendingPurchaseUpdateAndroid {
+  products: string[];     // New products the user is switching to
+  purchaseToken: string;  // Token for pending transaction
+}
+```
+
+### ErrorCode
+
+```tsx
+enum ErrorCode {
+  UserCancelled = 'user-cancelled',
+  NetworkError = 'network-error',
+  ItemUnavailable = 'item-unavailable',
+  AlreadyOwned = 'already-owned',
+  NotPrepared = 'not-prepared',
+  ServiceError = 'service-error',
+  BillingUnavailable = 'billing-unavailable',
+  // ... see full docs
+}
+```
+
+## Common Patterns
+
+### Fetch Products
+
+```tsx
+// In-app products
+await fetchProducts({skus: ['coins_100', 'premium_unlock'], type: 'in-app'});
+
+// Subscriptions
+await fetchProducts({skus: ['monthly_sub', 'yearly_sub'], type: 'subs'});
+```
+
+### Purchase with Platform-Specific Options
+
+```tsx
+// For subscriptions with Android offers using cross-platform subscriptionOffers
+const subscription = subscriptions.find(s => s.id === 'monthly_sub');
+const offers = subscription?.subscriptionOffers
+  ?.filter(offer => offer.offerTokenAndroid)
+  .map(offer => ({
+    sku: subscription.id,
+    offerToken: offer.offerTokenAndroid!,
+  })) || [];
+
+await requestPurchase({
+  request: {
+    apple: {sku: 'monthly_sub'},
+    google: {
+      skus: ['monthly_sub'],
+      subscriptionOffers: offers,
+    },
+  },
+  type: 'subs',
+});
+```
+
+### iOS Win-Back Offers (iOS 18+)
+
+```tsx
+// Re-engage churned subscribers with win-back offers
+await requestPurchase({
+  request: {
+    apple: {
+      sku: 'premium_monthly',
+      winBackOffer: {offerId: 'winback_50_off'},
+    },
+  },
+  type: 'subs',
+});
+```
+
+### iOS JWS Promotional Offers (iOS 15+)
+
+```tsx
+// New simplified JWS format for promotional offers
+await requestPurchase({
+  request: {
+    apple: {
+      sku: 'premium_yearly',
+      promotionalOfferJWS: {
+        offerId: 'promo_20_off',
+        jws: 'eyJhbGciOiJFUzI1NiI...', // Server-signed JWS
+      },
+    },
+  },
+  type: 'subs',
+});
+```
+
+### Android Product Status (Android 8.0+)
+
+```tsx
+// Check why products couldn't be fetched
+const result = await fetchProducts({skus: ['product_1'], type: 'in-app'});
+result.forEach((product) => {
+  if (product.platform === 'android' && product.productStatusAndroid) {
+    // 'ok' | 'not-found' | 'no-offers-available' | 'unknown'
+  }
+});
+```
+
+### Android One-Time Purchase Discounts (Android 7.0+)
+
+```tsx
+// Apply discount offers to one-time purchases
+const product = products.find(p => p.id === 'premium_upgrade');
+const discountOffer = product?.discountOffers?.[0];
+
+if (product && discountOffer?.offerTokenAndroid) {
+  await requestPurchase({
+    request: {
+      google: {
+        skus: [product.id],
+        offerToken: discountOffer.offerTokenAndroid,  // Input field: no suffix
+        isOfferPersonalized: false, // EU compliance flag
+      },
+    },
+    type: 'in-app',
+  });
+}
+```
+
+### Restore Purchases
+
+```tsx
+const {getAvailablePurchases, availablePurchases} = useIAP();
+
+const restore = async () => {
+  await getAvailablePurchases();
+  // availablePurchases now contains restorable items
+  for (const purchase of availablePurchases) {
+    // Validate and restore each
+  }
+};
+
+// Include suspended subscriptions (Android 8.1+)
+await getAvailablePurchases({includeSuspendedAndroid: true});
+```
+
+### iOS External Purchase Custom Link (iOS 18.1+)
+
+For apps with custom external purchase links entitlement:
+
+```tsx
+import {
+  isEligibleForExternalPurchaseCustomLinkIOS,
+  getExternalPurchaseCustomLinkTokenIOS,
+  showExternalPurchaseCustomLinkNoticeIOS,
+} from 'expo-iap';
+
+// Check eligibility
+const isEligible = await isEligibleForExternalPurchaseCustomLinkIOS();
+
+if (isEligible) {
+  // Show disclosure notice
+  const notice = await showExternalPurchaseCustomLinkNoticeIOS('browser');
+  if (notice.continued) {
+    // Get token for reporting to Apple
+    const result = await getExternalPurchaseCustomLinkTokenIOS('acquisition');
+    if (result.token) {
+      // Open external link and report to Apple's External Purchase Server API
+    }
+  }
+}
+```
+
+### Check Active Subscriptions
+
+```tsx
+const hasActive = await hasActiveSubscriptions(['premium_monthly', 'premium_yearly']);
+if (hasActive) {
+  // User has premium access
+}
+```
+
+### Android Pending Subscription Updates (Android 5.0+)
+
+Track pending subscription upgrades/downgrades:
+
+```tsx
+const purchases = await getAvailablePurchases();
+purchases?.forEach((purchase) => {
+  if ('pendingPurchaseUpdateAndroid' in purchase && purchase.pendingPurchaseUpdateAndroid) {
+    console.log('Pending change to:', purchase.pendingPurchaseUpdateAndroid.products);
+  }
+});
+```
+
+### Android Installment Plans (Android 7.0+)
+
+Check for installment subscription plans:
+
+```tsx
+const product = subscriptions.find(s => s.id === 'premium_yearly');
+product?.subscriptionOffers?.forEach((offer) => {
+  if (offer.installmentPlanDetailsAndroid) {
+    const {commitmentPaymentsCount} = offer.installmentPlanDetailsAndroid;
+    console.log(`${commitmentPaymentsCount} payment commitment`);
+  }
+});
+```
+
+### Verify Purchase with IAPKit
+
+```tsx
+const result = await verifyPurchaseWithProvider({
+  provider: 'iapkit',
+  iapkit: {
+    apple: {jws: purchase.purchaseToken},
+    google: {purchaseToken: purchase.purchaseToken},
+  },
+});
+
+if (result.iapkit?.isValid) {
+  // Grant entitlement
+}
+```
+
+## Error Handling
+
+```tsx
+import {ErrorCode, isUserCancelledError} from 'expo-iap';
+
+const {requestPurchase} = useIAP({
+  onPurchaseError: (error) => {
+    if (error.code === ErrorCode.UserCancelled) {
+      return; // User cancelled, no action needed
+    }
+    if (error.code === ErrorCode.NetworkError) {
+      showRetryDialog();
+    }
+    console.error(error.message);
+  },
+});
+```
+
+## Platform Requirements
+
+- **iOS**: 15.0+ for StoreKit 2 features
+- **Android**: API 21+, Kotlin 2.0+ (Expo SDK 53+)
+- **Expo**: Requires custom dev client (not Expo Go)
+
+## Config Plugin
+
+```json
+{
+  "expo": {
+    "plugins": [
+      ["expo-iap", {"iapkitApiKey": "your_key"}],
+      ["expo-build-properties", {"android": {"kotlinVersion": "2.2.0"}}]
+    ]
+  }
+}
+```
+
+## Links
+
+- [GitHub](https://github.com/hyochan/expo-iap)
+- [NPM](https://npmjs.com/package/expo-iap)
+- [Full Documentation](https://hyochan.github.io/expo-iap/)
+- [OpenIAP Specification](https://openiap.dev)
+- [Examples](https://github.com/hyochan/expo-iap/tree/main/example)

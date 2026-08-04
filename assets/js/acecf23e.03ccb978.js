@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkexpo_iap_docs=globalThis.webpackChunkexpo_iap_docs||[]).push([[1903],{1912(o){o.exports=JSON.parse('{"blogBasePath":"/expo-iap/blog","blogTitle":"Blog","authorsListPath":"/expo-iap/blog/authors"}')}}]);
