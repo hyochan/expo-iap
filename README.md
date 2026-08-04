@@ -1,6 +1,32 @@
-> **⚠️ This repository has moved to the [OpenIAP monorepo](https://github.com/hyodotdev/openiap/tree/main/libraries/expo-iap).** This repository is deprecated and will be archived soon. All future development happens in the monorepo. See the [📢 announcement issue](https://github.com/hyochan/expo-iap/issues/339) or the [discussion thread](https://github.com/hyochan/expo-iap/discussions/338) for details.
-> This repository is deprecated and will be archived soon. All future development happens in the monorepo.
-> Please see the [announcement](https://github.com/hyochan/expo-iap/discussions/338) for details.
+> [!IMPORTANT]
+> **⚠️ This repository has moved to [hyodotdev/openiap](https://github.com/hyodotdev/openiap).** expo-iap is now developed in the monorepo at [`libraries/expo-iap`](https://github.com/hyodotdev/openiap/tree/main/libraries/expo-iap) — this repository is archived and read-only.
+
+<div align="center">
+
+<a href="https://github.com/hyodotdev/openiap">
+  <img src="https://raw.githubusercontent.com/hyodotdev/openiap/main/logo.png" alt="OpenIAP" height="56" />
+</a>
+
+## 📦 This project now lives in the OpenIAP monorepo
+
+**expo-iap is actively maintained — development simply moved home.**<br/>
+This repository is archived and kept read-only as history.
+
+|                    |                                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------ |
+| 🧭 **Source code** | [hyodotdev/openiap → libraries/expo-iap](https://github.com/hyodotdev/openiap/tree/main/libraries/expo-iap)  |
+| 🏠 **Monorepo**    | [hyodotdev/openiap](https://github.com/hyodotdev/openiap)                                                    |
+| 📚 **Docs**        | [openiap.dev/docs/setup/expo](https://openiap.dev/docs/setup/expo) · [legacy docs](https://hyochan.github.io/expo-iap) |
+| 🐛 **Issues**      | [hyodotdev/openiap/issues](https://github.com/hyodotdev/openiap/issues)                                      |
+| 💬 **Q&A**         | [expo-iap discussions](https://github.com/hyodotdev/openiap/discussions/categories/expo-iap)                 |
+
+The npm package name is unchanged — `npx expo install expo-iap` keeps working as always.
+
+<sub>Background: [📢 announcement issue](https://github.com/hyochan/expo-iap/issues/339) · [discussion thread](https://github.com/hyochan/expo-iap/discussions/338)</sub>
+
+</div>
+
+---
 
 # Expo IAP
 
@@ -17,24 +43,9 @@ If you're shipping an app with expo-iap, we’d love to hear about it—please s
 
 </div>
 
-## 🎨 Promotion
-
-<div align="center">
-  <a href="https://hyodotdev.github.io/kstyled">
-    <img src="https://hyodotdev.github.io/kstyled/img/logo.png" alt="kstyled Logo" width="120" />
-  </a>
-
-**Compile-time CSS-in-JS for React Native**
-
-✨ Experience the next generation of styling with **[kstyled](https://hyodotdev.github.io/kstyled)** - a blazing-fast, fully type-safe CSS-in-JS solution with zero runtime overhead.
-
-🚀 **[Explore kstyled →](https://hyodotdev.github.io/kstyled)**
-
-</div>
-
 ## 📚 Documentation
 
-**[📖 Visit our comprehensive documentation site →](https://hyochan.github.io/expo-iap)**
+**[📖 Visit the documentation →](https://openiap.dev/docs/setup/expo)**
 
 ## Using with AI Assistants
 
@@ -93,7 +104,7 @@ Expo IAP conforms to the **[OpenIAP specification](https://openiap.dev)** — an
 - **Platform implementations** — [openiap-apple](https://github.com/hyodotdev/openiap/tree/main/packages/apple) (StoreKit 2) and [openiap-google](https://github.com/hyodotdev/openiap/tree/main/packages/google) (Play Billing 8.x)
 - **Verification profiles** — Standardized receipt validation and purchase verification patterns
 
-Other libraries built on OpenIAP: [react-native-iap](https://github.com/hyochan/react-native-iap) · [flutter_inapp_purchase](https://github.com/hyochan/flutter_inapp_purchase) · [kmp-iap](https://github.com/hyochan/kmp-iap) · [godot-iap](https://github.com/hyochan/godot-iap)
+Other libraries built on OpenIAP: [react-native-iap](https://github.com/hyodotdev/openiap/tree/main/libraries/react-native-iap) · [flutter_inapp_purchase](https://github.com/hyodotdev/openiap/tree/main/libraries/flutter_inapp_purchase) · [kmp-iap](https://github.com/hyodotdev/openiap/tree/main/libraries/kmp-iap) · [maui-iap](https://github.com/hyodotdev/openiap/tree/main/libraries/maui-iap) · [godot-iap](https://github.com/hyodotdev/openiap/tree/main/libraries/godot-iap)
 
 **[Learn more about the OpenIAP standard →](https://openiap.dev/docs/foundation/about)**
 
